@@ -3,6 +3,7 @@
 ## 当前状态
 ✅ Git 仓库已初始化
 ✅ .gitignore 文件已创建
+✅ 远程仓库已配置：`https://github.com/Atlantis010208/guangyigongchuang-miniprogram.git`
 
 ## 配置远程仓库
 
