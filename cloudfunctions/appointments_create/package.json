@@ -1,0 +1,10 @@
+{
+  "name": "appointments_create",
+  "version": "1.0.0",
+  "description": "Create appointment document for designer",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}
+

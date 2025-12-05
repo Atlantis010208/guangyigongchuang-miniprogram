@@ -1,0 +1,18 @@
+.mall-page {
+  background: #f2f2f7;
+  min-height: 100vh;
+  padding: 30rpx;
+}
+
+.mall-header { margin-bottom: 20rpx; }
+.mall-title { font-size: 48rpx; font-weight: 700; color:#000; display:block; }
+.mall-sub { font-size: 26rpx; color:#8e8e93; display:block; margin-top: 8rpx; }
+
+.product-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 20rpx; }
+.product-card { background:#fff; border-radius: 30rpx; overflow:hidden; }
+.product-image { width:100%; height: 260rpx; object-fit: cover; display:block; }
+.product-info { padding: 18rpx; }
+.product-name { font-size: 28rpx; color:#000; display:block; margin-bottom: 6rpx; }
+.product-price { font-size: 26rpx; color:#ff3b30; }
+
+

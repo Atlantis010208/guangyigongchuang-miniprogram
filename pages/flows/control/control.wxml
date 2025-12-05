@@ -1,0 +1,10 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">控制系统设计</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">控制协议</text><picker range="{{protocols}}" bindchange="onProtocol"><view class="picker-text">{{protocolText}}</view></picker></view>
+    <view class="cell"><text class="label">分路数量</text><input class="input" type="number" placeholder="如 8"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onDesign">提交设计需求</button></view>
+</scroll-view>
+
+

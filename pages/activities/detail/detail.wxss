@@ -1,0 +1,39 @@
+
+/* 表单模式样式（按题目顺序排列的卡片） */
+.form-wrap{padding:0 0 80rpx}
+.form-title-page{display:block;text-align:center;font-size:40rpx;font-weight:700;margin:20rpx 0 10rpx}
+.form-card{background:#fff;border-radius:24rpx;padding:26rpx;margin:20rpx 30rpx;border:1rpx solid #ececee}
+.q-index{display:block;font-size:32rpx;font-weight:700;margin-bottom:16rpx}
+.q-subtitle{display:block;color:#8e8e93;margin-bottom:16rpx}
+.options-group{display:flex;flex-direction:column}
+.option-row{display:flex;align-items:center;gap:18rpx;padding:18rpx 14rpx;border-radius:16rpx;transition:background-color .15s ease}
+.option-row:active{background:#f7f7f9}
+.option-text{font-size:30rpx;color:#111}
+.other-input{flex:1;border-bottom:1rpx solid #e5e5ea;padding:10rpx 0;color:#111}
+.text-input{width:100%;border-bottom:1rpx solid #e5e5ea;padding:12rpx 0;color:#111}
+.submit-wrap{padding:10rpx 20rpx}
+
+/* 自定义选中态，保持系统控件但增强视觉对比 */
+radio .wx-radio-input, checkbox .wx-checkbox-input{border-radius:50%;border:1rpx solid #c7c7cc}
+radio .wx-radio-input.wx-radio-input-checked{background:#34c759;border-color:#34c759}
+checkbox .wx-checkbox-input.wx-checkbox-input-checked{background:#34c759;border-color:#34c759}
+checkbox .wx-checkbox-input.wx-checkbox-input-checked::before{color:#fff}
+
+/* 发布需求模式复用发布页样式 */
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700;text-align:center}
+.section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:20rpx}
+.block-title{font-size:32rpx;font-weight:700;color:#000;display:flex;align-items:center;margin-bottom:10rpx}
+.required{display:none}
+.tip{display:block;color:#8e8e93;font-size:24rpx;line-height:1.5;margin:10rpx 0 10rpx}
+.group{display:flex;flex-direction:column;gap:0;padding:16rpx 0}
+.option{display:flex;align-items:center;gap:18rpx;font-size:30rpx;color:#000;padding:18rpx 14rpx;border-radius:16rpx;transition:background-color .15s ease}
+.option:active{background:#f7f7f9}
+.option + .option{margin-top:4rpx}
+.inline-input{margin-left:16rpx;flex:1;border-bottom:1rpx solid #f0f0f0;padding:8rpx 0;font-size:28rpx}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:24rpx 20rpx;border-bottom:1rpx solid #f2f2f7}
+.cell.auto{flex-direction:column;align-items:flex-start}
+.cell:last-child{border-bottom:none}
+.label{font-size:28rpx;color:#000}
+.input,.picker-text{flex:1;text-align:right;font-size:28rpx}
+.textarea{width:100%;min-height:160rpx;background:#f8f8fb;border-radius:20rpx;padding:20rpx;box-sizing:border-box}
+.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0}

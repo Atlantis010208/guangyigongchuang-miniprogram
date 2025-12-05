@@ -1,0 +1,44 @@
+<view class="page">
+  <scroll-view scroll-y class="content">
+    <image class="hero" src="{{item.image}}" mode="aspectFill" />
+    <view class="meta">
+      <text class="name">{{item.name}}</text>
+      <text class="price">¥ {{item.minPrice}} - {{item.maxPrice}}</text>
+      <text class="desc">{{item.desc}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="bottom">
+    <view class="action" bindtap="onFav"><text class="a-text">收藏</text></view>
+    <view class="action" bindtap="onService"><text class="a-text">客服</text></view>
+    <view class="cart" bindtap="onAddToCartTap"><text class="buy-text">加入购物车</text></view>
+    <view class="buy" bindtap="onBuy"><text class="buy-text">购买</text></view>
+  </view>
+
+  <view wx:if="{{showPicker}}" class="mask" catchtouchmove="true" bindtap="closePicker">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-header">
+        <text class="sheet-title">选择参数</text>
+        <text class="sheet-price">合计 ¥ {{totalPrice}}</text>
+      </view>
+      <view class="sheet-body">
+        <text class="label">规格</text>
+        <view class="pill-group">
+          <view wx:for="{{item.variants}}" wx:key="key" class="pill {{picked.key===item.key?'active':''}}" bindtap="pickVariant" data-idx="{{index}}">{{item.key}}</view>
+        </view>
+        <text class="label">数量</text>
+        <view class="qty">
+          <view class="btn" bindtap="dec">-</view>
+          <text class="num">{{qty}}</text>
+          <view class="btn" bindtap="inc">+</view>
+        </view>
+      </view>
+      <view class="sheet-actions">
+        <button class="btn ghost" bindtap="confirmCart">加入购物车</button>
+        <button class="btn primary" bindtap="confirmBuy">立即购买</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+

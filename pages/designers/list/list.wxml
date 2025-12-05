@@ -1,0 +1,143 @@
+<!-- 设计师列表页 - 参考 ai_studio 布局 -->
+<view class="container">
+  <!-- 顶部导航栏 -->
+  <view class="header-section">
+    <view class="header-row">
+      <text class="page-title">发现设计师</text>
+      <view class="notify-btn">
+        <text class="bell-icon">🔔</text>
+      </view>
+    </view>
+
+    <!-- 搜索框 -->
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索北欧、日式、极简..."
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+      />
+    </view>
+
+    <!-- 筛选标签 - 横向滚动 -->
+    <scroll-view class="filter-tabs-wrapper" scroll-x enable-flex>
+      <view
+        class="filter-chip {{sortBy === 'rating' ? 'active' : ''}}"
+        bindtap="onFilterTap"
+        data-filter="rating"
+      >
+        <text>推荐排序</text>
+      </view>
+      <view
+        class="filter-chip {{selectedSpace ? 'active' : ''}}"
+        bindtap="toggleSpaceFilter"
+      >
+        <text>擅长风格</text>
+        <text class="arrow-icon">▼</text>
+      </view>
+      <view
+        class="filter-chip {{sortBy === 'experience' ? 'active' : ''}}"
+        bindtap="onFilterTap"
+        data-filter="experience"
+      >
+        <text>从业年限</text>
+      </view>
+      <view
+        class="filter-chip {{sortBy === 'price' ? 'active' : ''}}"
+        bindtap="onFilterTap"
+        data-filter="price"
+      >
+        <text>价格筛选</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 设计师列表 -->
+  <view wx:elif="{{designers.length > 0}}" class="designer-list-content">
+    <view
+      wx:for="{{designers}}"
+      wx:key="_id"
+      class="designer-card"
+      bindtap="onDesignerTap"
+      data-id="{{item._id}}"
+    >
+      <!-- 作品集预览 - 有两种布局 -->
+      <view wx:if="{{item.portfolioLayout === 'grid'}}" class="portfolio-grid">
+        <image
+          class="main-image"
+          src="{{item.mainImage || '/images/个人中心.png'}}"
+          mode="aspectFill"
+        />
+        <view class="side-images">
+          <image
+            class="side-image"
+            src="{{item.sideImage1 || '/images/个人中心.png'}}"
+            mode="aspectFill"
+          />
+          <view class="image-count-box">
+            <text>+{{item.imageCount || 12}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:else class="portfolio-single">
+        <image
+          class="single-image"
+          src="{{item.coverImage || '/images/个人中心.png'}}"
+          mode="aspectFill"
+        />
+        <view wx:if="{{item.hasVideo}}" class="video-badge">
+          <text class="play-icon">▶</text>
+          <text>视频案例</text>
+        </view>
+      </view>
+
+      <!-- 设计师信息 -->
+      <view class="card-info-section">
+        <view class="info-left">
+          <image
+            class="designer-avatar"
+            src="{{item.avatarUrl}}"
+            mode="aspectFill"
+          />
+          <view class="info-text">
+            <text class="designer-name">{{item.name}}</text>
+            <text class="designer-meta">{{item.experienceYears || 8}}年经验 · {{item.specialties[0] || '极简'}}/{{item.specialties[1] || '日式'}}</text>
+            <view class="badge-group">
+              <view wx:if="{{item.fastResponse}}" class="badge badge-orange">
+                <text>响应快</text>
+              </view>
+              <view class="badge badge-gray">
+                <text>实名认证</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="info-right">
+          <view class="rating-box">
+            <text class="star-icon">★</text>
+            <text class="rating-num">{{item.rating}}</text>
+          </view>
+          <text class="transaction-text">{{item.projectCount}}单成交</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:else class="empty-state">
+    <view class="empty-icon">
+      <text class="empty-icon-text">🔍</text>
+    </view>
+    <text class="empty-title">未找到设计师</text>
+    <text class="empty-description">请尝试调整筛选条件</text>
+  </view>
+</view>

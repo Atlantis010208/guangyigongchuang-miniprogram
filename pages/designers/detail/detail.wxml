@@ -1,0 +1,240 @@
+<!-- 设计师详情页 - 参考 ai_studio 布局 -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text>加载中...</text>
+  </view>
+
+  <!-- 设计师详情 -->
+  <view wx:else class="detail-content">
+    <!-- 顶部英雄大图 -->
+    <view class="hero-section">
+      <image
+        class="hero-image"
+        src="{{designer.heroImage || '/images/个人中心.png'}}"
+        mode="aspectFill"
+      />
+      <view class="hero-gradient"></view>
+    </view>
+
+    <!-- 浮动的个人信息卡片 -->
+    <view class="floating-profile-card">
+      <view class="profile-card-content">
+        <view class="profile-header">
+          <view class="profile-text">
+            <text class="designer-name">{{designer.name}}</text>
+            <text class="designer-subtitle">{{designer.title}} | {{designer.specialties[0] || '极简'}}主义者</text>
+          </view>
+          <image
+            class="profile-avatar"
+            src="{{designer.avatarUrl}}"
+            mode="aspectFill"
+          />
+        </view>
+
+        <!-- 三栏统计数据 -->
+        <view class="stats-section">
+          <view class="stat-item">
+            <text class="stat-value">{{designer.rating}}</text>
+            <text class="stat-label">评分</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value">{{designer.projectCount}}</text>
+            <text class="stat-label">成交</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value">{{designer.experienceYears || 8}}年</text>
+            <text class="stat-label">经验</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Tab 切换栏 -->
+    <view class="tabs-wrapper">
+      <view
+        class="tab-button {{activeTab === 'works' ? 'active' : ''}}"
+        bindtap="onTabChange"
+        data-tab="works"
+      >
+        <text>代表作品</text>
+        <view wx:if="{{activeTab === 'works'}}" class="tab-underline"></view>
+      </view>
+      <view
+        class="tab-button {{activeTab === 'reviews' ? 'active' : ''}}"
+        bindtap="onTabChange"
+        data-tab="reviews"
+      >
+        <text>用户评价 ({{designer.reviews ? designer.reviews.length : 42}})</text>
+        <view wx:if="{{activeTab === 'reviews'}}" class="tab-underline"></view>
+      </view>
+    </view>
+
+    <!-- 内容区域 -->
+    <view class="content-wrapper">
+      <!-- 代表作品 -->
+      <view wx:if="{{activeTab === 'works'}}" class="works-content">
+        <view wx:if="{{designer.cases && designer.cases.length > 0}}" class="portfolio-grid">
+          <view
+            wx:for="{{designer.cases}}"
+            wx:key="title"
+            class="portfolio-item {{item.span === 2 ? 'span-2' : ''}}"
+          >
+            <image
+              class="portfolio-image"
+              src="{{item.coverUrl}}"
+              mode="aspectFill"
+            />
+            <view class="portfolio-overlay">
+              <text class="portfolio-title">{{item.title}}</text>
+            </view>
+            <view wx:if="{{item.hasGallery}}" class="gallery-icon">
+              <text>🖼</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:else class="empty-content">
+          <text class="empty-text">暂无作品展示</text>
+        </view>
+      </view>
+
+      <!-- 用户评价 -->
+      <view wx:if="{{activeTab === 'reviews'}}" class="reviews-content">
+        <view wx:if="{{designer.reviews && designer.reviews.length > 0}}" class="review-list">
+          <view wx:for="{{designer.reviews}}" wx:key="date" class="review-card">
+            <view class="review-header">
+              <text class="review-user">{{item.user}}</text>
+              <view class="review-rating">
+                <text class="star">★</text>
+                <text class="rating-num">{{item.rating}}</text>
+              </view>
+            </view>
+            <text class="review-content">{{item.content}}</text>
+            <text class="review-date">{{item.date}}</text>
+          </view>
+        </view>
+
+        <view wx:else class="empty-content">
+          <text class="empty-text">暂无用户评价</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view wx:if="{{!loading}}" class="action-bar">
+    <view class="customer-service" bindtap="onContact">
+      <image class="service-icon-img" src="/images/客服.png" mode="aspectFit" />
+      <text class="service-text">客服</text>
+    </view>
+    <view class="action-buttons">
+      <view class="consult-btn" bindtap="onConsult">
+        <text>私信咨询</text>
+      </view>
+      <view class="book-btn" bindtap="openBooking">
+        <text>立即预约</text>
+        <text class="arrow">→</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 预约弹窗 -->
+  <view wx:if="{{showBookingModal}}" class="modal-mask" catchtap="closeBooking">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">预约设计师</text>
+        <view class="modal-close" catchtap="closeBooking">✕</view>
+      </view>
+
+      <view class="modal-body">
+        <!-- 空间类型 -->
+        <view class="form-item">
+          <text class="form-label">空间类型</text>
+          <picker bindchange="onSpaceChange" value="{{spaceIndex}}" range="{{spaceOptions}}">
+            <view class="picker-value">
+              <text class="{{bookingForm.spaceType ? 'selected' : 'placeholder'}}">
+                {{bookingForm.spaceType || '请选择空间类型'}}
+              </text>
+              <text class="arrow">›</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 设计面积 -->
+        <view class="form-item">
+          <text class="form-label">设计面积</text>
+          <input
+            class="form-input"
+            type="digit"
+            placeholder="请输入面积（㎡）"
+            value="{{bookingForm.area}}"
+            bindinput="onAreaInput"
+          />
+        </view>
+
+        <!-- 预算范围 -->
+        <view class="form-item">
+          <text class="form-label">预算范围</text>
+          <picker bindchange="onBudgetChange" value="{{budgetIndex}}" range="{{budgetOptions}}">
+            <view class="picker-value">
+              <text class="{{bookingForm.budget ? 'selected' : 'placeholder'}}">
+                {{bookingForm.budget || '请选择预算范围'}}
+              </text>
+              <text class="arrow">›</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 联系方式类型 -->
+        <view class="form-item">
+          <text class="form-label">联系方式</text>
+          <picker bindchange="onContactTypeChange" value="{{contactTypeIndex}}" range="{{contactTypeOptions}}">
+            <view class="picker-value">
+              <text class="{{bookingForm.contactType ? 'selected' : 'placeholder'}}">
+                {{bookingForm.contactType || '请选择联系方式类型'}}
+              </text>
+              <text class="arrow">›</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 联系方式内容 -->
+        <view class="form-item">
+          <text class="form-label">{{bookingForm.contactType || '联系方式'}}号码</text>
+          <input
+            class="form-input"
+            type="text"
+            placeholder="{{bookingForm.contactType ? '请输入' + bookingForm.contactType + '号码' : '请先选择联系方式类型'}}"
+            value="{{bookingForm.contact}}"
+            bindinput="onContactInput"
+          />
+        </view>
+
+        <!-- 备注 -->
+        <view class="form-item">
+          <text class="form-label">备注</text>
+          <textarea
+            class="form-textarea"
+            placeholder="请描述您的需求或特殊要求（选填）"
+            value="{{bookingForm.remark}}"
+            bindinput="onRemarkInput"
+            maxlength="200"
+          />
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <view class="submit-btn" bindtap="submitBooking">
+          <text>提交预约</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

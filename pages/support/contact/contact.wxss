@@ -1,0 +1,21 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+.section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:30rpx;box-shadow:none}
+.card{display:flex;flex-direction:column;gap:20rpx}
+.contact-row{display:flex;gap:24rpx;align-items:center}
+.icon{width:80rpx;height:80rpx;border-radius:50%}
+.info .name{display:block;font-size:32rpx;font-weight:600;color:#000}
+.info .desc{display:block;font-size:24rpx;color:#8e8e93;margin-top:8rpx}
+.actions{display:flex;margin-top:20rpx}
+.actions .btn + .btn{margin-left:24rpx}
+.btn{flex:1;border-radius:50rpx;padding:22rpx 0;font-size:28rpx}
+.btn.primary{background:#000;color:#fff}
+.btn.ghost{background:#000;color:#fff}
+.badge{margin-left:10rpx;padding:4rpx 12rpx;border-radius:20rpx;font-size:22rpx}
+.badge.online{background:#e6fff2;color:#0a7f42}
+.badge.offline{background:#f5f5f5;color:#8e8e93}
+.subtitle{font-size:32rpx;font-weight:600;color:#000;display:block;margin-bottom:16rpx}
+.faq .qa{margin-bottom:18rpx}
+.faq .q{display:block;font-size:28rpx;color:#000;margin-bottom:6rpx}
+.faq .a{display:block;font-size:26rpx;color:#8e8e93;line-height:1.5}
+

@@ -1,0 +1,12 @@
+.page{background:#f2f2f7;min-height:100vh;padding-bottom:40rpx}
+.header{padding:30rpx;text-align:center}
+.title{font-size:48rpx;font-weight:600;color:#000}
+.cells{margin:20rpx 30rpx;background:#fff;border-radius:40rpx;overflow:hidden}
+.cell{display:flex;justify-content:space-between;align-items:center;padding:34rpx 28rpx;border-bottom:1rpx solid #eee}
+.cell:last-child{border-bottom:none}
+.left{display:flex;flex-direction:column}
+.name{font-size:32rpx;color:#000}
+.date{font-size:24rpx;color:#8e8e93;margin-top:6rpx}
+.amount{font-size:32rpx;color:#000}
+.empty{color:#8e8e93;text-align:center;margin-top:40rpx}
+

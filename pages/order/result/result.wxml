@@ -1,0 +1,13 @@
+<view class="result-page">
+  <view class="card result-card">
+    <image class="status-icon" src="{{success ? '/images/success.png' : '/images/取消.png'}}" mode="aspectFit"></image>
+    <text class="status-text">{{success ? '支付成功' : '支付失败'}}</text>
+    <text class="amount">¥{{amount}}</text>
+    <text class="order-id">订单号：{{orderId}}</text>
+    <view class="actions">
+      <button class="btn btn-dark" bindtap="goOrders">返回订单管理</button>
+      <button class="btn btn-dark" bindtap="goHome">继续逛逛</button>
+    </view>
+  </view>
+</view>
+

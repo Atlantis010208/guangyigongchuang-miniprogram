@@ -1,0 +1,15 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700;text-align:center}
+.section{padding:0 30rpx 30rpx}
+.cells{background:#fff;border-radius:30rpx;overflow:hidden}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:24rpx 20rpx;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.cell.auto{flex-direction:column;align-items:flex-start}
+.label{font-size:28rpx;color:#000}
+.label.fixed{min-width:180rpx}
+.input,.picker-text{flex:1;text-align:right;font-size:28rpx}
+.textarea{width:100%;min-height:160rpx;background:#f8f8fb;border-radius:20rpx;padding:20rpx;box-sizing:border-box}
+.cell-active{background:#f7f7f9}
+.actions{padding:20rpx 0}
+.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0}
+

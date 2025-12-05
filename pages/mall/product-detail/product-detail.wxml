@@ -1,0 +1,71 @@
+<view class="detail-page">
+  <swiper class="banner" indicator-dots autoplay circular>
+    <block wx:for="{{images}}" wx:key="*this">
+      <swiper-item>
+        <image class="banner-image" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view class="info">
+    <text class="name">{{name}}</text>
+    <text class="price">¥{{price}}</text>
+  </view>
+
+  <!-- 规格选择 -->
+  <view class="card">
+    <text class="section-title">选择规格</text>
+    <view wx:for="{{variantGroups}}" wx:key="name" class="variant-group">
+      <text class="variant-name">{{item.name}}</text>
+      <view class="variant-options">
+        <view wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt" class="variant-chip {{item.selected===opt ? 'selected' : ''}}" data-group="{{item.key}}" data-value="{{opt}}" bindtap="onSelectVariant">{{opt}}</view>
+      </view>
+    </view>
+    <view class="quantity">
+      <text class="q-label">数量</text>
+      <view class="stepper">
+        <view class="step-btn" bindtap="onDec">-</view>
+        <text class="step-val">{{quantity}}</text>
+        <view class="step-btn" bindtap="onInc">+</view>
+      </view>
+    </view>
+    <view class="total-line"><text class="total-label">合计</text><text class="total-val">¥{{totalPrice || (price * quantity)}}</text></view>
+  </view>
+
+  <!-- 商品简介 -->
+  <view class="card">
+    <text class="section-title">简介</text>
+    <text class="desc">{{desc}}</text>
+  </view>
+
+  <!-- 规格参数 -->
+  <view class="card">
+    <text class="section-title">参数</text>
+    <view class="params">
+      <view wx:for="{{params}}" wx:key="key" class="param-row">
+        <text class="param-line">{{item.key}}：{{item.value}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <view class="action-icons">
+      <view class="icon-btn" bindtap="onContact">
+        <image class="icon" src="/images/客服.png" mode="aspectFit"></image>
+        <text class="icon-text">客服</text>
+      </view>
+      <view class="icon-btn" bindtap="onToggleFav">
+        <image class="icon" src="{{fav ? '/images/收藏-active.png' : '/images/收藏.png'}}" mode="aspectFit"></image>
+        <text class="icon-text">收藏</text>
+      </view>
+      <view class="icon-btn" bindtap="onGoCart">
+        <image class="icon" src="/images/购物车.png" mode="aspectFit"></image>
+        <text class="icon-text">购物车</text>
+      </view>
+    </view>
+    <button class="btn primary" bindtap="onAddToCart">加入购物车</button>
+    <button class="btn primary" bindtap="onBuyNow">立即购买</button>
+  </view>
+  <view class="bottom-spacer"></view>
+</view>
+

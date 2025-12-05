@@ -1,0 +1,28 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+.section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:30rpx}
+.info .row{display:block;font-size:28rpx;color:#000;margin-bottom:10rpx}
+.block-title{font-size:32rpx;font-weight:700;color:#000;display:block;margin-bottom:12rpx}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:18rpx 0;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.label{font-size:28rpx;color:#000}
+.val{font-size:28rpx;color:#1c1c1e}
+.badge.cancel{display:inline-block;margin-top:6rpx;padding:6rpx 14rpx;border-radius:999rpx;background:#ffecec;color:#ff3b30;font-size:22rpx}
+.badge.priority{display:inline-block;margin-left:10rpx;margin-top:6rpx;padding:6rpx 14rpx;border-radius:999rpx;background:#000;color:#d4af37;font-size:22rpx;border:1rpx solid #d4af37}
+.timeline{margin-top:10rpx}
+.t-row{display:flex;align-items:center;gap:14rpx;margin-bottom:14rpx}
+.t-dot{width:16rpx;height:16rpx;border-radius:50%;background:#d1d1d6}
+.t-dot.done{background:#34c759}
+.t-text{font-size:28rpx;color:#000}
+.actions{display:flex;align-items:center}
+.btn{flex:1;border-radius:50rpx;padding:24rpx 0;font-size:28rpx;border:2rpx solid #000;background:#fff;color:#000}
+.actions .btn + .btn{margin-left:16rpx}
+.btn.primary{border:2rpx solid #000;background:#fff;color:#000}
+.btn.danger{border:2rpx solid #000;background:#fff;color:#000}
+.btn.ghost{border:2rpx solid #000;background:#fff;color:#000}
+.btn[disabled]{border-color:#d1d1d6;color:#9e9e9e}
+/* 更多按钮与图标 */
+.btn.more{flex:0 0 65rpx;height:58rpx;padding:0;display:flex;align-items:center;justify-content:center;border-radius:36rpx;border:none;background:transparent}
+.more-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8rpx;height:30rpx}
+.more-icon .dot{width:10rpx;height:10rpx;border-radius:50%;background:#1C1C1E}
+

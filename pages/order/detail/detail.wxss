@@ -1,0 +1,35 @@
+.page{min-height:100vh;background:#f2f2f7}
+.card{background:#fff;border-radius:30rpx;margin:20rpx 16rpx 0;padding:24rpx 20rpx}
+.title{font-size:30rpx;font-weight:700;color:#000;display:block;margin-bottom:12rpx}
+.row{display:flex;justify-content:space-between;margin-top:6rpx}
+.label{font-size:26rpx;color:#8e8e93}
+.val{font-size:26rpx;color:#000}
+.addr{font-size:26rpx;color:#1c1c1e;line-height:1.6}
+.empty{font-size:26rpx;color:#8e8e93}
+
+.item{display:flex;align-items:flex-start}
+.img{width:140rpx;height:140rpx;border-radius:20rpx;object-fit:cover;flex:none}
+.info{flex:1;margin-left:16rpx}
+.name{font-size:30rpx;color:#000;margin-bottom:6rpx}
+.specs{font-size:24rpx;color:#8e8e93;margin-bottom:6rpx}
+.qty{font-size:24rpx;color:#1c1c1e}
+.price{font-size:28rpx;color:#000;font-weight:700;align-self:flex-start;margin-left:12rpx}
+
+/* 商品参数列表 */
+.params{display:flex;flex-direction:column;gap:8rpx;margin:6rpx 0}
+.param-row{display:flex;justify-content:space-between;gap:16rpx}
+.param-key{font-size:24rpx;color:#8e8e93}
+.param-val{font-size:24rpx;color:#1c1c1e}
+
+.bottom-spacer{height:60rpx}
+
+.section.actions{display:flex;margin:20rpx 16rpx 0;padding:0;border-radius:0;background:transparent}
+.btn{flex:1;border-radius:50rpx;padding:24rpx 0;font-size:28rpx;border:2rpx solid #000;background:#fff;color:#000}
+.section.actions .btn + .btn{margin-left:16rpx}
+.btn.primary{border:2rpx solid #000;background:#fff;color:#000}
+.btn.danger{border:2rpx solid #000;background:#fff;color:#000}
+.btn.ghost{border:2rpx solid #000;background:#fff;color:#000}
+.btn[disabled]{border-color:#d1d1d6;color:#9e9e9e}
+
+.btn.more{flex:0 0 60rpx;width:70rpx;height:70rpx;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:transparent}
+.more-icon-img{width:70rpx;height:70rpx}

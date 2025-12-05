@@ -1,0 +1,11 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">照度/UGR 计算</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">软件</text><picker range="{{tools}}" bindchange="onTool"><view class="picker-text">{{toolText}}</view></picker></view>
+    <view class="cell"><text class="label">目标照度(Lx)</text><input class="input" type="number" placeholder="如 300"/></view>
+    <view class="cell"><text class="label">UGR 上限</text><input class="input" type="number" placeholder="如 19"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onCalc">提交计算请求</button></view>
+</scroll-view>
+
+

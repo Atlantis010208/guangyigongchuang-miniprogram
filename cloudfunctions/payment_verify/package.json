@@ -1,0 +1,9 @@
+{
+  "name": "payment_verify",
+  "version": "1.0.0",
+  "description": "支付结果验证云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

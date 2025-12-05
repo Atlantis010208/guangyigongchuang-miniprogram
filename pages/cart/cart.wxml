@@ -1,0 +1,199 @@
+<!--购物袋页面-->
+<view class="page">
+  <!-- 页面头部 -->
+  <view class="header">
+    <text class="page-title">灯光清单</text>
+    <view wx:if="{{cartItems.length > 0}}" class="edit-btn" bindtap="onEditTap">
+      <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
+    </view>
+  </view>
+
+  <!-- 筛选器：商城订单 / 方案订单 -->
+  <view class="filters">
+    <scroll-view class="filter-scroll" scroll-x>
+      <view class="filter-chip {{filterType==='mall' ? 'active' : ''}}" data-type="mall" bindtap="onFilterTap">电子商城 ({{mallOrders.length || 0}})</view>
+      <view class="filter-chip {{filterType==='scheme' ? 'active' : ''}}" data-type="scheme" bindtap="onFilterTap">方案订单 ({{requests.length || 0}})</view>
+    </scroll-view>
+  </view>
+
+  <!-- 购物车商品列表 -->
+  <view wx:if="{{cartItems.length > 0}}" class="cart-content">
+    <!-- 商品列表 -->
+    <view class="cart-items">
+      <view wx:for="{{cartItems}}" wx:key="id" class="cart-item">
+        <!-- 选择框 -->
+        <view wx:if="{{isEditing}}" class="checkbox" bindtap="onSelectItem" data-id="{{item.id}}">
+          <image wx:if="{{item.selected}}" class="checkbox-icon" src="../../images/checkbox-checked.png" mode="aspectFit"></image>
+          <view wx:else class="checkbox-empty"></view>
+        </view>
+
+        <!-- 商品信息 -->
+        <view class="item-content">
+          <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="item-info">
+            <text class="item-title">{{item.title}}</text>
+            <text class="item-specs">{{item.specs}}</text>
+            <text class="item-price">{{item.price}}</text>
+            
+            <!-- 数量控制 -->
+            <view wx:if="{{!isEditing}}" class="quantity-control">
+              <view class="quantity-btn {{item.quantity <= 1 ? 'disabled' : ''}}" bindtap="onDecreaseQuantity" data-id="{{item.id}}">
+                <text class="quantity-btn-text">-</text>
+              </view>
+              <text class="quantity-text">{{item.quantity}}</text>
+              <view class="quantity-btn" bindtap="onIncreaseQuantity" data-id="{{item.id}}">
+                <text class="quantity-btn-text">+</text>
+              </view>
+            </view>
+
+            <!-- 编辑状态下的操作 -->
+            <view wx:if="{{isEditing}}" class="edit-actions">
+              <view class="action-btn" bindtap="onSaveForLater" data-id="{{item.id}}">
+                <text class="action-text">稍后购买</text>
+              </view>
+              <view class="action-btn delete" bindtap="onDeleteItem" data-id="{{item.id}}">
+                <text class="action-text">删除</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 稍后购买 -->
+    <view wx:if="{{savedItems.length > 0}}" class="saved-section">
+      <view class="saved-header" bindtap="onToggleSaved">
+        <text class="saved-title">稍后购买 ({{savedItems.length}})</text>
+        <text class="toggle-icon">{{showSaved ? '︽' : '︾'}}</text>
+      </view>
+      
+      <view wx:if="{{showSaved}}" class="saved-items">
+        <view wx:for="{{savedItems}}" wx:key="id" class="saved-item">
+          <image class="saved-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="saved-info">
+            <text class="saved-title">{{item.title}}</text>
+            <text class="saved-specs">{{item.specs}}</text>
+            <text class="saved-price">{{item.price}}</text>
+          </view>
+          <view class="saved-actions">
+            <view class="saved-btn" bindtap="onMoveToCart" data-id="{{item.id}}">
+              <text class="saved-btn-text">移到购物袋</text>
+            </view>
+            <view class="saved-btn delete" bindtap="onDeleteSaved" data-id="{{item.id}}">
+              <text class="saved-btn-text">删除</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 推荐商品 -->
+    <view class="recommendations">
+      <text class="recommendations-title">你可能还喜欢</text>
+      <scroll-view class="recommendations-scroll" scroll-x>
+        <view class="recommendations-container">
+          <view wx:for="{{recommendations}}" wx:key="id" class="recommendation-item" bindtap="onRecommendationTap" data-item="{{item}}">
+            <image class="recommendation-image" src="{{item.image}}" mode="aspectFill"></image>
+            <text class="recommendation-title">{{item.title}}</text>
+            <text class="recommendation-price">{{item.price}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 发布的照明需求列表 -->
+  <view class="cart-content" wx:if="{{filterType==='scheme' && requests.length > 0}}">
+    <view class="cart-items">
+      <view class="cart-item" wx:for="{{requests}}" wx:key="id">
+        <view class="item-content">
+          <image class="item-image" src="{{item.cover}}" mode="aspectFill" bindtap="onRequestTap" data-id="{{item.id}}"></image>
+          <view class="item-info">
+            <text class="item-title">{{item.cardTitle || item.space || '照明需求'}} <text wx:if="{{item.status==='canceled'}}" class="tag-cancel">已撤销</text><text wx:elif="{{item.statusText}}" class="tag-status">{{item.statusText}}</text><text wx:if="{{item.priority}}" class="tag-priority">优先</text></text>
+            <text wx:if="{{item.source==='publish'}}" class="item-specs">面积 {{item.area || '-'}}㎡ · 预算 ¥{{item.budget || '-'}} · 主灯 {{item.mainLight || '-'}} · 风格 {{item.style || '-'}} </text>
+            <text wx:elif="{{item.source==='scheme'}}" class="item-specs">方案 {{item.scheme || '-'}} · 类别 {{item.category || '-'}} </text>
+            <text wx:elif="{{item.source==='selection'}}" class="item-specs">选配服务</text>
+            <text wx:elif="{{item.source==='optimize'}}" class="item-specs">方案优化服务</text>
+            <text wx:elif="{{item.source==='full'}}" class="item-specs">整套设计服务</text>
+            <text wx:elif="{{item.source==='custom_form'}}" class="item-specs">个性需求定制</text>
+            <text class="item-specs">内容 {{item.target || '-'}} </text>
+            <view class="progress">
+              <view class="step" wx:for="{{item.steps}}" wx:key="key">
+                <view class="dot {{item.done ? 'done' : ''}}"></view>
+                <text class="step-text">{{item.label}}</text>
+              </view>
+            </view>
+            <view class="inline-actions">
+              <button class="mini-btn" size="mini" data-id="{{item.id}}" bindtap="onRequestTap">查看</button>
+              <button class="mini-btn" size="mini" data-id="{{item.id}}" bindtap="onRequestModify">修改订单</button>
+              <button class="mini-btn designer-btn" size="mini" bindtap="onGoToDesigners">设计师筛选</button>
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{item.status==='canceled'}}" class="request-delete" catchtap="onDeleteRequest" data-id="{{item.id}}"><text class="request-delete-text">×</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 商城订单列表 -->
+  <view class="cart-content" wx:if="{{filterType==='mall' && mallOrders.length > 0}}">
+    <view class="cart-items">
+      <view class="cart-item" wx:for="{{mallOrders}}" wx:key="id" bindtap="onMallOrderTap" data-id="{{item.id}}">
+        <view class="item-content">
+          <image class="item-image" src="{{item.items[0].image}}" mode="aspectFill"></image>
+          <view class="item-info">
+            <text class="item-title">订单号 {{item.id}}</text>
+            <text class="item-specs">{{item.items[0].name}} × {{item.items[0].quantity}}</text>
+            <text class="item-price">¥{{item.total}}</text>
+          </view>
+        </view>
+        <view wx:if="{{item.status==='已取消'}}" class="request-delete" catchtap="onDeleteMallOrder" data-id="{{item.id}}"><text class="request-delete-text">×</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 方案订单空状态 -->
+  <view wx:if="{{filterType==='scheme' && requests.length === 0}}" class="empty-cart">
+    <image class="empty-icon" src="../../images/cart.png" mode="aspectFit"></image>
+    <text class="empty-title strong">暂无方案订单</text>
+    <text class="empty-subtitle center">发布照明需求或查看个人中心的订单。</text>
+  </view>
+
+  <!-- 商城订单空状态 -->
+  <view wx:if="{{filterType==='mall' && mallOrders.length === 0}}" class="empty-cart">
+    <image class="empty-icon" src="../../images/cart.png" mode="aspectFit"></image>
+    <text class="empty-title strong">暂无商城订单</text>
+    <text class="empty-subtitle center">去电子商城挑选商品并下单吧。</text>
+  </view>
+
+  <!-- 底部结算栏 -->
+  <view wx:if="{{cartItems.length > 0 && !isEditing}}" class="checkout-bar">
+    <view class="total-section">
+      <text class="total-label">小计：</text>
+      <text class="total-price">{{totalPrice}}</text>
+    </view>
+    <view class="checkout-btn {{canCheckout ? '' : 'disabled'}}" bindtap="onCheckout">
+      <text class="checkout-text">结算</text>
+    </view>
+  </view>
+
+  <!-- 编辑模式底部栏 -->
+  <view wx:if="{{isEditing && selectedItems.length > 0}}" class="edit-bar">
+    <view class="selected-count">
+      <text class="selected-text">已选择 {{selectedItems.length}} 件商品</text>
+    </view>
+    <view class="edit-actions-bar">
+      <view class="edit-action-btn" bindtap="onBatchSaveForLater">
+        <text class="edit-action-text">稍后购买</text>
+      </view>
+      <view class="edit-action-btn delete" bindtap="onBatchDelete">
+        <text class="edit-action-text">删除</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+
+
+
+

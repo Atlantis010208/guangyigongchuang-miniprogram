@@ -1,0 +1,140 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">住宅照明</text></view>
+
+  <!-- 横向滑动大卡片，复刻图一的首张卡片样式（仅样式，不复刻文案） -->
+  <view class="section hero-section">
+    <scroll-view class="hero-scroller" scroll-x>
+      <view class="hero-track">
+        <view class="hero-card" bindtap="onSchemeTap" data-scheme="living">
+          <image class="hero-bg" src="https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg" mode="aspectFill"/>
+          <view class="hero-overlay">
+            <text class="hero-title">客厅氛围方案</text>
+            <text class="hero-subtitle">低眩光·情景调光</text>
+          </view>
+        </view>
+        <view class="hero-card" bindtap="onSchemeTap" data-scheme="bedroom">
+          <image class="hero-bg" src="https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg" mode="aspectFill"/>
+          <view class="hero-overlay">
+            <text class="hero-title">卧室助眠方案</text>
+            <text class="hero-subtitle">暖色温·舒缓放松</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 方案参数选择区（美化版） -->
+  <view class="section">
+    <view class="cells">
+      <view class="cell" bindtap="onTapScheme"><text class="cell-text strong">方案</text>
+        <view class="picker-text">{{schemeText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapStyle"><text class="cell-text strong">风格</text>
+        <view class="picker-text">{{styleText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapAreaBucket"><text class="cell-text">面积(㎡)</text>
+        <view class="picker-text">{{areaBucketText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapAvgPrice"><text class="cell-text">灯具均价(元/盏)</text>
+        <view class="picker-text">{{avgFixturePriceText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapDesignUnit"><text class="cell-text">设计单价(元/㎡)</text>
+        <view class="picker-text">{{designUnitText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapRenovationType"><text class="cell-text">装修类型</text>
+        <view class="picker-text">{{renovationTypeText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapProgress"><text class="cell-text">装修进度</text>
+        <view class="picker-text">{{progressText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapDiningPendant"><text class="cell-text">餐吊灯</text>
+        <view class="picker-text">{{diningPendantText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapSmartHome"><text class="cell-text">智能家居</text>
+        <view class="picker-text">{{smartHomeText}}</view>
+      </view>
+
+      <view class="cell" wx:if="{{smartHomeText==='确定做'}}" bindtap="onTapSmartLight"><text class="cell-text">智能灯光倾向</text>
+        <view class="picker-text">{{smartLightText}}</view>
+      </view>
+
+      <view class="cell" bindtap="onTapCeilingAdjust"><text class="cell-text">天花调整</text>
+        <view class="picker-text">{{ceilingAdjustText}}</view>
+      </view>
+
+      <view class="cell auto">
+        <text class="cell-text">备注</text>
+        <textarea class="textarea" placeholder="可填写回路、层高、特殊偏好等" bindinput="onNote"/>
+      </view>
+    </view>
+
+    
+
+    <view class="estimate-card">
+      <text class="estimate-title">预算预估</text>
+      <view class="estimate-row"><text>灯具预算≈</text><text class="num">¥{{estFixtures}}</text></view>
+      <view class="estimate-row"><text>设计费≈</text><text class="num">¥{{estDesign}}</text></view>
+      <view class="estimate-total"><text>合计≈</text><text class="num strong">¥{{estTotal}}</text></view>
+    </view>
+
+    <view class="actions">
+      <button class="submit-btn" bindtap="onSubmitOrder" loading="{{submitting}}" disabled="{{submitting}}">提交订单</button>
+    </view>
+  </view>
+
+  <!-- 复制产品页的“你关心的照明内容”模块 -->
+   <!-- Apple 内容 -->
+   <view class="section">
+    <text class="section-title center">你关心的照明内容</text>
+    <view class="content-tags">
+      <text class="content-tag">新方案</text>
+      <text class="content-tag">光学知识</text>
+      <text class="content-tag">调光技巧</text>
+      <text class="content-tag">选型指南</text>
+    </view>
+    
+    <!-- 二维码 -->
+    <view class="qr-section">
+      <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
+      <text class="qr-title">获得 Apple 的官方支持</text>
+      <text class="qr-subtitle">长按关注Apple官方公众号，输入你想问的问题获得在线支持</text>
+    </view>
+  </view>
+
+  <!-- 折抵换购说明 -->
+  <view class="disclaimer">
+    <text class="disclaimer-text">* 折抵换购服务由 Apple 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
+    <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
+  </view>
+
+  <!-- 法律信息 -->
+  <view class="legal">
+    <text class="legal-text">京ICP备10214630号-7X 营业执照</text>
+    <text class="legal-text">无线电发射设备销售备案编号 11201910351200</text>
+  </view>
+</scroll-view>
+
+
+<!-- 通用搜索选择弹窗 -->
+<view wx:if="{{showOptionPopup}}" class="popup-mask" catchtouchmove="noop">
+  <view class="popup-panel" catchtap="noop">
+    <view class="popup-header">
+      <text class="popup-title">{{optionPopupTitle}}</text>
+      <text class="popup-close" bindtap="closeOptionPopup">关闭</text>
+    </view>
+    <scroll-view scroll-y class="popup-body">
+      <block wx:for="{{optionFilteredList}}" wx:key="*this">
+        <view class="popup-item" data-value="{{item}}" bindtap="onOptionPick">{{item}}</view>
+      </block>
+    </scroll-view>
+  </view>
+  <view class="popup-backdrop" bindtap="closeOptionPopup"></view>
+</view>

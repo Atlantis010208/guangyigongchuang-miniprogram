@@ -1,0 +1,68 @@
+/* 搜索页样式（照度计算器） */
+.page { background-color: #f8f8fb; min-height: 100vh; padding: 40rpx 30rpx 120rpx; }
+.search-title { margin-right: auto; font-size: 56rpx; font-weight: bold; }
+
+/* 顶部标签 */
+.tabs { display:flex; align-items:center; justify-content: space-between; padding: 0 0 20rpx; margin-top: 10rpx; }
+.tab { flex:1; text-align:center; position: relative; padding: 16rpx 0; }
+.tab-text { font-size: 32rpx; color: #8e8e93; }
+.tab.active .tab-text { color: #000; font-weight: 700; }
+.tab-underline { position:absolute; left: 50%; transform: translateX(-50%); bottom: -6rpx; width: 80rpx; height: 6rpx; background: #ff3b30; border-radius: 4rpx; }
+
+/* 卡片与单元格 */
+.card { background:#fff; border-radius: 30rpx; overflow:hidden; margin: 20rpx 0; box-shadow: none; }
+.cell { display:flex; align-items:center; justify-content: space-between; padding: 28rpx 24rpx; border-bottom: 1rpx solid #f2f2f7; transition: background-color .15s ease; }
+.cell:last-child { border-bottom: none; }
+.cell-active { background-color: #f7f7f9; }
+.label { font-size: 30rpx; color:#000; }
+.label.fixed { width: 220rpx; flex: 0 0 220rpx; }
+.input { flex:1; text-align:right; font-size: 30rpx; color:#000; }
+.unit { margin-left: 12rpx; color:#8e8e93; font-size: 28rpx; }
+.result { color: #ff3b30; font-weight: 700; font-size: 32rpx; }
+.card .value{margin-left:auto;display:flex;align-items:center;justify-content:flex-end}
+.card .result{display:inline-block;min-width:180rpx;text-align:right}
+.card .unit{display:inline-block;min-width:80rpx;text-align:left;margin-left:12rpx}
+
+.note { text-align:center; margin-top: 30rpx; }
+.note-text { color:#007aff; font-size: 28rpx; }
+
+/* 灯具类型行样式 */
+.card-heading{padding:6rpx 0 10rpx}
+.heading-title{display:block;font-size:30rpx;font-weight:700;color:#000;text-align:left}
+.heading-desc{display:block;color:#8e8e93;font-size:22rpx;margin-top:4rpx}
+.heading-actions{margin-top:10rpx;text-align:right}
+.param-btn{background:#000;color:#fff;border-radius:30rpx;padding:14rpx 24rpx;font-size:26rpx}
+.lamp-table{background:#fff;border-radius:20rpx;padding:20rpx 28rpx;margin-top:10rpx;box-sizing:border-box;overflow:visible}
+.lamp-table-header,.lamp-table-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:12rpx;align-items:stretch;min-height:60rpx}
+.lamp-table-header{color:#8e8e93;font-size:22rpx;margin-bottom:10rpx}
+.lamp-table-header .th{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.lamp-table-header .th.name{align-items:flex-start}
+.lamp-table-header .title{font-size:24rpx;color:#8e8e93}
+.lamp-table-header .unit{font-size:20rpx;color:#c7c7cc;margin-top:4rpx}
+.lamp-table-row .td,.lamp-table-row .td-input{justify-self:center}
+.lamp-table-row .name{justify-self:start}
+.lamp-table-row{padding:0}
+.th.name,.td.name{text-align:left}
+.td-input{background:#fff;border:1rpx solid #e5e5ea;border-radius:12rpx;padding:16rpx 14rpx;text-align:right;width:100%;box-sizing:border-box;min-height:60rpx;line-height:1.4;font-size:28rpx;vertical-align:middle;display:flex;align-items:center}
+.lamp-cells .cell{align-items:flex-start}
+.lamp-inline{display:flex;align-items:center;gap:14rpx;flex-wrap:wrap;justify-content:flex-end}
+.spec{color:#8e8e93;font-size:24rpx}
+.lamp-input{flex:0 0 140rpx;background:#fff;border-radius:14rpx;padding:10rpx 14rpx}
+
+/* 弹窗样式 */
+.popup-mask{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:40rpx}
+.popup-panel{width:100%;max-width:680rpx;background:#fff;border-radius:40rpx;overflow:hidden;position:relative;z-index:1}
+.popup-header{display:flex;align-items:center;justify-content:space-between;padding:24rpx 28rpx;border-bottom:1rpx solid #f2f2f7}
+.popup-title{font-size:32rpx;font-weight:700;color:#000}
+.popup-close{font-size:28rpx;color:#007aff}
+.popup-body{max-height:70vh;padding:24rpx;overflow-y:auto}
+.popup-actions{display:flex;justify-content:space-between;gap:16rpx;padding:16rpx;border-top:1rpx solid #f2f2f7}
+.btn{flex:0 0 46%;padding:20rpx;border-radius:30rpx;font-size:28rpx;border:2rpx solid #007aff;background:#fff;color:#007aff}
+.btn.primary{background:#fff;color:#007aff;border:2rpx solid #007aff}
+.btn.ghost{background:#fff;color:#007aff;border:2rpx solid #007aff}
+.popup-backdrop{position:absolute;left:0;right:0;top:0;bottom:0;z-index:0}
+
+@media (prefers-color-scheme: dark) {
+  .page { background-color: #f8f8fb; }
+  .search-title { color: #000; }
+}

@@ -1,0 +1,15 @@
+.result-page { background:#f2f2f7; min-height:100vh; }
+.card { background:#fff; margin: 20rpx 16rpx 0; border-radius: 30rpx; padding: 30rpx; }
+.result-card { text-align:center; padding: 50rpx 30rpx; }
+.status-icon { width: 140rpx; height: 140rpx; margin-bottom: 20rpx; }
+.status-text { font-size: 36rpx; font-weight: 700; color:#000; display:block; margin-bottom: 10rpx; }
+.amount { font-size: 32rpx; color:#000; display:block; margin-bottom: 8rpx; }
+.order-id { font-size: 24rpx; color:#8e8e93; }
+.actions { display:flex; margin-top: 24rpx; }
+.btn { flex:1; border:none; border-radius: 28rpx; padding: 22rpx 0; font-size: 28rpx; }
+.btn-dark { background:#1c1c1e; color:#fff; }
+/* 统一黑底白字，light 不再使用 */
+/* 兼容性：使用 margin 控制按钮间距，避免 gap 在部分版本不生效 */
+.actions .btn + .btn { margin-left: 28rpx; }
+
+

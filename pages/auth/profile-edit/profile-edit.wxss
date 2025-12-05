@@ -1,0 +1,17 @@
+.page{min-height:100vh;background:#f2f2f7;padding:40rpx;display:flex;justify-content:flex-start}
+.card{flex:1;background:#fff;border-radius:32rpx;padding:40rpx;box-shadow:0 24rpx 60rpx rgba(0,0,0,0.06)}
+.avatar-wrap{display:flex;align-items:center;gap:24rpx;margin-bottom:32rpx}
+.avatar{width:160rpx;height:160rpx;border-radius:50%;background:#f2f2f7}
+.field{margin:24rpx 0}
+.label{display:block;color:#8e8e93;font-size:26rpx;margin-bottom:10rpx}
+.input{background:#f7f7f7;border-radius:16rpx;padding:22rpx 24rpx}
+.row{display:flex;align-items:center;justify-content:space-between}
+.phone{font-size:28rpx;color:#000}
+.btn{background:#000;color:#fff;border-radius:50rpx;padding:20rpx 30rpx}
+.btn.ghost{background:#f2f2f7;color:#000}
+.btn.primary{margin-top:40rpx}
+
+
+
+
+

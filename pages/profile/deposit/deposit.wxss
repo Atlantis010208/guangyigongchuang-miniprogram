@@ -1,0 +1,20 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+.card{background:#fff;border-radius:30rpx;padding:30rpx;margin:20rpx}
+.label{display:block;color:#8e8e93;font-size:26rpx}
+.amount{display:block;font-size:56rpx;font-weight:800;color:#000;margin:8rpx 0 6rpx}
+.status{display:block;color:#34c759;font-size:26rpx;margin-bottom:6rpx}
+.desc{display:block;color:#8e8e93;font-size:24rpx;line-height:1.6}
+.actions{padding:0 20rpx;margin-top:10rpx;display:flex;gap:16rpx;justify-content:space-between}
+.btn{flex:0 0 46%;padding:20rpx;border-radius:40rpx;font-size:28rpx;border:2rpx solid #000;background:#fff;color:#000}
+.btn.primary{background:#fff;color:#000;border:2rpx solid #000}
+.btn.ghost{background:#fff;color:#000;border:2rpx solid #000}
+.contact{background:#fff;border-radius:30rpx;padding:24rpx;margin:20rpx}
+.contact-title{display:block;font-size:30rpx;font-weight:700;margin-bottom:10rpx}
+.contact-row{display:flex;align-items:center;justify-content:space-between;padding:16rpx 0;border-bottom:1rpx solid #f2f2f7}
+.contact-row:last-child{border-bottom:none}
+.contact-label{color:#8e8e93;font-size:26rpx}
+.contact-value{color:#007aff;font-size:28rpx}
+
+/* 自定义规则弹窗样式已移除，恢复系统弹窗 */
+

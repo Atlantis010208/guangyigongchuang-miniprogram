@@ -1,0 +1,47 @@
+<scroll-view class="page" scroll-y>
+  <view class="header">
+    <text class="title">即将开始</text>
+  </view>
+
+  <view class="calendar">
+    <swiper class="week-swiper" current="{{weekIndex}}" indicator-dots="false" circular="false" bindchange="onWeekChange">
+      <block wx:for="{{weeks}}" wx:key="w" wx:for-index="wIndex">
+        <swiper-item>
+          <view class="dates-grid">
+            <view class="date" wx:for="{{item}}" wx:key="ts" data-index="{{index}}" data-week="{{wIndex}}" bindtap="onPickDate">
+              <text class="wd">{{weekdays[item.weekday]}}</text>
+              <view class="num {{weekIndex==wIndex && currentIndex==index?'active':''}}">
+                <text class="d">{{item.d}}</text>
+              </view>
+            </view>
+          </view>
+        </swiper-item>
+      </block>
+    </swiper>
+  </view>
+
+  <view class="banner">所有形式，所有主题，所有类型，随时</view>
+
+  <view class="section">
+    <view class="row" bindtap="onNear">
+      <text class="near">附近正在举办的课程</text>
+      <text class="arrow">〉</text>
+    </view>
+    <view class="list">
+      <block wx:for="{{items}}" wx:key="id">
+        <view class="item">
+          <text class="title">{{item.title}}</text>
+          <text class="time">{{item.time}}</text>
+          <text class="place">{{item.place}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view class="qr-section">
+    <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
+    <text class="qr-title">获得 Apple 的官方支持</text>
+    <text class="qr-subtitle">长按关注Apple官方公众号，输入你想问的问题获得在线支持</text>
+  </view>
+</scroll-view>
+

@@ -1,0 +1,47 @@
+<scroll-view class="page" scroll-y>
+  <view class="top">
+    <text class="title">筛选活动</text>
+    <text class="reset {{hasSelection?'active':''}}" bindtap="onReset">重设</text>
+  </view>
+
+  <view class="group">
+    <text class="group-title">形式</text>
+    <view class="chips two">
+      <view class="chip {{form.online?'on':''}}" bindtap="toggle" data-cat="form" data-key="online">在线</view>
+      <view class="chip {{form.store?'on':''}}" bindtap="toggle" data-cat="form" data-key="store">店内</view>
+    </view>
+  </view>
+
+  <view class="group">
+    <text class="group-title">主题</text>
+    <view class="chips grid">
+      <block wx:for="{{topics}}" wx:key="key">
+        <view class="chip {{item.on?'on':''}}" bindtap="toggleTopic" data-index="{{index}}">{{item.name}}</view>
+      </block>
+    </view>
+  </view>
+
+  <view class="group">
+    <text class="group-title">课程类型</text>
+    <view class="desc">加入“轻松入门”课程，用你喜爱的产品实现更多可能…</view>
+    <view class="chips two">
+      <view class="chip {{type.guest?'on':''}}" bindtap="toggle" data-cat="type" data-key="guest">特邀嘉宾</view>
+      <view class="chip {{type.walk?'on':''}}" bindtap="toggle" data-cat="type" data-key="walk">漫游</view>
+      <view class="chip full {{type.workshop?'on':''}}" bindtap="toggle" data-cat="type" data-key="workshop">轻松入门和工作坊</view>
+    </view>
+  </view>
+
+  <view class="group">
+    <text class="group-title">时间</text>
+    <view class="chips two">
+      <view class="chip {{time.am?'on':''}}" bindtap="toggle" data-cat="time" data-key="am">上午</view>
+      <view class="chip {{time.pm?'on':''}}" bindtap="toggle" data-cat="time" data-key="pm">下午</view>
+      <view class="chip full {{time.eve?'on':''}}" bindtap="toggle" data-cat="time" data-key="eve">晚上</view>
+    </view>
+  </view>
+
+  <view class="bottom">
+    <button class="btn primary" bindtap="onSearch" disabled="{{!hasSelection}}">搜索</button>
+  </view>
+</scroll-view>
+

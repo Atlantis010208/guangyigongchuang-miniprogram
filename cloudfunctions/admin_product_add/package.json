@@ -1,0 +1,9 @@
+{
+  "name": "admin_product_add",
+  "version": "1.0.0",
+  "description": "管理员添加商品云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

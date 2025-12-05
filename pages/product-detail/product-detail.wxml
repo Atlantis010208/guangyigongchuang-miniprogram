@@ -1,0 +1,15 @@
+<scroll-view class="page" scroll-y>
+  <view class="hero">
+    <text class="notice">用 iPhone 12 或后续机型来换购 iPhone 16 或 iPhone 16 Pro，预计可享 RMB 900 至 RMB 5500 的折抵优惠*。<text class="link" bindtap="onBuy">购买 ›</text></text>
+    <view class="hero-content">
+      <text class="pro-glow">PRO</text>
+      <image class="product" src="{{image}}" mode="aspectFit" />
+      <text class="hero-title">{{title}}</text>
+      <view class="cta">
+        <button class="buy" bindtap="onBuy">购买</button>
+        <text class="price">RMB {{price}} 起</text>
+      </view>
+    </view>
+  </view>
+</scroll-view>
+

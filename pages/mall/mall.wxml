@@ -1,0 +1,18 @@
+<view class="mall-page">
+  <view class="mall-header">
+    <text class="mall-title">电子商城</text>
+    <text class="mall-sub">精选灯具与配件</text>
+  </view>
+
+  <view class="product-grid">
+    <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
+      <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="product-info">
+        <text class="product-name">{{item.name}}</text>
+        <text class="product-price">¥{{item.price}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+

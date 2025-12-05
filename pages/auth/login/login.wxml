@@ -1,0 +1,9 @@
+<!-- 微信登录页面 -->
+<view class="page">
+  <text class="title">微信登录</text>
+  <text class="subtitle">用于身份校验与保存照明需求</text>
+  <button class="auth-btn" open-type="getUserInfo" bindtap="onWxLogin">授权并登录</button>
+  <text class="tip">登录即表示同意《用户协议》和《隐私政策》</text>
+</view>
+
+

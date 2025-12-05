@@ -1,0 +1,14 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">自助结账收据</text></view>
+  <view class="cells">
+    <view class="cell" wx:for="{{receipts}}" wx:key="id">
+      <view class="left">
+        <text class="name">{{item.title}}</text>
+        <text class="date">{{item.date}}</text>
+      </view>
+      <text class="amount">¥{{item.amount}}</text>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{receipts.length===0}}">暂无收据</view>
+</scroll-view>
+

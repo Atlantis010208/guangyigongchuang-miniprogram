@@ -1,0 +1,32 @@
+<view class="fav-page">
+  <view class="header">
+    <text class="title">我的收藏</text>
+    <view class="edit-btn" bindtap="onToggleEdit"><text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text></view>
+  </view>
+
+  <view wx:if="{{list.length>0}}" class="list">
+    <view class="row" wx:for="{{list}}" wx:key="id" bindtap="onOpenDetail" data-id="{{item.id}}">
+      <image class="cover" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="info">
+        <text class="name">{{item.name}}</text>
+        <text class="price">¥{{item.price}}</text>
+      </view>
+      <view wx:if="{{isEditing}}" class="select-box {{item.checked ? 'selected' : ''}}" catchtap="onToggleSelect" data-id="{{item.id}}">
+        <text class="tick">✓</text>
+      </view>
+      <view wx:if="{{!isEditing}}" class="row-actions">
+        <button class="btn solid" data-id="{{item.id}}" catchtap="onBuy">购买</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="empty">
+    <text class="empty-text">暂无收藏的商品</text>
+  </view>
+
+  <view wx:if="{{isEditing && selectedIds.length>0}}" class="edit-bar">
+    <button class="btn danger" bindtap="onBatchDelete">删除</button>
+    <button class="btn primary" bindtap="onBatchBuy">一键购买</button>
+  </view>
+</view>
+

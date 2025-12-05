@@ -1,0 +1,159 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+.section{padding:0 30rpx 30rpx}
+/* 横向卡片容器贴边：覆盖左右 padding */
+.hero-section{padding-left:0;padding-right:0}
+/* 统一横向大卡片样式 */
+.hero-scroller{overflow:hidden;padding:0}
+.hero-track{display:flex;gap:30rpx;padding:0 20rpx}
+.hero-card{flex:0 0 calc(100vw - 30rpx);border-radius:40rpx;overflow:hidden;background:#111;position:relative}
+.hero-bg{width:100%;height:520rpx;filter:brightness(.9);object-fit:cover}
+.hero-overlay{position:absolute;left:28rpx;top:28rpx;right:28rpx;bottom:28rpx;display:flex;flex-direction:column;justify-content:flex-start}
+.hero-title{font-size:48rpx;font-weight:800;color:#fff}
+.hero-subtitle{margin-top:12rpx;font-size:28rpx;color:#d1d1d6}
+.hero-card {
+    flex: 0 0 calc(100vw - 60rpx);
+    border-radius: 40rpx;
+    overflow: hidden;
+    background: #111;
+    position: relative;
+    margin-right: 30rpx !important; /* 强制添加右边距 */
+    transform: translateZ(0); /* 触发硬件加速，避免布局问题 */
+  }
+/* 配件列表复制样式 */
+.list-section{padding-top:10rpx}
+.list-title{display:block;font-size:40rpx;font-weight:700;color:#000;margin:20rpx 0}
+.cells{background:#fff;border-radius:30rpx;overflow:hidden}
+.cell{display:flex;align-items:center;gap:20rpx;padding:28rpx 24rpx;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.icon{width:44rpx;height:44rpx;background:#000;border-radius:10rpx}
+.icon.circle{border-radius:50%}
+.icon.square{border-radius:10rpx}
+.icon.runner{border-radius:6rpx}
+.icon.cable{border-radius:6rpx}
+.icon.stand{border-radius:50%}
+.icon.audio{border-radius:50%}
+.cell-text{flex:1;font-size:28rpx;color:#000}
+.arrow{color:#8e8e93}
+
+/* 参数与估价样式 */
+.cells{background:#fff;border-radius:30rpx;overflow:hidden}
+.cell{display:flex;align-items:center;gap:20rpx;padding:28rpx 24rpx;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.cell-text{flex:1;font-size:28rpx;color:#000}
+.cell-text.strong{font-weight:700}
+.picker-text{color:#8e8e93}
+.estimate-card{background:#fff;border-radius:30rpx;padding:24rpx;margin-top:20rpx}
+.estimate-title{display:block;font-size:30rpx;font-weight:700;margin-bottom:10rpx}
+.estimate-row{display:flex;justify-content:space-between;margin:6rpx 0}
+.estimate-total{display:flex;justify-content:space-between;margin-top:12rpx;border-top:1rpx solid #f2f2f7;padding-top:12rpx}
+.num{color:#111}
+.num.strong{font-weight:800}
+.actions{padding:20rpx 0}
+.submit-btn{width:100%; background:#111; color:#fff; border-radius:50rpx; padding:26rpx 0; font-size:30rpx}
+.submit-btn:active{opacity:.9}
+
+/* 内容模块样式 */
+.section-title{display:block;font-size:36rpx;font-weight:700;color:#000;margin-bottom:16rpx}
+.section-title.center{text-align:center;margin-top:40rpx;margin-bottom:30rpx}
+  
+  /* 标签容器样式 */
+  .content-tags {
+    display: flex;
+    justify-content: center; /* 标签整体居中排列 */
+    flex-wrap: wrap; /* 当标签过多时自动换行 */
+    gap: 20rpx; /* 标签之间的间距 */
+    margin-bottom: 50rpx; /* 容器底部外边距 */
+    padding: 0 20rpx; /* 左右留一些空间，避免边缘标签贴边 */
+  }
+  
+  /* 单个标签样式 */
+  .content-tag {
+    font-size: 24rpx;
+    color: #8e8e93; /* 浅灰色文字 */
+    padding: 12rpx 25rpx; /* 内边距，让标签更饱满 */
+    border: 1rpx solid #e5e5ea; /* 浅色边框 */
+    border-radius: 50rpx; /* 胶囊形状 */
+    background-color: white; /* 白色背景 */
+    
+    /* 增加点击反馈效果 */
+    transition: all 0.2s ease;
+  }
+  
+  /* 标签点击状态样式（可选） */
+  .content-tag:active {
+    background-color: #f5f5f7; /* 点击时轻微变色 */
+  }
+  
+  
+  /* 二维码区域 */
+  .qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 40rpx;
+  }
+  
+  .qr-code {
+    width: 200rpx;
+    height: 200rpx;
+    margin-bottom: 40rpx;
+    border-radius: 50rpx;
+    border: 1rpx solid #e5e5ea;
+  }
+  
+  .qr-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 15rpx;
+  }
+  
+  .qr-subtitle {
+    font-size: 24rpx;
+    color: #8e8e93;
+    line-height: 1.5;
+    max-width: 500rpx;
+  }
+/* 免责声明 */
+.disclaimer {
+  padding: 30rpx;
+  margin-top: 40rpx;
+}
+
+.disclaimer-text {
+  font-size: 20rpx;
+  color: #8e8e93;
+  line-height: 1.6;
+  margin-bottom: 10rpx;
+}
+
+.disclaimer-link {
+  font-size: 20rpx;
+  color: #007aff;
+}
+
+/* 法律信息 */
+.legal {
+  padding: 20rpx 30rpx;
+  text-align: center;
+}
+
+.legal-text {
+  font-size: 18rpx;
+  color: #c7c7cc;
+  display: block;
+  margin-bottom: 5rpx;
+}
+
+/* 通用选择弹窗（无搜索） */
+.popup-mask{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:40rpx}
+.popup-panel{width:100%;max-width:680rpx;background:#fff;border-radius:40rpx;overflow:hidden;position:relative;z-index:1}
+.popup-header{display:flex;align-items:center;justify-content:space-between;padding:24rpx 28rpx;border-bottom:1rpx solid #f2f2f7}
+.popup-title{font-size:32rpx;font-weight:700;color:#000}
+.popup-close{font-size:28rpx;color:#007aff}
+.popup-body{max-height:65vh;padding:12rpx 20rpx}
+.popup-item{padding:22rpx;border-bottom:1rpx solid #f2f2f7;font-size:28rpx;color:#111}
+.popup-item:last-child{border-bottom:none}
+.popup-backdrop{position:absolute;left:0;right:0;top:0;bottom:0;z-index:0}

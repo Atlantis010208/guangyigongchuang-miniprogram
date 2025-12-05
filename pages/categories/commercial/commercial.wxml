@@ -1,0 +1,119 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">商业照明</text></view>
+  <view class="section hero-section">
+    <scroll-view class="hero-scroller" scroll-x>
+      <view class="hero-track">
+        <view class="hero-card">
+          <image class="hero-bg" src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg" mode="aspectFill" bindtap="onPreview" data-url="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg"/>
+          <view class="hero-overlay">
+            <text class="hero-title">零售陈列方案</text>
+            <text class="hero-subtitle">显色·重点照明</text>
+          </view>
+        </view>
+        <view class="hero-card">
+          <image class="hero-bg" src="https://images.pexels.com/photos/373548/pexels-photo-373548.jpeg" mode="aspectFill" bindtap="onPreview" data-url="https://images.pexels.com/photos/373548/pexels-photo-373548.jpeg"/>
+          <view class="hero-overlay">
+            <text class="hero-title">餐饮空间方案</text>
+            <text class="hero-subtitle">暖色温·眩光控制</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+  <!-- 参数与估价（参考住宅，无计算器） -->
+  <view class="section">
+    <view class="cells">
+      <view class="cell"><text class="cell-text strong">方案</text>
+        <picker mode="selector" range="{{schemeOptionsTexts}}" bindchange="onSchemeChange"><view class="picker-text">{{schemeText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text strong">风格</text>
+        <picker mode="selector" range="{{styleOptionsTexts}}" bindchange="onStyleChange"><view class="picker-text">{{styleText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">面积(㎡)</text>
+        <picker mode="selector" range="{{areaBucketTexts}}" bindchange="onAreaBucketChange"><view class="picker-text">{{areaBucketText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">灯具均价(元/盏)</text>
+        <picker mode="selector" range="{{avgFixturePriceOptions}}" bindchange="onAvgPriceChange"><view class="picker-text">{{avgFixturePriceText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">设计单价(元/㎡)</text>
+        <picker mode="selector" range="{{designUnitTexts}}" bindchange="onDesignUnitChange"><view class="picker-text">{{designUnitText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">装修类型</text>
+        <picker mode="selector" range="{{renovationTypeOptions}}" bindchange="onRenovationTypeChange"><view class="picker-text">{{renovationTypeText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">装修进度</text>
+        <picker mode="selector" range="{{progressOptions}}" bindchange="onProgressChange"><view class="picker-text">{{progressText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">餐吊灯</text>
+        <picker mode="selector" range="{{diningPendantOptions}}" bindchange="onDiningPendantChange"><view class="picker-text">{{diningPendantText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">智能家居</text>
+        <picker mode="selector" range="{{smartHomeOptions}}" bindchange="onSmartHomeChange"><view class="picker-text">{{smartHomeText}}</view></picker>
+      </view>
+
+      <view class="cell" wx:if="{{smartHomeText==='确定做'}}"><text class="cell-text">智能灯光倾向</text>
+        <picker mode="selector" range="{{smartLightOptions}}" bindchange="onSmartLightChange"><view class="picker-text">{{smartLightText}}</view></picker>
+      </view>
+
+      <view class="cell"><text class="cell-text">天花调整</text>
+        <picker mode="selector" range="{{ceilingAdjustOptions}}" bindchange="onCeilingAdjustChange"><view class="picker-text">{{ceilingAdjustText}}</view></picker>
+      </view>
+
+      <view class="cell auto">
+        <text class="cell-text">备注</text>
+        <textarea class="textarea" placeholder="可填写回路、层高、特殊偏好等" bindinput="onNote"/>
+      </view>
+    </view>
+
+    <view class="estimate-card">
+      <text class="estimate-title">预算预估</text>
+      <view class="estimate-row"><text>灯具预算≈</text><text class="num">¥{{estFixtures}}</text></view>
+      <view class="estimate-row"><text>设计费≈</text><text class="num">¥{{estDesign}}</text></view>
+      <view class="estimate-total"><text>合计≈</text><text class="num strong">¥{{estTotal}}</text></view>
+    </view>
+
+    <view class="actions">
+      <button class="submit-btn" bindtap="onSubmitOrder" loading="{{submitting}}" disabled="{{submitting}}">提交订单</button>
+    </view>
+  </view>
+   <!-- Apple 内容 -->
+   <view class="section">
+    <text class="section-title center">你关心的照明内容</text>
+    <view class="content-tags">
+      <text class="content-tag">新方案</text>
+      <text class="content-tag">光学知识</text>
+      <text class="content-tag">调光技巧</text>
+      <text class="content-tag">选型指南</text>
+    </view>
+    
+    <!-- 二维码 -->
+    <view class="qr-section">
+      <image class="qr-code" src="/images/二维码.jpg" mode="aspectFit"></image>
+      <text class="qr-title">获得 光乙 的官方支持</text>
+      <text class="qr-subtitle">长按添加官方客服，输入你想问的问题获得在线支持</text>
+    </view>
+  </view>
+
+
+  <view class="disclaimer">
+    <text class="disclaimer-text">* 折抵换购服务由 光乙 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
+    <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
+  </view>
+
+  <!-- 法律信息 -->
+  <view class="legal">
+    <text class="legal-text">京ICP备10214630号-7X 营业执照</text>
+    <text class="legal-text">无线电发射设备销售备案编号 11201910351200</text>
+  </view>
+</scroll-view>
+
+
+

@@ -1,0 +1,10 @@
+{
+  "name": "designer_detail",
+  "version": "1.0.0",
+  "description": "Get designer detail by id",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}
+

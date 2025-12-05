@@ -1,0 +1,59 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">灯光施工图优化</text></view>
+  <view class="section">
+    <view class="cells">
+      <view class="cell"><text class="label fixed">上传CAD/图纸</text>
+        <button class="upload" bindtap="onChooseFile">选择文件</button>
+      </view>
+      <view class="file-list" wx:if="{{files.length}}">
+        <view class="file-row" wx:for="{{files}}" wx:key="path">
+          <text class="file-name">{{item.name}}</text>
+          <text class="file-size">{{item.sizeText}}</text>
+        </view>
+      </view>
+      <view class="tip">支持 CAD(.dwg/.dxf)、PDF、JPG/PNG；单个文件建议 ≤ 20MB</view>
+      
+      <view class="cell auto">
+        <text class="label fixed">优化方向</text>
+        <view class="options-wrap">
+          <checkbox-group class="options-group" bindchange="onNeedsChange">
+            <label class="option-row"><checkbox value="回路校对"/> <text class="option-text">回路校对</text></label>
+            <label class="option-row"><checkbox value="灯位优化"/> <text class="option-text">灯位优化</text></label>
+            <label class="option-row"><checkbox value="眩光控制/UGR"/> <text class="option-text">眩光控制/UGR</text></label>
+            <label class="option-row"><checkbox value="照度提升/均匀度"/> <text class="option-text">照度提升/均匀度</text></label>
+            <label class="option-row"><checkbox value="色温/显指统一"/> <text class="option-text">色温/显指统一</text></label>
+            <label class="option-row"><checkbox value="预算降本优化"/> <text class="option-text">预算降本优化</text></label>
+            <label class="option-row"><checkbox value="智能控制建议"/> <text class="option-text">智能控制建议</text></label>
+          </checkbox-group>
+        </view>
+      </view>
+
+      
+
+      <view class="cell auto">
+        <text class="label fixed">期望交付</text>
+        <view class="options-wrap">
+          <checkbox-group class="options-group" bindchange="onDeliverablesChange">
+            <label class="option-row"><checkbox value="CAD标注文件"/> <text class="option-text">CAD标注文件</text></label>
+            <label class="option-row"><checkbox value="修改建议说明"/> <text class="option-text">修改建议说明</text></label>
+            <label class="option-row"><checkbox value="灯具清单建议"/> <text class="option-text">灯具清单建议</text></label>
+          </checkbox-group>
+        </view>
+      </view>
+
+      <view class="cell" hover-class="cell-active">
+        <text class="label fixed">联系方式</text>
+        <input class="input" placeholder="电话/微信号" bindinput="onContact" value="{{contact}}"/>
+      </view>
+
+      <view class="cell auto">
+        <text class="label">优化说明/备注</text>
+        <textarea class="textarea" placeholder="可补充具体空间、问题点、品牌偏好等" bindinput="onNote" value="{{note}}"></textarea>
+      </view>
+    </view>
+    <view class="actions">
+      <button class="primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交优化需求</button>
+    </view>
+  </view>
+</scroll-view>
+

@@ -1,0 +1,19 @@
+<scroll-view class="page" scroll-y>
+  <view class="header">
+    <text class="title">我的服务</text>
+  </view>
+  <view class="cards">
+    <view class="card">
+      <text class="card-title">在线客服</text>
+      <text class="card-subtitle">7x12 小时人工在线</text>
+      <button class="btn" bindtap="contact">联系</button>
+    </view>
+    <view class="card">
+      <text class="card-title">保修与支持</text>
+      <text class="card-subtitle">设备保修、安装支持</text>
+      <button class="btn" bindtap="support">查看</button>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{!hasService}}">暂无可用服务</view>
+</scroll-view>
+

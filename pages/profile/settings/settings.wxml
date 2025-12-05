@@ -1,0 +1,39 @@
+<scroll-view class="page" scroll-y>
+  <view class="header">
+    <text class="title">设置</text>
+  </view>
+
+  <!-- 通知设置 -->
+  <view class="section">
+    <text class="section-title">通知设置</text>
+    <view class="setting-item">
+      <text class="setting-label">订单状态通知</text>
+      <switch class="setting-switch" checked="{{settings.orderNotification}}" bindchange="onOrderNotificationChange"></switch>
+    </view>
+    <view class="setting-item">
+      <text class="setting-label">优惠活动通知</text>
+      <switch class="setting-switch" checked="{{settings.promotionNotification}}" bindchange="onPromotionNotificationChange"></switch>
+    </view>
+    <view class="setting-item">
+      <text class="setting-label">设备状态通知</text>
+      <switch class="setting-switch" checked="{{settings.deviceNotification}}" bindchange="onDeviceNotificationChange"></switch>
+    </view>
+  </view>
+
+  <!-- 关于我们 -->
+  <view class="section">
+    <text class="section-title">关于</text>
+    <view class="setting-item clickable" bindtap="goToAbout">
+      <text class="setting-label">关于我们</text>
+      <text class="setting-arrow">〉</text>
+    </view>
+  </view>
+
+  <!-- 账户操作 -->
+  <view class="section">
+    <text class="section-title">账户</text>
+    <view class="setting-item clickable" bindtap="logout">
+      <text class="setting-label logout-text">退出登录</text>
+    </view>
+  </view>
+</scroll-view>

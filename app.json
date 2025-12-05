@@ -1,0 +1,137 @@
+{
+  "pages": [
+    "pages/auth/login/login",
+    "pages/auth/profile-edit/profile-edit",
+    "pages/products/products",
+     
+    "pages/search/search",
+    "pages/cart/cart",
+    "pages/mall/mall",
+    "pages/mall/product-detail/product-detail",
+    "pages/mall/cart/cart",
+    "pages/course/course-detail/course-detail",
+    "pages/toolkit/toolkit-detail/toolkit-detail",
+    "pages/order/detail/detail",
+    "pages/order/edit/edit"
+    ,
+    "pages/order/confirm/confirm",
+    "pages/order/result/result"
+  ],
+  "subpackages": [
+    {
+      "root": "pages/flows/",
+      "pages": [
+        "publish/publish",
+        "survey/survey",
+        "concept/concept",
+        "calc/calc",
+        "selection/selection",
+        "optimize/optimize",
+        "construction/construction",
+        "commission/commission"
+      ]
+    },
+    {
+      "root": "pages/tips/",
+      "pages": [
+        "energy/energy"
+      ]
+    },
+    {
+      "root": "pages/categories/",
+      "pages": [
+        "residential/residential",
+        "commercial/commercial",
+        "office/office",
+        "hotel/hotel"
+      ]
+    },
+    {
+      "root": "pages/activities/",
+      "pages": [
+        "detail/detail"
+      ]
+    },
+    
+    {
+      "root": "pages/request/",
+      "pages": [
+        "progress/progress",
+        "edit/edit"
+      ]
+    },
+    {
+      "root": "pages/support/",
+      "pages": [
+        "contact/contact"
+      ]
+    },
+    {
+      "root": "pages/features/",
+      "pages": [
+        "detail/detail"
+      ]
+    },
+    
+    {
+      "root": "pages/profile/",
+      "pages": [
+        "home/home",
+        "account/account",
+        "requests/requests",
+        "orders/orders",
+        "deposit/deposit",
+        "services/services",
+        "addresses/addresses",
+        "addresses/edit",
+        "favorites/favorites",
+        "receipts/receipts",
+        "feedback/feedback",
+        "settings/settings"
+      ]
+    },
+    {
+      "root": "pages/designers/",
+      "pages": [
+        "list/list",
+        "detail/detail"
+      ]
+    }
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "光乙共创平台",
+    "navigationBarBackgroundColor": "#f2f2f7"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/products/products",
+        "text": "灯光方案",
+        "iconPath": "images/product.png",
+        "selectedIconPath": "images/product-active.png"
+      },
+      {
+        "pagePath": "pages/search/search",
+        "text": "照明计算",
+        "iconPath": "images/search.png",
+        "selectedIconPath": "images/search-active.png"
+      },
+      {
+        "pagePath": "pages/cart/cart",
+        "text": "订单管理",
+        "iconPath": "images/cart.png", 
+        "selectedIconPath": "images/cart-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "cloud": true
+}

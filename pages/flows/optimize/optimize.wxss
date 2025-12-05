@@ -1,0 +1,24 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700;text-align:center}
+.section{padding:0 30rpx 30rpx}
+.cells{background:#fff;border-radius:30rpx;overflow:hidden}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:24rpx 20rpx;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.label{font-size:28rpx;color:#000;white-space:nowrap}
+.label.fixed{min-width:200rpx}
+.cell.auto .label.fixed{min-width:240rpx}
+.upload{background:#000;color:#fff;border-radius:40rpx;padding:18rpx 32rpx}
+.options-wrap{width:100%;}
+.options-group{display:flex;flex-direction:column;gap:16rpx;margin-top:16rpx}
+.option-row{display:flex;align-items:center;gap:20rpx;padding:16rpx 0}
+.option-text{font-size:28rpx;color:#111}
+.file-list{padding:10rpx 20rpx}
+.file-row{display:flex;justify-content:space-between;padding:12rpx 0;border-bottom:1rpx solid #f7f7f9}
+.file-row:last-child{border-bottom:none}
+.file-name{font-size:28rpx;color:#111;max-width:460rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-size{font-size:24rpx;color:#8e8e93}
+.tip{padding:16rpx 20rpx;color:#8e8e93;font-size:24rpx}
+.actions{padding:20rpx 0}
+.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0}
+
+

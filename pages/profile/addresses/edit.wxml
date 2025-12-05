@@ -1,0 +1,41 @@
+<view class="page">
+  <scroll-view class="scroll" scroll-y>
+    <view class="form unified">
+      <view class="cell">
+        <text class="label">收件人</text>
+        <input class="input" placeholder="请输入姓名" value="{{form.name}}" bindinput="onInput" data-field="name" />
+      </view>
+
+      <view class="cell">
+        <text class="label">手机号</text>
+        <input class="input" placeholder="请输入手机号" value="{{form.phone}}" bindinput="onInput" data-field="phone" type="number" />
+      </view>
+
+      <view class="cell">
+        <text class="label">省市区/县</text>
+        <picker mode="region" value="{{form.region}}" bindchange="onRegionChange">
+          <view class="picker-text">{{ regionText || '请选择省/市/区' }}</view>
+        </picker>
+      </view>
+
+      <view class="cell">
+        <text class="label">镇/街道</text>
+        <input class="input" placeholder="请输入镇/街道" value="{{form.town}}" bindinput="onInput" data-field="town" />
+      </view>
+
+      <view class="cell">
+        <text class="label">详细地址</text>
+        <textarea class="textarea" placeholder="楼栋、门牌等信息" value="{{form.detail}}" bindinput="onInput" data-field="detail" />
+      </view>
+
+      
+    </view>
+  </scroll-view>
+
+  <view class="footer">
+    <button class="btn btn-primary" bindtap="onSave">保存</button>
+  </view>
+</view>
+
+
+

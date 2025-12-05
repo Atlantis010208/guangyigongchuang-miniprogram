@@ -1,0 +1,8 @@
+{
+  "name": "bootstrap_make_me_admin",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}

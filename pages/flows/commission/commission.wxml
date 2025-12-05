@@ -1,0 +1,11 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">调试与验收</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">调试日期</text><picker mode="date" bindchange="onDate"><view class="picker-text">{{date||'选择日期'}}</view></picker></view>
+    <view class="cell"><text class="label">场景联动测试</text><switch checked="{{linkage}}" bindchange="onLink"/></view>
+    <view class="cell auto"><text class="label">备注</text><textarea class="textarea" placeholder="记录异常与整改" bindinput="onNote"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onSubmit">提交验收表</button></view>
+</scroll-view>
+
+

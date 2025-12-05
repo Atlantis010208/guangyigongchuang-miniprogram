@@ -1,0 +1,35 @@
+.detail-page { background:#f2f2f7; min-height:100vh; }
+.banner { width:100%; height: 560rpx; }
+.banner-image { width:100%; height:100%; object-fit: cover; }
+.info { background:#fff; padding: 28rpx 30rpx; }
+.name { font-size: 36rpx; font-weight: 700; color:#000; display:block; margin-bottom: 8rpx; }
+.price { font-size: 32rpx; color:#ff3b30; }
+.card { background:#fff; margin-top: 20rpx; padding: 28rpx 30rpx; }
+.section-title { font-size: 32rpx; font-weight: 700; color:#000; display:block; margin-bottom: 16rpx; }
+.desc { font-size: 28rpx; color:#1c1c1e; line-height: 1.6; }
+.variant-group { margin-bottom: 16rpx; }
+.variant-name { font-size: 26rpx; color:#8e8e93; display:block; margin-bottom: 8rpx; }
+.variant-options { display:flex; flex-wrap: wrap; }
+.variant-chip { padding: 16rpx 24rpx; border-radius: 28rpx; background:#f7f7f9; font-size: 26rpx; color:#1c1c1e; line-height: 1; margin: 12rpx 16rpx 0 0; }
+.variant-chip.selected { background:#000; color:#fff; }
+.quantity { display:flex; justify-content: space-between; align-items:center; margin-top: 10rpx; }
+.q-label { font-size: 26rpx; color:#8e8e93; }
+.stepper { display:flex; align-items:center; gap: 20rpx; }
+.step-btn { width: 64rpx; height: 64rpx; border-radius: 18rpx; background:#f7f7f9; display:flex; align-items:center; justify-content:center; font-size: 36rpx; color:#000; }
+.step-val { font-size: 28rpx; color:#000; min-width: 40rpx; text-align:center; }
+.total-line{ display:flex; justify-content: space-between; align-items:center; margin-top: 16rpx; }
+.total-label{ font-size: 28rpx; color:#8e8e93 }
+.total-val{ font-size: 32rpx; font-weight:700; color:#000 }
+.params { display:flex; flex-direction: column; gap: 10rpx; }
+.param-row { display:block; }
+.param-line { font-size: 26rpx; color:#1c1c1e; line-height: 1.6; }
+.actions { position: fixed; left:0; right:0; bottom: 0; display:flex; gap: 20rpx; padding: 12rpx 16rpx calc(16rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.96); backdrop-filter: blur(6rpx); align-items:center; }
+.action-icons { display:flex; gap: 20rpx; }
+.icon-btn { width: 120rpx; display:flex; flex-direction: column; align-items:center; justify-content:center; color:#1c1c1e; }
+.icon { width: 44rpx; height: 44rpx; margin-bottom: 6rpx; }
+.icon-text { font-size: 22rpx; color:#1c1c1e; }
+.btn { flex:1; padding: 22rpx 0; border-radius: 30rpx; border:none; font-size: 28rpx; }
+.btn.primary { background:#007aff; color:#fff; }
+.btn + .btn { margin-left: 16rpx; }
+.bottom-spacer { height: 120rpx; }
+

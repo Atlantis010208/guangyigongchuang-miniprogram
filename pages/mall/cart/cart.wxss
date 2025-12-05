@@ -1,0 +1,35 @@
+.page{background:#f2f2f7;min-height:100vh}
+.header{padding:30rpx; display:flex; align-items:center; justify-content:space-between}
+.title{font-size:48rpx;font-weight:700}
+.edit-btn{}
+.edit-text{font-size:28rpx;color:#007aff}
+.list{padding:0 16rpx}
+.row{display:flex;align-items:center;background:#fff;border-radius:30rpx;padding:26rpx;margin-top:16rpx;gap:40rpx}
+.cover{width:120rpx;height:120rpx;border-radius:20rpx;object-fit:cover;flex:0 0 120rpx}
+.info{flex:1;min-width:0;padding-left:24rpx;padding-right:12rpx}
+.name{display:block;font-size:30rpx;color:#000;margin-bottom:20rpx;line-height:1.6}
+.price{display:block;font-size:30rpx;color:#ff3b30;margin-bottom:10rpx}
+.specs{display:block;font-size:24rpx;color:#8e8e93;margin-bottom:12rpx;line-height:1.6}
+.row-actions{ display:flex; align-items:center; justify-content:flex-end; flex: 0 0 140rpx; }
+.row-actions .btn{ width: 100%; border:none; border-radius: 22rpx; padding: 16rpx 0; font-size: 26rpx; background:#000; color:#fff }
+.qty{display:flex;align-items:center;gap:12rpx;margin-top:10rpx}
+.btn{width:60rpx;height:60rpx;border-radius:18rpx;background:#f2f2f7;display:flex;align-items:center;justify-content:center}
+.num{min-width:40rpx;text-align:center}
+.select-box{ width: 44rpx; height: 44rpx; border-radius: 50%; border:2rpx solid #c7c7cc; display:flex; align-items:center; justify-content:center; flex:0 0 44rpx; }
+.tick{ font-size: 28rpx; color: transparent; line-height: 1; }
+.select-box.selected{ border-color:#2ecc71; background: rgba(46,204,113,0.12); }
+.select-box.selected .tick{ color:#2ecc71; }
+.footer{position:fixed;left:0;right:0;bottom:0;background:#fff;display:flex;align-items:center;gap:28rpx;padding:18rpx 20rpx calc(20rpx + env(safe-area-inset-bottom));border-top-left-radius:30rpx;border-top-right-radius:30rpx}
+.primary{flex:0 0 44%;background:#007aff;color:#fff;border:none;border-radius:28rpx;padding:22rpx 0}
+.danger{flex:0 0 44%;background:#ff3b30;color:#fff;border:none;border-radius:28rpx;padding:22rpx 0}
+
+.empty{ text-align:center; padding: 200rpx 30rpx 100rpx; }
+.empty-icon{ width: 240rpx; height: 240rpx; opacity:0.35; margin-bottom: 30rpx }
+.empty-title{ display:block; font-size: 40rpx; font-weight:700; color:#000; margin-bottom: 10rpx }
+.empty-subtitle{ display:block; font-size: 26rpx; color:#8e8e93; margin-bottom: 20rpx }
+
+
+.floating-contact{ position: fixed; right: 24rpx; bottom: 160rpx; background: #ffffff; border-radius: 999rpx; box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); display: flex; align-items: center; padding: 12rpx 18rpx; z-index: 9 }
+.float-icon{ width: 36rpx; height: 36rpx; margin-right: 8rpx }
+.float-text{ font-size: 26rpx; color: #1c1c1e }
+

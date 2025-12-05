@@ -1,0 +1,46 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">需求进度</text></view>
+  <view class="section">
+    <view class="info">
+      <view class="block-title">订单信息</view>
+      <view class="cell"><text class="label">空间</text><text class="val">{{req.space || '-'}}</text></view>
+      <view class="cell"><text class="label">服务</text><text class="val">{{req.service || '-'}}</text></view>
+      <view class="cell"><text class="label">预算</text><text class="val">{{req.budget || '-'}}</text></view>
+      <view class="cell"><text class="label">面积</text><text class="val">{{req.area || '-'}}㎡</text></view>
+      <view class="cell"><text class="label">项目进度</text><text class="val">{{req.stage || '-'}}</text></view>
+      <view class="cell" wx:if="{{req.target}}"><text class="label">内容</text><text class="val">{{req.target}}</text></view>
+      <view class="cell"><text class="label">联系方式</text><text class="val">{{req.contact || '-'}}</text></view>
+      <view class="cell"><text class="label">提交时间（北京时间）</text><text class="val">{{beijingTime}}</text></view>
+      <text wx:if="{{req.status==='canceled'}}" class="badge cancel">已撤销</text>
+      <text wx:if="{{req.priority}}" class="badge priority">优先</text>
+    </view>
+    <view class="timeline">
+      <view class="t-row" wx:for="{{req.steps}}" wx:key="key">
+        <view class="t-dot {{item.done ? 'done' : ''}}"></view>
+        <text class="t-text">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section actions">
+    <block wx:if="{{isDesigner && req.assigned && !req.designStartConfirmed}}">
+      <button class="btn primary" bindtap="onConfirmStart">确认开始设计</button>
+      <button class="btn ghost" bindtap="onCancelAccept">取消接单</button>
+    </block>
+    <block wx:elif="{{isDesigner}}">
+      <button class="btn primary" bindtap="onSubmitOrder" disabled="{{req.status==='canceled'}}">提交订单</button>
+      <button class="btn ghost" bindtap="onDesignerDone" disabled="{{req.status==='canceled'}}">完成订单</button>
+      <button class="btn ghost" bindtap="onContact">联系客服</button>
+    </block>
+    <block wx:else>
+      <button class="btn primary" bindtap="onGoDeposit">押金</button>
+      <button class="btn primary" bindtap="onModify" disabled="{{req.status==='canceled'}}">修改订单</button>
+      <button class="btn ghost" bindtap="onContact">联系客服</button>
+      <button class="btn ghost more" bindtap="onMoreTap">
+        <image class="more-icon-img" src="/images/更多.svg" mode="aspectFit" />
+      </button>
+    </block>
+  </view>
+</scroll-view>
+
+

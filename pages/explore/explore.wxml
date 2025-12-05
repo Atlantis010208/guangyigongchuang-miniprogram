@@ -1,0 +1,186 @@
+<!--pages/explore/explore.wxml-->
+
+<!--深入探索页面-->
+
+<scroll-view class="page" scroll-y type="list">
+
+  <!-- 页面头部（与产品页一致） -->
+  <view class="header">
+    <text class="header-title">探索照明</text>
+    <view class="user-avatar" bindtap="onUserTap">
+      <image class="avatar-img" src="/images/个人中心.png" mode="aspectFill"></image>
+    </view>
+  </view>
+
+  <!-- 短视频区域 -->
+  <view class="section">
+
+    <view class="video-card" bindtap="onVideoTap">
+
+      <view class="video-header">
+
+        <text class="video-tag">短视频</text>
+
+      </view>
+
+      <block wx:if="{{!videoPlaying}}">
+        <image class="video-thumbnail" src="https://www.apple.com.cn/newsroom/images/product/mac/standard/Apple-MacBook-Pro-M4-hero-241028_big.jpg.large.jpg" mode="aspectFill"></image>
+      </block>
+      <block wx:else>
+        <view class="video-media">
+          <video id="shortVideo" class="video-player" src="{{videoSrc}}" autoplay controls show-center-play-btn="false" bindended="onVideoEnded"></video>
+        </view>
+      </block>
+
+      <view class="video-content">
+
+        <text class="video-title">探索 Mac 上的技巧，让多任务处理得心应手。立即观看。</text>
+
+        <view class="video-controls">
+
+          <view class="play-button">
+
+            <text class="play-icon">▶</text>
+
+            <text class="video-duration">2 分钟</text>
+
+          </view>
+
+          <text class="video-more">⋯</text>
+
+        </view>
+
+      </view>
+
+    </view>
+
+  </view>
+
+
+
+  <!-- 参加 Today at Apple 课程 -->
+  <view class="section nearby-activities-section">
+
+    <text class="section-title">参加 Today at Light 课程</text>
+
+    <text class="section-description">学习，创作，让灵感飞扬。报名参加免费课程，探索 Apple 带来的最新产品和精彩内容。</text>
+    
+    
+
+    <view class="nearby-activities" bindtap="onNearbyActivitiesTap">
+
+      <text class="activities-icon">📍</text>
+      <text class="activities-text">附近的精彩活动 ></text>
+      <text class="activities-arrow"> </text>
+
+    </view>
+
+
+
+    <scroll-view class="activities-scroller" scroll-x show-scrollbar="false" scroll-with-animation>
+      <view class="activities-track">
+        <view class="activity-card equal-card" bindtap="onActivityTap" data-activity="video">
+          <view class="card-image">
+            <image class="service-image" src="https://www.apple.com.cn/newsroom/images/2024/09/apple-introduces-iphone-16-and-iphone-16-plus/article/Apple-iPhone-16-Action-Button-240909_big.jpg.large.jpg" mode="aspectFill"></image>
+          </view>
+          <view class="card-content">
+            <view class="service-content">
+              <view class="title-wrap">
+                <text class="service-title">工作坊：用 iPhone 拍视频</text>
+              </view>
+              
+        </view>
+      </view>
+
+      </view>
+
+
+
+        <view class="activity-card equal-card" bindtap="onActivityTap" data-activity="photo">
+          <view class="card-image">
+            <image class="service-image" src="https://www.apple.com.cn/newsroom/images/2024/09/apple-introduces-iphone-16-and-iphone-16-plus/article/Apple-iPhone-16-Camera-Control-240909_big.jpg.large.jpg" mode="aspectFill"></image>
+          </view>
+          <view class="card-content">
+            <view class="service-content">
+              <view class="title-wrap">
+                <text class="service-title">工作坊：用 iPhone 拍出精彩的照片</text>
+        </view>
+              
+      </view>
+    </view>
+
+      </view>
+
+    </view>
+
+    </scroll-view>
+
+
+    <view class="browse-courses-btn" bindtap="onBrowseCoursesTap">
+
+      <text class="browse-courses-text">浏览即将举办的课程</text>
+
+    </view>
+
+  </view>
+
+
+
+  <!-- 轻松上手（插画卡片） -->
+  <view class="section">
+
+    <text class="section-title">我们来帮你轻松上手</text>
+    
+    <view class="onboarding-card">
+
+      <image class="onboarding-illustration" src="https://www.apple.com.cn/v/today/images/overview/intro_illustration__f6y0m6z6e6qe_large.png" mode="aspectFit"></image>
+      <text class="onboarding-title">设置新设备，有 Specialist 专家帮你。</text>
+
+      <text class="onboarding-description">参加在线个人设置辅导，从数据转移到了解最新功能，获得 Specialist 专家的一对一协助。</text>
+
+    </view>
+
+  </view>
+
+
+
+  <!-- 充分发挥 iPhone 的精彩 -->
+  <view class="section">
+
+    <text class="section-title">充分发挥 iPhone 的精彩</text>
+    
+    <view class="iphone-showcase">
+
+      <view class="iphone-card">
+
+        <image class="iphone-image" src="https://www.apple.com.cn/newsroom/images/product/iphone/standard/Apple_iPhone-Tips_trio-tips_12052021_big.jpg.large.jpg" mode="aspectFit"></image>
+
+      </view>
+      
+      <view class="iphone-description">
+
+        <text class="iphone-title">你知道 iPhone 还能这样用吗？</text>
+
+        <text class="iphone-subtitle">打开提示 app，了解新功能，解锁隐藏技巧。</text>
+
+      </view>
+
+    </view>
+
+  </view>
+
+
+
+  <!-- 你的设备支持服务 -->
+  <view class="section">
+    <view class="device-support">
+      <text class="support-title">你的设备支持服务</text>
+      <text class="support-arrow">〉</text>
+    </view>
+    <view class="device-showcase">
+      <image class="device-image" src="https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/iphone-card-40-iphone15pro-202309?wid=340&hei=264&fmt=p-jpg&qlt=95&.v=1692912411008" mode="aspectFit"></image>
+    </view>
+
+  </view>
+
+</scroll-view>

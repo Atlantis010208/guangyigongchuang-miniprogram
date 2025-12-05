@@ -1,0 +1,189 @@
+.page {
+  background: #f2f2f7;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  padding: 30rpx;
+  text-align: center;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #000;
+}
+
+/* 设备列表 */
+.device-list {
+  padding: 0 30rpx;
+}
+
+.device-card {
+  background: #fff;
+  border-radius: 40rpx;
+  margin-bottom: 30rpx;
+  padding: 40rpx 30rpx;
+}
+
+.device-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.device-icon {
+  width: 100rpx;
+  height: 100rpx;
+  margin-right: 30rpx;
+}
+
+.device-info {
+  flex: 1;
+}
+
+.device-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 10rpx;
+}
+
+.device-model {
+  display: block;
+  font-size: 26rpx;
+  color: #8e8e93;
+}
+
+.device-status {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.status-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+.status-dot.status-online {
+  background: #34c759;
+}
+
+.status-dot.status-offline {
+  background: #8e8e93;
+}
+
+.status-text {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.device-details {
+  margin-bottom: 30rpx;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #f2f2f7;
+  border-bottom: 1rpx solid #f2f2f7;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15rpx;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 28rpx;
+  color: #8e8e93;
+}
+
+.value {
+  font-size: 28rpx;
+  color: #000;
+}
+
+.device-actions {
+  display: flex;
+  gap: 15rpx;
+}
+
+.btn {
+  flex: 1;
+  padding: 20rpx;
+  border-radius: 25rpx;
+  font-size: 26rpx;
+  text-align: center;
+  border: none;
+}
+
+.btn-control {
+  background: #007aff;
+  color: #fff;
+}
+
+.btn-settings {
+  background: #8e8e93;
+  color: #fff;
+}
+
+.btn-remove {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.btn-primary {
+  background: #007aff;
+  color: #fff;
+  width: 300rpx;
+  margin: 40rpx auto 0;
+  display: block;
+}
+
+.btn-add {
+  background: #34c759;
+  color: #fff;
+  width: 100%;
+  padding: 30rpx;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 30rpx;
+}
+
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.3;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #000;
+  margin-bottom: 20rpx;
+}
+
+.empty-desc {
+  font-size: 28rpx;
+  color: #8e8e93;
+  margin-bottom: 60rpx;
+  text-align: center;
+}
+
+.add-device-section {
+  padding: 0 30rpx;
+  margin-top: 30rpx;
+}

@@ -1,0 +1,18 @@
+.page{min-height:100vh;background:#f2f2f7}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700;text-align:center}
+.section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:20rpx}
+.block-title{font-size:32rpx;font-weight:700;color:#000;display:flex;align-items:center;margin-bottom:10rpx}
+.required{display:none}
+.tip{display:block;color:#8e8e93;font-size:24rpx;line-height:1.5;margin:10rpx 0 10rpx}
+.group{display:flex;flex-direction:column;gap:32rpx;padding:16rpx 0}
+.option{display:flex;align-items:center;font-size:30rpx;color:#000;padding:2rpx 0}
+.option + .option{margin-top:4rpx}
+.inline-input{margin-left:16rpx;flex:1;border-bottom:1rpx solid #f0f0f0;padding:8rpx 0;font-size:28rpx}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:24rpx 20rpx;border-bottom:1rpx solid #f2f2f7}
+.cell.auto{flex-direction:column;align-items:flex-start}
+.cell:last-child{border-bottom:none}
+.label{font-size:28rpx;color:#000}
+.input,.picker-text{flex:1;text-align:right;font-size:28rpx}
+.textarea{width:100%;min-height:160rpx;background:#f8f8fb;border-radius:20rpx;padding:20rpx;box-sizing:border-box}
+.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0}
+

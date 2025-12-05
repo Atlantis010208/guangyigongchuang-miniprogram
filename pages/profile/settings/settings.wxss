@@ -1,0 +1,76 @@
+.page {
+  background: #f2f2f7;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  padding: 30rpx;
+  text-align: center;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #000;
+}
+
+/* 设置分组 */
+.section {
+  margin: 20rpx 30rpx 40rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  overflow: hidden;
+}
+
+.section-title {
+  display: block;
+  font-size: 28rpx;
+  color: #8e8e93;
+  margin-bottom: 20rpx;
+  padding-left: 28rpx;
+  margin-top: 20rpx;
+}
+
+.setting-item {
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 34rpx 28rpx;
+  margin-bottom: 2rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting-item:first-of-type { border-radius: 40rpx 40rpx 10rpx 10rpx; }
+.setting-item:last-of-type { border-radius: 10rpx 10rpx 40rpx 40rpx; margin-bottom: 0; }
+.setting-item:only-child { border-radius: 40rpx; }
+
+.setting-item.clickable:active { background: #f8f8f8; }
+
+.setting-label { font-size: 32rpx; color: #000; flex: 1; }
+
+.logout-text {
+  color: #ff3b30;
+  text-align: center;
+  width: 100%;
+}
+
+.setting-value {
+  font-size: 28rpx;
+  color: #8e8e93;
+  margin-right: 20rpx;
+}
+
+.setting-arrow { font-size: 28rpx; color: #c7c7cc; }
+
+.setting-switch {
+  transform: scale(0.8);
+}
+
+/* 特殊样式调整 */
+.section:last-child .setting-item {
+  background: #fff;
+  border-radius: 40rpx;
+  margin-bottom: 0;
+}

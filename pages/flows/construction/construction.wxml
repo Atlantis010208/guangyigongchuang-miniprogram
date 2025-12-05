@@ -1,0 +1,13 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">施工配合指导</text></view>
+  <view class="section">
+    <view class="cell auto">
+      <text class="label">上传施工图/布灯图</text>
+      <button class="link" bindtap="onUpload">上传文件</button>
+    </view>
+    <view class="cell"><text class="label">现场协调事项</text><input class="input" placeholder="如 走线/回路/高度"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onSubmit">提交信息</button></view>
+</scroll-view>
+
+

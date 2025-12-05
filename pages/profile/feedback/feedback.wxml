@@ -1,0 +1,8 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">提供反馈意见</text></view>
+  <view class="card">
+    <textarea class="input" placeholder="请填写你的建议或问题...（最多500字）" maxlength="500" />
+    <button class="btn" bindtap="submit">提交</button>
+  </view>
+</scroll-view>
+

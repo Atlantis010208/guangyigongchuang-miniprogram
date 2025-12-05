@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "openapi": [
+      "phonenumber.getPhoneNumber"
+    ]
+  }
+}
+
+
+
+
+

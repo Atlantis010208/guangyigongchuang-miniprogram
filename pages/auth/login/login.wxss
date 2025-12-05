@@ -1,0 +1,7 @@
+.page{min-height:100vh;background:#f2f2f7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60rpx}
+.title{font-size:56rpx;font-weight:700;color:#000;margin-bottom:16rpx}
+.subtitle{font-size:28rpx;color:#8e8e93;margin-bottom:60rpx}
+.auth-btn{width:80%;border-radius:50rpx;padding:26rpx 0;margin-bottom:24rpx}
+.auth-btn{background:#000;color:#fff}
+.tip{font-size:22rpx;color:#8e8e93;margin-top:20rpx}
+

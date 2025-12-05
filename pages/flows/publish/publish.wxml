@@ -1,0 +1,86 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">发布照明需求</text></view>
+  
+  <!-- 01 空间类型 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>01 空间类型</text></view>
+    <radio-group class="group" bindchange="onSpaceChange">
+      <label class="option"><radio value="住宅" checked="{{space==='住宅'}}"/> 住宅</label>
+      <label class="option"><radio value="商铺" checked="{{space==='商铺'}}"/> 商铺</label>
+      <label class="option"><radio value="办公室" checked="{{space==='办公室'}}"/> 办公室</label>
+      <label class="option"><radio value="其他" checked="{{space==='其他'}}"/> 其他 <input class="inline-input" placeholder="请输入" bindinput="onSpaceOther"/></label>
+    </radio-group>
+  </view>
+
+  <!-- 02 服务类型 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>02 需要什么服务?</text></view>
+    <text class="tip">根据个人需求选择</text>
+    <radio-group class="group" bindchange="onServiceChange">
+      <label class="option"><radio value="选灯配灯服务" checked="{{service==='选灯配灯服务'}}"/> 选灯配灯服务</label>
+      <label class="option"><radio value="只深化灯光施工图" checked="{{service==='只深化灯光施工图'}}"/> 只深化灯光施工图</label>
+      <label class="option"><radio value="整套灯光设计" checked="{{service==='整套灯光设计'}}"/> 整套灯光设计</label>
+    </radio-group>
+  </view>
+
+  <!-- 03 设计预算 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>03 设计预算</text></view>
+    <text class="tip">整套灯光根据你的预算匹配对应的设计师，最低价格不低于9元/平，预算越高将匹配到更有经验的共创设计师</text>
+    <radio-group class="group" bindchange="onBudgetChange">
+      <label class="option"><radio value="¥5/m²（只针对选灯配灯）" checked="{{budget==='¥5/m²（只针对选灯配灯）'}}"/> ¥5/m²（只针对选灯配灯）</label>
+      <label class="option"><radio value="¥9/m²" checked="{{budget==='¥9/m²'}}"/> ¥9/m²</label>
+      <label class="option"><radio value="¥16/m²" checked="{{budget==='¥16/m²'}}"/> ¥16/m²</label>
+      <label class="option"><radio value="¥19/m²" checked="{{budget==='¥19/m²'}}"/> ¥19/m²</label>
+      <label class="option"><radio value="¥29/m²" checked="{{budget==='¥29/m²'}}"/> ¥29/m²</label>
+      <label class="option"><radio value="¥39/m²" checked="{{budget==='¥39/m²'}}"/> ¥39/m²</label>
+      <label class="option"><radio value="¥50/m²及以上" checked="{{budget==='¥50/m²及以上'}}"/> ¥50/m²及以上</label>
+      <label class="option"><radio value="其他" checked="{{budget==='其他'}}"/> 其他 <input class="inline-input" placeholder="请输入" bindinput="onBudgetOther"/></label>
+    </radio-group>
+  </view>
+
+  <!-- 04 设计面积 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>04 设计面积</text></view>
+    <text class="tip">根据你家大概面积进行填写，只填写需要设计的面积。面积低于50平按50平收费！</text>
+    <view class="cell"><text class="label">面积(㎡)</text><input class="input" type="number" placeholder="请输入数字" bindinput="onArea" value="{{area}}"/></view>
+  </view>
+
+  <!-- 05 项目进度 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>05 项目进度</text></view>
+    <radio-group class="group" bindchange="onStageChange">
+      <label class="option"><radio value="未开始" checked="{{stage==='未开始'}}"/> 未开始</label>
+      <label class="option"><radio value="正在设计" checked="{{stage==='正在设计'}}"/> 正在设计</label>
+      <label class="option"><radio value="装修中" checked="{{stage==='装修中'}}"/> 装修中</label>
+      <label class="option"><radio value="已完成装修" checked="{{stage==='已完成装修'}}"/> 已完成装修</label>
+    </radio-group>
+  </view>
+
+  <!-- 06/07 意愿问题 -->
+  <view class="section">
+    <view class="block-title"><text>06 愿意分享你家的装修故事换取折扣吗?</text></view>
+    <radio-group class="group" bindchange="onShareChange">
+      <label class="option"><radio value="愿意" checked="{{share==='愿意'}}"/> 愿意</label>
+      <label class="option"><radio value="不愿意" checked="{{share==='不愿意'}}"/> 不愿意</label>
+    </radio-group>
+  </view>
+
+  <view class="section">
+    <view class="block-title"><text>07 愿意跟设计师共创你的设计吗?</text></view>
+    <radio-group class="group" bindchange="onCoCreateChange">
+      <label class="option"><radio value="愿意" checked="{{coCreate==='愿意'}}"/> 愿意</label>
+      <label class="option"><radio value="不愿意" checked="{{coCreate==='不愿意'}}"/> 不愿意</label>
+    </radio-group>
+  </view>
+
+  <!-- 08 联系方式 -->
+  <view class="section">
+    <view class="block-title"><text class="required"></text><text>08 联系方式</text></view>
+    <text class="tip">请填写可以联系到你的电话号码/微信号，便于尽快推进项目</text>
+    <view class="cell"><text class="label">联系方式</text><input class="input" placeholder="请输入" bindinput="onContact"/></view>
+  </view>
+
+  <view class="section"><button class="primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交需求</button></view>
+</scroll-view>
+

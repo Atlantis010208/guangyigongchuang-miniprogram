@@ -1,0 +1,13 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">预约现场勘测</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">项目名称</text><input class="input" placeholder="如 XX 跃层客厅"/></view>
+    <view class="cell"><text class="label">地址</text><input class="input" placeholder="详细地址"/></view>
+    <view class="cell"><text class="label">勘测日期</text><picker mode="date" bindchange="onDate"><view class="picker-text">{{date||'选择日期'}}</view></picker></view>
+    <view class="cell"><text class="label">联系人</text><input class="input" placeholder="姓名"/></view>
+    <view class="cell"><text class="label">电话</text><input class="input" type="number" placeholder="手机号"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onBook">提交预约</button></view>
+</scroll-view>
+
+

@@ -1,0 +1,14 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">申请概念方案</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">空间/项目</text><input class="input" placeholder="如 住宅客厅"/></view>
+    <view class="cell auto">
+      <text class="label">上传参考图</text>
+      <button class="link" bindtap="onUpload">选择图片</button>
+      <view class="thumbs"><image wx:for="{{imgs}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill"/></view>
+    </view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onApply">提交申请</button></view>
+</scroll-view>
+
+

@@ -1,0 +1,268 @@
+<!--产品页面-->
+<scroll-view class="page" scroll-y type="list">
+  <!-- 页面头部 -->
+  <view class="header">
+    <text class="header-title">灯光方案</text>
+    <view class="user-avatar" bindtap="onUserTap">
+      <image class="avatar-img" src="/images/个人中心.png" mode="aspectFill"></image>
+    </view>
+  </view>
+
+  <!-- 首次进入 · 预算小弹窗 -->
+  <view wx:if="{{showIntro}}" class="quiz-mask">
+    <view class="quiz-modal">
+      <view class="quiz-header">
+        <text class="quiz-title">为你预估预算</text>
+        <text class="quiz-sub">{{quizStep+1}}/5 步骤 · 约 10 秒</text>
+      </view>
+
+      <!-- 步骤 1：面积 -->
+      <view wx:if="{{quizStep===0}}" class="quiz-section">
+        <text class="quiz-label">房屋面积（㎡）</text>
+        <view class="area-grid">
+          <view class="area-item" data-value="55" bindtap="onQuickArea">60㎡以下</view>
+          <view class="area-item" data-value="75" bindtap="onQuickArea">61~90㎡</view>
+          <view class="area-item" data-value="110" bindtap="onQuickArea">91~130㎡</view>
+          <view class="area-item" data-value="130" bindtap="onQuickArea">130㎡以上</view>
+        </view>
+        <input class="quiz-input" type="number" placeholder="或直接输入面积，低于50㎡按50㎡" bindinput="onQuizArea" value="{{quiz.area}}"/>
+      </view>
+
+      <!-- 步骤 2：空间类型 -->
+      <view wx:if="{{quizStep===1}}" class="quiz-section">
+        <text class="quiz-label">空间类型</text>
+        <radio-group class="quiz-group" bindchange="onQuizSpace">
+          <label class="quiz-option"><radio value="住宅" checked="{{quiz.space==='住宅'}}"/> 住宅</label>
+          <label class="quiz-option"><radio value="商铺" checked="{{quiz.space==='商铺'}}"/> 商铺</label>
+          <label class="quiz-option"><radio value="办公室" checked="{{quiz.space==='办公室'}}"/> 办公室</label>
+          <label class="quiz-option"><radio value="其他" checked="{{quiz.space==='其他'}}"/> 其他</label>
+        </radio-group>
+      </view>
+
+      <!-- 步骤 3：服务类型 -->
+      <view wx:if="{{quizStep===2}}" class="quiz-section">
+        <text class="quiz-label">需要什么服务</text>
+        <radio-group class="quiz-group" bindchange="onQuizService">
+          <label class="quiz-option"><radio value="选灯配灯服务" checked="{{quiz.service==='选灯配灯服务'}}"/> 选灯配灯服务</label>
+          <label class="quiz-option"><radio value="只深化灯光施工图" checked="{{quiz.service==='只深化灯光施工图'}}"/> 只深化灯光施工图</label>
+          <label class="quiz-option"><radio value="整套灯光设计" checked="{{quiz.service==='整套灯光设计'}}"/> 整套灯光设计</label>
+        </radio-group>
+      </view>
+
+      <!-- 步骤 4：设计预算（单价） -->
+      <view wx:if="{{quizStep===3}}" class="quiz-section">
+        <text class="quiz-label">设计预算（单价）</text>
+        <radio-group class="quiz-group" bindchange="onQuizBudget">
+          <label class="quiz-option"><radio value="¥5/m²（只针对选灯配灯）" checked="{{quiz.budget==='¥5/m²（只针对选灯配灯）'}}"/> ¥5/m²（只针对选灯配灯）</label>
+          <label class="quiz-option"><radio value="¥9/m²" checked="{{quiz.budget==='¥9/m²'}}"/> ¥9/m²</label>
+          <label class="quiz-option"><radio value="¥16/m²" checked="{{quiz.budget==='¥16/m²'}}"/> ¥16/m²</label>
+          <label class="quiz-option"><radio value="¥19/m²" checked="{{quiz.budget==='¥19/m²'}}"/> ¥19/m²</label>
+          <label class="quiz-option"><radio value="¥29/m²" checked="{{quiz.budget==='¥29/m²'}}"/> ¥29/m²</label>
+          <label class="quiz-option"><radio value="¥39/m²" checked="{{quiz.budget==='¥39/m²'}}"/> ¥39/m²</label>
+          <label class="quiz-option"><radio value="¥50/m²及以上" checked="{{quiz.budget==='¥50/m²及以上'}}"/> ¥50/m²及以上</label>
+        </radio-group>
+      </view>
+
+      <!-- 结果 -->
+      <view wx:if="{{quizStep===4}}" class="quiz-result">
+        <text class="result-title">预计设计费用</text>
+        <text class="result-price">¥{{estimate}}</text>
+        <text class="result-sub">按 {{pricePer}} 元/㎡ × {{chargeArea}} ㎡ 计算</text>
+      </view>
+
+      <view class="quiz-actions">
+        <button class="btn ghost" bindtap="closeQuiz">稍后再说</button>
+        <button wx:if="{{quizStep>0 && quizStep<4}}" class="btn primary" bindtap="prevQuiz">上一步</button>
+        <button wx:if="{{quizStep===4}}" class="btn primary" bindtap="finishAndPrefill">去发布</button>
+      </view>
+    </view>
+  </view>
+
+   <!-- 用户角度 · 需求入口（灯光空间分类） -->
+   <view class="product-categories">
+      <scroll-view class="categories-scroll" scroll-x="true">
+        <view class="category-card" bindtap="onCategoryTap" data-category="residential">
+          <image class="category-image" src="https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg" mode="aspectFill"></image>
+          <view class="category-text-overlay">
+            <text class="category-text">住宅照明</text>
+          </view>
+        </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
+          <image class="category-image" src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg" mode="aspectFill"></image>
+          <view class="category-text-overlay">
+            <text class="category-text">商业照明</text>
+          </view>
+        </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="office">
+          <image class="category-image" src="https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg" mode="aspectFill"></image>
+          <view class="category-text-overlay">
+            <text class="category-text">办公照明</text>
+          </view>
+        </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="hotel">
+          <image class="category-image" src="https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg" mode="aspectFill"></image>
+          <view class="category-text-overlay">
+            <text class="category-text">酒店照明</text>
+          </view>
+        </view>
+      </scroll-view>
+          </view>
+
+
+  <!-- 我的灯光需求助手（两张可滑动卡片，样式复用“表达您的需求”） -->
+  <view class="section assistant-section">
+    <text class="section-title">我的灯光助手</text>
+    <scroll-view class="assistant-scroller" scroll-x show-scrollbar="false" scroll-with-animation>
+      <view class="assistant-track">
+        <view class="assistant-card" bindtap="onAssistantTap" data-activity="video">
+          <image class="assistant-image" src="{{assistantToolkitCover}}" mode="aspectFill" binderror="onAssistantImageError" data-key="toolkit"/>
+          <view class="assistant-content">
+            <text class="assistant-title">灯光工具包</text>
+          </view>
+        </view>
+
+        <view class="assistant-card" bindtap="onAssistantTap" data-activity="photo">
+          <image class="assistant-image" src="{{assistantCourseCover}}" mode="aspectFill" binderror="onAssistantImageError" data-key="course"/>
+          <view class="assistant-content">
+            <text class="assistant-title">十年经验二哥 灯光设计课</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 认识一下新朋友（主打服务横向滑动） -->
+  <view class="section hero-section">
+    <text class="section-title">发布灯光需求</text>
+    <scroll-view class="hero-scroll" scroll-x>
+      <view class="hero-track">
+        <view class="hero-card" bindtap="onServiceTap" data-service="selection">
+          <view class="hero-content">
+            <image class="hero-image" src="https://images.pexels.com/photos/331692/pexels-photo-331692.jpeg" mode="aspectFill"></image>
+            <view class="hero-text"><text class="hero-logo">选配</text></view>
+          </view>
+          <view class="hero-info">
+            <text class="hero-title">选灯配灯服务</text>
+            <text class="hero-subtitle">为你的场景快速完成专业选型与搭配。</text>
+            <view class="price-section">
+              <text class="price-text">结合预算与风格给出清单</text>
+              <view class="buy-button"><text class="buy-text">了解</text></view>
+            </view>
+          </view>
+        </view>
+        <view class="hero-card" bindtap="onServiceTap" data-service="optimize">
+          <view class="hero-content">
+            <image class="hero-image" src="https://images.pexels.com/photos/462123/pexels-photo-462123.jpeg" mode="aspectFill"></image>
+            <view class="hero-text"><text class="hero-logo">优化</text></view>
+          </view>
+          <view class="hero-info">
+            <text class="hero-title">优化灯光施工图</text>
+            <text class="hero-subtitle">校对回路与灯位，优化眩光与照度。</text>
+            <view class="price-section">
+              <text class="price-text">提升落地质量，减少返工</text>
+              <view class="buy-button"><text class="buy-text">了解</text></view>
+            </view>
+          </view>
+        </view>
+        <view class="hero-card" bindtap="onServiceTap" data-service="full">
+          <view class="hero-content">
+            <image class="hero-image" src="https://images.pexels.com/photos/704590/pexels-photo-704590.jpeg" mode="aspectFill"></image>
+            <view class="hero-text"><text class="hero-logo">整套</text></view>
+          </view>
+          <view class="hero-info">
+            <text class="hero-title">整套灯光设计</text>
+            <text class="hero-subtitle">从勘测到验收，一站式灯光设计服务。</text>
+            <view class="price-section">
+              <text class="price-text">全流程沟通与交付</text>
+              <view class="buy-button"><text class="buy-text">了解</text></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 附近的精彩活动（从探索页移动过来） -->
+  <view class="section nearby-activities-section">
+    <text class="section-title">表达您的需求</text>
+    <text class="section-description">思考，创作，让灵感飞扬！</text>
+
+
+    <scroll-view class="activities-scroller" scroll-x show-scrollbar="false" scroll-with-animation>
+      <view class="activities-track">
+        <view class="activity-card" bindtap="onActivityTap" data-activity="video">
+          <image class="activity-image" src="https://images.pexels.com/photos/704590/pexels-photo-704590.jpeg" mode="aspectFill"/>
+          <view class="activity-content">
+            <text class="activity-title">发布照明需求</text>
+          
+          </view>
+        </view>
+
+        <view class="activity-card" bindtap="onActivityTap" data-activity="photo">
+          <image class="activity-image" src="https://images.pexels.com/photos/331692/pexels-photo-331692.jpeg" mode="aspectFill"/>
+          <view class="activity-content">
+            <text class="activity-title">个性需求定制</text>
+            
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 电子商城入口缩略图 -->
+  <view class="section">
+    <text class="section-title">电子商城</text>
+    <view class="mall-card" bindtap="onMallTap">
+      <image class="mall-image" src="https://images.pexels.com/photos/1121123/pexels-photo-1121123.jpeg" mode="aspectFill"></image>
+      <view class="mall-content">
+        <text class="mall-title">精选灯具与配件</text>
+        <text class="mall-subtitle">点此进入电子商城</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 省钱妙招 -->
+  <view class="section">
+    <text class="section-title">节能妙招</text>
+    <view class="savings-card" bindtap="onSavingsTap">
+      <image class="savings-image" src="https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/store-card-50-specialist-help-202309?wid=960&hei=480&fmt=p-jpg&qlt=95&.v=1701194078821" mode="aspectFit"></image>
+      <view class="savings-content">
+        <text class="savings-title">采用高效光源与智能调光，全年节电更省心。</text>
+        <text class="savings-subtitle">支持 DALI/0-10V/蓝牙 Mesh 分路调光与场景控制。</text>
+      </view>
+    </view>
+  </view>
+
+  
+
+  <!-- Apple 内容 -->
+  <view class="section">
+    <text class="section-title center">你关心的照明内容</text>
+    <view class="content-tags">
+      <text class="content-tag">新方案</text>
+      <text class="content-tag">光学知识</text>
+      <text class="content-tag">调光技巧</text>
+      <text class="content-tag">选型指南</text>
+    </view>
+    
+    <!-- 二维码 -->
+    <view class="qr-section">
+      <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
+      <text class="qr-title">获得 光乙共创平台 的官方支持</text>
+      <text class="qr-subtitle">添加官方客服，输入你想问的问题获得在线支持</text>
+    </view>
+  </view>
+
+  <!-- 折抵换购说明 -->
+  <view class="disclaimer">
+    <text class="disclaimer-text">* 折抵换购服务由 光乙 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
+    <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
+  </view>
+
+  <!-- 法律信息 -->
+  <view class="legal">
+    <text class="legal-text">京ICP备10214630号-7X 营业执照</text>
+    <text class="legal-text">无线电发射设备销售备案编号 11201910351200</text>
+  </view>
+</scroll-view>
+

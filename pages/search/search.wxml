@@ -1,0 +1,91 @@
+<!-- 搜索页改为照度计算器界面（双标签） -->
+<view class="page">
+  <!-- 顶部标签 -->
+  <view class="tabs">
+    <view class="tab {{activeTab==='lux' ? 'active' : ''}}" bindtap="switchTab" data-tab="lux">
+      <text class="tab-text">根据灯具算照度</text>
+      <view class="tab-underline" wx:if="{{activeTab==='lux'}}"></view>
+    </view>
+    <view class="tab {{activeTab==='count' ? 'active' : ''}}" bindtap="switchTab" data-tab="count">
+      <text class="tab-text">根据照度算灯具</text>
+      <view class="tab-underline" wx:if="{{activeTab==='count'}}"></view>
+    </view>
+  </view>
+
+  <!-- 表单卡片 -->
+  <view wx:if="{{activeTab==='lux'}}">
+    <view class="card">
+      <view class="card-heading">
+        <text class="heading-title">灯具类型列表</text>
+        <text class="heading-desc">（未用类型填0，米数/数量留空视为0）</text>
+        <view class="heading-actions"><button class="param-btn" bindtap="openLampParams">灯具参数</button></view>
+  </view>
+
+      <view class="cells lamp-cells">
+        <view class="cell" wx:for="{{lampTypeRows}}" wx:key="name">
+          <text class="label fixed">{{item.displayName || item.name}}</text>
+          <view class="lamp-inline">
+            <text class="spec">米数/数量</text>
+            <input class="input lamp-input" type="number" value="{{item.lengthQty}}" data-index="{{index}}" bindinput="onLampLenInput" placeholder="0" placeholder-style="color:#9c9c9c"/>
+          </view>
+        </view>
+      </view>
+      <view class="cell"><text class="label">总光通量</text><view class="value"><text class="result">{{totalFluxCalc}}</text><text class="unit">lm</text></view></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">房间面积</text><input class="input" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="平方米" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">利用系数</text><input class="input" type="digit" value="{{utilFactor}}" data-field="utilFactor" bindinput="onFieldInput" placeholder="0.8" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">维护系数</text><input class="input" type="digit" value="{{maintenanceFactor}}" data-field="maintenanceFactor" bindinput="onFieldInput" placeholder="0.8" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell"><text class="label">平均照度</text><view class="value"><text class="result">{{avgLux}}</text><text class="unit">勒克斯</text></view></view>
+    </view>
+  </view>
+
+  <view wx:if="{{activeTab==='count'}}">
+    <view class="card">
+      <view class="cell" hover-class="cell-active"><text class="label fixed">照度值</text><input class="input" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="勒克斯" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">单灯光通量</text><input class="input" type="number" value="{{lampFlux}}" data-field="lampFlux" bindinput="onFieldInput" placeholder="流明" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">房间面积</text><input class="input" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="平方米" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">利用系数</text><input class="input" type="digit" value="{{utilFactor}}" data-field="utilFactor" bindinput="onFieldInput" placeholder="0.8" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell" hover-class="cell-active"><text class="label fixed">维护系数</text><input class="input" type="digit" value="{{maintenanceFactor}}" data-field="maintenanceFactor" bindinput="onFieldInput" placeholder="0.8" placeholder-style="color:#9c9c9c"/></view>
+      <view class="cell"><text class="label">灯具数量</text><view class="value"><text class="result">{{calcLampCount}}</text><text class="unit">套</text></view></view>
+      <view class="cell"><text class="label">单位面积平均功率</text><view class="value"><text class="result">{{avgPowerPerArea}}</text><text class="unit">W/m²</text></view></view>
+    </view>
+  </view>
+
+  <!-- 价格卡片：仅在“根据照度算灯具”标签显示 -->
+  <view wx:if="{{activeTab==='count'}}" class="card">
+    <view class="cell" hover-class="cell-active"><text class="label fixed">灯具单价</text><input class="input" type="number" value="{{lampUnitPrice}}" data-field="lampUnitPrice" bindinput="onFieldInput" placeholder="0" placeholder-style="color:#9c9c9c"/></view>
+    <view class="cell"><text class="label">灯具总价</text><view class="value"><text class="result">{{totalPrice}}</text><text class="unit">元</text></view></view>
+  </view>
+
+  <view class="note" bindtap="onOpenRules"><text class="note-text">注：《照度计算器规则》</text></view>
+</view>
+
+<!-- 灯具参数列表弹窗 -->
+<view wx:if="{{showLampParams}}" class="popup-mask" catchtouchmove="noop">
+  <view class="popup-panel" catchtap="noop">
+    <view class="popup-header">
+      <text class="popup-title">灯具参数</text>
+      <text class="popup-close" bindtap="closeLampParams">关闭</text>
+    </view>
+    <scroll-view scroll-y class="popup-body">
+      <view class="lamp-table">
+        <view class="lamp-table-header">
+          <view class="th name"><text class="title">灯具类型</text><text class="unit"></text></view>
+          <view class="th"><text class="title">功率</text><text class="unit">W</text></view>
+          <view class="th"><text class="title">发光效率</text><text class="unit">lm/W</text></view>
+          <view class="th"><text class="title">光源利用率</text><text class="unit">—</text></view>
+        </view>
+        <view class="lamp-table-row" wx:for="{{lampTypeRows}}" wx:key="name">
+          <text class="td name">{{item.displayName || item.name}}</text>
+          <input class="td td-input" type="number" value="{{item.powerW}}" data-index="{{index}}" data-field="powerW" bindinput="onLampMetaInput" placeholder="0" placeholder-style="color:#9c9c9c"/>
+          <input class="td td-input" type="number" value="{{item.efficacy}}" data-index="{{index}}" data-field="efficacy" bindinput="onLampMetaInput" placeholder="0" placeholder-style="color:#9c9c9c"/>
+          <input class="td td-input" type="digit" value="{{item.sourceUtil}}" data-index="{{index}}" data-field="sourceUtil" bindinput="onLampMetaInput" placeholder="0~1" placeholder-style="color:#9c9c9c"/>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="popup-actions">
+      <button class="btn ghost" bindtap="resetLampParams">重置参数</button>
+      <button class="btn primary" bindtap="saveLampParams">保存并关闭</button>
+    </view>
+  </view>
+  <view class="popup-backdrop" bindtap="closeLampParams"></view>
+</view>

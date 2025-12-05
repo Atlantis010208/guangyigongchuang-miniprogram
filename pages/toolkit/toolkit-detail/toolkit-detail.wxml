@@ -1,0 +1,109 @@
+<view class="detail-page">
+  <block wx:if="{{images && images.length}}">
+    <swiper class="banner" indicator-dots autoplay circular style="height: {{bannerHeight}}rpx" current="{{current}}" bindchange="onSwiperChange">
+      <block wx:for="{{images}}" wx:key="*this">
+        <swiper-item>
+          <image class="banner-image" src="{{item}}" mode="aspectFit" bindtap="onPreviewImage" data-src="{{item}}" bindload="onBannerLoad" data-idx="{{index}}"></image>
+        </swiper-item>
+      </block>
+    </swiper>
+  </block>
+  <block wx:else>
+    <view class="banner" style="height: {{bannerHeight}}rpx"></view>
+  </block>
+
+  <view class="info">
+    <text class="name">{{name}}</text>
+    <text class="price">¥{{price}}</text>
+  </view>
+
+  <!-- 规格选择 -->
+  <view class="card">
+    <text class="section-title">选择版本</text>
+    <view wx:for="{{variantGroups}}" wx:key="name" class="variant-group">
+      <text class="variant-name">{{item.name}}</text>
+      <view class="variant-options">
+        <view wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt" class="variant-chip {{item.selected===opt ? 'selected' : ''}}" data-group="{{item.key}}" data-value="{{opt}}" bindtap="onSelectVariant">{{opt}}</view>
+      </view>
+    </view>
+    <view class="quantity">
+      <text class="q-label">数量</text>
+      <view class="stepper">
+        <view class="step-btn" bindtap="onDec">-</view>
+        <text class="step-val">{{quantity}}</text>
+        <view class="step-btn" bindtap="onInc">+</view>
+      </view>
+    </view>
+    <view class="total-line"><text class="total-label">合计</text><text class="total-val">¥{{totalPrice || (price * quantity)}}</text></view>
+  </view>
+
+  <!-- 商品简介 -->
+  <view class="card">
+    <text class="section-title">产品介绍</text>
+    <text class="desc">{{desc}}</text>
+  </view>
+
+  <!-- 工具包内容 -->
+  <view class="card">
+    <text class="section-title">工具包内容</text>
+    <view class="content-list">
+      <view wx:for="{{contentList}}" wx:key="index" class="content-item">
+        <text class="content-title">{{item.title}}</text>
+        <text class="content-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 适用人群 -->
+  <view class="card">
+    <text class="section-title">适用人群</text>
+    <view class="target-groups">
+      <view class="group-card">
+        <text class="group-title">设计师、照明行业从业者</text>
+        <view class="group-features">
+          <text class="feature-item">• 掌握灯光设计的科学照度计算</text>
+          <text class="feature-item">• 了解住宅照明设计标准</text>
+          <text class="feature-item">• 加快科学灯光设计落地操作</text>
+        </view>
+      </view>
+      <view class="group-card">
+        <text class="group-title">装修业主、自装达人</text>
+        <view class="group-features">
+          <text class="feature-item">• 拥有专属自己的"灯光字典"</text>
+          <text class="feature-item">• 快速了解照明行业专业知识</text>
+          <text class="feature-item">• 打破信息闭塞，营造健康居住环境</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 规格参数 -->
+  <view class="card">
+    <text class="section-title">产品参数</text>
+    <view class="params">
+      <view wx:for="{{params}}" wx:key="key" class="param-row">
+        <text class="param-line">{{item.key}}：{{item.value}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <view class="action-icons">
+      <view class="icon-btn" bindtap="onContact">
+        <image class="icon" src="/images/客服.png" mode="aspectFit"></image>
+        <text class="icon-text">客服</text>
+      </view>
+      <view class="icon-btn" bindtap="onToggleFav">
+        <image class="icon" src="{{fav ? '/images/收藏-active.png' : '/images/收藏.png'}}" mode="aspectFit"></image>
+        <text class="icon-text">收藏</text>
+      </view>
+      <view class="icon-btn" bindtap="onGoCart">
+        <image class="icon" src="/images/购物车.png" mode="aspectFit"></image>
+        <text class="icon-text">购物车</text>
+      </view>
+    </view>
+    <button class="btn primary" bindtap="onAddToCart">加入购物车</button>
+    <button class="btn primary" bindtap="onBuyNow">立即购买</button>
+  </view>
+  <view class="bottom-spacer"></view>
+</view>

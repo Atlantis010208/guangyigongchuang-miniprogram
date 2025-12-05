@@ -1,0 +1,32 @@
+.page{ background:#f2f2f7; min-height:100vh; padding-bottom: 120rpx; }
+.content{ height: calc(100vh - 120rpx); }
+.hero{ width:100%; height: 680rpx; object-fit:cover; }
+.meta{ background:#fff; border-radius: 40rpx; margin: 20rpx 20rpx 0; padding: 30rpx; }
+.name{ font-size: 40rpx; font-weight:700; color:#000; display:block; margin-bottom: 10rpx; }
+.price{ font-size: 36rpx; color:#ff3b30; display:block; margin-bottom: 12rpx; }
+.desc{ font-size: 26rpx; color:#666; line-height:1.6; display:block; }
+.bottom{ position: fixed; left:0; right:0; bottom:0; background:#fff; display:flex; align-items:center; padding: 14rpx 20rpx; border-top:1rpx solid #f2f2f7; }
+.action{ padding: 18rpx 26rpx; border:1rpx solid #e5e5ea; border-radius: 999rpx; margin-right: 16rpx; }
+.a-text{ font-size: 26rpx; color:#000; }
+.cart{ flex:1; text-align:center; background:#fff; color:#000; border:2rpx solid #000; border-radius: 999rpx; padding: 22rpx 0; margin-right: 12rpx; }
+.buy{ flex:1; text-align:center; background:#000; color:#fff; border-radius: 999rpx; padding: 22rpx 0; }
+.buy-text{ font-size: 30rpx; font-weight:600; }
+.mask{ position: fixed; left:0; right:0; top:0; bottom:0; background: rgba(0,0,0,0.45); display:flex; align-items:flex-end; }
+.sheet{ width:100%; background:#fff; border-radius: 40rpx 40rpx 0 0; padding: 24rpx; }
+.sheet-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 10rpx; }
+.sheet-title{ font-size: 32rpx; font-weight:700; color:#000; }
+.sheet-price{ font-size: 32rpx; color:#ff3b30; }
+.sheet-body{ padding: 10rpx 0 0; }
+.label{ display:block; font-size: 26rpx; color:#000; margin: 18rpx 0 10rpx; }
+.pill-group{ display:flex; flex-wrap:wrap; gap: 12rpx; }
+.pill{ padding: 12rpx 18rpx; border-radius: 999rpx; border:1rpx solid #e5e5ea; font-size: 26rpx; color:#000; }
+.pill.active{ border-color:#000; background:#000; color:#fff; }
+.qty{ display:flex; align-items:center; gap: 20rpx; margin-top: 10rpx; }
+.btn{ width: 64rpx; height: 64rpx; border-radius: 16rpx; background:#f7f7f9; display:flex; align-items:center; justify-content:center; font-size: 36rpx; color:#000; }
+.num{ font-size: 28rpx; color:#000; min-width: 44rpx; text-align:center; }
+.sheet-actions{ padding: 18rpx 0 6rpx; display:flex; gap: 12rpx; }
+.btn{ border-radius: 999rpx; }
+.btn.primary{ flex:1; background:#000; color:#fff; border:none; padding: 24rpx 0; font-size: 30rpx; }
+.btn.ghost{ flex:1; background:#fff; color:#000; border:2rpx solid #000; padding: 24rpx 0; font-size: 30rpx; }
+
+

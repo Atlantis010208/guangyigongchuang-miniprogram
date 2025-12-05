@@ -1,0 +1,10 @@
+.page{background:#f2f2f7;min-height:100vh;padding-bottom:40rpx}
+.header{padding:30rpx;text-align:center}
+.title{font-size:48rpx;font-weight:600;color:#000}
+.cards{padding:0 30rpx}
+.card{background:#fff;border-radius:40rpx;margin-bottom:30rpx;padding:40rpx 30rpx}
+.card-title{display:block;font-size:32rpx;font-weight:600;color:#000;margin-bottom:10rpx}
+.card-subtitle{display:block;font-size:26rpx;color:#8e8e93;margin-bottom:20rpx}
+.btn{background:#000;color:#fff;border:none;border-radius:30rpx;padding:16rpx 28rpx;font-size:28rpx}
+.empty{color:#8e8e93;text-align:center;margin-top:40rpx}
+

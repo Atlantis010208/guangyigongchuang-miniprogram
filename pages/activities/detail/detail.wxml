@@ -1,0 +1,44 @@
+<scroll-view class="page" scroll-y>
+  <!-- 表单问卷模式（两个卡片都可能进入 form） -->
+  <block wx:if="{{mode==='form'}}">
+    <view class="form-wrap">
+      <text class="form-title-page">照明计算</text>
+      <view wx:for="{{questions}}" wx:key="key" class="form-card">
+        <text class="q-index">{{(index+1) < 10 ? ('0' + (index+1)) : (index+1)}} {{item.title}}</text>
+        <text wx:if="{{item.subtitle}}" class="q-subtitle">{{item.subtitle}}</text>
+
+        <!-- 单选题 -->
+        <radio-group wx:if="{{item.type==='radio'}}" class="options-group" bindchange="onRadioChange" data-key="{{item.key}}">
+          <label wx:for="{{item.options}}" wx:key="value" class="option-row">
+            <radio value="{{item.value}}"/>
+            <text class="option-text">{{item.label}}</text>
+            <input wx:if="{{item.value==='other'}}" class="other-input" placeholder="请输入" bindinput="onOtherInput" data-key="{{item.key}}" />
+          </label>
+        </radio-group>
+
+        <!-- 多选题 -->
+        <checkbox-group wx:if="{{item.type==='checkbox'}}" class="options-group" bindchange="onCheckboxChange" data-key="{{item.key}}">
+          <label wx:for="{{item.options}}" wx:key="value" class="option-row">
+            <checkbox value="{{item.value}}"/>
+            <text class="option-text">{{item.label}}</text>
+            <input wx:if="{{item.value==='other'}}" class="other-input" placeholder="请输入" bindinput="onOtherInputMulti" data-key="{{item.key}}" />
+          </label>
+        </checkbox-group>
+
+        <!-- 文本题 -->
+        <input wx:if="{{item.type==='input'}}" class="text-input" placeholder="请输入" bindinput="onInputChange" data-key="{{item.key}}"/>
+    </view>
+
+      <view class="submit-wrap">
+        <button class="primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交</button>
+      </view>
+    </view>
+  </block>
+
+  
+
+
+</scroll-view>
+
+
+

@@ -1,0 +1,33 @@
+<view class="page">
+  <view class="header">
+    <text class="title">灯光节能妙招</text>
+  </view>
+
+  <view class="content">
+    <view class="block">
+      <text class="block-title">选择高效光源</text>
+      <text class="block-desc">优先选择高光效 LED，显指 Ra≥90 的同时关注 SDCM 和寿命指标。</text>
+    </view>
+
+    <view class="block">
+      <text class="block-title">分区与传感控制</text>
+      <text class="block-desc">结合人体红外、光照度、时段策略进行分区调光，减少无效照明。</text>
+    </view>
+
+    <view class="block">
+      <text class="block-title">合适的目标照度</text>
+      <text class="block-desc">根据场景执行标准照度，不盲目堆光；通过场景化在满足功能前提下降低功耗。</text>
+    </view>
+
+    <view class="block">
+      <text class="block-title">驱动与系统效率</text>
+      <text class="block-desc">优选高效率驱动和低损耗布线；支持 DALI/0-10V/蓝牙 Mesh 的多通道精细化控制。</text>
+    </view>
+
+    <view class="block">
+      <text class="block-title">维护和清洁</text>
+      <text class="block-desc">定期清洁灯具与反射面，保持光效；及时更换衰减过大的光源与驱动。</text>
+    </view>
+  </view>
+</view>
+

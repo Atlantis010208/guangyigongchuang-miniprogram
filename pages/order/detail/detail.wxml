@@ -1,0 +1,52 @@
+<scroll-view class="page" scroll-y>
+  <view class="card">
+    <text class="title">订单信息</text>
+    <view class="row"><text class="label">订单号</text><text class="val">{{order.id}}</text></view>
+    <view class="row"><text class="label">状态</text><text class="val">{{order.status}}</text></view>
+    <view class="row"><text class="label">下单时间</text><text class="val">{{orderTime}}</text></view>
+    <view class="row"><text class="label">金额</text><text class="val">¥{{order.total}}</text></view>
+  </view>
+
+  <view class="card">
+    <text class="title">收货信息</text>
+    <block wx:if="{{order.addressSnapshot}}">
+      <view class="addr"><text>{{order.addressSnapshot.name}} {{order.addressSnapshot.phone}}</text></view>
+      <view class="addr"><text>{{order.addressSnapshot.region.join(' ')}} {{order.addressSnapshot.town}} {{order.addressSnapshot.detail}}</text></view>
+    </block>
+    <block wx:else>
+      <text class="empty">暂无收货信息</text>
+    </block>
+  </view>
+
+  <view class="card">
+    <text class="title">商品清单</text>
+    <view class="item" wx:for="{{order.items}}" wx:key="id">
+      <image class="img" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="info">
+        <text class="name">{{item.name}}</text>
+        <text class="specs">{{formatSpecs(item.specs)}}</text>
+        <view class="params">
+          <view class="param-row" wx:for="{{item.paramPairs}}" wx:key="key">
+            <text class="param-key">{{item.label}}</text>
+            <text class="param-val">{{item.value}}</text>
+          </view>
+        </view>
+        <text class="qty">数量：{{item.quantity}}</text>
+      </view>
+      <text class="price">¥{{(item.price || 0) * (item.quantity || 1)}}</text>
+    </view>
+  </view>
+
+  <view class="section actions">
+    <button class="btn danger" bindtap="onCancel" disabled="{{order.status==='canceled' || order.status==='已取消' || order.status==='支付失败'}}">撤销</button>
+    <button class="btn primary" bindtap="onModify" disabled="{{order.status==='canceled' || order.status==='已取消' || order.status==='支付失败'}}">修改订单</button>
+    <button class="btn ghost" bindtap="onContact">联系客服</button>
+    <button class="btn ghost" bindtap="onDelete" wx:if="{{order.status==='canceled' || order.status==='已取消'}}">删除订单</button>
+    <button class="btn ghost more" bindtap="onMoreTap">
+      <image class="more-icon-img" src="/images/更多.svg" mode="aspectFit" />
+    </button>
+  </view>
+
+  <view class="bottom-spacer"></view>
+</scroll-view>
+

@@ -1,0 +1,36 @@
+.page {
+	background-color: #f2f2f7;
+	min-height: 100vh;
+	padding: 30rpx;
+}
+
+.header .title {
+	font-size: 44rpx;
+	font-weight: 700;
+	color: #000;
+}
+
+.content {
+	margin-top: 30rpx;
+}
+
+/* 无卡片风格：纯信息版块 */
+.block {
+	margin-bottom: 36rpx;
+}
+
+.block-title {
+	display: block;
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #000;
+	margin-bottom: 8rpx;
+}
+
+.block-desc {
+	display: block;
+	font-size: 26rpx;
+	color: #666;
+	line-height: 1.6;
+}
+

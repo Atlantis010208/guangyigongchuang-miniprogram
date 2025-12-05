@@ -1,0 +1,47 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">灯具清单选型</text></view>
+
+  <view class="section">
+    <view class="cells">
+      <view class="cell" hover-class="cell-active">
+        <text class="label fixed">预算</text>
+        <input class="input" type="number" placeholder="请输入预算（元）" bindinput="onBudgetInput" value="{{budget}}"/>
+      </view>
+
+      <view class="cell" hover-class="cell-active" bindtap="onTapStage">
+        <text class="label fixed">施工阶段</text>
+        <view class="picker-text">{{stageOptions[stageIdx]}}</view>
+      </view>
+
+      <view class="cell" hover-class="cell-active" bindtap="onTapDrop">
+        <text class="label fixed">吊顶下吊</text>
+        <view class="picker-text">{{dropDisplay}}</view>
+      </view>
+
+      <view class="cell" hover-class="cell-active" bindtap="onTapBodyHeight">
+        <text class="label fixed">灯体高度</text>
+        <view class="picker-text">{{bodyHeightOptions[bodyHeightIdx]}}</view>
+      </view>
+
+      <view class="cell" hover-class="cell-active" bindtap="onTapTrimless">
+        <text class="label fixed">无边预埋射灯</text>
+        <view class="picker-text">{{trimlessOptions[trimlessIdx]}}</view>
+      </view>
+
+      <view class="cell" hover-class="cell-active" bindtap="onTapSpotPrice">
+        <text class="label fixed">射灯价位</text>
+        <view class="picker-text">{{spotPriceOptions[spotPriceIdx]}}</view>
+      </view>
+
+      <view class="cell auto">
+        <text class="label">备注</text>
+        <textarea class="textarea" placeholder="如有品牌要求或特殊说明，请填写" bindinput="onNote" value="{{note}}"></textarea>
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSubmitSelection" loading="{{submitting}}" disabled="{{submitting}}">提交选型需求</button>
+    </view>
+  </view>
+</scroll-view>
+

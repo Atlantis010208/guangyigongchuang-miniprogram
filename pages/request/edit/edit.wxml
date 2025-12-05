@@ -1,0 +1,15 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">修改订单</text></view>
+  <view class="section">
+    <view class="cell"><text class="label">空间</text><input class="input" value="{{space}}" bindinput="onSpace"/></view>
+    <view class="cell"><text class="label">面积(㎡)</text><input class="input" type="number" value="{{area}}" bindinput="onArea"/></view>
+    <view class="cell"><text class="label">预算(¥)</text><input class="input" type="number" value="{{budget}}" bindinput="onBudget"/></view>
+    <view class="cell"><text class="label">主灯需求</text><picker class="picker" range="{{mainLightOptions}}" value="{{mainLightIndex}}" bindchange="onMainLight"><view class="picker-text">{{mainLightText}}</view></picker></view>
+    <view class="cell"><text class="label">想要的风格</text><picker class="picker" range="{{styles}}" value="{{styleIndex}}" bindchange="onStyle"><view class="picker-text">{{styleText}}</view></picker></view>
+    <view class="cell auto"><text class="label">目标</text><textarea class="textarea" value="{{target}}" bindinput="onTarget"/></view>
+    <view class="cell auto"><text class="label">备注</text><textarea class="textarea" value="{{note}}" bindinput="onNote"/></view>
+  </view>
+  <view class="section"><button class="primary" bindtap="onSave">保存修改</button></view>
+</scroll-view>
+
+

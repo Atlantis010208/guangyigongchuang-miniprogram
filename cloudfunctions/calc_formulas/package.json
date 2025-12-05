@@ -1,0 +1,14 @@
+{
+  "name": "calc_formulas",
+  "version": "1.0.0",
+  "description": "照明计算公式和参数推荐",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

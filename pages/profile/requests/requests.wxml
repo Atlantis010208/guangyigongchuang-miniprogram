@@ -1,0 +1,18 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">我的需求</text></view>
+  <view class="list">
+    <view wx:for="{{items}}" wx:key="id" class="card">
+      <view class="row between">
+        <text class="name">{{item.name}}</text>
+        <text class="status">{{item.status}}</text>
+      </view>
+      <text class="desc">{{item.desc}}</text>
+      <view class="row between">
+        <text class="time">{{item.time}}</text>
+        <button class="link" data-id="{{item.id}}" bindtap="onView">查看进度</button>
+      </view>
+    </view>
+  </view>
+</scroll-view>
+
+

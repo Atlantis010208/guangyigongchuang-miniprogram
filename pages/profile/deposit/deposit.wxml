@@ -1,0 +1,31 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">押金</text></view>
+
+  <view class="card">
+    <text class="label">押金金额</text>
+    <text class="amount">¥100</text>
+    <text class="status">当前状态：{{paid ? '已缴纳' : '未缴纳'}}</text>
+    <text class="desc">发布需求时需缴纳¥100押金；订单完成后系统将自动原路退回。</text>
+  </view>
+
+  <view class="actions">
+    <button class="btn primary" bindtap="onPrimaryTap">{{paid ? '退回押金' : '立即缴纳押金'}}</button>
+    <button class="btn ghost" bindtap="onOpenRules">押金规则</button>
+  </view>
+
+  <view class="contact">
+    <text class="contact-title">客服联系方式</text>
+    <view class="contact-row">
+      <text class="contact-label">微信</text>
+      <text class="contact-value" bindtap="copyWeChat">gy-lighting</text>
+    </view>
+    <view class="contact-row">
+      <text class="contact-label">电话</text>
+      <text class="contact-value" bindtap="callPhone">17200000000</text>
+    </view>
+  </view>
+</scroll-view>
+
+ 
+
+

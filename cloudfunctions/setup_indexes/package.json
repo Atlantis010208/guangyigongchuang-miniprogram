@@ -1,0 +1,10 @@
+{
+  "name": "setup_indexes",
+  "version": "1.0.0",
+  "description": "Ensure designers/appointments collections and optionally update indexes via HTTP API",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}
+

@@ -1,0 +1,20 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">{{title || '配件列表'}}</text></view>
+
+  <view class="access-grid">
+    <view class="access-card" wx:for="{{items}}" wx:key="id">
+      <image class="product-img" src="{{item.img}}" mode="aspectFit"></image>
+      <text class="brand {{item.brandAccent ? 'accent' : ''}}" wx:if="{{item.brand}}">{{item.brand}}</text>
+      <text class="name">{{item.name}}</text>
+      <text class="price">RMB {{item.price}}</text>
+      <view class="colors" wx:if="{{item.colors && item.colors.length}}">
+        <view class="dot" wx:for="{{item.colors}}" wx:key="*this" style="background-color:{{item}}"></view>
+        <text class="more" wx:if="{{item.more}}">+{{item.more}}款</text>
+      </view>
+      <text class="footnote">免费送货 | 预计送达日期:有现货</text>
+    </view>
+  </view>
+</scroll-view>
+
+
+

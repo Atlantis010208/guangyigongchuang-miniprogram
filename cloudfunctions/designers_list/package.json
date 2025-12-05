@@ -1,0 +1,10 @@
+{
+  "name": "designers_list",
+  "version": "1.0.0",
+  "description": "List designers with filters and sorting",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}
+

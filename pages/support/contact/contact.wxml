@@ -1,0 +1,27 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">客服咨询</text></view>
+  <view class="section card">
+    <view class="contact-row">
+      <image class="icon" src="{{avatarUrl}}" mode="aspectFit"/>
+      <view class="info">
+        <text class="name">照明设计顾问</text>
+        <text class="desc">工作日 10:00-18:00 在线</text>
+      </view>
+    </view>
+    <view class="actions">
+      <button class="btn primary" open-type="contact" show-message-card="true" send-message-title="在线客服" send-message-path="/pages/support/contact/contact" send-message-img="/images/小程序头像.png" session-from="support-contact">在线咨询</button>
+      <button class="btn ghost" bindtap="onCall">电话咨询</button>
+    </view>
+  </view>
+  <view class="section">
+    <text class="subtitle">常见问题</text>
+    <view class="faq">
+      <view class="qa" wx:for="{{faqs}}" wx:key="q">
+        <text class="q">{{item.q}}</text>
+        <text class="a">{{item.a}}</text>
+      </view>
+    </view>
+  </view>
+</scroll-view>
+
+

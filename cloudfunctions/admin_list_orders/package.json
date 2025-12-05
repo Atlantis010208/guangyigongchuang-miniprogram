@@ -1,0 +1,9 @@
+{
+  "name": "admin_list_orders",
+  "version": "1.0.0",
+  "description": "管理员查询所有订单（需要管理员权限）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "^2.6.3"
+  }
+}

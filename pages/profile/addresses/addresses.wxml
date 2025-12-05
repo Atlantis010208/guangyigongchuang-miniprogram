@@ -1,0 +1,37 @@
+<scroll-view class="page" scroll-y>
+  <view class="header">
+    <text class="title">送货地址</text>
+    <button class="add-btn" bindtap="addAddress">+ 新增地址</button>
+  </view>
+
+  <!-- 地址列表 -->
+  <view wx:if="{{addresses.length > 0}}" class="address-list container-card">
+    <view wx:for="{{addresses}}" wx:key="id" class="address-card unified" bindtap="onSelectAddress" data-id="{{item.id}}">
+      <!-- 顶部右上角删除图标（每个卡片都有） -->
+      <view class="delete-icon" bindtap="deleteAddress" catchtap="true" data-id="{{item.id}}">×</view>
+      <view class="address-header">
+        <view class="contact-info">
+          <text class="name">{{item.name}}</text>
+          <text class="phone">{{item.phone}}</text>
+          <view wx:if="{{item.isDefault}}" class="default-tag inline">默认</view>
+        </view>
+      </view>
+      
+      <view class="address-detail">
+        <text class="address-text">{{item.full || ((item.region && item.region.join(' ')) + ' ' + (item.town||'') + ' ' + (item.detail||item.address))}}</text>
+      </view>
+
+      <view class="address-actions right">
+        <button class="btn btn-ghost" catchtap="true" bindtap="onCopy" data-id="{{item.id}}">复制</button>
+        <button wx:if="{{!item.isDefault}}" class="btn btn-default" catchtap="true" bindtap="setDefault" data-id="{{item.id}}">设为默认</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:else class="empty-state">
+    <image class="empty-icon" src="/images/empty-address.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无送货地址</text>
+    <button class="btn btn-primary" bindtap="addAddress">添加地址</button>
+  </view>
+</scroll-view>

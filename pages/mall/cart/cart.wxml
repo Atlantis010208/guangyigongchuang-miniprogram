@@ -1,0 +1,66 @@
+<wxs module="utils">
+var isSelected = function(selectedIds, key) {
+  if (!selectedIds || !key) return false;
+  for (var i = 0; i < selectedIds.length; i++) {
+    if (selectedIds[i] === key) return true;
+  }
+  return false;
+};
+module.exports = {
+  isSelected: isSelected
+};
+</wxs>
+
+<scroll-view class="page" scroll-y>
+  <view class="header">
+    <text class="title">购物车</text>
+    <view class="edit-btn" bindtap="onToggleEdit"><text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text></view>
+  </view>
+
+  <view wx:if="{{items.length}}" class="list">
+    <view class="row" wx:for="{{items}}" wx:key="_key">
+      <image class="cover" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="info">
+        <text class="name">{{item.name}}</text>
+        <text class="price">¥{{item.price}}</text>
+        <text wx:if="{{item.specs}}" class="specs">{{formatSpecs(item.specs)}}</text>
+        <view class="qty">
+          <view class="btn" bindtap="dec" data-id="{{item.id}}">-</view>
+          <text class="num">{{item.quantity}}</text>
+          <view class="btn" bindtap="inc" data-id="{{item.id}}">+</view>
+        </view>
+      </view>
+      <block wx:if="{{isEditing}}">
+        <view class="select-box {{utils.isSelected(selectedIds, item._key) ? 'selected' : ''}}" bindtap="onToggleSelect" data-key="{{item._key}}">
+          <text class="tick">✓</text>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="row-actions">
+          <button class="btn solid" data-id="{{item.id}}" bindtap="onBuySingle">购买</button>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view wx:else class="empty">
+    <image class="empty-icon" src="/images/empty-address.png" mode="aspectFit"></image>
+    <text class="empty-title">购物车是空的</text>
+    <text class="empty-subtitle">去电子商城挑选商品并加入购物车吧</text>
+    <button class="btn primary" bindtap="goMall">去商城</button>
+  </view>
+</scroll-view>
+
+<!-- 悬浮联系客服按钮 -->
+<view class="floating-contact" bindtap="onContact">
+  <image class="float-icon" src="/images/客服.png" mode="aspectFit"></image>
+  <text class="float-text">联系客服</text>
+  
+</view>
+
+<view wx:if="{{items.length && isEditing}}" class="footer">
+  <button class="btn danger" bindtap="onBatchDelete">删除</button>
+  <button class="btn primary" bindtap="onBatchCheckout">一键购买</button>
+</view>
+
+
