@@ -1,6 +1,9 @@
 // app.js
 const util = require('./utils/util')
 
+// 登录有效期：1天（毫秒）
+const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
+
 App({
   onLaunch(options) {
     console.log('小程序启动', options)
@@ -27,6 +30,9 @@ App({
     
     // 获取系统信息
     this.getSystemInfo()
+
+    // 检查登录状态
+    this.checkLoginStatus()
   },
 
   onShow(options) {
@@ -79,6 +85,10 @@ App({
   initGlobalData() {
     this.globalData = {
       userInfo: null,
+      userDoc: null,
+      openid: '',
+      isLoggedIn: false,
+      loginExpired: false,
       systemInfo: null,
       networkType: 'unknown',
       isFirstLaunch: false,
@@ -260,6 +270,183 @@ App({
         }
       })
     })
+  },
+
+  /**
+   * 检查登录状态
+   * 如果登录已过期或云端记录不存在，清理缓存并标记需要重新登录
+   */
+  checkLoginStatus() {
+    try {
+      const userDoc = util.getStorage('userDoc')
+      const openid = util.getStorage('openid')
+      const expireTime = util.getStorage('loginExpireTime')
+      const now = Date.now()
+
+      // 没有登录信息
+      if (!userDoc || !openid) {
+        this.globalData.isLoggedIn = false
+        this.globalData.loginExpired = false
+        console.log('用户未登录')
+        return
+      }
+
+      // 检查是否过期
+      if (expireTime && now >= expireTime) {
+        console.log('登录已过期，需要重新登录')
+        this.clearLoginCache()
+        this.globalData.isLoggedIn = false
+        this.globalData.loginExpired = true
+        return
+      }
+
+      // 临时标记为已登录（等待云端验证）
+      this.globalData.isLoggedIn = true
+      this.globalData.loginExpired = false
+      this.globalData.userDoc = userDoc
+      this.globalData.openid = openid
+      console.log('本地登录状态有效，剩余时间:', Math.round((expireTime - now) / 1000 / 60), '分钟')
+
+      // 异步验证云端登录状态
+      this.verifyCloudLoginStatus()
+    } catch (e) {
+      console.warn('检查登录状态失败', e)
+      this.globalData.isLoggedIn = false
+    }
+  },
+
+  /**
+   * 验证云端登录状态
+   * 检查云数据库中用户记录是否存在，以及登录是否过期
+   */
+  async verifyCloudLoginStatus() {
+    try {
+      if (!wx.cloud) return
+
+      // 调用云函数验证登录状态
+      const res = await wx.cloud.callFunction({ 
+        name: 'login', 
+        data: { verifyOnly: true } 
+      })
+
+      if (!res || !res.result || !res.result.success) {
+        console.log('云端登录验证失败，清除本地登录状态')
+        this.clearLoginCache()
+        this.globalData.isLoggedIn = false
+        this.globalData.loginExpired = true
+        
+        // 如果当前不在登录页，提示用户
+        const pages = getCurrentPages()
+        const currentPage = pages[pages.length - 1]
+        if (currentPage && currentPage.route !== 'pages/auth/login/login') {
+          wx.showModal({
+            title: '登录已失效',
+            content: '您的登录状态已失效，请重新登录',
+            showCancel: false,
+            confirmText: '去登录',
+            success: () => {
+              wx.reLaunch({ url: '/pages/auth/login/login' })
+            }
+          })
+        }
+        return
+      }
+
+      // 云端验证成功，更新本地缓存
+      const { user, loginTime, expireTime } = res.result
+      util.setStorage('userDoc', user)
+      util.setStorage('loginTime', loginTime)
+      util.setStorage('loginExpireTime', expireTime)
+      this.globalData.userDoc = user
+      console.log('云端登录验证成功')
+    } catch (e) {
+      console.warn('云端登录验证异常', e)
+      // 网络异常时不清除登录状态，保持离线可用
+    }
+  },
+
+  /**
+   * 清理登录缓存
+   */
+  clearLoginCache() {
+    try {
+      util.removeStorage('userDoc')
+      util.removeStorage('openid')
+      util.removeStorage('unionId')
+      util.removeStorage('loginTime')
+      util.removeStorage('loginExpireTime')
+      util.removeStorage('userInfo')
+      
+      this.globalData.userDoc = null
+      this.globalData.openid = ''
+      this.globalData.userInfo = null
+      
+      console.log('已清理登录缓存')
+    } catch (e) {
+      console.warn('清理登录缓存失败', e)
+    }
+  },
+
+  /**
+   * 刷新登录状态（延长有效期）
+   * 可在用户活跃时调用
+   */
+  async refreshLoginStatus() {
+    if (!this.globalData.isLoggedIn) return false
+    
+    try {
+      if (!wx.cloud) return false
+      
+      const res = await wx.cloud.callFunction({ name: 'login', data: {} })
+      if (res && res.result && res.result.success) {
+        const { openid, unionId, user, loginTime, expireTime } = res.result
+        
+        util.setStorage('openid', openid)
+        util.setStorage('unionId', unionId || '')
+        util.setStorage('userDoc', user)
+        util.setStorage('loginTime', loginTime)
+        util.setStorage('loginExpireTime', expireTime)
+        
+        this.globalData.userDoc = user
+        this.globalData.openid = openid
+        this.globalData.isLoggedIn = true
+        
+        console.log('登录状态已刷新')
+        return true
+      }
+    } catch (e) {
+      console.warn('刷新登录状态失败', e)
+    }
+    return false
+  },
+
+  /**
+   * 检查是否需要登录
+   * 如果需要登录，跳转到登录页面
+   * @param {boolean} redirect 是否自动跳转登录页
+   * @returns {boolean} 是否已登录
+   */
+  requireLogin(redirect = true) {
+    this.checkLoginStatus()
+    
+    if (!this.globalData.isLoggedIn) {
+      if (redirect) {
+        wx.navigateTo({ url: '/pages/auth/login/login' })
+      }
+      return false
+    }
+    return true
+  },
+
+  /**
+   * 获取当前用户信息
+   * @returns {object|null} 用户文档
+   */
+  getCurrentUser() {
+    if (!this.globalData.isLoggedIn) {
+      return null
+    }
+    return this.globalData.userDoc || util.getStorage('userDoc')
   },
 
   // 分享配置

@@ -18,20 +18,51 @@ Page({
   async loadAddresses() {
     // 优先从云端 users.addresses 读取
     let list = []
-    try{
+    try {
       const cached = wx.getStorageSync('userDoc') || {}
       const userId = (cached && cached._id) ? cached._id : ''
-      this.setData({ userId, openid: wx.getStorageSync('openid') || '' })
-      if (wx.cloud && userId) {
+      const openid = wx.getStorageSync('openid') || ''
+      this.setData({ userId, openid })
+
+      if (wx.cloud && (userId || openid)) {
         const db = wx.cloud.database()
-        const doc = await db.collection('users').doc(userId).get()
-        const u = doc && doc.data ? doc.data : {}
-        list = Array.isArray(u.addresses) ? u.addresses : []
-        try{ wx.setStorageSync('user_addresses', list) }catch(e){}
+        let userData = null
+
+        // 方法1：通过 _id 查询
+        if (userId) {
+          try {
+            const doc = await db.collection('users').doc(userId).get()
+            userData = doc && doc.data ? doc.data : null
+          } catch (docErr) {
+            console.warn('通过 _id 查询失败，尝试 _openid', docErr.message)
+          }
+        }
+
+        // 方法2：如果 _id 失败，通过 _openid 查询
+        if (!userData && openid) {
+          try {
+            const q = await db.collection('users').where({ _openid: openid }).limit(1).get()
+            userData = (q && q.data && q.data[0]) || null
+            // 更新本地缓存的 userId
+            if (userData && userData._id) {
+              this.setData({ userId: userData._id })
+            }
+          } catch (queryErr) {
+            console.warn('通过 _openid 查询失败', queryErr.message)
+          }
+        }
+
+        if (userData) {
+          list = Array.isArray(userData.addresses) ? userData.addresses : []
+          try { wx.setStorageSync('user_addresses', list) } catch (e) {}
+        } else {
+          list = wx.getStorageSync('user_addresses') || []
+        }
       } else {
         list = wx.getStorageSync('user_addresses') || []
       }
-    }catch(err){
+    } catch (err) {
+      console.error('加载地址失败', err)
       list = wx.getStorageSync('user_addresses') || []
     }
     const sorted = (list || []).slice().sort((a,b)=> (b && b.isDefault ? 1:0) - (a && a.isDefault ? 1:0))

@@ -5,6 +5,102 @@
       {
         "value": ".eslintrc.js",
         "type": "file"
+      },
+      {
+        "value": ".git",
+        "type": "folder"
+      },
+      {
+        "value": ".gitignore",
+        "type": "file"
+      },
+      {
+        "value": ".cursor",
+        "type": "folder"
+      },
+      {
+        "value": ".claude",
+        "type": "folder"
+      },
+      {
+        "value": ".trae",
+        "type": "folder"
+      },
+      {
+        "value": ".mcp.json",
+        "type": "file"
+      },
+      {
+        "value": "ccundo",
+        "type": "folder"
+      },
+      {
+        "value": "docs",
+        "type": "folder"
+      },
+      {
+        "value": "assets",
+        "type": "folder"
+      },
+      {
+        "value": "cloudrun",
+        "type": "folder"
+      },
+      {
+        "value": "*.md",
+        "type": "suffix"
+      },
+      {
+        "value": "package.json",
+        "type": "file"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "功能需求.jpg",
+        "type": "file"
+      },
+      {
+        "value": "pages/accessories",
+        "type": "folder"
+      },
+      {
+        "value": "pages/explore",
+        "type": "folder"
+      },
+      {
+        "value": "pages/legal",
+        "type": "folder"
+      },
+      {
+        "value": "pages/product-detail",
+        "type": "folder"
+      },
+      {
+        "value": "pages/flows/control",
+        "type": "folder"
+      },
+      {
+        "value": "images/explore.png",
+        "type": "file"
+      },
+      {
+        "value": "images/explore-active.png",
+        "type": "file"
+      },
+      {
+        "value": "images/logo.txt",
+        "type": "file"
+      },
+      {
+        "value": "images/placeholder.txt",
+        "type": "file"
+      },
+      {
+        "value": "images/RESOURCES_NEEDED.md",
+        "type": "file"
       }
     ],
     "include": []

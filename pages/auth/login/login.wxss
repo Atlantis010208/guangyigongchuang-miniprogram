@@ -1,7 +1,292 @@
-.page{min-height:100vh;background:#f2f2f7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60rpx}
-.title{font-size:56rpx;font-weight:700;color:#000;margin-bottom:16rpx}
-.subtitle{font-size:28rpx;color:#8e8e93;margin-bottom:60rpx}
-.auth-btn{width:80%;border-radius:50rpx;padding:26rpx 0;margin-bottom:24rpx}
-.auth-btn{background:#000;color:#fff}
-.tip{font-size:22rpx;color:#8e8e93;margin-top:20rpx}
+/* 登录页面样式 - Apple 风格设计 */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8f8fa 0%, #f2f2f7 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 60rpx 40rpx 40rpx;
+  box-sizing: border-box;
+}
 
+/* 头部区域 */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.logo {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 8rpx;
+}
+
+.subtitle {
+  font-size: 26rpx;
+  color: #86868b;
+}
+
+/* 步骤容器 */
+.steps-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 步骤项 */
+.step-item {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.step-item.active {
+  opacity: 1;
+  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
+}
+
+.step-item.done {
+  opacity: 0.8;
+  background: #f8faf8;
+}
+
+/* 步骤头部 */
+.step-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.step-number {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #e5e5ea;
+  color: #86868b;
+  font-size: 22rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14rpx;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-number {
+  background: #007aff;
+  color: #fff;
+}
+
+.step-item.done .step-number {
+  background: #34c759;
+  color: #fff;
+}
+
+.step-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+/* 步骤内容 */
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.step-desc {
+  font-size: 24rpx;
+  color: #86868b;
+  line-height: 1.5;
+}
+
+/* 头像选择器 */
+.avatar-picker {
+  display: flex;
+  justify-content: center;
+  padding: 16rpx 0;
+}
+
+.avatar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+}
+
+.avatar-btn::after {
+  display: none;
+}
+
+.avatar-img {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: #f2f2f7;
+  border: 4rpx dashed #c7c7cc;
+}
+
+.avatar-tip {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #86868b;
+}
+
+/* 昵称输入 */
+.nickname-input-wrap {
+  background: #f7f7f7;
+  border-radius: 16rpx;
+  padding: 4rpx;
+}
+
+.nickname-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+/* 授权按钮 */
+.auth-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-btn.primary {
+  background: #007aff;
+  color: #fff;
+}
+
+.auth-btn.primary:active {
+  background: #0066d6;
+}
+
+.auth-btn[disabled] {
+  background: #c7c7cc;
+  color: #fff;
+}
+
+/* 跳过文字 */
+.skip-text {
+  font-size: 24rpx;
+  color: #86868b;
+  text-align: center;
+  padding: 12rpx 0;
+}
+
+.skip-text:active {
+  color: #007aff;
+}
+
+/* 步骤状态 */
+.step-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-text {
+  font-size: 26rpx;
+  color: #86868b;
+}
+
+.status-text.success {
+  color: #34c759;
+  font-weight: 500;
+}
+
+/* 成功容器 */
+.success-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.success-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #34c759;
+  color: #fff;
+  font-size: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 8rpx;
+}
+
+.success-desc {
+  font-size: 24rpx;
+  color: #86868b;
+}
+
+/* 底部协议 */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 30rpx 0 50rpx;
+}
+
+.footer .tip {
+  font-size: 22rpx;
+  color: #86868b;
+}
+
+.footer .link {
+  font-size: 22rpx;
+  color: #007aff;
+}
+
+.footer .link:active {
+  opacity: 0.7;
+}

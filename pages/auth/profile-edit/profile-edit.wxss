@@ -1,17 +1,182 @@
-.page{min-height:100vh;background:#f2f2f7;padding:40rpx;display:flex;justify-content:flex-start}
-.card{flex:1;background:#fff;border-radius:32rpx;padding:40rpx;box-shadow:0 24rpx 60rpx rgba(0,0,0,0.06)}
-.avatar-wrap{display:flex;align-items:center;gap:24rpx;margin-bottom:32rpx}
-.avatar{width:160rpx;height:160rpx;border-radius:50%;background:#f2f2f7}
-.field{margin:24rpx 0}
-.label{display:block;color:#8e8e93;font-size:26rpx;margin-bottom:10rpx}
-.input{background:#f7f7f7;border-radius:16rpx;padding:22rpx 24rpx}
-.row{display:flex;align-items:center;justify-content:space-between}
-.phone{font-size:28rpx;color:#000}
-.btn{background:#000;color:#fff;border-radius:50rpx;padding:20rpx 30rpx}
-.btn.ghost{background:#f2f2f7;color:#000}
-.btn.primary{margin-top:40rpx}
+/* 个人资料编辑页面样式 */
+.page {
+  min-height: 100vh;
+  background: #f2f2f7;
+  padding: 40rpx;
+  box-sizing: border-box;
+}
 
+.card {
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.06);
+}
 
+/* 头像区域 */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+  padding-bottom: 32rpx;
+  border-bottom: 1rpx solid #f2f2f7;
+}
 
+.avatar-wrap {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+}
 
+.avatar {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: #f2f2f7;
+}
 
+.avatar-edit-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 48rpx;
+  height: 48rpx;
+  background: #007aff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid #fff;
+}
+
+.avatar-edit-icon .icon {
+  font-size: 24rpx;
+}
+
+.avatar-tip {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #86868b;
+}
+
+/* 表单字段 */
+.field {
+  margin: 32rpx 0;
+}
+
+.label {
+  display: block;
+  color: #86868b;
+  font-size: 26rpx;
+  margin-bottom: 12rpx;
+}
+
+.input {
+  width: 100%;
+  background: #f7f7f7;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+/* 手机号行 */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f7f7f7;
+  border-radius: 16rpx;
+  padding: 16rpx 24rpx;
+}
+
+.phone {
+  font-size: 30rpx;
+  color: #1d1d1f;
+}
+
+.phone.placeholder {
+  color: #c7c7cc;
+}
+
+/* 登录状态 */
+.login-status {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #f7f7f7;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+}
+
+.status-text {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.status-text.valid {
+  color: #34c759;
+}
+
+.status-text.expired {
+  color: #ff3b30;
+}
+
+.expire-time {
+  font-size: 24rpx;
+  color: #86868b;
+}
+
+/* 按钮样式 */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.btn.ghost {
+  background: #e5e5ea;
+  color: #1d1d1f;
+  padding: 16rpx 24rpx;
+}
+
+.btn.ghost.small {
+  font-size: 26rpx;
+  padding: 12rpx 20rpx;
+}
+
+.btn.primary {
+  width: 100%;
+  height: 96rpx;
+  background: #007aff;
+  color: #fff;
+  margin-top: 48rpx;
+}
+
+.btn.primary:active {
+  background: #0066d6;
+}
+
+.btn.primary[disabled] {
+  background: #c7c7cc;
+}
+
+.btn.logout {
+  width: 100%;
+  height: 88rpx;
+  background: transparent;
+  color: #ff3b30;
+  margin-top: 24rpx;
+  font-weight: 400;
+}
+
+.btn.logout:active {
+  background: #fff5f5;
+}

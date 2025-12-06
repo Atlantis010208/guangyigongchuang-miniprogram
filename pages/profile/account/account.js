@@ -27,41 +27,69 @@ Page({
       if (wx.cloud) {
         const db = wx.cloud.database()
         let uid = this.data.userId
-        if (!uid) {
-          const openid = this.data.openid
-          if (openid) {
-            const q = await db.collection('users').where({ _openid: openid }).limit(1).get()
-            if (q && q.data && q.data.length) {
-              uid = q.data[0]._id
-              this.setData({ userId: uid })
-              try { wx.setStorageSync('userDoc', q.data[0]) } catch (e) {}
-            }
+        const openid = this.data.openid
+        let userData = null
+
+        // 方法1：通过 _id 查询
+        if (uid) {
+          try {
+            const doc = await db.collection('users').doc(uid).get()
+            userData = doc && doc.data ? doc.data : null
+          } catch (docErr) {
+            console.warn('通过 _id 查询失败，尝试 _openid', docErr.message)
           }
         }
-        if (uid) {
-          const doc = await db.collection('users').doc(uid).get()
-          const u = doc.data || {}
+
+        // 方法2：如果 _id 失败，通过 _openid 查询
+        if (!userData && openid) {
+          try {
+            const q = await db.collection('users').where({ _openid: openid }).limit(1).get()
+            if (q && q.data && q.data.length) {
+              userData = q.data[0]
+              uid = userData._id
+              this.setData({ userId: uid })
+              try { wx.setStorageSync('userDoc', userData) } catch (e) {}
+            }
+          } catch (queryErr) {
+            console.warn('通过 _openid 查询失败', queryErr.message)
+          }
+        }
+
+        // 成功获取用户数据
+        if (userData) {
           this.setData({
             user: {
-              name: u.nickname || '',
-              phone: u.phoneNumber || '',
-              avatar: u.avatarUrl || ''
+              name: userData.nickname || '',
+              phone: userData.phoneNumber || '',
+              avatar: userData.avatarUrl || ''
             }
           })
           return
         }
       }
+
       // fallback 本地
-    const userData = wx.getStorageSync('user_profile') || {}
-    this.setData({
-      user: {
-          name: userData.name || '',
-          phone: userData.phone || '',
-        avatar: userData.avatar || ''
-      }
-    })
+      const localProfile = wx.getStorageSync('user_profile') || {}
+      const cachedDoc = wx.getStorageSync('userDoc') || {}
+      this.setData({
+        user: {
+          name: localProfile.name || cachedDoc.nickname || '',
+          phone: localProfile.phone || cachedDoc.phoneNumber || '',
+          avatar: localProfile.avatar || cachedDoc.avatarUrl || ''
+        }
+      })
     } catch (err) {
       console.error('加载用户资料失败', err)
+      // 发生错误时使用本地缓存
+      const localProfile = wx.getStorageSync('user_profile') || {}
+      const cachedDoc = wx.getStorageSync('userDoc') || {}
+      this.setData({
+        user: {
+          name: localProfile.name || cachedDoc.nickname || '',
+          phone: localProfile.phone || cachedDoc.phoneNumber || '',
+          avatar: localProfile.avatar || cachedDoc.avatarUrl || ''
+        }
+      })
     }
   },
 

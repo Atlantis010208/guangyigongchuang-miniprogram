@@ -1,28 +1,68 @@
+<!-- 个人资料编辑页面 -->
 <view class="page">
   <view class="card">
-    <view class="avatar-wrap">
-      <image class="avatar" src="{{avatarUrl || '/images/个人中心.png'}}" mode="aspectFill"></image>
-      <button class="btn ghost" bindtap="chooseAvatar">更换头像</button>
+    <!-- 头像区域 -->
+    <view class="avatar-section">
+      <view class="avatar-wrap" bindtap="chooseAvatar">
+        <image class="avatar" src="{{avatarUrl || '/images/个人中心.png'}}" mode="aspectFill"></image>
+        <view class="avatar-edit-icon">
+          <text class="icon">📷</text>
+        </view>
+      </view>
+      <text class="avatar-tip">点击更换头像</text>
     </view>
 
+    <!-- 昵称 -->
     <view class="field">
       <text class="label">昵称</text>
-      <input class="input" placeholder="请输入昵称" value="{{nickname}}" bindinput="onNicknameInput" />
+      <input 
+        class="input" 
+        placeholder="请输入昵称" 
+        value="{{nickname}}" 
+        bindinput="onNicknameInput" 
+        maxlength="20"
+      />
     </view>
 
+    <!-- 手机号 -->
     <view class="field">
       <text class="label">手机号</text>
       <view class="row">
-        <text class="phone">{{phone || '未绑定'}}</text>
-        <button class="btn" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">获取手机号</button>
+        <text class="phone {{phone ? '' : 'placeholder'}}">{{phone || '未绑定'}}</text>
+        <button 
+          class="btn ghost small" 
+          open-type="getPhoneNumber" 
+          bindgetphonenumber="onGetPhoneNumber"
+        >
+          {{phone ? '更换' : '绑定'}}
+        </button>
       </view>
     </view>
 
-    <button class="btn primary" loading="{{saving}}" bindtap="onSave">保存</button>
+    <!-- 登录状态信息 -->
+    <view class="field" wx:if="{{loginExpireInfo}}">
+      <text class="label">登录状态</text>
+      <view class="login-status">
+        <text class="status-text {{loginExpireInfo.isValid ? 'valid' : 'expired'}}">
+          {{loginExpireInfo.isValid ? '有效' : '已过期'}}
+        </text>
+        <text class="expire-time" wx:if="{{loginExpireInfo.isValid}}">
+          {{loginExpireInfo.remainText}}后过期
+        </text>
+      </view>
+    </view>
+
+    <!-- 保存按钮 -->
+    <button 
+      class="btn primary" 
+      loading="{{saving}}" 
+      disabled="{{saving}}"
+      bindtap="onSave"
+    >
+      保存修改
+    </button>
+
+    <!-- 退出登录 -->
+    <button class="btn logout" bindtap="onLogout">退出登录</button>
   </view>
 </view>
-
-
-
-
-

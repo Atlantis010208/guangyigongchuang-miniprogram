@@ -1,9 +1,123 @@
-<!-- 微信登录页面 -->
+<!-- 微信登录页面 - 三步授权流程 -->
 <view class="page">
-  <text class="title">微信登录</text>
-  <text class="subtitle">用于身份校验与保存照明需求</text>
-  <button class="auth-btn" open-type="getUserInfo" bindtap="onWxLogin">授权并登录</button>
-  <text class="tip">登录即表示同意《用户协议》和《隐私政策》</text>
+  <!-- 标题区域 -->
+  <view class="header">
+    <image class="logo" src="/images/个人中心.png" mode="aspectFill"></image>
+    <text class="title">欢迎使用</text>
+    <text class="subtitle">光乙共创平台 · 专业照明设计服务</text>
+  </view>
+
+  <!-- 授权步骤区域 -->
+  <view class="steps-container">
+    <!-- 步骤1：微信登录 -->
+    <view class="step-item {{step >= 1 ? 'active' : ''}} {{step > 1 ? 'done' : ''}}">
+      <view class="step-header">
+        <view class="step-number">{{step > 1 ? '✓' : '1'}}</view>
+        <text class="step-title">微信身份验证</text>
+      </view>
+      <view class="step-content" wx:if="{{step === 1}}">
+        <text class="step-desc">获取您的微信身份标识，用于保存照明需求</text>
+        <button 
+          class="auth-btn primary" 
+          bindtap="onWxLogin" 
+          loading="{{loginLoading}}"
+          disabled="{{loginLoading}}"
+        >
+          授权登录
+        </button>
+      </view>
+      <view class="step-status" wx:if="{{step > 1}}">
+        <text class="status-text success">已完成</text>
+      </view>
+    </view>
+
+    <!-- 步骤2：填写昵称头像（按官方文档使用 form 收集数据） -->
+    <view class="step-item {{step >= 2 ? 'active' : ''}} {{step > 2 ? 'done' : ''}}">
+      <view class="step-header">
+        <view class="step-number">{{step > 2 ? '✓' : '2'}}</view>
+        <text class="step-title">完善个人信息</text>
+      </view>
+      <view class="step-content" wx:if="{{step === 2}}">
+        <text class="step-desc">设置您的头像和昵称</text>
+        
+        <!-- 使用 form 组件收集数据（官方推荐方式） -->
+        <form bindsubmit="onProfileFormSubmit">
+          <!-- 头像选择 - 使用 button open-type="chooseAvatar" -->
+          <view class="avatar-picker">
+            <button 
+              class="avatar-btn" 
+              open-type="chooseAvatar" 
+              bindchooseavatar="onChooseAvatar"
+            >
+              <image class="avatar-img" src="{{avatarUrl || '/images/个人中心.png'}}" mode="aspectFill"></image>
+              <text class="avatar-tip">点击选择头像</text>
+            </button>
+          </view>
+          
+          <!-- 昵称输入 - 使用 input type="nickname" -->
+          <view class="nickname-input-wrap">
+            <input 
+              class="nickname-input" 
+              type="nickname" 
+              name="nickname"
+              placeholder="请输入昵称"
+            />
+          </view>
+
+          <!-- 使用 form-type="submit" 的按钮提交表单 -->
+          <button 
+            class="auth-btn primary" 
+            form-type="submit"
+            loading="{{profileLoading}}"
+            disabled="{{profileLoading}}"
+          >
+            下一步
+          </button>
+        </form>
+        <text class="skip-text" bindtap="onSkipProfile">跳过此步骤</text>
+      </view>
+      <view class="step-status" wx:if="{{step > 2}}">
+        <text class="status-text success">{{nickname || '已完成'}}</text>
+      </view>
+    </view>
+
+    <!-- 步骤3：手机号授权 -->
+    <view class="step-item {{step >= 3 ? 'active' : ''}} {{step > 3 ? 'done' : ''}}">
+      <view class="step-header">
+        <view class="step-number">{{step > 3 ? '✓' : '3'}}</view>
+        <text class="step-title">手机号验证</text>
+      </view>
+      <view class="step-content" wx:if="{{step === 3}}">
+        <text class="step-desc">绑定手机号，方便设计师与您联系</text>
+        <button 
+          class="auth-btn primary" 
+          open-type="getPhoneNumber" 
+          bindgetphonenumber="onGetPhoneNumber"
+          loading="{{phoneLoading}}"
+          disabled="{{phoneLoading}}"
+        >
+          授权手机号
+        </button>
+        <text class="skip-text" bindtap="onSkipPhone">稍后再说</text>
+      </view>
+      <view class="step-status" wx:if="{{step > 3}}">
+        <text class="status-text success">{{phoneNumber || '已完成'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 登录成功提示 -->
+  <view class="success-container" wx:if="{{step > 3}}">
+    <view class="success-icon">✓</view>
+    <text class="success-title">授权完成</text>
+    <text class="success-desc">正在跳转...</text>
+  </view>
+
+  <!-- 底部协议 -->
+  <view class="footer">
+    <text class="tip">登录即表示同意</text>
+    <text class="link" bindtap="showAgreement">《用户协议》</text>
+    <text class="tip">和</text>
+    <text class="link" bindtap="showPrivacy">《隐私政策》</text>
+  </view>
 </view>
-
-
