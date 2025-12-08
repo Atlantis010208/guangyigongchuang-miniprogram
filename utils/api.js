@@ -19,7 +19,16 @@ const getUsersRepo = (db) => {
     getByOpenId(openid) { return col.where({ _openid: openid }).limit(1).get().then(res => (res.data && res.data[0]) || null) },
     create(data) { return col.add({ data: { ...data, createdAt: Date.now(), updatedAt: Date.now() } }).then(r => col.doc(r._id).get()).then(res => res.data) },
     update(id, patch) { return col.doc(id).update({ data: { ...patch, updatedAt: Date.now() } }) },
-    watchById(id, handler) { return col.doc(id).watch({ onChange: handler, onError: () => {} }) }
+    watchById(id, handler) { 
+      return col.doc(id).watch({ 
+        onChange: handler, 
+        onError: (err) => {
+          // 忽略状态机错误（CLOSED 状态不接受操作）
+          if (err && err.message && err.message.includes('does not accept')) return
+          console.warn('watchById error:', err)
+        }
+      }) 
+    }
   }
 }
 
@@ -41,7 +50,12 @@ const getOrdersRepo = (db) => {
     removeByOrderNo(orderNo) { return col.where({ orderNo }).update({ data: { isDelete: 1, updatedAt: Date.now() } }) },
     // 使用 _openid 监听（自动注入）
     watchByUser(userId, onChange, onError) {
-      return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: onError || (()=>{}) })
+      const safeOnError = (err) => {
+        // 忽略状态机错误（CLOSED 状态不接受操作）
+        if (err && err.message && err.message.includes('does not accept')) return
+        if (onError) onError(err)
+      }
+      return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: safeOnError })
     }
   }
 }
@@ -61,7 +75,12 @@ const getRequestsRepo = (db) => {
     remove(id) { return col.doc(id).update({ data: { isDelete: 1, updatedAt: Date.now() } }) },
     // 使用 _openid 监听（自动注入）
     watchByUser(userId, onChange, onError) {
-      return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: onError || (()=>{}) })
+      const safeOnError = (err) => {
+        // 忽略状态机错误（CLOSED 状态不接受操作）
+        if (err && err.message && err.message.includes('does not accept')) return
+        if (onError) onError(err)
+      }
+      return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: safeOnError })
     }
   }
 }

@@ -11,31 +11,59 @@ module.exports = {
 };
 </wxs>
 
-<scroll-view class="page" scroll-y>
+<scroll-view class="page" scroll-y enable-back-to-top>
   <view class="header">
     <text class="title">购物车</text>
-    <view class="edit-btn" bindtap="onToggleEdit"><text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text></view>
+    <view wx:if="{{items.length > 0}}" class="header-actions">
+      <view class="edit-btn" bindtap="onToggleEdit">
+        <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
+      </view>
+      <view wx:if="{{isEditing}}" class="clear-btn" bindtap="clearCart">
+        <text class="clear-text">清空</text>
+      </view>
+    </view>
   </view>
 
-  <view wx:if="{{items.length}}" class="list">
+  <!-- 统计信息 -->
+  <view wx:if="{{items.length > 0}}" class="stats-bar">
+    <text class="stats-text">共 {{items.length}} 件商品，合计 ¥{{total}}</text>
+  </view>
+
+  <!-- 加载中状态 -->
+  <view wx:if="{{loading && items.length === 0}}" class="loading-state">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 购物车列表 -->
+  <view wx:elif="{{items.length > 0}}" class="list">
     <view class="row" wx:for="{{items}}" wx:key="_key">
-      <image class="cover" src="{{item.image}}" mode="aspectFill"></image>
-      <view class="info">
-        <text class="name">{{item.name}}</text>
-        <text class="price">¥{{item.price}}</text>
-        <text wx:if="{{item.specs}}" class="specs">{{formatSpecs(item.specs)}}</text>
-        <view class="qty">
-          <view class="btn" bindtap="dec" data-id="{{item.id}}">-</view>
-          <text class="num">{{item.quantity}}</text>
-          <view class="btn" bindtap="inc" data-id="{{item.id}}">+</view>
-        </view>
-      </view>
+      <!-- 编辑模式下的选择框 -->
       <block wx:if="{{isEditing}}">
-        <view class="select-box {{utils.isSelected(selectedIds, item._key) ? 'selected' : ''}}" bindtap="onToggleSelect" data-key="{{item._key}}">
+        <view 
+          class="select-box {{utils.isSelected(selectedIds, item._key) ? 'selected' : ''}}" 
+          bindtap="onToggleSelect" 
+          data-key="{{item._key}}"
+        >
           <text class="tick">✓</text>
         </view>
       </block>
-      <block wx:else>
+      
+      <image class="cover" src="{{item.image}}" mode="aspectFill"></image>
+      
+      <view class="info">
+        <text class="name">{{item.name}}</text>
+        <text wx:if="{{item.specsText}}" class="specs">{{item.specsText}}</text>
+        <text class="price">¥{{item.price}}</text>
+        <view class="qty">
+          <view class="qty-btn" bindtap="dec" data-id="{{item.id}}">-</view>
+          <text class="num">{{item.quantity || 1}}</text>
+          <view class="qty-btn" bindtap="inc" data-id="{{item.id}}">+</view>
+        </view>
+      </view>
+      
+      <!-- 非编辑模式下的购买按钮 -->
+      <block wx:if="{{!isEditing}}">
         <view class="row-actions">
           <button class="btn solid" data-id="{{item.id}}" bindtap="onBuySingle">购买</button>
         </view>
@@ -43,6 +71,7 @@ module.exports = {
     </view>
   </view>
 
+  <!-- 空状态 -->
   <view wx:else class="empty">
     <image class="empty-icon" src="/images/empty-address.png" mode="aspectFit"></image>
     <text class="empty-title">购物车是空的</text>
@@ -55,12 +84,21 @@ module.exports = {
 <view class="floating-contact" bindtap="onContact">
   <image class="float-icon" src="/images/客服.png" mode="aspectFit"></image>
   <text class="float-text">联系客服</text>
-  
 </view>
 
-<view wx:if="{{items.length && isEditing}}" class="footer">
-  <button class="btn danger" bindtap="onBatchDelete">删除</button>
-  <button class="btn primary" bindtap="onBatchCheckout">一键购买</button>
+<!-- 编辑模式底部栏 -->
+<view wx:if="{{items.length > 0 && isEditing}}" class="footer">
+  <view class="footer-left">
+    <view class="select-all" bindtap="onToggleSelectAll">
+      <view class="select-box {{selectedIds.length === items.length ? 'selected' : ''}}">
+        <text class="tick">✓</text>
+      </view>
+      <text class="select-all-text">全选</text>
+    </view>
+    <text class="selected-count">已选 {{selectedIds.length}} 件</text>
+  </view>
+  <view class="footer-right">
+    <button class="btn danger" bindtap="onBatchDelete">删除</button>
+    <button class="btn primary" bindtap="onBatchCheckout">一键购买</button>
+  </view>
 </view>
-
-

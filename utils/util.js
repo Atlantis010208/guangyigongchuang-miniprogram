@@ -203,6 +203,157 @@ const getSafeArea = () => {
   }
 }
 
+/**
+ * 调用云函数
+ * @param {string} name - 云函数名称
+ * @param {object} data - 请求参数
+ * @returns {Promise<object>} 云函数返回结果
+ */
+const callCf = (name, data) => {
+  try {
+    if (!wx.cloud || !wx.cloud.callFunction) {
+      return Promise.resolve({ success: false, code: 'CF_UNAVAILABLE', errorMessage: 'cloud not available' })
+    }
+    return wx.cloud.callFunction({ name, data })
+      .then(res => (res && res.result) ? res.result : { success: false, code: 'CF_EMPTY', errorMessage: 'empty result' })
+      .catch(err => ({ success: false, code: 'CF_ERROR', errorMessage: (err && err.message) || 'error' }))
+  } catch (e) {
+    return Promise.resolve({ success: false, code: 'CF_ERROR', errorMessage: (e && e.message) || 'error' })
+  }
+}
+
+// ==================== 收藏相关方法 ====================
+
+/**
+ * 添加收藏
+ * @param {object} product - 商品信息 { id, name, price, image, specs, description, category }
+ * @returns {Promise<object>} 操作结果
+ */
+const addFavorite = async (product) => {
+  try {
+    const res = await callCf('favorites_operations', {
+      action: 'add',
+      product
+    })
+    
+    if (res && res.success) {
+      // 同步更新本地缓存
+      const list = wx.getStorageSync('mall_favorites') || []
+      const exists = list.some(i => i.id === product.id)
+      if (!exists) {
+        list.unshift({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          specs: product.specs || {}
+        })
+        wx.setStorageSync('mall_favorites', list)
+      }
+    }
+    
+    return res
+  } catch (err) {
+    console.error('添加收藏失败:', err)
+    // 降级到本地存储
+    const list = wx.getStorageSync('mall_favorites') || []
+    const exists = list.some(i => i.id === product.id)
+    if (!exists) {
+      list.unshift({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        specs: product.specs || {}
+      })
+      wx.setStorageSync('mall_favorites', list)
+    }
+    return { success: true, code: 'LOCAL_OK', message: '已收藏（本地）' }
+  }
+}
+
+/**
+ * 移除收藏
+ * @param {string} productId - 商品ID
+ * @returns {Promise<object>} 操作结果
+ */
+const removeFavorite = async (productId) => {
+  try {
+    const res = await callCf('favorites_operations', {
+      action: 'remove',
+      productId
+    })
+    
+    if (res && res.success) {
+      // 同步更新本地缓存
+      const list = wx.getStorageSync('mall_favorites') || []
+      const next = list.filter(i => i.id !== productId)
+      wx.setStorageSync('mall_favorites', next)
+    }
+    
+    return res
+  } catch (err) {
+    console.error('移除收藏失败:', err)
+    // 降级到本地存储
+    const list = wx.getStorageSync('mall_favorites') || []
+    const next = list.filter(i => i.id !== productId)
+    wx.setStorageSync('mall_favorites', next)
+    return { success: true, code: 'LOCAL_OK', message: '已取消收藏（本地）' }
+  }
+}
+
+/**
+ * 检查是否已收藏
+ * @param {string} productId - 商品ID
+ * @returns {Promise<boolean>} 是否已收藏
+ */
+const checkFavorite = async (productId) => {
+  try {
+    const res = await callCf('favorites_operations', {
+      action: 'check',
+      productId
+    })
+    
+    if (res && res.success && res.data) {
+      return res.data.isFavorited
+    }
+    
+    // 云函数检查失败，从本地缓存判断
+    const list = wx.getStorageSync('mall_favorites') || []
+    return list.some(i => i.id === productId)
+  } catch (err) {
+    // 降级到本地存储
+    const list = wx.getStorageSync('mall_favorites') || []
+    return list.some(i => i.id === productId)
+  }
+}
+
+/**
+ * 切换收藏状态
+ * @param {object} product - 商品信息
+ * @param {boolean} currentState - 当前收藏状态
+ * @returns {Promise<object>} { success, isFavorited, message }
+ */
+const toggleFavorite = async (product, currentState) => {
+  if (currentState) {
+    // 当前已收藏，执行取消
+    const res = await removeFavorite(product.id)
+    return {
+      success: res.success,
+      isFavorited: false,
+      message: res.success ? '已取消收藏' : '取消收藏失败'
+    }
+  } else {
+    // 当前未收藏，执行添加
+    const res = await addFavorite(product)
+    return {
+      success: res.success,
+      isFavorited: true,
+      message: res.success ? '已收藏' : '收藏失败'
+    }
+  }
+}
+
 module.exports = {
   formatTime,
   formatPrice,
@@ -225,12 +376,10 @@ module.exports = {
   getShareConfig,
   hapticFeedback,
   getSafeArea,
-  callCf: (name, data) => {
-    try {
-      if (!wx.cloud || !wx.cloud.callFunction) return Promise.resolve({ success: false, code: 'CF_UNAVAILABLE', errorMessage: 'cloud not available' })
-      return wx.cloud.callFunction({ name, data }).then(res => (res && res.result) ? res.result : { success: false, code: 'CF_EMPTY', errorMessage: 'empty result' }).catch(err => ({ success: false, code: 'CF_ERROR', errorMessage: (err && err.message) || 'error' }))
-    } catch (e) {
-      return Promise.resolve({ success: false, code: 'CF_ERROR', errorMessage: (e && e.message) || 'error' })
-    }
-  }
+  callCf,
+  // 收藏相关方法
+  addFavorite,
+  removeFavorite,
+  checkFavorite,
+  toggleFavorite
 }

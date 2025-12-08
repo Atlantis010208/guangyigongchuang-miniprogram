@@ -11,12 +11,10 @@
         <input class="input" placeholder="请输入手机号" value="{{form.phone}}" bindinput="onInput" data-field="phone" type="number" />
       </view>
 
-      <view class="cell">
+      <picker class="cell picker-cell" mode="region" value="{{form.region}}" bindchange="onRegionChange">
         <text class="label">省市区/县</text>
-        <picker mode="region" value="{{form.region}}" bindchange="onRegionChange">
-          <view class="picker-text">{{ regionText || '请选择省/市/区' }}</view>
-        </picker>
-      </view>
+        <view class="picker-text">{{ regionText || '请选择省/市/区' }}</view>
+      </picker>
 
       <view class="cell">
         <text class="label">镇/街道</text>

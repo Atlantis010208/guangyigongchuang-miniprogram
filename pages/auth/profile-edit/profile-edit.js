@@ -13,6 +13,7 @@ Page({
     openid: '',
     userId: '',
     saving: false,
+    loading: false,
     loginExpireInfo: null
   },
 
@@ -34,9 +35,63 @@ Page({
   },
 
   /**
-   * 加载用户信息
+   * 下拉刷新
    */
-  loadUserInfo() {
+  onPullDownRefresh() {
+    this.loadUserInfo().then(() => {
+      wx.stopPullDownRefresh()
+    })
+  },
+
+  /**
+   * 加载用户信息（通过云函数）
+   */
+  async loadUserInfo() {
+    this.setData({ loading: true })
+    
+    try {
+      const res = await util.callCf('user_operations', {
+        action: 'get'
+      })
+      
+      if (res && res.success && res.data) {
+        const user = res.data
+        
+        this.setData({
+          userId: user.id || '',
+          nickname: user.nickname || '',
+          phone: user.phoneNumber || '',
+          avatarUrl: user.avatarTempUrl || '',  // 使用临时链接显示
+          avatarFileID: user.avatarUrl || '',    // 保存原始 fileID
+          openid: wx.getStorageSync('openid') || ''
+        })
+        
+        // 更新本地缓存
+        const userDoc = {
+          _id: user.id,
+          nickname: user.nickname,
+          avatarUrl: user.avatarUrl,
+          phoneNumber: user.phoneNumber,
+          roles: user.roles
+        }
+        wx.setStorageSync('userDoc', userDoc)
+      } else {
+        console.warn('获取用户信息失败:', res?.message)
+        // 降级到本地缓存
+        this.loadFromLocal()
+      }
+    } catch (err) {
+      console.error('加载用户信息失败:', err)
+      this.loadFromLocal()
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  /**
+   * 从本地缓存加载用户信息（降级方案）
+   */
+  loadFromLocal() {
     const userDoc = wx.getStorageSync('userDoc') || {}
     const openid = wx.getStorageSync('openid') || ''
     const rawAvatarUrl = userDoc.avatarUrl || ''
@@ -46,108 +101,37 @@ Page({
       userId: userDoc._id || '',
       nickname: userDoc.nickname || userDoc.nickName || '',
       phone: userDoc.phoneNumber || '',
-      avatarUrl: '', // 先置空，等转换后再设置
+      avatarUrl: '',
       avatarFileID: rawAvatarUrl.startsWith('cloud://') ? rawAvatarUrl : ''
     })
 
-    // 转换头像地址为可用的临时链接
+    // 转换头像地址
     this.convertAvatarUrl(rawAvatarUrl)
   },
 
   /**
-   * 转换头像URL
-   * 如果是 cloud:// fileID 则获取临时链接
-   * 如果是已过期的 tcb.qcloud.la 链接，尝试从云数据库重新获取 fileID
+   * 转换头像URL（将 cloud:// fileID 转换为临时链接）
    */
   async convertAvatarUrl(avatarUrl) {
     if (!avatarUrl) return
 
-    // 如果是 cloud:// 开头的 fileID，需要转换为临时链接
     if (avatarUrl.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
       try {
         const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
-        if (res && res.fileList && res.fileList[0]) {
-          const item = res.fileList[0]
-          if (item.tempFileURL) {
-            this.setData({ 
-              avatarUrl: item.tempFileURL,
-              avatarFileID: avatarUrl 
-            })
-          } else {
-            // 转换失败，可能文件不存在
-            this.setData({ avatarUrl: '' })
-          }
-        }
-      } catch (e) {
-        console.warn('转换头像URL失败', e)
-        this.setData({ avatarUrl: '' })
-      }
-      return
-    }
-
-    // 如果是 tcb.qcloud.la 的临时链接（可能已过期），尝试从云数据库重新获取
-    if (avatarUrl.includes('tcb.qcloud.la') || avatarUrl.includes('.tcb.')) {
-      try {
-        await this.refreshAvatarFromCloud()
-      } catch (e) {
-        console.warn('刷新头像失败', e)
-        this.setData({ avatarUrl: '' })
-      }
-      return
-    }
-
-    // 其他情况（如 http/https 外链），直接使用
-    this.setData({ avatarUrl })
-  },
-
-  /**
-   * 从云数据库重新获取头像 fileID 并转换
-   */
-  async refreshAvatarFromCloud() {
-    if (!wx.cloud) return
-
-    const { userId, openid } = this.data
-    if (!userId && !openid) return
-
-    const db = wx.cloud.database()
-    let userRecord = null
-
-    try {
-      if (userId) {
-        const res = await db.collection('users').doc(userId).get()
-        userRecord = res && res.data
-      } else if (openid) {
-        const res = await db.collection('users').where({ _openid: openid }).limit(1).get()
-        userRecord = res && res.data && res.data[0]
-      }
-    } catch (e) {
-      console.warn('查询用户记录失败', e)
-      return
-    }
-
-    if (!userRecord || !userRecord.avatarUrl) return
-
-    const fileID = userRecord.avatarUrl
-
-    // 如果数据库中存的是 cloud:// fileID，则转换
-    if (fileID.startsWith('cloud://')) {
-      try {
-        const res = await wx.cloud.getTempFileURL({ fileList: [fileID] })
         if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
           this.setData({ 
             avatarUrl: res.fileList[0].tempFileURL,
-            avatarFileID: fileID
+            avatarFileID: avatarUrl 
           })
-
-          // 更新本地缓存中的 avatarUrl 为 fileID（确保缓存的是原始 fileID）
-          const userDoc = wx.getStorageSync('userDoc') || {}
-          userDoc.avatarUrl = fileID
-          try { wx.setStorageSync('userDoc', userDoc) } catch (e) {}
         }
       } catch (e) {
-        console.warn('获取临时链接失败', e)
+        console.warn('转换头像URL失败', e)
       }
+      return
     }
+
+    // 其他情况直接使用
+    this.setData({ avatarUrl })
   },
 
   /**
@@ -215,17 +199,29 @@ Page({
 
       wx.showLoading({ title: '上传中...', mask: true })
 
-      const cloudPath = `avatars/${this.data.openid || 'unknown'}-${Date.now()}.jpg`
+      const openid = this.data.openid || wx.getStorageSync('openid') || 'unknown'
+      const cloudPath = `avatars/${openid}-${Date.now()}.jpg`
       const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: tempPath })
 
       wx.hideLoading()
 
       if (uploadRes && uploadRes.fileID) {
+        // 获取临时链接用于显示
+        let tempUrl = uploadRes.fileID
+        try {
+          const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
+          if (urlRes.fileList && urlRes.fileList[0] && urlRes.fileList[0].tempFileURL) {
+            tempUrl = urlRes.fileList[0].tempFileURL
+          }
+        } catch (e) {
+          console.warn('获取临时链接失败', e)
+        }
+        
         this.setData({ 
-          avatarUrl: uploadRes.fileID, 
+          avatarUrl: tempUrl, 
           avatarFileID: uploadRes.fileID 
         })
-        wx.showToast({ title: '头像已更新', icon: 'success' })
+        wx.showToast({ title: '头像已上传', icon: 'success' })
       } else {
         this.setData({ avatarUrl: tempPath })
       }
@@ -275,8 +271,8 @@ Page({
 
           // 更新本地缓存
           const userDoc = wx.getStorageSync('userDoc') || {}
-          const newDoc = { ...userDoc, phoneNumber }
-          try { wx.setStorageSync('userDoc', newDoc) } catch (e) {}
+          userDoc.phoneNumber = phoneNumber
+          wx.setStorageSync('userDoc', userDoc)
 
           wx.showToast({ title: '手机号已更新', icon: 'success' })
         }
@@ -294,20 +290,15 @@ Page({
   },
 
   /**
-   * 保存修改
+   * 保存修改（通过云函数）
    */
   async onSave() {
     if (this.data.saving) return
 
-    const { nickname, phone, avatarUrl, avatarFileID, userId, openid } = this.data
+    const { nickname, avatarFileID } = this.data
 
     if (!nickname || !nickname.trim()) {
       wx.showToast({ title: '请输入昵称', icon: 'none' })
-      return
-    }
-
-    if (!wx.cloud) {
-      wx.showToast({ title: '当前版本不支持云开发', icon: 'none' })
       return
     }
 
@@ -316,41 +307,40 @@ Page({
     try {
       wx.showLoading({ title: '保存中...', mask: true })
 
-      // 保存到数据库时，优先使用 fileID（cloud://格式），确保不会保存过期的临时链接
-      const avatarToSave = avatarFileID || avatarUrl
-
-      const db = wx.cloud.database()
-      const updateData = {
-        nickname: nickname.trim(),
-        avatarUrl: avatarToSave,
-        updatedAt: Date.now()
-      }
-
-      if (userId) {
-        await db.collection('users').doc(userId).update({ data: updateData })
-      } else if (openid) {
-        // 兜底逻辑
-        const exist = await db.collection('users').where({ _openid: openid }).limit(1).get()
-        if (exist && exist.data && exist.data.length) {
-          await db.collection('users').doc(exist.data[0]._id).update({ data: updateData })
+      // 通过云函数更新用户信息
+      const res = await util.callCf('user_operations', {
+        action: 'update',
+        updateData: {
+          nickname: nickname.trim(),
+          avatarUrl: avatarFileID || ''
         }
-      }
-
-      // 更新本地缓存（保存 fileID 格式）
-      const userDoc = wx.getStorageSync('userDoc') || {}
-      const newDoc = { ...userDoc, nickname: nickname.trim(), avatarUrl: avatarToSave }
-      try { wx.setStorageSync('userDoc', newDoc) } catch (e) {}
-
-      // 更新全局数据
-      const app = getApp()
-      app.globalData.userDoc = newDoc
+      })
 
       wx.hideLoading()
-      wx.showToast({ title: '保存成功', icon: 'success' })
 
-      setTimeout(() => {
-        wx.navigateBack()
-      }, 1000)
+      if (res && res.success) {
+        // 更新本地缓存
+        const userDoc = wx.getStorageSync('userDoc') || {}
+        userDoc.nickname = nickname.trim()
+        if (avatarFileID) {
+          userDoc.avatarUrl = avatarFileID
+        }
+        wx.setStorageSync('userDoc', userDoc)
+
+        // 更新全局数据
+        const app = getApp()
+        app.globalData.userDoc = userDoc
+
+        wx.showToast({ title: '保存成功', icon: 'success' })
+
+        setTimeout(() => {
+          wx.navigateBack()
+        }, 1000)
+      } else {
+        // 显示具体错误信息
+        const errorMsg = res?.message || '保存失败'
+        wx.showToast({ title: errorMsg, icon: 'none' })
+      }
     } catch (err) {
       wx.hideLoading()
       console.error('保存资料失败', err)
@@ -382,5 +372,44 @@ Page({
         }
       }
     })
+  },
+
+  /**
+   * 注销账号
+   */
+  async onDeleteAccount() {
+    const confirm1 = await util.showConfirm('注销账号后，您的所有数据将被清除且无法恢复。确定要继续吗？', '注销账号')
+    if (!confirm1) return
+    
+    const confirm2 = await util.showConfirm('请再次确认：注销后账号将无法找回！', '最终确认')
+    if (!confirm2) return
+    
+    util.showLoading('注销中...')
+    
+    try {
+      const res = await util.callCf('user_operations', {
+        action: 'delete_account'
+      })
+      
+      util.hideLoading()
+      
+      if (res && res.success) {
+        // 清除本地登录信息
+        const app = getApp()
+        app.clearLoginCache()
+        
+        wx.showToast({ title: '账号已注销', icon: 'success' })
+        
+        setTimeout(() => {
+          wx.reLaunch({ url: '/pages/auth/login/login' })
+        }, 1500)
+      } else {
+        util.showError(res?.message || '注销失败')
+      }
+    } catch (err) {
+      util.hideLoading()
+      console.error('注销账号失败:', err)
+      util.showError('注销失败')
+    }
   }
 })

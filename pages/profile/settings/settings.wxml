@@ -29,6 +29,15 @@
     </view>
   </view>
 
+  <!-- 其他设置 -->
+  <view class="section">
+    <text class="section-title">其他</text>
+    <view class="setting-item clickable" bindtap="resetSettings">
+      <text class="setting-label">重置设置</text>
+      <text class="setting-arrow">〉</text>
+    </view>
+  </view>
+
   <!-- 账户操作 -->
   <view class="section">
     <text class="section-title">账户</text>

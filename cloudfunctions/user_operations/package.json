@@ -1,0 +1,9 @@
+{
+  "name": "user_operations",
+  "version": "1.0.0",
+  "description": "用户信息操作云函数 - 支持获取、更新用户信息",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

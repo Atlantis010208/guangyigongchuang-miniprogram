@@ -154,9 +154,22 @@ Page({
             console.error('[startWatchers] Requests.listByUser 失败:', err)
           })
         }catch(_){ }
-        if (this._ordersUnwatch && typeof this._ordersUnwatch.close === 'function') { try{ this._ordersUnwatch.close() }catch(_){ } }
-        if (this._requestsUnwatch && typeof this._requestsUnwatch.close === 'function') { try{ this._requestsUnwatch.close() }catch(_){ } }
+        // 安全关闭旧的 watchers
+        if (this._ordersUnwatch && typeof this._ordersUnwatch.close === 'function') { 
+          try{ this._ordersUnwatch.close() }catch(e){ 
+            if (e && e.message && !e.message.includes('does not accept')) console.warn('close orders:', e)
+          } 
+          this._ordersUnwatch = null
+        }
+        if (this._requestsUnwatch && typeof this._requestsUnwatch.close === 'function') { 
+          try{ this._requestsUnwatch.close() }catch(e){ 
+            if (e && e.message && !e.message.includes('does not accept')) console.warn('close requests:', e)
+          } 
+          this._requestsUnwatch = null
+        }
         const onErr = async (err)=>{
+          // 忽略状态机错误
+          if (err && err.message && err.message.includes('does not accept')) return
           if (this._closing) return
           this._closing = true
           this._watching = false

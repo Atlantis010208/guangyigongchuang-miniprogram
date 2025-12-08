@@ -1,11 +1,31 @@
-<scroll-view class="page" scroll-y>
+<scroll-view class="page" scroll-y enable-back-to-top bindscrolltolower="onReachBottom">
   <view class="header">
     <text class="title">我的预约</text>
+    <text class="subtitle" wx:if="{{total > 0}}">共 {{total}} 条预约记录</text>
+  </view>
+
+  <!-- 状态筛选标签 -->
+  <scroll-view class="status-tabs" scroll-x enable-flex>
+    <view 
+      wx:for="{{statusTabs}}" 
+      wx:key="key" 
+      class="tab-item {{currentStatus === item.key ? 'active' : ''}}"
+      bindtap="switchStatus"
+      data-status="{{item.key}}"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 加载中状态 -->
+  <view wx:if="{{loading && appointments.length === 0}}" class="loading-state">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
   </view>
 
   <!-- 预约列表 -->
-  <view wx:if="{{appointments.length > 0}}" class="appointment-list">
-    <view wx:for="{{appointments}}" wx:key="id" class="appointment-card">
+  <view wx:elif="{{appointments.length > 0}}" class="appointment-list">
+    <view wx:for="{{appointments}}" wx:key="id" class="appointment-card" bindtap="viewDetail" data-id="{{item.id}}">
       <view class="appointment-header">
         <text class="service-name">{{item.serviceName}}</text>
         <text class="status status-{{item.status}}">{{item.statusText}}</text>
@@ -23,12 +43,29 @@
           <text class="label">联系电话</text>
           <text class="value">{{item.phone}}</text>
         </view>
+        <view wx:if="{{item.rescheduleCount > 0}}" class="info-row">
+          <text class="label">改期次数</text>
+          <text class="value">{{item.rescheduleCount}} 次</text>
+        </view>
       </view>
-      <view class="appointment-actions">
-        <button wx:if="{{item.status === 'pending'}}" class="btn btn-cancel" bindtap="cancelAppointment" data-id="{{item.id}}">取消预约</button>
-        <button wx:if="{{item.status === 'confirmed'}}" class="btn btn-reschedule" bindtap="rescheduleAppointment" data-id="{{item.id}}">改期</button>
-        <button class="btn btn-contact" bindtap="contactService">联系客服</button>
+      <view class="appointment-actions" catchtap="preventTap">
+        <button wx:if="{{item.status === 'pending'}}" class="btn btn-cancel" catchtap="cancelAppointment" data-id="{{item.id}}">取消预约</button>
+        <button wx:if="{{item.status === 'confirmed'}}" class="btn btn-reschedule" catchtap="rescheduleAppointment" data-id="{{item.id}}">改期</button>
+        <button wx:if="{{item.status === 'pending'}}" class="btn btn-reschedule" catchtap="rescheduleAppointment" data-id="{{item.id}}">改期</button>
+        <button class="btn btn-contact" catchtap="contactService">联系客服</button>
       </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{!loading && hasMore}}">
+      <text>上拉加载更多</text>
+    </view>
+    <view class="load-more" wx:if="{{loading && appointments.length > 0}}">
+      <view class="loading-spinner small"></view>
+      <text>加载中...</text>
+    </view>
+    <view class="load-more" wx:if="{{!hasMore && appointments.length > 0}}">
+      <text>没有更多了</text>
     </view>
   </view>
 
@@ -39,3 +76,49 @@
     <button class="btn btn-primary" bindtap="makeAppointment">立即预约</button>
   </view>
 </scroll-view>
+
+<!-- 改期弹窗 -->
+<view class="modal-mask" wx:if="{{showReschedule}}" bindtap="closeReschedule">
+  <view class="modal-content" catchtap="preventTap">
+    <view class="modal-header">
+      <text class="modal-title">预约改期</text>
+      <view class="modal-close" bindtap="closeReschedule">✕</view>
+    </view>
+    
+    <view class="modal-body">
+      <view class="form-item">
+        <text class="form-label">新日期 <text class="required">*</text></text>
+        <picker mode="date" start="{{minDate}}" value="{{rescheduleDate}}" bindchange="onRescheduleDateChange">
+          <view class="picker-value {{rescheduleDate ? '' : 'placeholder'}}">
+            {{rescheduleDate || '请选择日期'}}
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">新时间 <text class="required">*</text></text>
+        <picker mode="time" value="{{rescheduleTime}}" bindchange="onRescheduleTimeChange">
+          <view class="picker-value {{rescheduleTime ? '' : 'placeholder'}}">
+            {{rescheduleTime || '请选择时间'}}
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">改期原因</text>
+        <textarea 
+          class="form-textarea" 
+          placeholder="请输入改期原因（选填）"
+          value="{{rescheduleReason}}"
+          bindinput="onRescheduleReasonInput"
+          maxlength="200"
+        ></textarea>
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-default" bindtap="closeReschedule">取消</button>
+      <button class="btn btn-primary" bindtap="confirmReschedule">确认改期</button>
+    </view>
+  </view>
+</view>

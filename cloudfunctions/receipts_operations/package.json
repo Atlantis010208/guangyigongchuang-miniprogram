@@ -1,0 +1,9 @@
+{
+  "name": "receipts_operations",
+  "version": "1.0.0",
+  "description": "收据管理云函数 - 支持列表查询、详情、删除、导出等功能",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

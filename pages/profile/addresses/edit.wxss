@@ -6,6 +6,7 @@
 .cell + .cell { border-top: 1rpx solid #eee; }
 .label { font-size:28rpx; color:#000; font-weight:600; display:block; margin-bottom:14rpx; }
 .input { font-size:28rpx; color:#000; }
+.picker-cell { display:block; width:auto; }
 .picker-text { font-size:28rpx; color:#8e8e93; }
 .textarea { width:100%; min-height: 160rpx; font-size:28rpx; color:#000; }
 .footer { position:fixed; left:0; right:0; bottom:0; padding: 20rpx 30rpx calc(40rpx + env(safe-area-inset-bottom)); background:rgba(242,242,247,0.9); backdrop-filter: blur(10rpx); z-index: 2000; }

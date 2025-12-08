@@ -1,14 +1,182 @@
-<scroll-view class="page" scroll-y>
-  <view class="header"><text class="title">自助结账收据</text></view>
-  <view class="cells">
-    <view class="cell" wx:for="{{receipts}}" wx:key="id">
-      <view class="left">
-        <text class="name">{{item.title}}</text>
-        <text class="date">{{item.date}}</text>
-      </view>
-      <text class="amount">¥{{item.amount}}</text>
+<scroll-view class="page" scroll-y enable-back-to-top bindscrolltolower="onReachBottom">
+  <view class="header">
+    <text class="title">自助结账收据</text>
+    <text class="subtitle" wx:if="{{total > 0}}">共 {{total}} 条记录，总计 ¥{{stats.totalAmount}}</text>
+  </view>
+
+  <!-- 搜索和筛选栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <input 
+        class="search-input" 
+        placeholder="搜索收据标题或订单号"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        bindconfirm="onSearch"
+      />
+      <view wx:if="{{keyword}}" class="clear-btn" bindtap="clearSearch">✕</view>
+    </view>
+    <view class="filter-btn" bindtap="showFilterModal">
+      <text>筛选</text>
+      <text wx:if="{{filterStartDate || filterEndDate}}" class="filter-badge"></text>
     </view>
   </view>
-  <view class="empty" wx:if="{{receipts.length===0}}">暂无收据</view>
+
+  <!-- 加载中状态 -->
+  <view wx:if="{{loading && receipts.length === 0}}" class="loading-state">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 收据列表 -->
+  <view wx:elif="{{receipts.length > 0}}" class="cells">
+    <view 
+      class="cell" 
+      wx:for="{{receipts}}" 
+      wx:key="id" 
+      bindtap="viewDetail" 
+      data-id="{{item.id}}"
+    >
+      <view class="left">
+        <view class="cell-header">
+        <text class="name">{{item.title}}</text>
+          <text class="type-tag type-{{item.type}}">{{item.typeText}}</text>
+        </view>
+        <text class="date">{{item.date}}</text>
+        <text wx:if="{{item.orderNo}}" class="order-no">订单号: {{item.orderNo}}</text>
+      </view>
+      <view class="right">
+        <text class="amount {{item.status === 'refunded' ? 'refunded' : ''}}">
+          {{item.status === 'refunded' ? '-' : ''}}¥{{item.amount}}
+        </text>
+        <text class="status" style="color: {{item.statusColor}}">{{item.statusText}}</text>
+        <view class="delete-btn" catchtap="deleteReceipt" data-id="{{item.id}}">删除</view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{!loading && hasMore}}">
+      <text>上拉加载更多</text>
+    </view>
+    <view class="load-more" wx:if="{{loading && receipts.length > 0}}">
+      <view class="loading-spinner small"></view>
+      <text>加载中...</text>
+    </view>
+    <view class="load-more" wx:if="{{!hasMore && receipts.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:else class="empty">
+    <text>暂无收据</text>
+  </view>
+
+  <!-- 导出按钮 -->
+  <view wx:if="{{receipts.length > 0}}" class="export-bar">
+    <button class="export-btn" bindtap="exportReceipts">导出收据汇总</button>
+  </view>
 </scroll-view>
 
+<!-- 筛选弹窗 -->
+<view class="modal-mask" wx:if="{{showFilter}}" bindtap="closeFilter">
+  <view class="modal-content filter-modal" catchtap="preventTap">
+    <view class="modal-header">
+      <text class="modal-title">筛选收据</text>
+      <view class="modal-close" bindtap="closeFilter">✕</view>
+    </view>
+    
+    <view class="modal-body">
+      <view class="form-item">
+        <text class="form-label">开始日期</text>
+        <picker mode="date" start="{{minDate}}" end="{{maxDate}}" value="{{filterStartDate}}" bindchange="onStartDateChange">
+          <view class="picker-value {{filterStartDate ? '' : 'placeholder'}}">
+            {{filterStartDate || '请选择开始日期'}}
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <text class="form-label">结束日期</text>
+        <picker mode="date" start="{{minDate}}" end="{{maxDate}}" value="{{filterEndDate}}" bindchange="onEndDateChange">
+          <view class="picker-value {{filterEndDate ? '' : 'placeholder'}}">
+            {{filterEndDate || '请选择结束日期'}}
+          </view>
+        </picker>
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-default" bindtap="resetFilter">重置</button>
+      <button class="btn btn-primary" bindtap="applyFilter">应用筛选</button>
+    </view>
+  </view>
+</view>
+
+<!-- 详情弹窗 -->
+<view class="modal-mask" wx:if="{{showDetail}}" bindtap="closeDetail">
+  <view class="modal-content detail-modal" catchtap="preventTap">
+    <view class="modal-header">
+      <text class="modal-title">收据详情</text>
+      <view class="modal-close" bindtap="closeDetail">✕</view>
+    </view>
+    
+    <view class="modal-body" wx:if="{{currentReceipt}}">
+      <view class="detail-section">
+        <view class="detail-row main">
+          <text class="detail-title">{{currentReceipt.title}}</text>
+          <text class="detail-amount {{currentReceipt.status === 'refunded' ? 'refunded' : ''}}">
+            {{currentReceipt.status === 'refunded' ? '-' : ''}}¥{{currentReceipt.amount}}
+          </text>
+        </view>
+        <view class="detail-status" style="color: {{currentReceipt.statusColor}}">
+          {{currentReceipt.statusText}}
+        </view>
+      </view>
+      
+      <view class="detail-section">
+        <view class="detail-row">
+          <text class="detail-label">类型</text>
+          <text class="detail-value">{{currentReceipt.typeText}}</text>
+        </view>
+        <view class="detail-row" wx:if="{{currentReceipt.orderNo}}">
+          <text class="detail-label">订单号</text>
+          <text class="detail-value">{{currentReceipt.orderNo}}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">时间</text>
+          <text class="detail-value">{{currentReceipt.date}}</text>
+        </view>
+        <view class="detail-row" wx:if="{{currentReceipt.paymentMethod}}">
+          <text class="detail-label">支付方式</text>
+          <text class="detail-value">{{currentReceipt.paymentMethod}}</text>
+        </view>
+        <view class="detail-row" wx:if="{{currentReceipt.storeName}}">
+          <text class="detail-label">商户名称</text>
+          <text class="detail-value">{{currentReceipt.storeName}}</text>
+        </view>
+      </view>
+      
+      <!-- 购买商品列表 -->
+      <view class="detail-section" wx:if="{{currentReceipt.items && currentReceipt.items.length > 0}}">
+        <text class="section-title">购买商品</text>
+        <view class="item-list">
+          <view class="item-row" wx:for="{{currentReceipt.items}}" wx:key="index">
+            <text class="item-name">{{item.name}}</text>
+            <text class="item-qty">x{{item.quantity || 1}}</text>
+            <text class="item-price">¥{{item.price}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="detail-section" wx:if="{{currentReceipt.remark}}">
+        <text class="section-title">备注</text>
+        <text class="detail-remark">{{currentReceipt.remark}}</text>
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn btn-danger" bindtap="deleteReceipt" data-id="{{currentReceipt.id}}">删除收据</button>
+    </view>
+  </view>
+</view>

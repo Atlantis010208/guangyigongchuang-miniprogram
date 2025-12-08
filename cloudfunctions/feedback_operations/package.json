@@ -1,0 +1,19 @@
+{
+  "name": "feedback_operations",
+  "version": "1.0.0",
+  "description": "用户反馈操作云函数 - 支持提交反馈、查看历史、查看详情",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "feedback",
+    "user",
+    "miniprogram"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

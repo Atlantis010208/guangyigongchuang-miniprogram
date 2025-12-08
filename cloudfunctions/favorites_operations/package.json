@@ -1,0 +1,19 @@
+{
+  "name": "favorites_operations",
+  "version": "1.0.0",
+  "description": "收藏夹操作云函数 - 支持添加、移除、查询、批量删除、清空等操作",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "favorites",
+    "collection",
+    "miniprogram"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

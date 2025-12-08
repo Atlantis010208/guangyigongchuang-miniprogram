@@ -1,8 +1,180 @@
 <scroll-view class="page" scroll-y>
-  <view class="header"><text class="title">提供反馈意见</text></view>
-  <view class="card">
-    <textarea class="input" placeholder="请填写你的建议或问题...（最多500字）" maxlength="500" />
-    <button class="btn" bindtap="submit">提交</button>
+  <!-- 标签切换 -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'submit' ? 'active' : ''}}" bindtap="switchTab" data-tab="submit">
+      <text>提交反馈</text>
+    </view>
+    <view class="tab {{activeTab === 'history' ? 'active' : ''}}" bindtap="switchTab" data-tab="history">
+      <text>历史记录</text>
+      <view wx:if="{{unreadCount > 0}}" class="badge">{{unreadCount}}</view>
+    </view>
+  </view>
+
+  <!-- 提交反馈表单 -->
+  <view wx:if="{{activeTab === 'submit'}}" class="form-container">
+    <view class="header">
+      <text class="title">提供反馈意见</text>
+      <text class="subtitle">您的建议将帮助我们不断改进</text>
+    </view>
+
+    <!-- 反馈类型选择 -->
+    <view class="section">
+      <text class="section-title">反馈类型</text>
+      <view class="type-list">
+        <view 
+          wx:for="{{feedbackTypes}}" 
+          wx:key="value"
+          class="type-item {{form.type === item.value ? 'selected' : ''}}"
+          bindtap="selectType"
+          data-type="{{item.value}}"
+        >
+          <text class="type-icon">{{item.icon}}</text>
+          <text class="type-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 反馈内容 -->
+    <view class="section">
+      <text class="section-title">反馈内容 <text class="required">*</text></text>
+      <view class="textarea-wrapper">
+        <textarea 
+          class="textarea" 
+          placeholder="请详细描述您遇到的问题或建议...（最多500字）" 
+          maxlength="500"
+          value="{{form.content}}"
+          bindinput="onContentInput"
+        />
+        <text class="word-count">{{form.content.length}}/500</text>
+      </view>
+    </view>
+
+    <!-- 图片上传 -->
+    <view class="section">
+      <text class="section-title">上传图片 <text class="optional">（可选，最多9张）</text></text>
+      <view class="image-list">
+        <view wx:for="{{form.images}}" wx:key="index" class="image-item">
+          <image class="preview-image" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}"></image>
+          <view class="remove-btn" catchtap="removeImage" data-index="{{index}}">×</view>
+        </view>
+        <view wx:if="{{form.images.length < 9}}" class="add-image" bindtap="chooseImage">
+          <text class="add-icon">+</text>
+          <text class="add-text">添加图片</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="section">
+      <text class="section-title">联系方式 <text class="optional">（可选，方便我们联系您）</text></text>
+      <input 
+        class="input" 
+        placeholder="手机号或微信号" 
+        value="{{form.contact}}"
+        bindinput="onContactInput"
+      />
+    </view>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="submit" disabled="{{submitting}}">
+      {{submitting ? '提交中...' : '提交反馈'}}
+    </button>
+  </view>
+
+  <!-- 历史记录列表 -->
+  <view wx:if="{{activeTab === 'history'}}" class="history-container">
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <view wx:elif="{{historyList.length === 0}}" class="empty">
+      <text class="empty-icon">📝</text>
+      <text class="empty-text">暂无反馈记录</text>
+    </view>
+
+    <view wx:else class="history-list">
+      <view 
+        wx:for="{{historyList}}" 
+        wx:key="_id" 
+        class="history-item {{item.hasReply && !item.isRead ? 'unread' : ''}}"
+        bindtap="viewDetail"
+        data-id="{{item._id}}"
+      >
+        <view class="item-header">
+          <text class="item-type">{{item.typeLabel}}</text>
+          <text class="item-status status-{{item.status}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="item-content">{{item.content}}</text>
+        <view class="item-footer">
+          <text class="item-time">{{item.createdAtText}}</text>
+          <view wx:if="{{item.hasReply && !item.isRead}}" class="new-reply">有新回复</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{hasMore && historyList.length > 0}}" class="load-more" bindtap="loadMore">
+      <text>{{loadingMore ? '加载中...' : '加载更多'}}</text>
+    </view>
+  </view>
+
+  <!-- 反馈详情弹窗 -->
+  <view wx:if="{{showDetail}}" class="detail-modal" catchtap="closeDetail">
+    <view class="detail-content" catchtap="noop">
+      <view class="detail-header">
+        <text class="detail-title">反馈详情</text>
+        <text class="close-btn" bindtap="closeDetail">×</text>
+      </view>
+      
+      <scroll-view class="detail-body" scroll-y>
+        <view class="detail-section">
+          <text class="detail-label">反馈编号</text>
+          <text class="detail-value">{{currentDetail.feedbackNo}}</text>
+        </view>
+        
+        <view class="detail-section">
+          <text class="detail-label">反馈类型</text>
+          <text class="detail-value">{{currentDetail.typeLabel}}</text>
+        </view>
+        
+        <view class="detail-section">
+          <text class="detail-label">反馈内容</text>
+          <text class="detail-value content">{{currentDetail.content}}</text>
+        </view>
+        
+        <view wx:if="{{currentDetail.imageUrls && currentDetail.imageUrls.length > 0}}" class="detail-section">
+          <text class="detail-label">图片</text>
+          <view class="detail-images">
+            <image 
+              wx:for="{{currentDetail.imageUrls}}" 
+              wx:key="index" 
+              class="detail-image" 
+              src="{{item}}" 
+              mode="aspectFill"
+              bindtap="previewDetailImage"
+              data-index="{{index}}"
+            ></image>
+          </view>
+        </view>
+        
+        <view class="detail-section">
+          <text class="detail-label">状态</text>
+          <text class="detail-value status-{{currentDetail.status}}">{{currentDetail.statusLabel}}</text>
+        </view>
+        
+        <view class="detail-section">
+          <text class="detail-label">提交时间</text>
+          <text class="detail-value">{{currentDetail.createdAtText}}</text>
+        </view>
+        
+        <view wx:if="{{currentDetail.reply}}" class="detail-section reply-section">
+          <text class="detail-label">官方回复</text>
+          <view class="reply-box">
+            <text class="reply-content">{{currentDetail.reply}}</text>
+            <text class="reply-time">{{currentDetail.replyTimeText}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 </scroll-view>
-

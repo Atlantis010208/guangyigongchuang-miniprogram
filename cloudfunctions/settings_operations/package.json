@@ -1,0 +1,19 @@
+{
+  "name": "settings_operations",
+  "version": "1.0.0",
+  "description": "用户设置操作云函数 - 支持获取、更新、重置用户设置",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "settings",
+    "user",
+    "miniprogram"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

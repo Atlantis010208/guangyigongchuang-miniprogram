@@ -1,0 +1,9 @@
+{
+  "name": "appointments_operations",
+  "version": "1.0.0",
+  "description": "预约操作云函数 - 支持列表查询、取消、改期等功能",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

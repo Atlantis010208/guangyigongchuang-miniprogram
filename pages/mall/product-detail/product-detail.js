@@ -1,4 +1,6 @@
 // pages/mall/product-detail/product-detail.js
+const util = require('../../../utils/util')
+
 Page({
   data: {
     id: '',
@@ -55,12 +57,23 @@ Page({
     this.syncFavState()
   },
 
-  syncFavState(){
-    try{
+  /**
+   * 同步收藏状态（优先从云端获取，失败则从本地缓存）
+   */
+  async syncFavState() {
+    try {
+      const isFavorited = await util.checkFavorite(this.data.id)
+      if (isFavorited !== this.data.fav) {
+        this.setData({ fav: isFavorited })
+      }
+    } catch (e) {
+      // 降级到本地存储
+      try {
       const list = wx.getStorageSync('mall_favorites') || []
       const exists = (list || []).some(i => i.id === this.data.id)
       if (exists !== this.data.fav) this.setData({ fav: exists })
-    }catch(e){}
+      } catch (_) {}
+    }
   },
 
   getSkuConfigByProductId(id){
@@ -576,26 +589,39 @@ Page({
   onContact() {
     wx.navigateTo({ url: '/pages/support/contact/contact' })
   },
-  onToggleFav() {
-    const fav = !this.data.fav
-    this.setData({ fav })
-    const list = wx.getStorageSync('mall_favorites') || []
-    if (fav) {
-      const item = {
+  /**
+   * 切换收藏状态（调用云函数）
+   */
+  async onToggleFav() {
+    const currentFav = this.data.fav
+    const product = {
         id: this.data.id,
         name: this.data.name,
         price: this.data.price,
         image: (this.data.images && this.data.images[0]) || '',
-        specs: this.data.selectedVariants || {}
-      }
-      const exists = list.some(i => i.id === item.id)
-      if (!exists) list.unshift(item)
-      wx.setStorageSync('mall_favorites', list)
-    } else {
-      const next = list.filter(i => i.id !== this.data.id)
-      wx.setStorageSync('mall_favorites', next)
+      specs: this.data.selectedVariants || {},
+      description: this.data.desc || ''
     }
-    wx.showToast({ title: fav ? '已收藏' : '已取消收藏', icon: 'none' })
+
+    // 先乐观更新 UI
+    this.setData({ fav: !currentFav })
+
+    try {
+      const result = await util.toggleFavorite(product, currentFav)
+      
+      if (result.success) {
+        wx.showToast({ title: result.message, icon: 'none' })
+      } else {
+        // 失败时恢复状态
+        this.setData({ fav: currentFav })
+        wx.showToast({ title: result.message || '操作失败', icon: 'none' })
+      }
+    } catch (err) {
+      console.error('切换收藏状态失败:', err)
+      // 失败时恢复状态
+      this.setData({ fav: currentFav })
+      wx.showToast({ title: '操作失败', icon: 'none' })
+    }
   },
   onGoCart() {
     wx.navigateTo({ url: '/pages/mall/cart/cart' })
