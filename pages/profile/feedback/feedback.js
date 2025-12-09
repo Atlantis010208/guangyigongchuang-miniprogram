@@ -12,7 +12,7 @@ Page({
     // 反馈类型选项
     feedbackTypes: [
       { value: 'suggestion', label: '功能建议', icon: '💡', iconImage: '/images/功能建议单.png' },
-      { value: 'bug', label: '问题反馈', icon: '🐛' },
+      { value: 'bug', label: '问题反馈', icon: '🐛', iconImage: '/images/问题反馈.png' },
       { value: 'complaint', label: '投诉', icon: '😤' },
       { value: 'other', label: '其他', icon: '📝' }
     ],
