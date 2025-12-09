@@ -8,7 +8,7 @@
   <view wx:if="{{addresses.length > 0}}" class="address-list container-card">
     <view wx:for="{{addresses}}" wx:key="id" class="address-card unified" bindtap="onSelectAddress" data-id="{{item.id}}">
       <!-- 顶部右上角删除图标（每个卡片都有） -->
-      <view class="delete-icon" bindtap="deleteAddress" catchtap="true" data-id="{{item.id}}">×</view>
+      <view class="delete-icon" catchtap="deleteAddress" data-id="{{item.id}}">×</view>
       <view class="address-header">
         <view class="contact-info">
           <text class="name">{{item.name}}</text>
@@ -22,8 +22,8 @@
       </view>
 
       <view class="address-actions right">
-        <button class="btn btn-ghost" catchtap="true" bindtap="onCopy" data-id="{{item.id}}">复制</button>
-        <button wx:if="{{!item.isDefault}}" class="btn btn-default" catchtap="true" bindtap="setDefault" data-id="{{item.id}}">设为默认</button>
+        <button class="btn btn-ghost" catchtap="onCopy" data-id="{{item.id}}">复制</button>
+        <button wx:if="{{!item.isDefault}}" class="btn btn-default" catchtap="setDefault" data-id="{{item.id}}">设为默认</button>
       </view>
     </view>
   </view>

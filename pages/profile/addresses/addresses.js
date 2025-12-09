@@ -114,7 +114,7 @@ Page({
     
     wx.showModal({
       title: '删除地址',
-      content: '确定要删除这个地址吗？',
+      content: '确定要删除吗？',
       success: (res) => {
         if (res.confirm) {
           const addresses = this.data.addresses.filter(addr => addr.id !== id)
