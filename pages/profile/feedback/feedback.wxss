@@ -139,6 +139,13 @@
   margin-bottom: 8rpx;
 }
 
+.type-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
 .type-label {
   font-size: 26rpx;
   color: #333;

@@ -28,7 +28,12 @@
           bindtap="selectType"
           data-type="{{item.value}}"
         >
-          <text class="type-icon">{{item.icon}}</text>
+          <block wx:if="{{item.iconImage}}">
+            <image class="type-icon-img" src="{{item.iconImage}}" mode="aspectFit"></image>
+          </block>
+          <block wx:else>
+            <text class="type-icon">{{item.icon}}</text>
+          </block>
           <text class="type-label">{{item.label}}</text>
         </view>
       </view>
