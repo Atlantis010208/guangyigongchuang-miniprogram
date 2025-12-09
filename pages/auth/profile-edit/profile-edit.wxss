@@ -50,8 +50,10 @@
   border: 4rpx solid #fff;
 }
 
-.avatar-edit-icon .icon {
-  font-size: 24rpx;
+.avatar-edit-icon .icon-img {
+  width: 24rpx;
+  height: 24rpx;
+  display: block;
 }
 
 .avatar-tip {
@@ -76,9 +78,23 @@
   width: 100%;
   background: #f7f7f7;
   border-radius: 16rpx;
+  height: 72rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  display: block;
+  line-height: 72rpx;
+}
+
+.textarea {
+  width: 100%;
+  background: #f7f7f7;
+  border-radius: 16rpx;
   padding: 24rpx;
   font-size: 30rpx;
   box-sizing: border-box;
+  display: block;
+  line-height: 40rpx;
 }
 
 /* 手机号行 */
