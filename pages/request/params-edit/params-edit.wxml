@@ -1,0 +1,181 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">修改订单</text></view>
+  
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  
+  <!-- 个性需求定制表单 -->
+  <block wx:elif="{{category === 'custom'}}">
+    <!-- 基本信息 -->
+    <view class="section">
+      <text class="section-title">基本信息</text>
+      <view class="cell">
+        <text class="label">年龄</text>
+        <picker class="picker" range="{{ageOptions}}" value="{{ageIndex}}" bindchange="onAgePick">
+          <view class="picker-text">{{params.age || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell auto">
+        <text class="label">家庭成员结构</text>
+        <textarea class="textarea" value="{{params.family}}" bindinput="onInput" data-key="family" placeholder="长住人员结构、年龄及对应居住空间位置"/>
+      </view>
+    </view>
+
+    <!-- 装修信息 -->
+    <view class="section">
+      <text class="section-title">装修信息</text>
+      <view class="cell">
+        <text class="label">整体装修预算</text>
+        <picker class="picker" range="{{budgetOptions}}" value="{{budgetIndex}}" bindchange="onBudgetPick">
+          <view class="picker-text">{{params.budgetTotal || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">风格意向</text>
+        <picker class="picker" range="{{styleOptions}}" value="{{styleIndex}}" bindchange="onStylePick">
+          <view class="picker-text">{{params.style || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">装修类型</text>
+        <picker class="picker" range="{{renoTypeOptions}}" value="{{renoTypeIndex}}" bindchange="onRenoTypePick">
+          <view class="picker-text">{{params.renoType || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">装修进度</text>
+        <picker class="picker" range="{{progressOptions}}" value="{{progressIndex}}" bindchange="onProgressPick">
+          <view class="picker-text">{{params.progress || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">平面布置</text>
+        <picker class="picker" range="{{layoutOptions}}" value="{{layoutIndex}}" bindchange="onLayoutPick">
+          <view class="picker-text">{{params.layout || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">套内面积</text>
+        <input class="input" type="number" value="{{params.area}}" bindinput="onInput" data-key="area" placeholder="请输入"/>
+      </view>
+    </view>
+
+    <!-- 灯光偏好 -->
+    <view class="section">
+      <text class="section-title">灯光偏好</text>
+      <view class="cell auto">
+        <text class="label">色温特殊要求</text>
+        <textarea class="textarea" value="{{params.cctPreference}}" bindinput="onInput" data-key="cctPreference" placeholder="如：统一色温、不喜欢太黄等"/>
+      </view>
+      <view class="cell auto">
+        <text class="label">可接受的装饰灯（多选）</text>
+        <view class="checkbox-group">
+          <view wx:for="{{decorLightsOptions}}" wx:key="*this" 
+                class="checkbox-item {{decorLightsChecked[item] ? 'checked' : ''}}"
+                bindtap="onDecorLightsTap" data-value="{{item}}">
+            {{item}}
+          </view>
+        </view>
+      </view>
+      <view class="cell auto">
+        <text class="label">不喜欢的灯（多选）</text>
+        <view class="checkbox-group">
+          <view wx:for="{{dislikesOptions}}" wx:key="*this" 
+                class="checkbox-item {{dislikesChecked[item] ? 'checked' : ''}}"
+                bindtap="onDislikesTap" data-value="{{item}}">
+            {{item}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 智能家居 -->
+    <view class="section">
+      <text class="section-title">智能家居</text>
+      <view class="cell">
+        <text class="label">是否做智能家居</text>
+        <picker class="picker" range="{{smartHomeOptions}}" value="{{smartHomeIndex}}" bindchange="onSmartHomePick">
+          <view class="picker-text">{{params.smartHome || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">智能灯光倾向</text>
+        <picker class="picker" range="{{smartLightingOptions}}" value="{{smartLightingIndex}}" bindchange="onSmartLightingPick">
+          <view class="picker-text">{{params.smartLighting || '请选择'}}</view>
+        </picker>
+      </view>
+    </view>
+  </block>
+
+  <!-- 选配服务表单 -->
+  <block wx:elif="{{category === 'selection'}}">
+    <view class="section">
+      <text class="section-title">选配服务信息</text>
+      <view class="cell">
+        <text class="label">灯具预算</text>
+        <input class="input" type="number" value="{{params.budget}}" bindinput="onInput" data-key="budget" placeholder="请输入"/>
+      </view>
+      <view class="cell">
+        <text class="label">装修进度</text>
+        <picker class="picker" range="{{selectionStageOptions}}" value="{{selectionStageIndex}}" bindchange="onSelectionStagePick">
+          <view class="picker-text">{{params.stage || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">吊顶下吊</text>
+        <picker class="picker" range="{{ceilingDropOptions}}" value="{{ceilingDropIndex}}" bindchange="onCeilingDropPick">
+          <view class="picker-text">{{params.ceilingDrop || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">灯体高度</text>
+        <picker class="picker" range="{{bodyHeightOptions}}" value="{{bodyHeightIndex}}" bindchange="onBodyHeightPick">
+          <view class="picker-text">{{params.bodyHeight || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">无边框灯</text>
+        <picker class="picker" range="{{trimlessOptions}}" value="{{trimlessIndex}}" bindchange="onTrimlessPick">
+          <view class="picker-text">{{params.trimless || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell">
+        <text class="label">射灯价位</text>
+        <picker class="picker" range="{{spotPriceOptions}}" value="{{spotPriceIndex}}" bindchange="onSpotPricePick">
+          <view class="picker-text">{{params.spotPrice || '请选择'}}</view>
+        </picker>
+      </view>
+      <view class="cell auto">
+        <text class="label">备注</text>
+        <textarea class="textarea" value="{{params.note}}" bindinput="onInput" data-key="note" placeholder="其他补充说明"/>
+      </view>
+    </view>
+  </block>
+
+  <!-- 发布需求表单 -->
+  <block wx:elif="{{category === 'publish'}}">
+    <view class="section">
+      <text class="section-title">发布需求信息</text>
+      <view class="cell"><text class="label">空间</text><input class="input" value="{{params.space}}" bindinput="onInput" data-key="space"/></view>
+      <view class="cell"><text class="label">服务</text><input class="input" value="{{params.service}}" bindinput="onInput" data-key="service"/></view>
+      <view class="cell"><text class="label">预算</text><input class="input" value="{{params.budget}}" bindinput="onInput" data-key="budget"/></view>
+      <view class="cell"><text class="label">面积(㎡)</text><input class="input" type="number" value="{{params.area}}" bindinput="onInput" data-key="area"/></view>
+      <view class="cell"><text class="label">项目进度</text><input class="input" value="{{params.stage}}" bindinput="onInput" data-key="stage"/></view>
+      <view class="cell"><text class="label">联系方式</text><input class="input" value="{{params.contact}}" bindinput="onInput" data-key="contact"/></view>
+    </view>
+  </block>
+
+  <!-- 其他类型的兜底展示 -->
+  <block wx:else>
+    <view class="section">
+      <view class="cell"><text class="label">类型</text><text>{{category || '未知'}}</text></view>
+      <view class="cell"><text class="label">暂不支持编辑此类型订单</text></view>
+    </view>
+  </block>
+
+  <!-- 保存按钮 -->
+  <view wx:if="{{!loading}}" class="section">
+    <button class="primary" bindtap="onSave" loading="{{saving}}" disabled="{{saving}}">保存修改</button>
+  </view>
+</scroll-view>
+

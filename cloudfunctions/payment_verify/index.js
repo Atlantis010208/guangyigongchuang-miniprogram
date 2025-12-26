@@ -185,28 +185,64 @@ async function verifyPaymentResult(transactionId, paymentMethod) {
 }
 
 // 更新商品销量和库存
+// 注意：productId 是商品的业务ID字段，不是文档的 _id，需要使用 where 查询
 async function updateProductSales(items) {
   if (!items || !Array.isArray(items)) {
     return
   }
 
+  const _ = db.command
+  // 虚拟商品ID列表（不需要扣减库存）
+  const virtualProductIds = ['toolkit', 'course01']
+
   for (const item of items) {
     try {
-      const productId = item.productId
-      const quantity = item.quantity
+      const productId = item.id || item.productId
+      const quantity = item.quantity || 1
 
-      // 更新销量
-      await db.collection('products')
-        .doc(productId)
+      if (!productId) continue
+
+      // 虚拟商品只增加销量，不扣减库存
+      const isVirtual = virtualProductIds.includes(productId) || 
+                        (item.name && (item.name.includes('工具包') || item.name.includes('课程')))
+
+      // 方法1：尝试通过 productId 字段查询（新版商品）
+      let updateResult = await db.collection('products')
+        .where({ productId: productId })
         .update({
           data: {
-            sales: db.command.inc(quantity),
-            updatedAt: db.serverDate()
+            sales: _.inc(quantity),
+            ...(isVirtual ? {} : { stock: _.inc(-quantity) }),
+            updatedAt: new Date()
           }
         })
 
+      // 如果没有更新到记录，尝试方法2：直接使用 _id（兼容旧数据）
+      if (!updateResult.stats || updateResult.stats.updated === 0) {
+        try {
+          updateResult = await db.collection('products')
+            .doc(productId)
+            .update({
+              data: {
+                sales: _.inc(quantity),
+                ...(isVirtual ? {} : { stock: _.inc(-quantity) }),
+                updatedAt: new Date()
+              }
+            })
+        } catch (docErr) {
+          // doc() 方式失败是预期的，忽略
+        }
+      }
+
+      const updated = updateResult.stats?.updated || 0
+      if (updated > 0) {
+        console.log('✅ 商品销量已更新:', productId, '+', quantity)
+      } else {
+        console.warn('⚠️ 未找到商品:', productId)
+      }
+
     } catch (error) {
-      console.warn(`更新商品销量失败，商品ID: ${item.productId}`, error)
+      console.warn(`更新商品销量失败，商品ID: ${item.productId || item.id}`, error)
     }
   }
 }

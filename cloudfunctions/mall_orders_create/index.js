@@ -108,31 +108,9 @@ exports.main = async (event, context) => {
       }
     })
 
-    // 减少商品库存
-    for (const item of items) {
-      try {
-        const productResult = await db.collection('products')
-          .doc(item.id)
-          .get()
-
-        if (productResult.data) {
-          const product = productResult.data
-          const newInventory = Math.max(0, product.inventory - item.quantity)
-
-          await db.collection('products')
-            .doc(item.id)
-            .update({
-              data: {
-                inventory: newInventory,
-                sales: db.command.inc(item.quantity),
-                updatedAt: db.serverDate()
-              }
-            })
-        }
-      } catch (error) {
-        console.warn(`更新商品库存失败，商品ID: ${item.id}`, error)
-      }
-    }
+    // 注意：库存扣减和销量增加统一在支付成功回调(wxpayOrderCallback)中处理
+    // 这样可以避免用户下单但未支付导致的库存异常
+    // 如果需要预扣库存防止超卖，可以在此处添加预扣逻辑，并在支付超时后释放
 
     return {
       success: true,

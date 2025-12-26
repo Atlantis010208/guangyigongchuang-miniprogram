@@ -1,0 +1,15 @@
+{
+  "name": "deposit_create",
+  "version": "1.0.0",
+  "description": "押金创建云函数 - 创建押金订单并发起微信支付",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
+

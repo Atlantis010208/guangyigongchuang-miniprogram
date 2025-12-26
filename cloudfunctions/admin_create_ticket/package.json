@@ -1,0 +1,11 @@
+{
+  "name": "admin_create_ticket",
+  "version": "1.0.0",
+  "description": "创建自定义登录 ticket 云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

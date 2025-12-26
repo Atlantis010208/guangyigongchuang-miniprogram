@@ -1,8 +1,9 @@
 {
   "pages": [
-    "pages/auth/login/login",
-    "pages/auth/profile-edit/profile-edit",
     "pages/products/products",
+    "pages/auth/login/login",
+    "pages/auth/agreement/agreement",
+    "pages/auth/profile-edit/profile-edit",
      
     "pages/search/search",
     "pages/cart/cart",
@@ -15,7 +16,9 @@
     "pages/order/edit/edit"
     ,
     "pages/order/confirm/confirm",
-    "pages/order/result/result"
+    "pages/order/result/result",
+    "pages/refund/apply/apply",
+    "pages/refund/detail/detail"
   ],
   "subpackages": [
     {
@@ -57,7 +60,8 @@
       "root": "pages/request/",
       "pages": [
         "progress/progress",
-        "edit/edit"
+        "edit/edit",
+        "params-edit/params-edit"
       ]
     },
     {
@@ -80,6 +84,7 @@
         "account/account",
         "requests/requests",
         "orders/orders",
+        "appointments/appointments",
         "deposit/deposit",
         "services/services",
         "addresses/addresses",
@@ -129,7 +134,6 @@
       }
     ]
   },
-  "style": "v2",
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",

@@ -1,0 +1,10 @@
+{
+  "name": "admin_refunds_list",
+  "version": "1.0.0",
+  "description": "管理后台退款列表查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
+

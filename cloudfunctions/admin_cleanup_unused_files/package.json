@@ -1,0 +1,10 @@
+{
+  "name": "admin_cleanup_unused_files",
+  "version": "1.0.0",
+  "description": "清理未使用的云存储文件（可选工具）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

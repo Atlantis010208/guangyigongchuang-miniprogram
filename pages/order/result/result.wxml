@@ -1,13 +1,50 @@
 <view class="result-page">
   <view class="card result-card">
-    <image class="status-icon" src="{{success ? '/images/success.png' : '/images/取消.png'}}" mode="aspectFit"></image>
-    <text class="status-text">{{success ? '支付成功' : '支付失败'}}</text>
-    <text class="amount">¥{{amount}}</text>
-    <text class="order-id">订单号：{{orderId}}</text>
-    <view class="actions">
-      <button class="btn btn-dark" bindtap="goOrders">返回订单管理</button>
-      <button class="btn btn-dark" bindtap="goHome">继续逛逛</button>
-    </view>
+    <!-- 成功状态 -->
+    <block wx:if="{{success}}">
+      <image class="status-icon" src="/images/success.png" mode="aspectFit"></image>
+      <text class="status-text">支付成功</text>
+      <text class="amount">¥{{amount}}</text>
+      <text class="order-id">订单号：{{orderId}}</text>
+      <view class="success-tips">
+        <text class="tip-text">感谢您的购买，我们会尽快为您安排发货</text>
+      </view>
+      <view class="actions">
+        <button class="btn btn-outline" bindtap="goOrderDetail">查看订单</button>
+        <button class="btn btn-dark" bindtap="goHome">继续购物</button>
+      </view>
+    </block>
+    
+    <!-- 取消支付状态 -->
+    <block wx:elif="{{cancelled}}">
+      <image class="status-icon" src="/images/取消.png" mode="aspectFit"></image>
+      <text class="status-text">支付取消</text>
+      <text class="amount">¥{{amount}}</text>
+      <text class="order-id">订单号：{{orderId}}</text>
+      <view class="cancel-tips">
+        <text class="tip-text">订单已保存，您可以随时继续支付</text>
+        <text class="tip-sub">订单将在30分钟后自动取消</text>
+      </view>
+      <view class="actions">
+        <button class="btn btn-primary" bindtap="onRepay" loading="{{loading}}">立即支付</button>
+        <button class="btn btn-outline" bindtap="goOrders">查看订单</button>
+      </view>
+    </block>
+    
+    <!-- 失败状态 -->
+    <block wx:else>
+      <image class="status-icon" src="/images/取消.png" mode="aspectFit"></image>
+      <text class="status-text">支付失败</text>
+      <text class="amount">¥{{amount}}</text>
+      <text class="order-id" wx:if="{{orderId}}">订单号：{{orderId}}</text>
+      <view class="fail-tips">
+        <text class="tip-text">支付遇到问题，请重新尝试</text>
+      </view>
+      <view class="actions">
+        <button class="btn btn-primary" bindtap="onRepay" loading="{{loading}}" wx:if="{{orderId}}">重新支付</button>
+        <button class="btn btn-outline" bindtap="goMall">返回商城</button>
+        <button class="btn btn-outline" bindtap="goOrders" wx:if="{{orderId}}">我的订单</button>
+      </view>
+    </block>
   </view>
 </view>
-

@@ -1,15 +1,28 @@
 <!--购物袋页面-->
 <view class="page">
-  <!-- 页面头部 -->
-  <view class="header">
-    <text class="page-title">灯光清单</text>
-    <view wx:if="{{cartItems.length > 0}}" class="edit-btn" bindtap="onEditTap">
-      <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
+  <!-- 未登录提示 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-prompt">
+    <view class="login-prompt-content">
+      <image class="login-prompt-icon" src="../../images/cart.png" mode="aspectFit"></image>
+      <text class="login-prompt-title">登录后查看订单</text>
+      <text class="login-prompt-desc">登录后可查看您的照明方案订单和商城订单</text>
+      <button class="login-prompt-btn" bindtap="onGoLogin">立即登录</button>
+      <text class="login-prompt-tip">您也可以先浏览其他功能</text>
     </view>
   </view>
 
-  <!-- 筛选器：商城订单 / 方案订单 -->
-  <view class="filters">
+  <!-- 已登录显示正常内容 -->
+  <block wx:if="{{isLoggedIn}}">
+    <!-- 页面头部 -->
+    <view class="header">
+      <text class="page-title">灯光清单</text>
+      <view wx:if="{{cartItems.length > 0}}" class="edit-btn" bindtap="onEditTap">
+        <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
+      </view>
+    </view>
+
+    <!-- 筛选器：商城订单 / 方案订单 -->
+    <view class="filters">
     <scroll-view class="filter-scroll" scroll-x>
       <view class="filter-chip {{filterType==='mall' ? 'active' : ''}}" data-type="mall" bindtap="onFilterTap">电子商城 ({{mallOrders.length || 0}})</view>
       <view class="filter-chip {{filterType==='scheme' ? 'active' : ''}}" data-type="scheme" bindtap="onFilterTap">方案订单 ({{requests.length || 0}})</view>
@@ -105,28 +118,39 @@
   <!-- 发布的照明需求列表 -->
   <view class="cart-content" wx:if="{{filterType==='scheme' && requests.length > 0}}">
     <view class="cart-items">
-      <view class="cart-item" wx:for="{{requests}}" wx:key="id">
+      <view class="cart-item" wx:for="{{requests}}" wx:key="id" bindtap="onRequestTap" data-id="{{item.id}}">
         <view class="item-content">
-          <image class="item-image" src="{{item.cover}}" mode="aspectFill" bindtap="onRequestTap" data-id="{{item.id}}"></image>
+          <image class="item-image" src="{{item.cover}}" mode="aspectFill"></image>
           <view class="item-info">
             <text class="item-title">{{item.cardTitle || item.space || '照明需求'}} <text wx:if="{{item.status==='canceled'}}" class="tag-cancel">已撤销</text><text wx:elif="{{item.statusText}}" class="tag-status">{{item.statusText}}</text><text wx:if="{{item.priority}}" class="tag-priority">优先</text></text>
             <text wx:if="{{item.source==='publish'}}" class="item-specs">面积 {{item.area || '-'}}㎡ · 预算 ¥{{item.budget || '-'}} · 主灯 {{item.mainLight || '-'}} · 风格 {{item.style || '-'}} </text>
-            <text wx:elif="{{item.source==='scheme'}}" class="item-specs">方案 {{item.scheme || '-'}} · 类别 {{item.category || '-'}} </text>
-            <text wx:elif="{{item.source==='selection'}}" class="item-specs">选配服务</text>
+            <text wx:elif="{{item.category==='custom'}}" class="item-specs">{{item.area || '-'}}㎡ · {{item.budget || '-'}} · {{item.style || '-'}} · {{item.progress || '-'}}</text>
+            <!-- 🔥 选配服务：与其他订单保持一致的单行布局 -->
+            <text wx:elif="{{item.category==='selection'}}" class="item-specs">预算 ¥{{item.budget || '-'}} · {{item.stage || '未开工'}}{{item.ceilingDrop ? ' · 吊顶' + item.ceilingDrop : ''}}{{item.bodyHeight ? ' · 灯体' + item.bodyHeight : ''}}</text>
+            <text wx:elif="{{item.source==='scheme'}}" class="item-specs">类别：{{item.categoryCN || item.category || '-'}}</text>
             <text wx:elif="{{item.source==='optimize'}}" class="item-specs">方案优化服务</text>
             <text wx:elif="{{item.source==='full'}}" class="item-specs">整套设计服务</text>
             <text wx:elif="{{item.source==='custom_form'}}" class="item-specs">个性需求定制</text>
-            <text class="item-specs">内容 {{item.target || '-'}} </text>
-            <view class="progress">
-              <view class="step" wx:for="{{item.steps}}" wx:key="key">
-                <view class="dot {{item.done ? 'done' : ''}}"></view>
-                <text class="step-text">{{item.label}}</text>
-              </view>
-            </view>
-            <view class="inline-actions">
-              <button class="mini-btn" size="mini" data-id="{{item.id}}" bindtap="onRequestTap">查看</button>
-              <button class="mini-btn" size="mini" data-id="{{item.id}}" bindtap="onRequestModify">修改订单</button>
-              <button class="mini-btn designer-btn" size="mini" bindtap="onGoToDesigners">设计师筛选</button>
+            <!-- 🔥 设计师状态区域 -->
+            <view class="designer-status-row">
+              <block wx:if="{{item.designerStatus === 'assigned'}}">
+                <!-- 已分配：显示设计师名字 -->
+                <view class="designer-assigned">
+                  <text class="designer-label">设计师：</text>
+                  <text class="designer-name">{{item.designerName}}</text>
+                </view>
+              </block>
+              <block wx:elif="{{item.designerStatus === 'pending'}}">
+                <!-- 待确认：已预约但设计师未确认 -->
+                <view class="designer-pending">
+                  <text class="designer-label">设计师：</text>
+                  <text class="designer-status-pending">待确认</text>
+                </view>
+              </block>
+              <block wx:else>
+                <!-- 未预约：显示筛选按钮 -->
+                <button class="mini-btn designer-btn" size="mini" data-request="{{item}}" catchtap="onGoToDesigners">设计师筛选</button>
+              </block>
             </view>
           </view>
         </view>
@@ -137,17 +161,64 @@
 
   <!-- 商城订单列表 -->
   <view class="cart-content" wx:if="{{filterType==='mall' && mallOrders.length > 0}}">
-    <view class="cart-items">
-      <view class="cart-item" wx:for="{{mallOrders}}" wx:key="id" bindtap="onMallOrderTap" data-id="{{item.id}}">
-        <view class="item-content">
+    <view class="cart-items mall-order-list">
+      <view class="cart-item mall-order-card" wx:for="{{mallOrders}}" wx:key="id">
+        <!-- 订单头部：标题和状态 -->
+        <view class="mall-order-header" bindtap="onMallOrderTap" data-id="{{item.id}}">
+          <view class="mall-order-title-wrap">
+            <text class="mall-order-title">{{item.title}}</text>
+            <text class="mall-order-time">{{item.time}}</text>
+          </view>
+          <view class="mall-order-status-wrap">
+            <van-tag wx:if="{{item.afterSaleStatus === '待售后'}}" type="warning" plain size="small">售后中</van-tag>
+            <van-tag wx:if="{{item.afterSaleStatus === '售后完成'}}" type="success" plain size="small">售后完成</van-tag>
+            <text class="mall-order-status status-{{item.statusType}}">{{item.status}}</text>
+          </view>
+        </view>
+        
+        <!-- 订单商品信息 -->
+        <view class="mall-order-content" bindtap="onMallOrderTap" data-id="{{item.id}}">
           <image class="item-image" src="{{item.items[0].image}}" mode="aspectFill"></image>
           <view class="item-info">
-            <text class="item-title">订单号 {{item.id}}</text>
-            <text class="item-specs">{{item.items[0].name}} × {{item.items[0].quantity}}</text>
+            <view>
+              <text class="item-specs">{{item.items[0].name}}</text>
+              <text class="item-quantity" wx:if="{{item.items.length > 1}}">等 {{item.items.length}} 件商品</text>
+              <text class="item-quantity" wx:else>× {{item.items[0].quantity}}</text>
+            </view>
             <text class="item-price">¥{{item.total}}</text>
           </view>
         </view>
-        <view wx:if="{{item.status==='已取消'}}" class="request-delete" catchtap="onDeleteMallOrder" data-id="{{item.id}}"><text class="request-delete-text">×</text></view>
+        
+        <!-- 订单底部：操作按钮（全靠右） -->
+        <view class="mall-order-footer">
+          <view class="mall-order-actions">
+            <!-- 删除按钮（仅已关闭/已退款订单显示） -->
+            <view 
+              wx:if="{{item.statusType==='closed' || item.statusType==='refunded'}}" 
+              class="mini-btn detail-btn" 
+              catchtap="onDeleteMallOrder" 
+              data-id="{{item.id}}"
+              style="margin-right: 0 !important;"
+            >删除订单</view>
+            
+            <!-- 订单详情按钮 -->
+            <button 
+              class="mini-btn detail-btn" 
+              size="mini"
+              data-id="{{item.id}}" 
+              catchtap="onMallOrderTap"
+            >详情</button>
+            
+            <!-- 待支付订单显示去支付按钮 -->
+            <button 
+              wx:if="{{item.canPay}}" 
+              class="mini-btn pay-btn" 
+              size="mini"
+              data-orderno="{{item.orderNo}}" 
+              catchtap="onPayOrder"
+            >去支付</button>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -191,6 +262,7 @@
       </view>
     </view>
   </view>
+  </block>
 </view>
 
 

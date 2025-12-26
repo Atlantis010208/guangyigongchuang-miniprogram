@@ -1,9 +1,10 @@
-{
-  "name": "admin_product_update",
-  "version": "1.0.0",
-  "description": "管理员更新商品云函数",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "latest"
-  }
+﻿{
+    "name":  "admin_product_update",
+    "version":  "1.0.0",
+    "description":  "绠＄悊鍛樻洿鏂板晢鍝佷簯鍑芥暟",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "latest",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
 }

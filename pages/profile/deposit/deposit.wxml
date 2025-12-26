@@ -1,31 +1,97 @@
 <scroll-view class="page" scroll-y>
   <view class="header"><text class="title">押金</text></view>
 
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-box">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 主要内容 -->
+  <block wx:else>
   <view class="card">
     <text class="label">押金金额</text>
-    <text class="amount">¥100</text>
-    <text class="status">当前状态：{{paid ? '已缴纳' : '未缴纳'}}</text>
-    <text class="desc">发布需求时需缴纳¥100押金；订单完成后系统将自动原路退回。</text>
+      <text class="amount">¥{{amount}}</text>
+      <view class="status-box">
+        <text class="status-line">当前状态：<text class="status-value {{status === 'paid' ? 'status-paid' : (status === 'refunding' || status === 'pending_refund') ? 'status-refunding' : status === 'refund_failed' ? 'status-failed' : ''}}">{{statusText[status] || '未缴纳'}}</text></text>
+      </view>
+      
+      <!-- 已支付时显示支付时间 -->
+      <view wx:if="{{status === 'paid' && deposit.paidAt}}" class="info-row">
+        <text class="info-label">支付时间</text>
+        <text class="info-value">{{deposit.paidAt}}</text>
+      </view>
+      
+      <!-- 退款待审批提示 -->
+      <view wx:if="{{status === 'pending_refund'}}" class="refund-tip">
+        <text class="refund-tip-text">📋 退款申请已提交，等待管理员审核</text>
+      </view>
+      
+      <!-- 退款中时显示提示 -->
+      <view wx:if="{{status === 'refunding'}}" class="refund-tip">
+        <text class="refund-tip-text">⏳ 退款申请已提交，预计1-3个工作日到账</text>
+      </view>
+      
+      <!-- 退款失败提示 -->
+      <view wx:if="{{status === 'refund_failed'}}" class="refund-tip error">
+        <text class="refund-tip-text">❌ 退款失败，请联系客服处理</text>
+      </view>
+      
+      <text class="desc">
+        {{status === 'paid' ? '您已缴纳押金，发布的需求将标记为"优先"，享受优先服务。' : '发布需求时缴纳押金可享受优先服务；订单完成后系统将自动原路退回。'}}
+      </text>
   </view>
 
   <view class="actions">
-    <button class="btn primary" bindtap="onPrimaryTap">{{paid ? '退回押金' : '立即缴纳押金'}}</button>
+      <!-- 主按钮 -->
+      <button 
+        wx:if="{{status !== 'refunding' && status !== 'pending_refund'}}"
+        class="btn primary {{paying || refunding ? 'disabled' : ''}}" 
+        bindtap="onPrimaryTap"
+        disabled="{{paying || refunding}}"
+      >
+        <text wx:if="{{paying || refunding}}">处理中...</text>
+        <text wx:elif="{{status === 'paid'}}">申请退回押金</text>
+        <text wx:elif="{{status === 'refund_failed'}}">重新缴纳押金</text>
+        <text wx:else>立即缴纳押金</text>
+      </button>
+      
+      <!-- 退款待审批状态提示 -->
+      <view wx:if="{{status === 'pending_refund'}}" class="refunding-notice">
+        <text>退款申请待审核，请耐心等待</text>
+      </view>
+      
+      <!-- 退款中状态不显示主按钮 -->
+      <view wx:if="{{status === 'refunding'}}" class="refunding-notice">
+        <text>退款处理中，请耐心等待</text>
+      </view>
+      
     <button class="btn ghost" bindtap="onOpenRules">押金规则</button>
+  </view>
+
+    <!-- 优先服务说明 -->
+    <view class="priority-info">
+      <view class="priority-title">
+        <text class="priority-icon">⭐</text>
+        <text>优先服务权益</text>
+      </view>
+      <view class="priority-list">
+        <view class="priority-item">✓ 需求标记为"优先"，优先处理</view>
+        <view class="priority-item">✓ 客服优先对接，快速响应</view>
+        <view class="priority-item">✓ 订单完成后自动退回押金</view>
+      </view>
   </view>
 
   <view class="contact">
     <text class="contact-title">客服联系方式</text>
     <view class="contact-row">
       <text class="contact-label">微信</text>
-      <text class="contact-value" bindtap="copyWeChat">gy-lighting</text>
+        <text class="contact-value" bindtap="copyWeChat">{{serviceWeChat}}</text>
     </view>
     <view class="contact-row">
       <text class="contact-label">电话</text>
-      <text class="contact-value" bindtap="callPhone">17200000000</text>
+        <text class="contact-value" bindtap="callPhone">{{servicePhone}}</text>
+      </view>
     </view>
-  </view>
+  </block>
 </scroll-view>
-
- 
-
-

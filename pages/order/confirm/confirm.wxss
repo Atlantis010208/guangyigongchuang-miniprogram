@@ -42,10 +42,6 @@
 .total-row .val { font-size: 26rpx; color:#000; }
 .total-row.strong .label, .total-row.strong .val { font-weight: 700; font-size: 30rpx; color:#000; }
 
-.footer-bar { position: fixed; left:0; right:0; bottom: 0; display:flex; align-items:center; justify-content: space-between; gap: 16rpx; padding: 10rpx 16rpx calc(16rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.96); backdrop-filter: blur(6rpx); }
-.sum { display:flex; align-items: baseline; gap: 8rpx; }
-.sum-label { font-size: 24rpx; color:#8e8e93; }
-.sum-price { font-size: 36rpx; font-weight: 800; color:#000; }
-.btn-primary { background:#007aff; color:#fff; flex: none; padding: 22rpx 34rpx; border-radius: 30rpx; }
+/* Vant Submit Bar 组件样式已由组件内部处理，无需额外样式 */
 .bottom-spacer { height: 120rpx; }
 

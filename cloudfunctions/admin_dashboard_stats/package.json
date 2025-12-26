@@ -1,0 +1,11 @@
+{
+  "name": "admin_dashboard_stats",
+  "version": "1.0.0",
+  "description": "后台管理仪表盘统计数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

@@ -1,0 +1,11 @@
+{
+  "name": "admin_accounts_list",
+  "version": "1.0.0",
+  "description": "获取后台账号列表",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

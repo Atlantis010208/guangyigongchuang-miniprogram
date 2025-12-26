@@ -1,0 +1,11 @@
+{
+  "name": "admin_accounts_update",
+  "version": "1.0.0",
+  "description": "更新后台账号",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

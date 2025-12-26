@@ -41,11 +41,6 @@
         </view>
       </view>
 
-      <view class="cell" hover-class="cell-active">
-        <text class="label fixed">联系方式</text>
-        <input class="input" placeholder="电话/微信号" bindinput="onContact" value="{{contact}}"/>
-      </view>
-
       <view class="cell auto">
         <text class="label">优化说明/备注</text>
         <textarea class="textarea" placeholder="可补充具体空间、问题点、品牌偏好等" bindinput="onNote" value="{{note}}"></textarea>

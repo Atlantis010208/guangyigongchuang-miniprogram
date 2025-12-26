@@ -14,19 +14,6 @@ module.exports = {
 <scroll-view class="page" scroll-y enable-back-to-top>
   <view class="header">
     <text class="title">购物车</text>
-    <view wx:if="{{items.length > 0}}" class="header-actions">
-      <view class="edit-btn" bindtap="onToggleEdit">
-        <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
-      </view>
-      <view wx:if="{{isEditing}}" class="clear-btn" bindtap="clearCart">
-        <text class="clear-text">清空</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 统计信息 -->
-  <view wx:if="{{items.length > 0}}" class="stats-bar">
-    <text class="stats-text">共 {{items.length}} 件商品，合计 ¥{{total}}</text>
   </view>
 
   <!-- 加载中状态 -->
@@ -37,43 +24,51 @@ module.exports = {
 
   <!-- 购物车列表 -->
   <view wx:elif="{{items.length > 0}}" class="list">
-    <view class="row" wx:for="{{items}}" wx:key="_key">
-      <!-- 编辑模式下的选择框 -->
-      <block wx:if="{{isEditing}}">
-        <view 
-          class="select-box {{utils.isSelected(selectedIds, item._key) ? 'selected' : ''}}" 
-          bindtap="onToggleSelect" 
-          data-key="{{item._key}}"
-        >
-          <text class="tick">✓</text>
+    <van-swipe-cell 
+      right-width="{{ 65 }}" 
+      wx:for="{{items}}" 
+      wx:key="_key"
+      class="swipe-cell-item"
+    >
+      <view class="row">
+        <!-- 选择框 -->
+        <view class="checkbox-wrapper" catchtap="stopBubble">
+          <van-checkbox 
+            value="{{utils.isSelected(selectedIds, item._key)}}" 
+            bind:change="onToggleSelect" 
+            data-key="{{item._key}}"
+            checked-color="#000"
+            icon-size="22px"
+          />
         </view>
-      </block>
-      
-      <image class="cover" src="{{item.image}}" mode="aspectFill"></image>
-      
-      <view class="info">
-        <text class="name">{{item.name}}</text>
-        <text wx:if="{{item.specsText}}" class="specs">{{item.specsText}}</text>
-        <text class="price">¥{{item.price}}</text>
-        <view class="qty">
-          <view class="qty-btn" bindtap="dec" data-id="{{item.id}}">-</view>
-          <text class="num">{{item.quantity || 1}}</text>
-          <view class="qty-btn" bindtap="inc" data-id="{{item.id}}">+</view>
+        
+        <image class="cover" src="{{item.image}}" mode="aspectFill" bindtap="goDetail" data-id="{{item.id}}"></image>
+        
+        <view class="info">
+          <view class="info-top">
+            <text class="name">{{item.name}}</text>
+            <text wx:if="{{item.specsText}}" class="specs">{{item.specsText}}</text>
+          </view>
+          <view class="info-bottom">
+            <text class="price">¥{{item.price}}</text>
+            <view class="qty">
+              <view class="qty-btn minus" bindtap="dec" data-id="{{item.id}}">-</view>
+              <text class="num">{{item.quantity || 1}}</text>
+              <view class="qty-btn plus" bindtap="inc" data-id="{{item.id}}">+</view>
+            </view>
+          </view>
         </view>
       </view>
       
-      <!-- 非编辑模式下的购买按钮 -->
-      <block wx:if="{{!isEditing}}">
-        <view class="row-actions">
-          <button class="btn solid" data-id="{{item.id}}" bindtap="onBuySingle">购买</button>
-        </view>
-      </block>
-    </view>
+      <view slot="right" class="delete-btn" catchtap="remove" data-id="{{item.id}}">
+        <text>删除</text>
+      </view>
+    </van-swipe-cell>
   </view>
 
   <!-- 空状态 -->
   <view wx:else class="empty">
-    <image class="empty-icon" src="/images/empty-address.png" mode="aspectFit"></image>
+    <image class="empty-icon" src="/images/购物车.png" mode="aspectFit"></image>
     <text class="empty-title">购物车是空的</text>
     <text class="empty-subtitle">去电子商城挑选商品并加入购物车吧</text>
     <button class="btn primary" bindtap="goMall">去商城</button>
@@ -86,19 +81,21 @@ module.exports = {
   <text class="float-text">联系客服</text>
 </view>
 
-<!-- 编辑模式底部栏 -->
-<view wx:if="{{items.length > 0 && isEditing}}" class="footer">
-  <view class="footer-left">
-    <view class="select-all" bindtap="onToggleSelectAll">
-      <view class="select-box {{selectedIds.length === items.length ? 'selected' : ''}}">
-        <text class="tick">✓</text>
-      </view>
-      <text class="select-all-text">全选</text>
-    </view>
-    <text class="selected-count">已选 {{selectedIds.length}} 件</text>
-  </view>
-  <view class="footer-right">
-    <button class="btn danger" bindtap="onBatchDelete">删除</button>
-    <button class="btn primary" bindtap="onBatchCheckout">一键购买</button>
-  </view>
-</view>
+<!-- 提交订单栏 -->
+<van-submit-bar
+  wx:if="{{items.length > 0}}"
+  price="{{ totalPrice }}"
+  button-text="提交订单"
+  bind:submit="onSubmit"
+  button-class="submit-btn"
+  bar-class="submit-bar"
+>
+  <van-checkbox 
+    value="{{ allChecked }}" 
+    bind:change="onToggleSelectAll"
+    checked-color="#000"
+    class="select-all-checkbox"
+  >
+    全选
+  </van-checkbox>
+</van-submit-bar>

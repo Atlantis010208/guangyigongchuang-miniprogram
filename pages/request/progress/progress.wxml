@@ -1,15 +1,107 @@
 <scroll-view class="page" scroll-y>
   <view class="header"><text class="title">需求进度</text></view>
+  
+  <!-- 顶部步骤条：待确认 → 进行中 → 已完成 -->
+  <view class="steps-section">
+    <van-steps 
+      steps="{{progressSteps}}" 
+      active="{{progressActive}}"
+      active-color="#007AFF"
+      inactive-color="#c7c7cc"
+    />
+  </view>
+
   <view class="section">
     <view class="info">
       <view class="block-title">订单信息</view>
-      <view class="cell"><text class="label">空间</text><text class="val">{{req.space || '-'}}</text></view>
-      <view class="cell"><text class="label">服务</text><text class="val">{{req.service || '-'}}</text></view>
-      <view class="cell"><text class="label">预算</text><text class="val">{{req.budget || '-'}}</text></view>
-      <view class="cell"><text class="label">面积</text><text class="val">{{req.area || '-'}}㎡</text></view>
-      <view class="cell"><text class="label">项目进度</text><text class="val">{{req.stage || '-'}}</text></view>
-      <view class="cell" wx:if="{{req.target}}"><text class="label">内容</text><text class="val">{{req.target}}</text></view>
-      <view class="cell"><text class="label">联系方式</text><text class="val">{{req.contact || '-'}}</text></view>
+      
+      <!-- 个性需求定制类型 -->
+      <block wx:if="{{req.source === 'custom'}}">
+        <view class="cell"><text class="label">类型</text><text class="val">{{req.space || '-'}}</text></view>
+        <view class="cell" wx:if="{{req.age}}"><text class="label">年龄</text><text class="val">{{req.age}}</text></view>
+        <view class="cell" wx:if="{{req.renoType}}"><text class="label">装修类型</text><text class="val">{{req.renoType}}</text></view>
+        <view class="cell"><text class="label">风格意向</text><text class="val">{{req.service || '-'}}</text></view>
+        <view class="cell"><text class="label">装修预算</text><text class="val">{{req.budget || '-'}}</text></view>
+        <view class="cell"><text class="label">套内面积</text><text class="val">{{req.area || '-'}}㎡</text></view>
+        <view class="cell"><text class="label">装修进度</text><text class="val">{{req.stage || '-'}}</text></view>
+        <view class="cell" wx:if="{{req.layout}}"><text class="label">平面布置</text><text class="val">{{req.layout}}</text></view>
+        <view class="cell" wx:if="{{req.cctPreference}}"><text class="label">色温要求</text><text class="val">{{req.cctPreference}}</text></view>
+        <view class="cell" wx:if="{{req.smartHome}}"><text class="label">智能家居</text><text class="val">{{req.smartHome}}</text></view>
+        <view class="cell" wx:if="{{req.smartLighting}}"><text class="label">智能灯光</text><text class="val">{{req.smartLighting}}</text></view>
+      </block>
+      
+      <!-- 选配服务类型 -->
+      <block wx:elif="{{req.source === 'selection'}}">
+        <view class="cell"><text class="label">类型</text><text class="val">{{req.space || '-'}}</text></view>
+        <view class="cell"><text class="label">灯具预算</text><text class="val">{{req.budget || '-'}}</text></view>
+        <view class="cell"><text class="label">装修进度</text><text class="val">{{req.stage || '-'}}</text></view>
+        <view class="cell" wx:if="{{req.ceilingDrop}}"><text class="label">吊顶下吊</text><text class="val">{{req.ceilingDrop}}</text></view>
+        <view class="cell" wx:if="{{req.bodyHeight}}"><text class="label">灯体高度</text><text class="val">{{req.bodyHeight}}</text></view>
+        <view class="cell" wx:if="{{req.trimless}}"><text class="label">无边框灯</text><text class="val">{{req.trimless}}</text></view>
+        <view class="cell" wx:if="{{req.spotPrice}}"><text class="label">射灯价位</text><text class="val">{{req.spotPrice}}</text></view>
+        <view class="cell" wx:if="{{req.note}}"><text class="label">备注</text><text class="val">{{req.note}}</text></view>
+      </block>
+      
+      <!-- 灯光施工图优化类型 -->
+      <block wx:elif="{{req.source === 'optimize'}}">
+        <view class="cell"><text class="label">服务类型</text><text class="val">{{req.space || '灯光施工图优化'}}</text></view>
+        <view class="cell"><text class="label">优化方向</text><text class="val">{{req.needsText || '-'}}</text></view>
+        <view class="cell"><text class="label">期望交付</text><text class="val">{{req.deliverablesText || '-'}}</text></view>
+        <view class="cell" wx:if="{{req.note}}"><text class="label">备注说明</text><text class="val">{{req.note}}</text></view>
+        <view class="cell" wx:if="{{req.filesCount > 0}}">
+          <text class="label">上传文件</text>
+          <text class="val">{{req.filesCount}} 个文件</text>
+        </view>
+        <!-- 文件列表 -->
+        <view class="files-section" wx:if="{{req.files && req.files.length > 0}}">
+          <view class="file-item" wx:for="{{req.files}}" wx:key="name">
+            <text class="file-icon">📄</text>
+            <view class="file-info">
+              <text class="file-name">{{item.name}}</text>
+              <text class="file-size">{{item.sizeText || '-'}}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 其他类型（发布需求等） -->
+      <block wx:else>
+        <view class="cell"><text class="label">空间</text><text class="val">{{req.space || '-'}}</text></view>
+        <view class="cell"><text class="label">服务</text><text class="val">{{req.service || '-'}}</text></view>
+        <view class="cell"><text class="label">预算</text><text class="val">{{req.budget || '-'}}</text></view>
+        <view class="cell"><text class="label">面积</text><text class="val">{{req.area || '-'}}㎡</text></view>
+        <view class="cell"><text class="label">项目进度</text><text class="val">{{req.stage || '-'}}</text></view>
+        <view class="cell" wx:if="{{req.target}}"><text class="label">内容</text><text class="val">{{req.target}}</text></view>
+      </block>
+      
+      <!-- 🔥 设计师联系方式（只在进行中或已完成阶段显示） -->
+      <block wx:if="{{progressActive >= 1 && (req.hasDesignerContact || req.hasCustomContact)}}">
+        <view class="cell" wx:if="{{req.designerInfo.phone}}">
+          <text class="label">联系方式(设计师)</text>
+          <text 
+            class="val phone longpress-copy" 
+            bindlongpress="onLongPressPhone" 
+            data-phone="{{req.designerInfo.phone}}"
+          >{{req.designerInfo.phone}}</text>
+        </view>
+        <view class="cell" wx:if="{{req.designerInfo.wechat}}">
+          <text class="label">微信号</text>
+          <text 
+            class="val wechat longpress-copy" 
+            bindlongpress="onLongPressWechat" 
+            data-wechat="{{req.designerInfo.wechat}}"
+          >{{req.designerInfo.wechat}}</text>
+        </view>
+        <view class="cell" wx:if="{{req.designerInfo.email}}">
+          <text class="label">邮箱</text>
+          <text 
+            class="val longpress-copy" 
+            bindlongpress="onLongPressEmail" 
+            data-email="{{req.designerInfo.email}}"
+          >{{req.designerInfo.email}}</text>
+        </view>
+      </block>
+      
       <view class="cell"><text class="label">提交时间（北京时间）</text><text class="val">{{beijingTime}}</text></view>
       <text wx:if="{{req.status==='canceled'}}" class="badge cancel">已撤销</text>
       <text wx:if="{{req.priority}}" class="badge priority">优先</text>

@@ -1,0 +1,15 @@
+{
+  "name": "deposit_query",
+  "version": "1.0.0",
+  "description": "押金查询云函数 - 查询用户押金状态",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
+

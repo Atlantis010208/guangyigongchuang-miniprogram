@@ -26,35 +26,75 @@
   <!-- 预约列表 -->
   <view wx:elif="{{appointments.length > 0}}" class="appointment-list">
     <view wx:for="{{appointments}}" wx:key="id" class="appointment-card" bindtap="viewDetail" data-id="{{item.id}}">
-      <view class="appointment-header">
-        <text class="service-name">{{item.serviceName}}</text>
-        <text class="status status-{{item.status}}">{{item.statusText}}</text>
+      <!-- 卡片顶部：服务类型 + 状态 -->
+      <view class="card-header">
+        <view class="service-info">
+          <text class="service-name">{{item.serviceName || '设计咨询'}}</text>
+          <text class="create-time">{{item.createdAtText || ''}}</text>
+        </view>
+        <view class="status-tag status-{{item.status}}">{{item.statusText}}</view>
       </view>
-      <view class="appointment-info">
-        <view class="info-row">
-          <text class="label">预约时间</text>
-          <text class="value">{{item.appointmentTime}}</text>
-        </view>
-        <view class="info-row">
-          <text class="label">服务地址</text>
-          <text class="value">{{item.address}}</text>
-        </view>
-        <view class="info-row">
-          <text class="label">联系电话</text>
-          <text class="value">{{item.phone}}</text>
-        </view>
-        <view wx:if="{{item.rescheduleCount > 0}}" class="info-row">
-          <text class="label">改期次数</text>
-          <text class="value">{{item.rescheduleCount}} 次</text>
+      
+      <!-- 设计师信息条 -->
+      <view class="designer-row">
+        <image class="designer-mini-avatar" src="{{item.designerAvatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
+        <view class="designer-mini-info">
+          <text class="designer-mini-name">设计师：{{item.designerName || '待分配'}}</text>
+          <text class="designer-mini-rating" wx:if="{{item.designerRating}}">⭐ {{item.designerRating}}</text>
         </view>
       </view>
-      <view class="appointment-actions" catchtap="preventTap">
-        <button wx:if="{{item.status === 'pending'}}" class="btn btn-cancel" catchtap="cancelAppointment" data-id="{{item.id}}">取消预约</button>
-        <button wx:if="{{item.status === 'confirmed'}}" class="btn btn-reschedule" catchtap="rescheduleAppointment" data-id="{{item.id}}">改期</button>
-        <button wx:if="{{item.status === 'pending'}}" class="btn btn-reschedule" catchtap="rescheduleAppointment" data-id="{{item.id}}">改期</button>
-        <button class="btn btn-contact" catchtap="contactService">联系客服</button>
+      
+      <!-- 需求概要 -->
+      <view class="demand-summary">
+        <view class="summary-item" wx:if="{{item.spaceType}}">
+          <text class="item-label">空间</text>
+          <text class="item-value">{{item.spaceType}}</text>
+        </view>
+        <view class="summary-item" wx:if="{{item.area}}">
+          <text class="item-label">面积</text>
+          <text class="item-value">{{item.area}}㎡</text>
+        </view>
+        <view class="summary-item" wx:if="{{item.budget}}">
+          <text class="item-label">预算</text>
+          <text class="item-value">{{item.budget}}</text>
+        </view>
+      </view>
+
+      <!-- 设计师联系方式 - 仅确认后显示 -->
+      <view wx:if="{{item.status === 'confirmed' || item.status === 'completed'}}" class="designer-contact-bar" catchtap="preventTap">
+        <view class="contact-main">
+          <view class="contact-label">设计师联系方式</view>
+          <view class="contact-content">
+            <text class="phone" wx:if="{{item.designerPhone}}" bindtap="makeCall" data-phone="{{item.designerPhone}}">{{item.designerPhone}}</text>
+            <text class="wechat" wx:if="{{item.designerWechat}}">{{item.designerWechat}}</text>
+          </view>
+        </view>
+        <view class="contact-actions">
+          <view class="action-icon-btn call" wx:if="{{item.designerPhone}}" bindtap="makeCall" data-phone="{{item.designerPhone}}">
+            <image src="/images/icon-phone.png" class="icon" mode="aspectFit"></image>
+          </view>
+          <view class="action-icon-btn copy" bindtap="copyContact" data-type="联系方式" data-value="{{item.designerPhone || item.designerWechat}}">
+            <image src="/images/icon-copy.png" class="icon" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+
+      <!-- 待确认提示 -->
+      <view wx:if="{{item.status === 'pending'}}" class="status-notice">
+        <view class="notice-dot"></view>
+        <text class="notice-text">预约确认后可查看设计师联系方式</text>
+      </view>
+
+      <!-- 卡片底部操作 -->
+      <view class="card-footer" catchtap="preventTap">
+        <view class="btn-group">
+          <button wx:if="{{item.status === 'pending'}}" class="action-btn outline danger" catchtap="cancelAppointment" data-id="{{item.id}}">取消预约</button>
+          <button wx:if="{{item.status === 'confirmed' || item.status === 'completed'}}" class="action-btn primary" catchtap="makeCall" data-phone="{{item.designerPhone}}">联系设计师</button>
+          <button class="action-btn outline" catchtap="contactService">联系客服</button>
+        </view>
       </view>
     </view>
+
 
     <!-- 加载更多 -->
     <view class="load-more" wx:if="{{!loading && hasMore}}">
@@ -77,48 +117,97 @@
   </view>
 </scroll-view>
 
-<!-- 改期弹窗 -->
-<view class="modal-mask" wx:if="{{showReschedule}}" bindtap="closeReschedule">
-  <view class="modal-content" catchtap="preventTap">
-    <view class="modal-header">
-      <text class="modal-title">预约改期</text>
-      <view class="modal-close" bindtap="closeReschedule">✕</view>
+<!-- 预约详情弹窗 -->
+<view class="modal-mask {{showDetail ? 'show' : ''}}" bindtap="closeDetail">
+  <view class="detail-sheet" catchtap="preventTap">
+    <view class="sheet-header">
+      <view class="handle"></view>
+      <text class="sheet-title">预约详情</text>
+      <view class="sheet-close" bindtap="closeDetail">✕</view>
     </view>
     
-    <view class="modal-body">
-      <view class="form-item">
-        <text class="form-label">新日期 <text class="required">*</text></text>
-        <picker mode="date" start="{{minDate}}" value="{{rescheduleDate}}" bindchange="onRescheduleDateChange">
-          <view class="picker-value {{rescheduleDate ? '' : 'placeholder'}}">
-            {{rescheduleDate || '请选择日期'}}
+    <scroll-view scroll-y class="sheet-body" wx:if="{{currentAppointment}}">
+      <!-- 状态与设计师 -->
+      <view class="detail-hero">
+        <view class="designer-info-box">
+          <image class="designer-avatar" src="{{currentAppointment.designerAvatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
+          <view class="designer-text">
+            <text class="designer-name">{{currentAppointment.designerName || '设计师待分配'}}</text>
+            <view class="designer-tags">
+              <text class="tag" wx:if="{{currentAppointment.designerRating}}">⭐ {{currentAppointment.designerRating}}</text>
+              <text class="status-badge status-{{currentAppointment.status}}">{{currentAppointment.statusText}}</text>
+            </view>
           </view>
-        </picker>
+        </view>
       </view>
       
-      <view class="form-item">
-        <text class="form-label">新时间 <text class="required">*</text></text>
-        <picker mode="time" value="{{rescheduleTime}}" bindchange="onRescheduleTimeChange">
-          <view class="picker-value {{rescheduleTime ? '' : 'placeholder'}}">
-            {{rescheduleTime || '请选择时间'}}
+      <!-- 核心详情 -->
+      <view class="detail-group">
+        <view class="group-title">需求信息</view>
+        <view class="info-grid">
+          <view class="info-cell">
+            <text class="cell-label">空间类型</text>
+            <text class="cell-value">{{currentAppointment.spaceType || '未填'}}</text>
           </view>
-        </picker>
+          <view class="info-cell">
+            <text class="cell-label">设计面积</text>
+            <text class="cell-value">{{currentAppointment.area ? currentAppointment.area + '㎡' : '未填'}}</text>
+          </view>
+          <view class="info-cell">
+            <text class="cell-label">预算范围</text>
+            <text class="cell-value">{{currentAppointment.budget || '未填'}}</text>
+          </view>
+          <view class="info-cell">
+            <text class="cell-label">提交时间</text>
+            <text class="cell-value">{{currentAppointment.createdAtText || '-'}}</text>
+          </view>
+        </view>
+        <view class="info-full-cell" wx:if="{{currentAppointment.remark}}">
+          <text class="cell-label">备注说明</text>
+          <text class="cell-value">{{currentAppointment.remark}}</text>
+        </view>
       </view>
       
-      <view class="form-item">
-        <text class="form-label">改期原因</text>
-        <textarea 
-          class="form-textarea" 
-          placeholder="请输入改期原因（选填）"
-          value="{{rescheduleReason}}"
-          bindinput="onRescheduleReasonInput"
-          maxlength="200"
-        ></textarea>
+      <!-- 联系方式 -->
+      <view class="detail-group" wx:if="{{currentAppointment.status === 'confirmed' || currentAppointment.status === 'completed'}}">
+        <view class="group-title">联系设计师</view>
+        <view class="contact-card-list">
+          <view class="contact-card" wx:if="{{currentAppointment.designerPhone}}">
+            <view class="card-left">
+              <text class="card-label">电话号码</text>
+              <text class="card-value">{{currentAppointment.designerPhone}}</text>
+            </view>
+            <view class="card-right">
+              <button class="icon-btn" bindtap="makeCall" data-phone="{{currentAppointment.designerPhone}}">拨打</button>
+            </view>
+          </view>
+          <view class="contact-card" wx:if="{{currentAppointment.designerWechat}}">
+            <view class="card-left">
+              <text class="card-label">微信号</text>
+              <text class="card-value">{{currentAppointment.designerWechat}}</text>
+            </view>
+            <view class="card-right">
+              <button class="icon-btn outline" bindtap="copyContact" data-type="微信" data-value="{{currentAppointment.designerWechat}}">复制</button>
+            </view>
+          </view>
+        </view>
       </view>
+
+      <!-- 待确认引导 -->
+      <view class="pending-notice-card" wx:if="{{currentAppointment.status === 'pending'}}">
+        <view class="notice-icon">⏳</view>
+        <text class="notice-title">设计师确认中</text>
+        <text class="notice-desc">确认后即可查看完整联系方式并沟通细节</text>
     </view>
     
-    <view class="modal-footer">
-      <button class="btn btn-default" bindtap="closeReschedule">取消</button>
-      <button class="btn btn-primary" bindtap="confirmReschedule">确认改期</button>
+      <view class="safe-area-inset-bottom"></view>
+    </scroll-view>
+
+    <view class="sheet-footer">
+      <button wx:if="{{currentAppointment.status === 'pending'}}" class="sheet-btn danger" catchtap="cancelAppointment" data-id="{{currentAppointment.id}}">取消预约</button>
+      <button wx:if="{{currentAppointment.status === 'confirmed' && currentAppointment.designerPhone}}" class="sheet-btn primary" catchtap="makeCall" data-phone="{{currentAppointment.designerPhone}}">立即联系</button>
+      <button class="sheet-btn" bindtap="closeDetail">返回</button>
     </view>
   </view>
 </view>
+

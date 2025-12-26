@@ -14,7 +14,8 @@ exports.main = async (event) => {
     const doc = {
       ...order,
       orderNo,
-      userId: order.userId || openid,
+      userId: openid,  // 强制使用 openid，确保与支付验证时的查询条件一致
+      _openid: openid, // 添加 _openid 字段，确保查询时能匹配到
       isDelete: 0,
       createdAt: now,
       updatedAt: now

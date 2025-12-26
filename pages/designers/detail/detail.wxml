@@ -7,12 +7,12 @@
   </view>
 
   <!-- 设计师详情 -->
-  <view wx:else class="detail-content">
-    <!-- 顶部英雄大图 -->
+  <view wx:elif="{{designer}}" class="detail-content">
+    <!-- 顶部英雄大图 - 使用作品图或头像 -->
     <view class="hero-section">
       <image
         class="hero-image"
-        src="{{designer.heroImage || '/images/个人中心.png'}}"
+        src="{{designer.portfolioImages[0] || designer.avatar || '/images/个人中心.png'}}"
         mode="aspectFill"
       />
       <view class="hero-gradient"></view>
@@ -24,11 +24,11 @@
         <view class="profile-header">
           <view class="profile-text">
             <text class="designer-name">{{designer.name}}</text>
-            <text class="designer-subtitle">{{designer.title}} | {{designer.specialties[0] || '极简'}}主义者</text>
+            <text class="designer-subtitle">{{designer.title || '照明设计师'}} | {{designer.specialties[0] || '照明设计'}}</text>
           </view>
           <image
             class="profile-avatar"
-            src="{{designer.avatarUrl}}"
+            src="{{designer.avatar || '/images/个人中心.png'}}"
             mode="aspectFill"
           />
         </view>
@@ -36,20 +36,40 @@
         <!-- 三栏统计数据 -->
         <view class="stats-section">
           <view class="stat-item">
-            <text class="stat-value">{{designer.rating}}</text>
+            <text class="stat-value">{{designer.rating || 0}}</text>
             <text class="stat-label">评分</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-item">
-            <text class="stat-value">{{designer.projectCount}}</text>
+            <text class="stat-value">{{designer.projects || 0}}</text>
             <text class="stat-label">成交</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-item">
-            <text class="stat-value">{{designer.experienceYears || 8}}年</text>
+            <text class="stat-value">{{designer.experience || 0}}年</text>
             <text class="stat-label">经验</text>
           </view>
         </view>
+
+        <!-- 认证标签 -->
+        <view class="cert-tags" wx:if="{{designer.hasCalcExp || (designer.certifications && designer.certifications.length > 0)}}">
+          <view wx:if="{{designer.hasCalcExp}}" class="cert-tag cert-tag-primary">
+            <text>✓ 照度计算认证</text>
+          </view>
+          <view wx:for="{{designer.certifications}}" wx:key="*this" class="cert-tag">
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 个人简介 -->
+    <view wx:if="{{designer.bio}}" class="bio-section">
+      <view class="section-title">
+        <text>个人简介</text>
+      </view>
+      <view class="bio-content">
+        <text>{{designer.bio}}</text>
       </view>
     </view>
 
@@ -60,7 +80,7 @@
         bindtap="onTabChange"
         data-tab="works"
       >
-        <text>代表作品</text>
+        <text>代表作品 ({{designer.portfolioImages.length || 0}})</text>
         <view wx:if="{{activeTab === 'works'}}" class="tab-underline"></view>
       </view>
       <view
@@ -68,32 +88,29 @@
         bindtap="onTabChange"
         data-tab="reviews"
       >
-        <text>用户评价 ({{designer.reviews ? designer.reviews.length : 42}})</text>
+        <text>用户评价 ({{designer.reviews ? designer.reviews.length : 0}})</text>
         <view wx:if="{{activeTab === 'reviews'}}" class="tab-underline"></view>
       </view>
     </view>
 
     <!-- 内容区域 -->
     <view class="content-wrapper">
-      <!-- 代表作品 -->
+      <!-- 代表作品 - 使用 portfolioImages 数组 -->
       <view wx:if="{{activeTab === 'works'}}" class="works-content">
-        <view wx:if="{{designer.cases && designer.cases.length > 0}}" class="portfolio-grid">
+        <view wx:if="{{designer.portfolioImages && designer.portfolioImages.length > 0}}" class="portfolio-grid">
           <view
-            wx:for="{{designer.cases}}"
-            wx:key="title"
-            class="portfolio-item {{item.span === 2 ? 'span-2' : ''}}"
+            wx:for="{{designer.portfolioImages}}"
+            wx:key="index"
+            class="portfolio-item"
+            bindtap="previewImage"
+            data-url="{{item}}"
+            data-urls="{{designer.portfolioImages}}"
           >
             <image
               class="portfolio-image"
-              src="{{item.coverUrl}}"
+              src="{{item}}"
               mode="aspectFill"
             />
-            <view class="portfolio-overlay">
-              <text class="portfolio-title">{{item.title}}</text>
-            </view>
-            <view wx:if="{{item.hasGallery}}" class="gallery-icon">
-              <text>🖼</text>
-            </view>
           </view>
         </view>
 
@@ -128,8 +145,13 @@
     <view class="bottom-spacer"></view>
   </view>
 
+  <!-- 未找到设计师 -->
+  <view wx:else class="empty-state">
+    <text class="empty-text">未找到该设计师</text>
+  </view>
+
   <!-- 底部操作栏 -->
-  <view wx:if="{{!loading}}" class="action-bar">
+  <view wx:if="{{!loading && designer}}" class="action-bar">
     <view class="customer-service" bindtap="onContact">
       <image class="service-icon-img" src="/images/客服.png" mode="aspectFit" />
       <text class="service-text">客服</text>
@@ -154,64 +176,71 @@
       </view>
 
       <view class="modal-body">
-        <!-- 空间类型 -->
-        <view class="form-item">
-          <text class="form-label">空间类型</text>
-          <picker bindchange="onSpaceChange" value="{{spaceIndex}}" range="{{spaceOptions}}">
-            <view class="picker-value">
-              <text class="{{bookingForm.spaceType ? 'selected' : 'placeholder'}}">
-                {{bookingForm.spaceType || '请选择空间类型'}}
-              </text>
-              <text class="arrow">›</text>
+        <!-- 加载中 -->
+        <view wx:if="{{loadingRequests}}" class="loading-hint">
+          <text>加载需求中...</text>
+        </view>
+        
+        <!-- 关联需求选择 -->
+        <block wx:elif="{{userRequests.length > 0}}">
+          <view class="form-item">
+            <text class="form-label">关联需求</text>
+            <picker bindchange="onRequestChange" value="{{selectedRequestIndex}}" range="{{userRequests}}" range-key="title">
+              <view class="picker-value">
+                <text class="picker-text selected">{{selectedRequest.title || '请选择'}}</text>
+                <text class="picker-arrow">›</text>
+              </view>
+            </picker>
+          </view>
+          
+          <!-- 自动填充的信息（只读展示） -->
+          <view class="auto-fill-info" wx:if="{{selectedRequest}}">
+            <view class="info-row">
+              <text class="info-label">空间类型</text>
+              <text class="info-value">{{selectedRequest.spaceType || '-'}}</text>
             </view>
-          </picker>
+            <view class="info-row">
+              <text class="info-label">设计面积</text>
+              <text class="info-value">{{selectedRequest.area || '-'}}㎡</text>
+            </view>
+            <view class="info-row">
+              <text class="info-label">预算范围</text>
+              <text class="info-value">{{selectedRequest.budget || '-'}}</text>
+            </view>
+          </view>
+        </block>
+        
+        <!-- 无需求提示 -->
+        <view wx:else class="no-request-hint">
+          <text class="hint-icon">📋</text>
+          <text class="hint-text">您还没有发布照明需求</text>
+          <text class="hint-sub">预约后将自动关联您的需求信息</text>
         </view>
 
-        <!-- 设计面积 -->
-        <view class="form-item">
-          <text class="form-label">设计面积</text>
-          <input
-            class="form-input"
-            type="digit"
-            placeholder="请输入面积（㎡）"
-            value="{{bookingForm.area}}"
-            bindinput="onAreaInput"
-          />
-        </view>
-
-        <!-- 预算范围 -->
-        <view class="form-item">
-          <text class="form-label">预算范围</text>
-          <picker bindchange="onBudgetChange" value="{{budgetIndex}}" range="{{budgetOptions}}">
-            <view class="picker-value">
-              <text class="{{bookingForm.budget ? 'selected' : 'placeholder'}}">
-                {{bookingForm.budget || '请选择预算范围'}}
-              </text>
-              <text class="arrow">›</text>
-            </view>
-          </picker>
-        </view>
+        <!-- 分隔线 -->
+        <view class="form-divider"></view>
 
         <!-- 联系方式类型 -->
         <view class="form-item">
-          <text class="form-label">联系方式</text>
+          <text class="form-label">联系方式 <text class="form-label-required">*</text></text>
           <picker bindchange="onContactTypeChange" value="{{contactTypeIndex}}" range="{{contactTypeOptions}}">
             <view class="picker-value">
-              <text class="{{bookingForm.contactType ? 'selected' : 'placeholder'}}">
-                {{bookingForm.contactType || '请选择联系方式类型'}}
+              <text class="picker-text {{bookingForm.contactType ? 'selected' : 'placeholder'}}">
+                {{bookingForm.contactType || '请选择'}}
               </text>
-              <text class="arrow">›</text>
+              <text class="picker-arrow">›</text>
             </view>
           </picker>
         </view>
 
         <!-- 联系方式内容 -->
         <view class="form-item">
-          <text class="form-label">{{bookingForm.contactType || '联系方式'}}号码</text>
+          <text class="form-label">{{bookingForm.contactType || '联系方式'}}号码 <text class="form-label-required">*</text></text>
           <input
             class="form-input"
             type="text"
-            placeholder="{{bookingForm.contactType ? '请输入' + bookingForm.contactType + '号码' : '请先选择联系方式类型'}}"
+            placeholder="{{bookingForm.contactType ? '请输入您的' + bookingForm.contactType : '请先选择联系方式'}}"
+            placeholder-class="input-placeholder"
             value="{{bookingForm.contact}}"
             bindinput="onContactInput"
           />
@@ -219,10 +248,11 @@
 
         <!-- 备注 -->
         <view class="form-item">
-          <text class="form-label">备注</text>
+          <text class="form-label">备注 <text class="form-label-hint">（选填）</text></text>
           <textarea
             class="form-textarea"
-            placeholder="请描述您的需求或特殊要求（选填）"
+            placeholder="请描述您的需求或特殊要求"
+            placeholder-class="textarea-placeholder"
             value="{{bookingForm.remark}}"
             bindinput="onRemarkInput"
             maxlength="200"

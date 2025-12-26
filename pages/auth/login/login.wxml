@@ -113,11 +113,19 @@
     <text class="success-desc">正在跳转...</text>
   </view>
 
-  <!-- 底部协议 -->
-  <view class="footer">
-    <text class="tip">登录即表示同意</text>
-    <text class="link" bindtap="showAgreement">《用户协议》</text>
-    <text class="tip">和</text>
-    <text class="link" bindtap="showPrivacy">《隐私政策》</text>
+  <!-- 底部协议 - 用户主动勾选同意 -->
+  <view class="agreement-section">
+    <view class="agreement-checkbox-wrap" bindtap="toggleAgreement">
+      <view class="checkbox {{agreedToTerms ? 'checked' : ''}}">
+        <text wx:if="{{agreedToTerms}}" class="check-icon">✓</text>
+      </view>
+      <view class="agreement-text">
+        <text class="tip">我已阅读并同意</text>
+        <text class="link" catchtap="showAgreement">《用户服务协议》</text>
+        <text class="tip">及</text>
+        <text class="link" catchtap="showPrivacy">《隐私政策》</text>
+      </view>
+    </view>
+    <text class="agreement-hint" wx:if="{{showAgreementHint}}">请先阅读并同意协议</text>
   </view>
 </view>

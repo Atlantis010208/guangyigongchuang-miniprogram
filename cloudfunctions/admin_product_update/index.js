@@ -1,25 +1,34 @@
-// 云函数入口文件
+/**
+ * 云函数：admin_product_update
+ * 功能：更新商品
+ * 权限：仅管理员（roles=0）
+ * 
+ * 支持两种调用来源：
+ * 1. 微信小程序：通过 getWXContext() 获取 OPENID
+ * 2. Web 后台（自定义登录）：通过 @cloudbase/node-sdk 获取 customUserId
+ */
 const cloud = require('wx-server-sdk')
+const { requireAdmin, getErrorMessage } = require('./admin_auth')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
 const db = cloud.database()
+const _ = db.command
 
 // 云函数入口函数
 exports.main = async (event, context) => {
-  const wxContext = cloud.getWXContext()
-  const { OPENID } = wxContext
-
   try {
-    // 验证管理员权限
-    const hasPermission = await checkAdminPermission(OPENID)
-    if (!hasPermission) {
-      return {
-        success: false,
-        code: 'PERMISSION_DENIED',
-        errorMessage: '没有管理员权限',
+    // 权限验证（支持小程序和 Web 端）
+    const authResult = await requireAdmin(db, _)
+    
+    if (!authResult.ok) {
+      console.log('[admin_product_update] 权限验证失败:', authResult.errorCode)
+      return { 
+        success: false, 
+        code: authResult.errorCode, 
+        errorMessage: getErrorMessage(authResult.errorCode),
         timestamp: Date.now()
       }
     }
@@ -106,7 +115,12 @@ async function updateProduct(product, updateData) {
       specifications,
       stock,
       tags,
-      seo
+      seo,
+      // 新增：灯具专业参数字段
+      brand,
+      model,
+      categoryParams,
+      fixedSpecs
     } = updateData
 
     // 构建更新数据
@@ -175,6 +189,35 @@ async function updateProduct(product, updateData) {
       dataToUpdate.seoTitle = seo.title || name || product.name
       dataToUpdate.seoKeywords = seo.keywords || name || product.name
       dataToUpdate.seoDescription = seo.description || description || product.description
+    }
+
+    // ========== 新增：更新灯具专业参数字段 ==========
+    
+    // 更新品牌
+    if (brand !== undefined) {
+      dataToUpdate.brand = brand
+    }
+    
+    // 更新型号
+    if (model !== undefined) {
+      dataToUpdate.model = model
+    }
+    
+    // 更新分类参数数据
+    if (categoryParams !== undefined) {
+      dataToUpdate.categoryParams = categoryParams
+    }
+    
+    // 更新固定规格参数
+    if (fixedSpecs !== undefined) {
+      dataToUpdate.fixedSpecs = Array.isArray(fixedSpecs) ? fixedSpecs.map(spec => ({
+        key: spec.key || '',
+        label: spec.label || '',
+        value: spec.value,
+        unit: spec.unit || '',
+        group: spec.group || 'physical',
+        important: spec.important || false
+      })) : []
     }
 
     // 执行更新
@@ -347,45 +390,20 @@ async function deleteProduct(product) {
   }
 }
 
-// 复用admin_product_add中的辅助函数
-async function checkAdminPermission(openid) {
-  try {
-    const userResult = await db.collection('users')
-      .where({
-        _openid: openid,
-        roles: db.command.in([0]),
-        isDelete: 0
-      })
-      .get()
+// 注意：权限验证已移至 admin_auth 模块
 
-    return userResult.data.length > 0
-  } catch (error) {
-    console.error('检查权限失败:', error)
-    return false
-  }
-}
-
+// 处理图片URL
+// 注意：直接存储 cloud:// 格式的云文件ID，不转换为临时URL
+// 在查询时（如 products_list）再转换为临时URL，避免URL过期问题
 async function processImages(images) {
   const processedImages = []
 
   for (const image of images) {
     if (typeof image === 'string') {
-      if (image.startsWith('cloud://')) {
-        try {
-          const result = await cloud.getTempFileURL({
-            fileList: [image]
-          })
-          if (result.fileList && result.fileList[0] && result.fileList[0].tempFileURL) {
-            processedImages.push(result.fileList[0].tempFileURL)
-          }
-        } catch (error) {
-          console.warn('转换云存储图片URL失败:', error)
-          processedImages.push(image)
-        }
-      } else {
-        processedImages.push(image)
-      }
+      // 直接存储 cloud:// 格式，或者其他格式（HTTPS URL、Base64）
+      processedImages.push(image)
     } else if (image && image.url) {
+      // 如果是对象格式，提取 URL
       processedImages.push(image.url)
     }
   }

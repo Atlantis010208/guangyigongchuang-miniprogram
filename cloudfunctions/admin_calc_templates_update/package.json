@@ -1,0 +1,10 @@
+﻿{
+    "name":  "admin_calc_templates_update",
+    "version":  "1.0.0",
+    "description":  "鏇存柊璁＄畻妯℃澘",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "latest",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
+}

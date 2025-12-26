@@ -60,6 +60,58 @@ Page({
     wx.previewImage({ current:url, urls })
   },
 
+  // ========== Picker change 事件处理方法 ==========
+  onSchemeChange(e) {
+    const idx = e.detail.value
+    this.setData({ schemeText: this.data.schemeOptionsTexts[idx] })
+  },
+  onStyleChange(e) {
+    const idx = e.detail.value
+    this.setData({ styleText: this.data.styleOptionsTexts[idx] }, this.recalc)
+  },
+  onAreaBucketChange(e) {
+    const idx = e.detail.value
+    this.setData({ areaBucketText: this.data.areaBucketTexts[idx] }, this.recalc)
+  },
+  onAvgPriceChange(e) {
+    const idx = e.detail.value
+    this.setData({ avgFixturePriceText: this.data.avgFixturePriceOptions[idx] }, this.recalc)
+  },
+  onDesignUnitChange(e) {
+    const idx = e.detail.value
+    this.setData({ designUnitText: this.data.designUnitTexts[idx] }, this.recalc)
+  },
+  onRenovationTypeChange(e) {
+    const idx = e.detail.value
+    this.setData({ renovationTypeText: this.data.renovationTypeOptions[idx] })
+  },
+  onProgressChange(e) {
+    const idx = e.detail.value
+    this.setData({ progressText: this.data.progressOptions[idx] })
+  },
+  onDiningPendantChange(e) {
+    const idx = e.detail.value
+    this.setData({ diningPendantText: this.data.diningPendantOptions[idx] })
+  },
+  onSmartHomeChange(e) {
+    const idx = e.detail.value
+    const val = this.data.smartHomeOptions[idx]
+    const next = { smartHomeText: val }
+    if (val !== '确定做') {
+      next.smartLightText = '请选择'
+    }
+    this.setData(next)
+  },
+  onSmartLightChange(e) {
+    const idx = e.detail.value
+    this.setData({ smartLightText: this.data.smartLightOptions[idx] })
+  },
+  onCeilingAdjustChange(e) {
+    const idx = e.detail.value
+    this.setData({ ceilingAdjustText: this.data.ceilingAdjustOptions[idx] })
+  },
+
+  // ========== onTap* 方法（保留用于 ActionSheet 场景） ==========
   onTapScheme(){ wx.showActionSheet({ itemList:this.data.schemeOptionsTexts, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ schemeText:this.data.schemeOptionsTexts[r.tapIndex] }) } } }) },
   onTapStyle(){ this.openOptionPopup('style','选择风格', this.data.styleOptionsTexts||[]) },
   onTapAreaBucket(){ wx.showActionSheet({ itemList:this.data.areaBucketTexts, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ areaBucketText:this.data.areaBucketTexts[r.tapIndex] }, this.recalc) } } }) },
@@ -101,12 +153,30 @@ Page({
   },
 
   async onSubmitOrder(){
+    // 登录检查：未登录时跳转登录页
+    const app = getApp()
+    if (!app.requireLogin(true, '/pages/categories/commercial/commercial')) {
+      return // 未登录，阻止提交并跳转登录页
+    }
     if (this.data.submitting || this._submitting) return
     const { schemeText, styleText, areaBucketText, avgFixturePriceText, designUnitText, renovationTypeText, progressText, diningPendantText, smartHomeText, smartLightText, ceilingAdjustText, estFixtures, estDesign, estTotal, note } = this.data
     if(schemeText==='请选择'){ wx.showToast({ title:'请选择方案', icon:'none' }); return }
     if(styleText==='请选择' || areaBucketText==='请选择' || avgFixturePriceText==='请选择' || designUnitText==='请选择'){
       wx.showToast({ title:'请完善参数', icon:'none' }); return
     }
+    
+    // 🔥 查询云端押金状态，用于优先服务标记
+    let depositPaid = false
+    try {
+      const depositRes = await wx.cloud.callFunction({ name: 'deposit_query' })
+      if (depositRes.result && depositRes.result.code === 0) {
+        depositPaid = depositRes.result.data.hasPaid === true
+      }
+      console.log('押金状态:', depositPaid ? '已缴纳' : '未缴纳')
+    } catch (err) {
+      console.warn('查询押金状态失败，使用默认值:', err)
+    }
+    
     const id = Date.now().toString()
     this._submitting = true
     this.setData({ submitting: true })
@@ -124,18 +194,20 @@ Page({
         const userDoc = wx.getStorageSync('userDoc') || {}
         const userId = (userDoc && userDoc._id) ? userDoc._id : null
         try{
-          const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'commercial', params: order.params, userId, status: 'submitted' } })
+          // 🔥 添加 priority 参数
+          const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'commercial', params: order.params, userId, status: 'submitted', priority: depositPaid } })
           if (!r1 || !r1.success) throw new Error((r1 && r1.errorMessage) || 'requests_create failed')
         }catch(err){
           const msg = (err && (err.message || err.errMsg)) || ''
           if (msg.indexOf('collection not exists') !== -1 || (err && err.errCode === -502005)) {
             if (wx.cloud && wx.cloud.callFunction) {
               await wx.cloud.callFunction({ name: 'initCollections' }).catch(()=>{})
-              await util.callCf('requests_create', { request: { orderNo: id, category: 'commercial', params: order.params, userId, status: 'submitted' } }).catch(()=>{})
+              await util.callCf('requests_create', { request: { orderNo: id, category: 'commercial', params: order.params, userId, status: 'submitted', priority: depositPaid } }).catch(()=>{})
             }
           }
         }
-        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'commercial', params: order.params, status:'submitted', paid:false, userId } }).catch(()=>{})
+        // 🔥 添加 priority 参数
+        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'commercial', params: order.params, status:'submitted', paid:false, userId, priority: depositPaid } }).catch(()=>{})
       }
     }catch(err){}
     wx.showToast({ title:'已下单', icon:'success' })

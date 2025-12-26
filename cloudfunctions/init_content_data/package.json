@@ -1,0 +1,13 @@
+{
+  "name": "init_content_data",
+  "version": "1.0.0",
+  "description": "初始化工具包和课程示例数据",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+

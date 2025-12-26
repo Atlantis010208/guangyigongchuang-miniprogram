@@ -55,9 +55,12 @@
 
 ### 🛠 技术栈
 - **框架**：微信小程序原生开发
+- **后端**：微信云开发（CloudBase）
+- **数据库**：云开发云数据库（MongoDB 风格）
+- **支付**：微信支付云模板
 - **样式**：苹果设计系统 + 响应式布局
 - **组件**：模块化组件设计
-- **状态管理**：本地存储 + 全局状态
+- **状态管理**：本地存储 + 全局状态 + 云数据库
 
 ### 🎯 核心功能
 - **触觉反馈**：支持 iPhone 震动反馈
@@ -65,23 +68,242 @@
 - **网络状态**：自动检测和处理网络状态
 - **错误处理**：完善的错误处理机制
 - **性能优化**：防抖节流、懒加载等优化
+- **微信支付**：完整的支付流程，支持重新支付
+
+## 💳 微信支付功能
+
+
+### 支付流程
+1. 用户在订单确认页点击"提交订单"
+2. 系统调用 `wxpayFunctions` 云函数创建预付单
+3. 前端调用 `wx.requestPayment` 唤起微信支付
+4. 支付成功后，云函数 `wxpayOrderCallback` 接收回调
+5. 更新订单状态、商品销量，发送通知
+
+### 支付相关云函数
+| 云函数名 | 功能 |
+|----------|------|
+| wxpayFunctions | 微信支付路由（下单、查询等） |
+| wxpayOrderCallback | 支付成功回调处理 |
+| orderTimeoutCheck | 订单超时自动关闭（定时触发） |
+
+### 订单状态
+- `pending_payment` - 待支付（30分钟后自动关闭）
+- `paid` - 已支付
+- `shipped` - 已发货
+- `completed` - 已完成
+- `closed` - 已关闭（超时或取消）
+- `refund_pending` - 退款申请中
+- `refunding` - 退款处理中
+- `refunded` - 已退款
+
+### 售后状态
+- `无售后` - 无售后申请
+- `待售后` - 有待处理的退款申请
+- `售后完成` - 售后已处理完成
+
+### 部署步骤
+1. 在云开发控制台安装微信支付云模板
+2. 配置商户号、密钥等商户信息
+3. 部署 `wxpayOrderCallback` 云函数
+4. 在云模板配置中设置回调函数：`scf:wxpayOrderCallback`
+5. 部署 `orderTimeoutCheck` 云函数并配置定时触发器
+6. 部署其他云函数（`wxpayFunctions`、`mall_orders_list` 等）
+
+详细技术设计文档见：`specs/wechat_payment/design.md`
+
+## 🔄 退款退货功能
+
+### 功能概述
+支持用户对已支付订单申请退款或退货，包含完整的售后流程管理。
+
+### 退款类型
+1. **仅退款**：适用于虚拟商品或无需退货的情况
+   - 流程：申请 → 商家审核 → 退款完成
+   - 阶段：商家处理 → 退款结束
+
+2. **退货退款**：适用于实物商品需要退回的情况
+   - 流程：申请 → 商家审核 → 用户寄回 → 商家确认收货 → 退款完成
+   - 阶段：商家处理 → 寄回商品 → 退款结束
+
+### 退款状态流转
+```
+pending（待审核）
+    ├── approved（已同意）→ refunding（退款中）→ success（退款成功）
+    │                                        └── failed（退款失败）→ 重试
+    ├── rejected（已拒绝）→ 用户可重新申请
+    └── cancelled（已取消）
+    
+退货流程额外状态：
+approved → return_pending（待寄回）→ return_shipped（已寄回）→ return_received（已收货）→ refunding
+```
+
+### 退款相关云函数
+| 云函数名 | 功能 |
+|----------|------|
+| refund_apply | 用户提交退款申请 |
+| refund_detail | 查询退款详情 |
+| refund_cancel | 用户取消退款申请 |
+| admin_refunds_list | 商家查询退款列表 |
+| admin_refunds_update | 商家审核/确认收货 |
+| wxpayRefundCallback | 微信支付退款回调 |
+| wxpayFunctions (wxpay_refund) | 发起微信支付退款 |
+| wxpayFunctions (wxpay_refund_query) | 查询退款状态 |
+
+### 退款相关页面
+| 页面路径 | 功能 |
+|----------|------|
+| pages/refund/apply/apply | 退款申请页（填写原因、上传凭证） |
+| pages/refund/detail/detail | 退款详情页（Steps步骤条、状态展示） |
+| pages/order/detail/detail | 订单详情页（申请退货入口） |
+
+### 数据库集合
+- **refunds**：退款记录集合
+  - 字段：refundNo, orderNo, refundType, status, reason, images, amount 等
+  - 索引：orderNo, openid, status, createdAt
+
+- **orders** 扩展字段：
+  - `afterSaleStatus`：售后状态（无售后/待售后/售后完成）
+
+### 管理后台改造
+- 订单列表新增「售后状态」列
+- 支持查看退款申请详情
+- 支持审核通过/拒绝退款
+- 支持确认收货（退货流程）
+
+## 💰 押金缴纳功能
+
+### 功能概述
+用户可以选择性缴纳押金以享受"优先"服务。押金在订单完成后自动原路退回。
+
+### 押金规则
+1. **可选支付**：押金为可选支付，不缴纳也可发布设计需求
+2. **优先服务**：已缴纳押金的用户发布的需求标记为"优先"
+   - 优先处理
+   - 客服优先对接
+3. **自动退回**：订单完成后系统自动原路退回押金
+4. **一人一笔**：每个用户同一时间只能有一笔活跃押金
+
+### 押金状态
+| 状态 | 说明 |
+|------|------|
+| `pending` | 待支付（已创建订单但未支付） |
+| `paid` | 已支付（享受优先服务） |
+| `refunding` | 退款中（已发起退款申请） |
+| `refunded` | 已退款（押金已退回） |
+| `refund_failed` | 退款失败（可重试） |
+
+### 押金相关云函数
+| 云函数名 | 功能 |
+|----------|------|
+| deposit_create | 创建押金订单并发起微信支付 |
+| deposit_query | 查询用户押金状态 |
+| deposit_refund | 用户/管理员申请押金退款 |
+| admin_deposits_list | 管理后台查询押金列表 |
+| wxpayOrderCallback | 支持押金支付成功回调 |
+| wxpayRefundCallback | 支持押金退款回调 |
+
+### 押金相关页面
+| 页面路径 | 功能 |
+|----------|------|
+| pages/profile/deposit/deposit | 押金缴纳/退款页面 |
+
+### 数据库集合
+- **deposits**：押金记录集合
+  - 字段：depositNo, userId, amount, status, paidAt, refundedAt, statusLogs 等
+  - 索引：userId, status, depositNo(唯一), createdAt
+
+- **users** 扩展字段：
+  - `depositPaid`：是否已缴纳押金
+  - `depositId`：当前活跃押金记录ID
+
+- **requests** 扩展字段：
+  - `priority`：是否优先处理（缴纳押金时为 true）
+
+### 管理后台功能
+- 押金管理页面：`/business/deposits`
+  - 查看所有用户押金记录
+  - 按状态筛选
+  - 管理员手动退款（兜底机制）
+  - 查看状态变更日志
+
+详细技术设计文档见：`specs/deposit/design.md`
+
+---
+
+### 退款原因选项
+1. 不想要了/买错了
+2. 商品与描述不符
+3. 质量问题
+4. 收到商品损坏
+5. 发错货/漏发
+6. 其他原因
+
+### UI 组件
+- 使用 **Vant Weapp** 组件库
+- Steps 步骤条展示退款进度
+- ActionSheet 选择退款类型
+- Uploader 上传凭证图片（最多9张）
+
+详细技术设计文档见：`specs/refund_return/design.md`
 
 ## 文件结构
 
 ```
 miniprogram-4/
-├── app.js              # 应用入口文件
-├── app.json            # 全局配置
-├── app.wxss            # 全局样式
-├── images/             # 图片资源
-├── pages/              # 页面文件
-│   ├── products/       # 产品页面
-│   ├── explore/        # 深入探索页面
-│   ├── search/         # 搜索页面
-│   └── cart/           # 购物袋页面
-├── utils/              # 工具函数
-│   └── util.js         # 通用工具函数
-└── README.md           # 项目说明
+├── app.js                    # 应用入口文件
+├── app.json                  # 全局配置
+├── app.wxss                  # 全局样式
+├── images/                   # 图片资源
+├── pages/                    # 页面文件
+│   ├── products/             # 产品页面
+│   ├── explore/              # 深入探索页面
+│   ├── search/               # 搜索页面
+│   ├── cart/                 # 购物袋页面
+│   ├── mall/                 # 电子商城
+│   ├── order/                # 订单相关
+│   │   ├── confirm/          # 订单确认页（支付入口）
+│   │   ├── result/           # 支付结果页
+│   │   └── detail/           # 订单详情页（含退货入口）
+│   ├── refund/               # 退款相关
+│   │   ├── apply/            # 退款申请页
+│   │   └── detail/           # 退款详情页
+│   └── profile/              # 个人中心
+│       └── orders/           # 我的订单（含售后状态）
+├── cloudfunctions/           # 云函数目录
+│   ├── wxpayFunctions/       # 微信支付路由（V3 API）
+│   │   ├── wxpay_order/      # JSAPI下单接口
+│   │   ├── wxpay_query_.../  # 订单查询接口
+│   │   ├── wxpay_refund/     # 退款接口
+│   │   ├── wxpay_refund_query/ # 退款查询接口
+│   │   ├── config/           # 支付配置（商户号、密钥等）
+│   │   └── utils/            # 支付工具类（签名、请求）
+│   ├── wxpayOrderCallback/   # 支付成功回调
+│   ├── wxpayRefundCallback/  # 退款回调处理
+│   ├── refund_apply/         # 用户申请退款
+│   ├── refund_detail/        # 退款详情查询
+│   ├── refund_cancel/        # 取消退款申请
+│   ├── admin_refunds_list/   # 商家退款列表
+│   ├── admin_refunds_update/ # 商家审核退款
+│   ├── orderTimeoutCheck/    # 订单超时检查
+│   ├── orders_create/        # 创建订单
+│   ├── orders_update/        # 更新订单
+│   └── mall_orders_list/     # 查询订单列表
+├── specs/                    # 技术文档
+│   ├── wechat_payment/       # 微信支付功能
+│   │   ├── requirements.md   # 需求文档
+│   │   ├── design.md         # 技术设计
+│   │   └── tasks.md          # 任务拆分
+│   ├── wechat_payment_v3/    # 微信支付V3升级
+│   │   └── tasks.md          # 任务拆分
+│   └── refund_return/        # 退款退货功能
+│       ├── requirements.md   # 需求文档
+│       ├── design.md         # 技术设计
+│       └── tasks.md          # 任务拆分
+├── utils/                    # 工具函数
+│   ├── util.js               # 通用工具函数
+│   └── api.js                # API 封装
+└── README.md                 # 项目说明
 ```
 
 ## 使用说明

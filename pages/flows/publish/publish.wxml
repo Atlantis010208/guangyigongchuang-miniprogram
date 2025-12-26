@@ -74,13 +74,6 @@
     </radio-group>
   </view>
 
-  <!-- 08 联系方式 -->
-  <view class="section">
-    <view class="block-title"><text class="required"></text><text>08 联系方式</text></view>
-    <text class="tip">请填写可以联系到你的电话号码/微信号，便于尽快推进项目</text>
-    <view class="cell"><text class="label">联系方式</text><input class="input" placeholder="请输入" bindinput="onContact"/></view>
-  </view>
-
   <view class="section"><button class="primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交需求</button></view>
 </scroll-view>
 

@@ -1,7 +1,9 @@
 {
   "navigationBarTitleText": "需求进度",
   "navigationBarBackgroundColor": "#f2f2f7",
-  "navigationBarTextStyle": "black"
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "van-steps": "@vant/weapp/steps/index",
+    "van-icon": "@vant/weapp/icon/index"
+  }
 }
-
-

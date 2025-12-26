@@ -1,0 +1,14 @@
+{
+  "name": "wxpayFunctions",
+  "version": "2.0.0",
+  "description": "微信支付V3云函数 - 支持JSAPI下单、订单查询、退款等",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

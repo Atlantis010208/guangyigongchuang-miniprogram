@@ -9,7 +9,7 @@
         <view class="spacer"></view>
         <view wx:if="{{address.isDefault}}" class="addr-tag">默认</view>
       </view>
-      <text class="addr-detail">{{address.region.join(' ')}} {{address.town}} {{address.detail}}</text>
+      <text class="addr-detail">{{addressText || address.full || address.detail}}</text>
     </view>
     <view wx:else class="addr-empty">
       <text class="addr-empty-text">暂无默认收货地址</text>
@@ -67,13 +67,14 @@
     <view class="total-row strong"><text class="label">合计</text><text class="val">¥{{total}}</text></view>
   </view>
 
-  <view class="footer-bar">
-    <view class="sum">
-      <text class="sum-label">应付：</text>
-      <text class="sum-price">¥{{total}}</text>
-    </view>
-    <button class="btn btn-primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{submitting}}">提交订单并支付</button>
-  </view>
+  <van-submit-bar
+    price="{{ total * 100 }}"
+    button-text="提交订单"
+    loading="{{ submitting }}"
+    disabled="{{ submitting }}"
+    button-color="#007AFF"
+    bind:submit="onSubmit"
+  />
 
   <view class="bottom-spacer"></view>
 </view>

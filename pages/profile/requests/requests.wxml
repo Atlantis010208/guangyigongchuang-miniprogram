@@ -1,18 +1,63 @@
-<scroll-view class="page" scroll-y>
-  <view class="header"><text class="title">我的需求</text></view>
-  <view class="list">
-    <view wx:for="{{items}}" wx:key="id" class="card">
-      <view class="row between">
+<scroll-view class="page" scroll-y refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="refreshData" bindscrolltolower="loadMore">
+  <view class="header">
+    <text class="title">我的需求</text>
+    <text class="subtitle">共 {{total}} 条设计请求</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading && requests.length === 0}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{isEmpty}}" class="empty-wrap">
+    <image class="empty-icon" src="/images/icons/empty-box.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无设计请求</text>
+    <text class="empty-desc">发布您的照明设计需求，让专业设计师为您服务</text>
+    <button class="publish-btn" bindtap="onPublish">发布需求</button>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:else class="list">
+    <view wx:for="{{requests}}" wx:key="id" class="card" bindtap="onView" data-id="{{item.id}}">
+      <!-- 头部：名称 + 状态 -->
+      <view class="card-header">
         <text class="name">{{item.name}}</text>
-        <text class="status">{{item.status}}</text>
+        <text class="status" style="color: {{item.statusColor}}; background: {{item.statusColor}}20;">{{item.status}}</text>
       </view>
+      
+      <!-- 订单号 -->
+      <view class="order-no" wx:if="{{item.orderNo}}">
+        <text class="label">编号:</text>
+        <text class="value">{{item.orderNo}}</text>
+      </view>
+      
+      <!-- 描述 -->
       <text class="desc">{{item.desc}}</text>
-      <view class="row between">
-        <text class="time">{{item.time}}</text>
-        <button class="link" data-id="{{item.id}}" bindtap="onView">查看进度</button>
+      
+      <!-- 面积/预算 -->
+      <view class="specs" wx:if="{{item.area || item.budget}}">
+        <text class="spec-item" wx:if="{{item.area}}">📐 {{item.area}}</text>
+        <text class="spec-item" wx:if="{{item.budget}}">💰 {{item.budget}}</text>
       </view>
+      
+      <!-- 底部：时间 + 操作 -->
+      <view class="card-footer">
+        <text class="time">{{item.time}}</text>
+        <view class="action-btn">
+          <text>查看进度</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{loading && requests.length > 0}}" class="loading-more">
+      <text>加载中...</text>
+    </view>
+    <view wx:elif="{{!hasMore && requests.length > 0}}" class="no-more">
+      <text>— 没有更多了 —</text>
     </view>
   </view>
 </scroll-view>
-
-

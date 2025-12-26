@@ -5,6 +5,7 @@
  * 入参：
  *   - profile: { nickName, avatarUrl } 可选，用户基本信息
  *   - verifyOnly: boolean 可选，仅验证模式（不创建新用户，检查登录是否有效）
+ *   - getOpenIdOnly: boolean 可选，仅获取 openid 模式（不创建用户、不查询数据库）
  * 
  * 返回：
  *   - success: boolean
@@ -34,6 +35,63 @@ exports.main = async (event) => {
         success: false, 
         code: 'MISSING_OPENID', 
         errorMessage: '无法获取用户身份标识' 
+      }
+    }
+
+    // 仅获取 openid 模式：不创建用户，但会查询数据库判断用户是否存在
+    // 用于登录流程的第一步，获取 openid 后等待用户完成资料填写
+    const getOpenIdOnly = event && event.getOpenIdOnly === true
+    if (getOpenIdOnly) {
+      console.log('仅获取 openid 模式:', { openid, unionId: unionId || '无' })
+      
+      // 查询用户是否已存在（用于区分新老用户）
+      const db = cloud.database()
+      let existingUser = null
+      try {
+        const queryRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
+        if (queryRes && queryRes.data && queryRes.data.length > 0) {
+          existingUser = queryRes.data[0]
+          console.log('找到已有用户记录:', existingUser._id)
+          
+          // 老用户：更新登录时间
+          const now = Date.now()
+          const expireTime = now + LOGIN_EXPIRE_DURATION
+          await db.collection('users').doc(existingUser._id).update({
+            data: {
+              lastLoginAt: now,
+              loginExpireAt: expireTime,
+              updatedAt: now
+            }
+          })
+          
+          // 重新获取更新后的用户
+          const refreshed = await db.collection('users').doc(existingUser._id).get()
+          existingUser = refreshed && refreshed.data ? refreshed.data : existingUser
+          
+          return {
+            success: true,
+            code: 'OK',
+            openid,
+            unionId: unionId || '',
+            user: existingUser,
+            isNewUser: false,
+            loginTime: now,
+            expireTime
+          }
+        }
+      } catch (e) {
+        // 集合不存在或查询失败，视为新用户
+        console.log('查询用户失败（可能是新用户）:', e.message)
+      }
+      
+      // 新用户：只返回 openid，不创建记录
+      return {
+        success: true,
+        code: 'OK',
+        openid,
+        unionId: unionId || '',
+        user: null,
+        isNewUser: true  // 标记为新用户（待创建）
       }
     }
 

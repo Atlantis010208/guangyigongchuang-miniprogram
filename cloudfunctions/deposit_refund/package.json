@@ -1,0 +1,15 @@
+{
+  "name": "deposit_refund",
+  "version": "1.0.0",
+  "description": "押金退款云函数 - 用户或管理员申请押金退款",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
+

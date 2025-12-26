@@ -1,5 +1,48 @@
 /* 设计师列表页 - 参考 ai_studio 布局 */
 
+/* 🔥 预选需求提示条 */
+.preselect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+}
+
+.preselect-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.preselect-label {
+  font-size: 22rpx;
+  opacity: 0.85;
+}
+
+.preselect-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  max-width: 540rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preselect-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  margin-left: 16rpx;
+}
+
 /* 色彩系统 - 基于SHADCN */
 page {
   --background: 0 0% 100%;

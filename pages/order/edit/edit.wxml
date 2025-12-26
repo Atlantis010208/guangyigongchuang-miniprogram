@@ -9,7 +9,7 @@
     <text class="title">收货信息</text>
     <block wx:if="{{address}}">
       <view class="addr"><text>{{address.name}} {{address.phone}}</text></view>
-      <view class="addr"><text>{{address.region.join(' ')}} {{address.town}} {{address.detail}}</text></view>
+      <view class="addr"><text>{{addressText || address.full || address.detail}}</text></view>
       <button class="btn ghost" bindtap="onManageAddress">管理地址</button>
     </block>
     <block wx:else>
@@ -20,14 +20,14 @@
 
   <view class="card">
     <text class="title">商品清单</text>
-    <view class="item" wx:for="{{items}}" wx:key="id">
-      <image class="img" src="{{item.image}}" mode="aspectFill"></image>
+    <view class="item" wx:for="{{items}}" wx:key="id" wx:for-item="product">
+      <image class="img" src="{{product.image}}" mode="aspectFill"></image>
       <view class="info">
-        <text class="name">{{item.name}}</text>
-        <text class="specs">{{formatSpecs(item.specs)}}</text>
-        <view class="qty-row"><view class="qty-btn" bindtap="dec" data-id="{{item.id}}">-</view><text class="qty-val">{{item.quantity}}</text><view class="qty-btn" bindtap="inc" data-id="{{item.id}}">+</view></view>
+        <text class="name">{{product.name}}</text>
+        <text class="specs" wx:if="{{product.specsText}}">{{product.specsText}}</text>
+        <view class="qty-row"><view class="qty-btn" bindtap="dec" data-id="{{product.id}}">-</view><text class="qty-val">{{product.quantity}}</text><view class="qty-btn" bindtap="inc" data-id="{{product.id}}">+</view></view>
       </view>
-      <text class="price">¥{{item.price * item.quantity}}</text>
+      <text class="price">¥{{product.subtotal}}</text>
     </view>
   </view>
 

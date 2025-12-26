@@ -26,14 +26,34 @@ const APPOINTMENT_STATUS = {
   cancelled: { text: '已取消', color: '#8e8e93' }
 }
 
-// 服务类型定义
+// 服务类型定义 - 根据 category 映射
 const SERVICE_TYPES = {
+  // 空间类型
+  residential: '住宅设计',
+  commercial: '商业设计',
+  office: '办公设计',
+  hotel: '酒店设计',
+  // 服务类型
+  custom: '个性需求定制',
+  selection: '选配服务',
+  publish: '设计需求',
+  optimize: '方案优化',
+  full: '全案设计',
+  // 其他
   light_experience: '光环境体验',
   site_survey: '现场勘测',
   design_consultation: '设计咨询',
   installation: '安装服务',
   maintenance: '维护保养',
   other: '其他服务'
+}
+
+// 空间类型中文映射
+const SPACE_TYPE_MAP = {
+  '住宅': '住宅设计',
+  '商业': '商业设计',
+  '办公': '办公设计',
+  '酒店': '酒店设计'
 }
 
 exports.main = async (event, context) => {
@@ -146,21 +166,92 @@ async function getAppointmentList(userId, openid, event) {
     .limit(pageSize)
     .get()
   
-  // 处理预约数据，添加状态文本
-  const appointments = (res.data || []).map(item => ({
-    id: item._id,
-    ...item,
-    statusText: APPOINTMENT_STATUS[item.status]?.text || item.status,
-    statusColor: APPOINTMENT_STATUS[item.status]?.color || '#8e8e93',
-    // 格式化服务名称
-    serviceName: item.serviceName || item.designerName || SERVICE_TYPES[item.spaceType] || '预约服务',
-    // 格式化预约时间
-    appointmentTime: formatAppointmentTime(item),
-    // 格式化地址
-    address: item.address || item.area || '待确认',
-    // 联系电话
-    phone: item.phone || item.contact || '待确认'
-  }))
+  // 收集设计师ID以批量查询联系方式
+  const designerIds = [...new Set(res.data.filter(item => item.designerId).map(item => item.designerId))]
+  
+  // 收集关联的设计请求ID
+  const requestIds = [...new Set(res.data.filter(item => item.requestId).map(item => item.requestId))]
+  
+  // 批量查询设计师信息
+  let designersMap = {}
+  if (designerIds.length > 0) {
+    try {
+      const designersRes = await db.collection('designers').where({
+        _id: _.in(designerIds)
+      }).field({
+        _id: true,
+        name: true,
+        avatar: true,
+        rating: true,
+        phone: true,
+        wechat: true
+      }).get()
+      
+      designersRes.data.forEach(d => {
+        designersMap[d._id] = d
+      })
+    } catch (err) {
+      console.warn('批量查询设计师信息失败:', err.message)
+    }
+  }
+  
+  // 批量查询关联的设计请求，获取服务类型
+  let requestsMap = {}
+  if (requestIds.length > 0) {
+    try {
+      const requestsRes = await db.collection('requests').where({
+        _id: _.in(requestIds)
+      }).field({
+        _id: true,
+        category: true,
+        orderNo: true
+      }).get()
+      
+      requestsRes.data.forEach(r => {
+        requestsMap[r._id] = r
+      })
+    } catch (err) {
+      console.warn('批量查询设计请求失败:', err.message)
+    }
+  }
+  
+  // 处理预约数据，添加状态文本和设计师联系方式
+  const appointments = (res.data || []).map(item => {
+    const designer = designersMap[item.designerId] || {}
+    const request = requestsMap[item.requestId] || {}
+    const isConfirmed = item.status === 'confirmed' || item.status === 'completed'
+    
+    // 🔥 智能生成服务名称：优先使用关联请求的 category，其次是空间类型映射
+    let serviceName = item.serviceName
+    if (!serviceName || serviceName === item.designerName || serviceName === designer.name) {
+      // 尝试从关联的设计请求获取服务类型
+      if (request.category && SERVICE_TYPES[request.category]) {
+        serviceName = SERVICE_TYPES[request.category]
+      } else if (item.spaceType && SPACE_TYPE_MAP[item.spaceType]) {
+        serviceName = SPACE_TYPE_MAP[item.spaceType]
+      } else if (item.spaceType && SERVICE_TYPES[item.spaceType]) {
+        serviceName = SERVICE_TYPES[item.spaceType]
+      } else {
+        serviceName = '设计咨询'
+      }
+    }
+    
+    return {
+      id: item._id,
+      ...item,
+      statusText: APPOINTMENT_STATUS[item.status]?.text || item.status,
+      statusColor: APPOINTMENT_STATUS[item.status]?.color || '#8e8e93',
+      // 🔥 服务名称 - 显示服务类型而非设计师名称
+      serviceName: serviceName,
+      // 🔥 设计师信息 - 单独保留
+      designerName: item.designerName || designer.name || '未分配',
+      designerAvatar: designer.avatar || '',
+      designerRating: designer.rating || 0,
+      // 设计师联系方式 - 仅确认后可见
+      designerPhone: isConfirmed ? (designer.phone || '') : '',
+      designerWechat: isConfirmed ? (designer.wechat || '') : ''
+    }
+  })
   
   return {
     success: true,
@@ -400,16 +491,35 @@ async function getAppointmentDetail(userId, openid, event) {
     }
   }
   
+  // 查询设计师联系方式
+  let designerInfo = {}
+  if (appointment.designerId) {
+    try {
+      const designerRes = await db.collection('designers').doc(appointment.designerId).get()
+      if (designerRes.data) {
+        designerInfo = designerRes.data
+      }
+    } catch (err) {
+      console.warn('查询设计师信息失败:', err.message)
+    }
+  }
+  
+  const isConfirmed = appointment.status === 'confirmed' || appointment.status === 'completed'
+  
   // 处理返回数据
   const detail = {
     id: appointment._id,
     ...appointment,
     statusText: APPOINTMENT_STATUS[appointment.status]?.text || appointment.status,
     statusColor: APPOINTMENT_STATUS[appointment.status]?.color || '#8e8e93',
-    serviceName: appointment.serviceName || appointment.designerName || SERVICE_TYPES[appointment.spaceType] || '预约服务',
-    appointmentTime: formatAppointmentTime(appointment),
-    address: appointment.address || appointment.area || '待确认',
-    phone: appointment.phone || appointment.contact || '待确认'
+    serviceName: appointment.serviceName || appointment.designerName || designerInfo.name || SERVICE_TYPES[appointment.spaceType] || '预约服务',
+    // 设计师信息
+    designerName: appointment.designerName || designerInfo.name || '未分配',
+    designerAvatar: designerInfo.avatar || '',
+    designerRating: designerInfo.rating || 0,
+    // 🔥 设计师联系方式 - 仅确认后可见
+    designerPhone: isConfirmed ? (designerInfo.phone || '') : '',
+    designerWechat: isConfirmed ? (designerInfo.wechat || '') : ''
   }
   
   return {

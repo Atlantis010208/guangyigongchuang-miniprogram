@@ -6,13 +6,22 @@ Page({
     mode: '',
     // 表单题目（按顺序）
     questions: [],
-    submitting:false
+    submitting:false,
+    // 表单类型：'publish' = 发布照明需求，'custom' = 个性需求定制
+    formType: ''
   },
   onLoad({id}){
     // 第二个卡片改为表单模式；第一个卡片复刻发布需求界面
-    if (id === 'photo') { this.setData({ mode:'form', questions: this.buildQuestions() }); return }
-    // 第一张卡片恢复到「上次的问卷」并独立存在
-    if (id === 'video') { this.setData({ mode:'form', questions: this.buildLegacyQuestions() }); return }
+    // photo = 个性需求定制（新问卷）
+    if (id === 'photo') { 
+      this.setData({ mode:'form', questions: this.buildQuestions(), formType: 'custom' })
+      return 
+    }
+    // video = 发布照明需求（旧问卷）
+    if (id === 'video') { 
+      this.setData({ mode:'form', questions: this.buildLegacyQuestions(), formType: 'publish' })
+      return 
+    }
 
     // 其余保留默认（如将来拓展其他模式）
   },
@@ -124,7 +133,6 @@ Page({
       { key:'coCreate', title:'愿意跟设计师共同创作你家的设计吗？', type:'radio', options:[
         {label:'愿意', value:'愿意'}, {label:'不愿意', value:'不愿意'}
       ]},
-      { key:'contact', title:'联系方式', type:'input', subtitle:'请填写电话/微信等，便于沟通' },
       { key:'accept', title:'设计流程/标准能接受吗？', type:'radio', subtitle:'(1) 核实你的装修需求，全面梳理设计阶段需求；\n(2) 按实际需求在平台内完成下单并沟通；\n(3) 收取设计费的50%定金，开始深化设计；\n(4) 交付成套设计方案，平台审核通过后交付给用户；\n(5) 后续…', options:[
         {label:'接受', value:'接受'}, {label:'不接受', value:'不接受'}, {label:'其他', value:'other'}
       ]}
@@ -152,6 +160,11 @@ Page({
     this.setData({ [key]: e.detail.value })
   },
   async onSubmit(){
+    // 登录检查：未登录时跳转登录页
+    const app = getApp()
+    if (!app.requireLogin(true, '/pages/activities/detail/detail')) {
+      return // 未登录，阻止提交并跳转登录页
+    }
     if (this.data.submitting || this._submitting) return
     // 所有表单模式（两个卡片都可能进入 form）统一处理为方案订单
     if (this.data.mode === 'form') {
@@ -170,48 +183,68 @@ Page({
           if (typeof val !== 'undefined') params[key] = val
         })
         
+        // 根据表单类型确定订单分类
+        // formType: 'publish' = 发布照明需求，'custom' = 个性需求定制
+        const category = this.data.formType || 'custom'
+        const logPrefix = category === 'publish' ? '[提交照明需求]' : '[提交个性需求]'
+        
+        // 🔥 查询云端押金状态，用于优先服务标记
+        let depositPaid = false
+        try {
+          const depositRes = await wx.cloud.callFunction({ name: 'deposit_query' })
+          if (depositRes.result && depositRes.result.code === 0) {
+            depositPaid = depositRes.result.data.hasPaid === true
+          }
+          console.log(logPrefix + ' 押金状态:', depositPaid ? '已缴纳' : '未缴纳')
+        } catch (err) {
+          console.warn(logPrefix + ' 查询押金状态失败，使用默认值:', err)
+        }
+        
         try{
           const db = api.dbInit()
           if (db) {
             const userDoc = wx.getStorageSync('userDoc') || {}
             const userId = (userDoc && userDoc._id) ? userDoc._id : null
             try{
-              console.log('[提交个性需求] 调用 requests_create, userId:', userId, 'orderNo:', id)
-              const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'custom', params, userId, status: 'submitted' } })
-              console.log('[提交个性需求] requests_create 返回:', r1)
+              console.log(logPrefix + ' 调用 requests_create, userId:', userId, 'orderNo:', id, 'category:', category, 'priority:', depositPaid)
+              // 🔥 添加 priority 参数
+              const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: category, params, userId, status: 'submitted', priority: depositPaid } })
+              console.log(logPrefix + ' requests_create 返回:', r1)
               if (!r1 || !r1.success) {
-                console.warn('[提交个性需求] 云函数失败，尝试直接写入')
+                console.warn(logPrefix + ' 云函数失败，尝试直接写入')
                 // 云函数失败时，直接用客户端写入作为兜底
                 const Requests = api.getRequestsRepo(db)
-                await Requests.create({ orderNo: id, category: 'custom', params, userId, status: 'submitted' })
-                console.log('[提交个性需求] 直接写入成功')
+                await Requests.create({ orderNo: id, category: category, params, userId, status: 'submitted', priority: depositPaid })
+                console.log(logPrefix + ' 直接写入成功')
               }
             }catch(err){
-              console.error('[提交个性需求] requests_create 失败:', err)
+              console.error(logPrefix + ' requests_create 失败:', err)
               const msg = (err && (err.message || err.errMsg)) || ''
               if (msg.indexOf('collection not exists') !== -1 || (err && err.errCode === -502005)) {
-                console.log('[提交个性需求] 集合不存在，尝试创建...')
+                console.log(logPrefix + ' 集合不存在，尝试创建...')
                 if (wx.cloud && wx.cloud.callFunction) {
                   await wx.cloud.callFunction({ name: 'initCollections' }).catch((e)=>console.error('initCollections失败:', e))
-                  const r2 = await util.callCf('requests_create', { request: { orderNo: id, category: 'custom', params, userId, status: 'submitted' } })
-                  console.log('[提交个性需求] 重试 requests_create 返回:', r2)
+                  // 🔥 添加 priority 参数
+                  const r2 = await util.callCf('requests_create', { request: { orderNo: id, category: category, params, userId, status: 'submitted', priority: depositPaid } })
+                  console.log(logPrefix + ' 重试 requests_create 返回:', r2)
                 }
               } else {
                 // 未知错误时，尝试直接写入
-                console.warn('[提交个性需求] 尝试直接写入作为兜底')
+                console.warn(logPrefix + ' 尝试直接写入作为兜底')
                 try {
                   const Requests = api.getRequestsRepo(db)
-                  await Requests.create({ orderNo: id, category: 'custom', params, userId, status: 'submitted' })
-                  console.log('[提交个性需求] 直接写入成功')
+                  await Requests.create({ orderNo: id, category: category, params, userId, status: 'submitted', priority: depositPaid })
+                  console.log(logPrefix + ' 直接写入成功')
                 } catch (e2) {
-                  console.error('[提交个性需求] 直接写入也失败:', e2)
+                  console.error(logPrefix + ' 直接写入也失败:', e2)
                 }
               }
             }
-            console.log('[提交个性需求] 调用 orders_create, userId:', userId, 'orderNo:', id)
-            util.callCf('orders_create', { order: { type:'products', orderNo:id, category:'custom', params, status:'submitted', paid:false, userId } })
-              .then(r => console.log('[提交个性需求] orders_create 返回:', r))
-              .catch(e => console.error('[提交个性需求] orders_create 失败:', e))
+            console.log(logPrefix + ' 调用 orders_create, userId:', userId, 'orderNo:', id, 'category:', category, 'priority:', depositPaid)
+            // 🔥 添加 priority 参数
+            util.callCf('orders_create', { order: { type:'products', orderNo:id, category: category, params, status:'submitted', paid:false, userId, priority: depositPaid } })
+              .then(r => console.log(logPrefix + ' orders_create 返回:', r))
+              .catch(e => console.error(logPrefix + ' orders_create 失败:', e))
           }
         }catch(err){}
         wx.showToast({ title:'已提交', icon:'success' })
@@ -234,15 +267,13 @@ Page({
   onStageChange(e){ this.setData({ stage:e.detail.value }) },
   onShareChange(e){ this.setData({ share:e.detail.value }) },
   onCoCreateChange(e){ this.setData({ coCreate:e.detail.value }) },
-  onContact(e){ this.setData({ contact:e.detail.value }) },
-  // 仅供“发布模式”使用，避免和表单模式的提交冲突
+  // 仅供"发布模式"使用，避免和表单模式的提交冲突
   onPublishSubmit(){
     if(!this.data.space){ wx.showToast({ title:'请选择空间类型', icon:'none' }); return }
     if(!this.data.service){ wx.showToast({ title:'请选择服务类型', icon:'none' }); return }
     if(!this.data.budget){ wx.showToast({ title:'请选择预算', icon:'none' }); return }
     if(!this.data.area){ wx.showToast({ title:'请输入设计面积', icon:'none' }); return }
     if(!this.data.stage){ wx.showToast({ title:'请选择项目进度', icon:'none' }); return }
-    if(!this.data.contact){ wx.showToast({ title:'请填写联系方式', icon:'none' }); return }
     wx.showToast({ title:'已提交', icon:'success' })
   },
   openRecommend(){

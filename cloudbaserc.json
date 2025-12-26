@@ -1,0 +1,32 @@
+{
+  "envId": "cloud1-5gb9c5u2c58ad6d7",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "admin_accounts_add",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_login",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_accounts_list",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_appointments_update",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_requests_update",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    }
+  ]
+}
+

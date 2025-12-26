@@ -1,0 +1,10 @@
+{
+  "name": "cleanup_invalid_avatars",
+  "version": "1.0.0",
+  "description": "清理数据库中无效的头像链接",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

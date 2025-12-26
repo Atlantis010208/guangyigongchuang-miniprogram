@@ -1,0 +1,10 @@
+{
+  "name": "admin_login",
+  "version": "1.1.0",
+  "description": "管理员/设计师登录验证云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "bcryptjs": "^2.4.3"
+  }
+}

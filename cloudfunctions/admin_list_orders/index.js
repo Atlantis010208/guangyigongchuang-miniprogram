@@ -1,20 +1,33 @@
+/**
+ * 云函数：admin_list_orders
+ * 功能：管理员查询所有订单
+ * 权限：仅管理员（roles=0）
+ * 
+ * 支持两种调用来源：
+ * 1. 微信小程序：通过 getWXContext() 获取 OPENID
+ * 2. Web 后台（自定义登录）：通过 @cloudbase/node-sdk 获取 customUserId
+ */
 const cloud = require('wx-server-sdk')
+const { requireAdmin, getErrorMessage } = require('./admin_auth')
 
-cloud.init({ env: 'cloud1-5gb9c5u2c58ad6d7' })
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+
+const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event) => {
   try {
-    const ctx = cloud.getWXContext()
-    const openid = ctx && (ctx.OPENID || ctx.openid) || ''
-
-    // TODO: 在这里添加管理员权限验证
-    // 例如：检查 openid 是否在管理员白名单中
-    const adminWhitelist = ['o8ItW5Hccz2uiBkbXSODWHFjc0wk']
-    if (!adminWhitelist.includes(openid)) {
-      return { success: false, code: 'FORBIDDEN', errorMessage: 'No permission' }
+    // 权限验证（支持小程序和 Web 端）
+    const authResult = await requireAdmin(db, _)
+    
+    if (!authResult.ok) {
+      console.log('[admin_list_orders] 权限验证失败:', authResult.errorCode)
+      return { 
+        success: false, 
+        code: authResult.errorCode, 
+        errorMessage: getErrorMessage(authResult.errorCode)
+      }
     }
-
-    const db = cloud.database()
     const { collection, filters = {}, limit = 100, offset = 0 } = event
 
     if (!collection || !['orders', 'requests'].includes(collection)) {

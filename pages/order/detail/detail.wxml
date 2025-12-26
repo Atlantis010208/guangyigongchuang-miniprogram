@@ -1,52 +1,238 @@
 <scroll-view class="page" scroll-y>
-  <view class="card">
-    <text class="title">订单信息</text>
-    <view class="row"><text class="label">订单号</text><text class="val">{{order.id}}</text></view>
-    <view class="row"><text class="label">状态</text><text class="val">{{order.status}}</text></view>
-    <view class="row"><text class="label">下单时间</text><text class="val">{{orderTime}}</text></view>
-    <view class="row"><text class="label">金额</text><text class="val">¥{{order.total}}</text></view>
-  </view>
-
-  <view class="card">
-    <text class="title">收货信息</text>
-    <block wx:if="{{order.addressSnapshot}}">
-      <view class="addr"><text>{{order.addressSnapshot.name}} {{order.addressSnapshot.phone}}</text></view>
-      <view class="addr"><text>{{order.addressSnapshot.region.join(' ')}} {{order.addressSnapshot.town}} {{order.addressSnapshot.detail}}</text></view>
-    </block>
-    <block wx:else>
-      <text class="empty">暂无收货信息</text>
-    </block>
-  </view>
-
-  <view class="card">
-    <text class="title">商品清单</text>
-    <view class="item" wx:for="{{order.items}}" wx:key="id">
-      <image class="img" src="{{item.image}}" mode="aspectFill"></image>
-      <view class="info">
-        <text class="name">{{item.name}}</text>
-        <text class="specs">{{formatSpecs(item.specs)}}</text>
-        <view class="params">
-          <view class="param-row" wx:for="{{item.paramPairs}}" wx:key="key">
-            <text class="param-key">{{item.label}}</text>
-            <text class="param-val">{{item.value}}</text>
-          </view>
-        </view>
-        <text class="qty">数量：{{item.quantity}}</text>
+  <!-- 订单状态头部 -->
+  <view class="status-header">
+    <!-- 已完成 -->
+    <image 
+      class="status-icon-img" 
+      wx:if="{{order.status === '已完成' || order.status === 'completed'}}"
+      src="/images/已完成.png" 
+      mode="aspectFit"
+    />
+    <!-- 已发货 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '已发货' || order.status === 'shipped'}}"
+      src="/images/已发货.png" 
+      mode="aspectFit"
+    />
+    <!-- 已支付 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '已支付' || order.status === 'paid'}}"
+      src="/images/已支付.png" 
+      mode="aspectFit"
+    />
+    <!-- 待支付 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '待支付' || order.status === 'pending' || order.status === 'pending_payment'}}"
+      src="/images/待支付-copy.png" 
+      mode="aspectFit"
+    />
+    <!-- 已关闭 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === 'closed' || order.status === '已关闭'}}"
+      src="/images/已关闭.png" 
+      mode="aspectFit"
+    />
+    <!-- 已取消 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '已取消' || order.status === 'canceled' || order.status === 'cancelled'}}"
+      src="/images/已取消.png" 
+      mode="aspectFit"
+    />
+    <!-- 已退款 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '已退款' || order.status === 'refunded'}}"
+      src="/images/已退款.png" 
+      mode="aspectFit"
+    />
+    <!-- 支付失败 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '支付失败' || order.status === 'failed' || order.status === 'payment_failed'}}"
+      src="/images/支付失败.png" 
+      mode="aspectFit"
+    />
+    <!-- 已确认 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '已确认' || order.status === 'confirmed'}}"
+      src="/images/已确认.png" 
+      mode="aspectFit"
+    />
+    <!-- 处理中 -->
+    <image 
+      class="status-icon-img" 
+      wx:elif="{{order.status === '处理中' || order.status === 'processing'}}"
+      src="/images/处理中.png" 
+      mode="aspectFit"
+    />
+    <!-- 其他状态 -->
+    <view class="status-icon" wx:else>
+      <text>📦</text>
+    </view>
+    <view class="status-info">
+      <view class="status-main">
+        <text class="status-text">{{order.statusText || order.status}}</text>
+        <text wx:if="{{order.priority}}" class="tag-priority">优先</text>
+        <van-tag wx:if="{{order.afterSaleStatus === '待售后'}}" type="warning" plain size="small">售后中</van-tag>
       </view>
-      <text class="price">¥{{(item.price || 0) * (item.quantity || 1)}}</text>
+      <text class="status-time">{{orderTime}}</text>
+    </view>
+    <text class="status-amount">¥{{order.total}}</text>
+  </view>
+
+  <!-- 收货信息 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">收货信息</text>
+    </view>
+    <view class="card-body">
+      <block wx:if="{{order.addressSnapshot}}">
+        <view class="address-row">
+          <text class="address-name">{{order.addressSnapshot.name}}</text>
+          <text class="address-phone">{{order.addressSnapshot.phone}}</text>
+        </view>
+        <text class="address-detail">{{addressText || order.addressSnapshot.full || order.addressSnapshot.detail}}</text>
+      </block>
+      <block wx:else>
+        <text class="empty">暂无收货信息</text>
+      </block>
     </view>
   </view>
 
-  <view class="section actions">
-    <button class="btn danger" bindtap="onCancel" disabled="{{order.status==='canceled' || order.status==='已取消' || order.status==='支付失败'}}">撤销</button>
-    <button class="btn primary" bindtap="onModify" disabled="{{order.status==='canceled' || order.status==='已取消' || order.status==='支付失败'}}">修改订单</button>
-    <button class="btn ghost" bindtap="onContact">联系客服</button>
-    <button class="btn ghost" bindtap="onDelete" wx:if="{{order.status==='canceled' || order.status==='已取消'}}">删除订单</button>
-    <button class="btn ghost more" bindtap="onMoreTap">
-      <image class="more-icon-img" src="/images/更多.svg" mode="aspectFit" />
-    </button>
+  <!-- 商品清单 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">商品清单</text>
+    </view>
+    <view class="card-body">
+      <view class="product-item" wx:for="{{order.items}}" wx:key="id" wx:for-item="product">
+        <image class="product-img" src="{{product.image}}" mode="aspectFill"></image>
+        <view class="product-info">
+          <text class="product-name">{{product.name}}</text>
+          <!-- 规格标签 -->
+          <view class="product-specs" wx:if="{{product.paramPairs.length > 0 || product.specsText}}">
+            <text class="spec-tag" wx:for="{{product.paramPairs}}" wx:key="key" wx:for-item="param">{{param.value}}</text>
+            <text class="spec-tag" wx:if="{{!product.paramPairs.length && product.specsText}}">{{product.specsText}}</text>
+          </view>
+          <view class="product-bottom">
+            <text class="product-price">¥{{product.subtotal}}</text>
+            <text class="product-qty">×{{product.quantity}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 订单信息 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">订单信息</text>
+    </view>
+    <view class="card-body info-list">
+      <view class="info-row">
+        <text class="info-label">订单编号</text>
+        <text class="info-value" selectable>{{order.id}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">下单时间</text>
+        <text class="info-value">{{orderTime}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">支付方式</text>
+        <text class="info-value">{{order.payMethod || '微信支付'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 虚拟发货信息卡片（仅已支付的虚拟商品显示：工具包/课程） -->
+  <view class="card virtual-delivery-card" wx:if="{{showVirtualDelivery && virtualDeliveryInfo}}">
+    <view class="virtual-delivery-header">
+      <text class="card-title">{{virtualDeliveryInfo.title || '虚拟发货信息'}}</text>
+      <view class="virtual-delivery-tag">已发货</view>
+    </view>
+    <view class="virtual-delivery-content">
+      <text class="virtual-delivery-text">{{virtualDeliveryInfo.content}}</text>
+      <view class="virtual-delivery-link-row">
+        <text class="virtual-delivery-label">{{virtualDeliveryInfo.linkLabel || '链接'}}：</text>
+        <text class="virtual-delivery-link" selectable="true">{{virtualDeliveryInfo.link}}</text>
+      </view>
+      <view class="virtual-delivery-code-row">
+        <text class="virtual-delivery-label">{{virtualDeliveryInfo.codeLabel || '提取码'}}：</text>
+        <text class="virtual-delivery-code">{{virtualDeliveryInfo.extractCode}}</text>
+      </view>
+      <text class="virtual-delivery-alt">{{virtualDeliveryInfo.altContact}}</text>
+    </view>
+    <button class="virtual-delivery-copy-btn" bindtap="onCopyVirtualDelivery">一键复制</button>
+  </view>
+
+  <!-- 退款信息卡片（有退款记录时显示） -->
+  <view class="card refund-card" wx:if="{{refundInfo}}" bindtap="onViewRefund">
+    <view class="card-header refund-header">
+      <text class="card-icon">📝</text>
+      <text class="card-title">售后进度</text>
+      <view class="refund-status">
+        <text>{{refundInfo.status}}</text>
+        <van-icon name="arrow" size="14px" color="#fa8c16"/>
+      </view>
+    </view>
+    <view class="card-body">
+      <text class="refund-type">{{refundInfo.refundTypeLabel}}</text>
+    </view>
+  </view>
+
+  <!-- 底部操作区 -->
+  <view class="action-bar">
+    <!-- 确认收货按钮（仅已发货状态显示） -->
+    <button 
+      wx:if="{{order.status === 'shipped' || order.status === '已发货'}}"
+      class="btn primary" 
+      bindtap="onConfirmReceive"
+    >确认收货</button>
+    
+    <button 
+      wx:if="{{canApplyRefund}}"
+      class="btn warning" 
+      bindtap="onApplyRefund"
+    >{{refundInfo.status === '退款失败' ? '重新申请退款' : '申请退货'}}</button>
+    
+    <button 
+      wx:if="{{canCancel}}"
+      class="btn" 
+      bindtap="onCancel"
+    >撤销订单</button>
+    
+    <button 
+      class="btn" 
+      bindtap="onModify" 
+      disabled="{{!canModify}}"
+    >修改订单</button>
+    
+    <button class="btn" bindtap="onContact">联系客服</button>
+    
+    <button 
+      class="btn" 
+      bindtap="onDelete" 
+      wx:if="{{order.status==='canceled' || order.status==='cancelled' || order.status==='已取消' || order.status==='completed' || order.status==='已完成' || order.status==='refunded' || order.status==='已退款' || order.status==='failed' || order.status==='payment_failed' || order.status==='支付失败' || order.status==='closed' || order.status==='已关闭'}}"
+    >删除订单</button>
   </view>
 
   <view class="bottom-spacer"></view>
 </scroll-view>
+
+<!-- 退款类型选择 ActionSheet -->
+<van-action-sheet
+  show="{{showRefundSheet}}"
+  actions="{{refundActions}}"
+  bind:close="onCloseRefundSheet"
+  bind:select="onSelectRefundType"
+  cancel-text="取消"
+  description="请选择退款类型"
+  close-on-click-overlay
+/>
 

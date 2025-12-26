@@ -1,0 +1,10 @@
+{
+  "name": "refund_apply",
+  "version": "1.0.0",
+  "description": "用户申请退款",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
+

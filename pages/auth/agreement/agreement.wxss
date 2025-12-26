@@ -1,0 +1,94 @@
+/* 协议页面样式 */
+.page {
+  min-height: 100vh;
+  background: #f8f8fa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部区域 */
+.header {
+  background: #fff;
+  padding: 40rpx 32rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 12rpx;
+}
+
+.update-time {
+  font-size: 24rpx;
+  color: #86868b;
+}
+
+/* 内容滚动区域 */
+.content-scroll {
+  flex: 1;
+  height: 0;
+}
+
+.content {
+  padding: 32rpx;
+}
+
+/* 章节样式 */
+.section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.section-text {
+  display: block;
+  font-size: 26rpx;
+  color: #3a3a3c;
+  line-height: 1.8;
+  margin-bottom: 12rpx;
+}
+
+.section-text:last-child {
+  margin-bottom: 0;
+}
+
+/* 底部按钮 */
+.footer {
+  background: #fff;
+  padding: 20rpx 32rpx 50rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.confirm-btn {
+  width: 100%;
+  height: 88rpx;
+  background: #007aff;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.confirm-btn:active {
+  background: #0066d6;
+}
+

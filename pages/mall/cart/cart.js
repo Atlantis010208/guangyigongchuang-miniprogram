@@ -7,10 +7,11 @@ const util = require('../../../utils/util')
 Page({
   data: {
     items: [],              // 购物车商品列表
-    total: 0,               // 总金额
+    total: 0,               // 总金额 (元) - 仅作为参考或显示
+    totalPrice: 0,          // 总金额 (分) - 用于 SubmitBar
     totalQuantity: 0,       // 总数量
-    isEditing: false,       // 是否编辑模式
     selectedIds: [],        // 选中的商品 key 数组
+    allChecked: false,      // 是否全选
     loading: false,         // 加载状态
     syncing: false          // 同步状态
   },
@@ -21,6 +22,22 @@ Page({
 
   onShow() {
     this.load()
+    // 每次显示时更新 TabBar 徽标（如果有）
+    this.updateTabBarBadge()
+  },
+
+  updateTabBarBadge() {
+    const count = this.data.totalQuantity
+    if (count > 0) {
+      wx.setTabBarBadge({
+        index: 2, // 假设购物车是第3个 tab
+        text: count + ''
+      }).catch(e => {})
+    } else {
+      wx.removeTabBarBadge({
+        index: 2
+      }).catch(e => {})
+    }
   },
 
   /**
@@ -46,7 +63,7 @@ Page({
       })
       
       if (res && res.success && res.data) {
-        const { items, totalAmount, totalQuantity } = res.data
+        const { items } = res.data
         
         // 确保每个商品有唯一 key，并格式化规格文本
         const itemsWithKeys = (items || []).map((item, index) => {
@@ -58,11 +75,14 @@ Page({
           return item
         })
         
+        // 默认全选？通常购物车加载时不全选，或者记住上次选择。这里保持不全选或根据逻辑。
+        // 为了方便用户，可以默认全选。
+        // const allKeys = itemsWithKeys.map(i => i._key)
+        
         this.setData({
           items: itemsWithKeys,
-          total: parseFloat(totalAmount) || 0,
-          totalQuantity: totalQuantity || 0
-        })
+          // selectedIds: allKeys 
+        }, () => this.calcTotal())
         
         // 同步到本地缓存作为备份
         wx.setStorageSync('cartItems', itemsWithKeys)
@@ -101,7 +121,6 @@ Page({
 
   /**
    * 处理云存储图片链接
-   * @param {array} items - 商品列表
    */
   processCloudImages(items) {
     // 确保每个商品都有 specsText
@@ -140,26 +159,42 @@ Page({
   },
 
   /**
-   * 计算总价
+   * 计算总价 (基于选中商品)
    */
   calcTotal() {
-    const total = (this.data.items || []).reduce((sum, item) => {
-      const price = parseFloat(item.price) || 0
-      const quantity = Math.max(1, parseInt(item.quantity) || 1)
-      return sum + price * quantity
-    }, 0)
+    const { items, selectedIds } = this.data
+    const selectedSet = new Set(selectedIds)
     
-    const totalQuantity = (this.data.items || []).reduce((sum, item) => {
-      return sum + Math.max(1, parseInt(item.quantity) || 1)
-    }, 0)
+    let total = 0
+    let totalQuantity = 0
+    let selectedPrice = 0 // 单位: 元
     
-    this.setData({ total, totalQuantity })
+    // 计算购物车总数量（不管是否选中）
+    totalQuantity = items.reduce((sum, item) => sum + (Math.max(1, parseInt(item.quantity) || 1)), 0)
+    
+    // 计算选中商品的总价
+    items.forEach(item => {
+      if (selectedSet.has(item._key)) {
+        const price = parseFloat(item.price) || 0
+        const quantity = Math.max(1, parseInt(item.quantity) || 1)
+        selectedPrice += price * quantity
+      }
+    })
+    
+    const allChecked = items.length > 0 && selectedIds.length === items.length
+
+    this.setData({
+      total: selectedPrice.toFixed(2),
+      totalPrice: Math.round(selectedPrice * 100), // 转换为分
+      totalQuantity,
+      allChecked
+    })
+    
+    this.updateTabBarBadge()
   },
 
   /**
    * 格式化规格显示
-   * @param {object} specs - 规格对象
-   * @returns {string} 格式化后的字符串
    */
   formatSpecs(specs) {
     try {
@@ -171,8 +206,6 @@ Page({
 
   /**
    * 根据 ID 查找商品索引
-   * @param {string} id - 商品ID
-   * @returns {number} 索引
    */
   findIndexById(id) {
     return (this.data.items || []).findIndex(i => i.id === id)
@@ -189,25 +222,7 @@ Page({
     const item = this.data.items[idx]
     const newQuantity = Math.max(1, parseInt(item.quantity) || 1) + 1
     
-    // 先更新本地显示
-    const items = [...this.data.items]
-    items[idx].quantity = newQuantity
-    this.setData({ items }, () => this.calcTotal())
-    
-    // 同步到云端
-    try {
-      await util.callCf('cart_operations', {
-        action: 'update',
-        cartItemId: item.cartItemId || item._key,
-        productId: id,
-        quantity: newQuantity
-      })
-      
-      // 更新本地缓存
-      wx.setStorageSync('cartItems', this.data.items)
-    } catch (err) {
-      console.error('更新数量失败:', err)
-    }
+    this.updateItemQuantity(idx, newQuantity)
   },
 
   /**
@@ -221,15 +236,26 @@ Page({
     const item = this.data.items[idx]
     const currentQty = Math.max(1, parseInt(item.quantity) || 1)
     
-    // 数量为1时不能再减
     if (currentQty <= 1) {
-      util.showToast('商品数量不能小于1')
+      // 数量为1时减少，询问是否删除
+      const confirm = await util.showConfirm('确定要删除该商品吗？')
+      if (confirm) {
+        this.remove(id)
+      }
       return
     }
     
     const newQuantity = currentQty - 1
+    this.updateItemQuantity(idx, newQuantity)
+  },
+
+  /**
+   * 更新商品数量（封装）
+   */
+  async updateItemQuantity(idx, newQuantity) {
+    const item = this.data.items[idx]
     
-    // 先更新本地显示
+    // 先乐观更新
     const items = [...this.data.items]
     items[idx].quantity = newQuantity
     this.setData({ items }, () => this.calcTotal())
@@ -239,39 +265,55 @@ Page({
       await util.callCf('cart_operations', {
         action: 'update',
         cartItemId: item.cartItemId || item._key,
-        productId: id,
+        productId: item.id,
         quantity: newQuantity
       })
-      
-      // 更新本地缓存
       wx.setStorageSync('cartItems', this.data.items)
     } catch (err) {
       console.error('更新数量失败:', err)
+      // 回滚? 暂时不做复杂回滚，重新加载即可
     }
   },
 
   /**
    * 移除单个商品
+   * @param {Event|string} eOrId - 事件对象或商品ID
    */
-  async remove(e) {
-    const id = e.currentTarget.dataset.id
+  async remove(eOrId) {
+    // 兼容两种调用方式：事件对象 或 直接传入 id
+    const id = typeof eOrId === 'string' ? eOrId : eOrId?.currentTarget?.dataset?.id
+    
+    if (!id) {
+      console.error('删除失败：未获取到商品ID')
+      return
+    }
+    
     const item = this.data.items.find(i => i.id === id)
+    if (!item) {
+      console.error('删除失败：未找到商品', id)
+      return
+    }
     
-    if (!item) return
-    
-    // 先更新本地显示
+    // 先乐观更新
     const items = (this.data.items || []).filter(i => i.id !== id)
-    this.setData({ items }, () => this.calcTotal())
+    // 同时移除选中状态
+    const selectedIds = this.data.selectedIds.filter(k => k !== item._key)
     
-    // 同步到云端
+    this.setData({ items, selectedIds }, () => this.calcTotal())
+    
+    // 显示删除成功提示
+    wx.showToast({
+      title: '已删除',
+      icon: 'success',
+      duration: 1500
+    })
+    
     try {
       await util.callCf('cart_operations', {
         action: 'remove',
         cartItemId: item.cartItemId || item._key,
         productId: id
       })
-      
-      // 更新本地缓存
       wx.setStorageSync('cartItems', items)
     } catch (err) {
       console.error('移除商品失败:', err)
@@ -279,29 +321,11 @@ Page({
   },
 
   /**
-   * 切换编辑模式
-   */
-  onToggleEdit() {
-    const isEditing = !this.data.isEditing
-    this.setData({
-      isEditing,
-      selectedIds: []
-    })
-  },
-
-  /**
    * 切换选中状态
    */
   onToggleSelect(e) {
     const key = e.currentTarget.dataset.key
-    console.log('切换选中:', key)
-    
-    if (!key) {
-      console.warn('商品 key 不存在')
-      return
-    }
-    
-    let selectedIds = [...(this.data.selectedIds || [])]
+    let selectedIds = [...this.data.selectedIds]
     const index = selectedIds.indexOf(key)
     
     if (index > -1) {
@@ -310,191 +334,71 @@ Page({
       selectedIds.push(key)
     }
     
-    this.setData({ selectedIds })
+    this.setData({ selectedIds }, () => this.calcTotal())
   },
 
   /**
    * 全选/取消全选
    */
-  onToggleSelectAll() {
-    const { items, selectedIds } = this.data
+  onToggleSelectAll(e) {
+    // Vant checkbox change event returns detail as boolean
+    // But sometimes we trigger this from a button. 
+    // If e.detail is boolean, use it. Otherwise toggle based on allChecked.
+    const isChecked = typeof e.detail === 'boolean' ? e.detail : !this.data.allChecked
     
-    if (selectedIds.length === items.length) {
-      // 已全选，取消全选
-      this.setData({ selectedIds: [] })
-    } else {
-      // 未全选，执行全选
-      const allKeys = items.map(item => item._key)
-      this.setData({ selectedIds: allKeys })
-    }
-  },
-
-  /**
-   * 批量删除
-   */
-  async onBatchDelete() {
-    const keys = this.data.selectedIds || []
-    if (keys.length === 0) {
-      util.showToast('请选择要删除的商品')
-      return
+    let selectedIds = []
+    if (isChecked) {
+      selectedIds = this.data.items.map(item => item._key)
     }
     
-    const confirm = await util.showConfirm(`确定删除选中的 ${keys.length} 件商品吗？`)
-    if (!confirm) return
-    
-    const keySet = new Set(keys)
-    
-    // 先更新本地显示
-    const items = (this.data.items || []).filter(i => !keySet.has(i._key))
-    this.setData({
-      items,
-      selectedIds: []
+    this.setData({ 
+      selectedIds,
+      allChecked: isChecked
     }, () => this.calcTotal())
-    
-    // 同步到云端
-    try {
-      await util.callCf('cart_operations', {
-        action: 'batch_remove',
-        keys: keys
-      })
-      
-      // 更新本地缓存
-      wx.setStorageSync('cartItems', items)
-      util.showSuccess('已删除')
-    } catch (err) {
-      console.error('批量删除失败:', err)
-      util.showError('删除失败')
-    }
   },
 
   /**
-   * 批量购买（一键结算）
+   * 提交订单
    */
-  onBatchCheckout() {
-    const keys = new Set(this.data.selectedIds || [])
-    const items = (this.data.items || []).filter(i => keys.has(i._key))
+  onSubmit() {
+    const { selectedIds, items } = this.data
     
-    if (items.length === 0) {
-      util.showToast('请选择要购买的商品')
+    if (selectedIds.length === 0) {
+      util.showToast('请选择要结算的商品')
       return
     }
     
-    const payload = encodeURIComponent(JSON.stringify({ items }))
+    const selectedItems = items.filter(i => selectedIds.includes(i._key))
+    
+    const payload = encodeURIComponent(JSON.stringify({ items: selectedItems }))
     wx.navigateTo({
       url: `/pages/order/confirm/confirm?multi=${payload}`
     })
   },
 
   /**
-   * 购买单个商品
-   */
-  onBuySingle(e) {
-    const id = e.currentTarget.dataset.id
-    const item = (this.data.items || []).find(x => x.id === id)
-    
-    if (!item) return
-    
-    const orderItem = {
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: Math.max(1, parseInt(item.quantity) || 1),
-      specs: item.specs || {}
-    }
-    
-    const query = encodeURIComponent(JSON.stringify(orderItem))
-    wx.navigateTo({
-      url: `/pages/order/confirm/confirm?item=${query}`
-    })
-  },
-
-  /**
-   * 同步本地数据到云端
-   */
-  async syncToCloud() {
-    if (this.data.syncing) return
-    
-    const localItems = wx.getStorageSync('cartItems') || []
-    if (localItems.length === 0) {
-      util.showToast('购物车为空')
-      return
-    }
-    
-    this.setData({ syncing: true })
-    util.showLoading('同步中...')
-    
-    try {
-      const res = await util.callCf('cart_operations', {
-        action: 'sync',
-        cartItems: localItems
-      })
-      
-      util.hideLoading()
-      
-      if (res && res.success) {
-        util.showSuccess('同步成功')
-        // 重新加载
-        await this.load()
-      } else {
-        util.showError(res?.message || '同步失败')
-      }
-    } catch (err) {
-      util.hideLoading()
-      console.error('同步失败:', err)
-      util.showError('同步失败')
-    } finally {
-      this.setData({ syncing: false })
-    }
-  },
-
-  /**
-   * 清空购物车
-   */
-  async clearCart() {
-    if (this.data.items.length === 0) {
-      util.showToast('购物车已经是空的')
-      return
-    }
-    
-    const confirm = await util.showConfirm('确定要清空购物车吗？')
-    if (!confirm) return
-    
-    util.showLoading('清空中...')
-    
-    try {
-      const res = await util.callCf('cart_operations', {
-        action: 'clear'
-      })
-      
-      util.hideLoading()
-      
-      if (res && res.success) {
-        this.setData({
-          items: [],
-          total: 0,
-          totalQuantity: 0,
-          selectedIds: []
-        })
-        wx.setStorageSync('cartItems', [])
-        util.showSuccess('已清空')
-      } else {
-        util.showError(res?.message || '清空失败')
-      }
-    } catch (err) {
-      util.hideLoading()
-      console.error('清空购物车失败:', err)
-      util.showError('清空失败')
-    }
-  },
-
-  /**
    * 跳转到商城
    */
   goMall() {
-    wx.navigateTo({
-      url: '/pages/mall/mall'
+    wx.switchTab({
+      url: '/pages/index/index' // 假设首页是 index
+    }).catch(() => {
+      wx.navigateTo({
+        url: '/pages/mall/mall'
+      })
     })
+  },
+  
+  /**
+   * 跳转商品详情
+   */
+  goDetail(e) {
+    const id = e.currentTarget.dataset.id
+    if (id) {
+      wx.navigateTo({
+        url: `/pages/mall/product-detail/product-detail?id=${id}`
+      })
+    }
   },
 
   /**
@@ -504,5 +408,8 @@ Page({
     wx.navigateTo({
       url: '/pages/support/contact/contact'
     })
-  }
+  },
+  
+  // 防止事件冒泡的空函数
+  stopBubble() {}
 })

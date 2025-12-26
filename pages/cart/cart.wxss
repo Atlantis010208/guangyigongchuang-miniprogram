@@ -52,8 +52,10 @@
   display: flex;
   align-items: flex-start;
   padding: 35rpx;
+  padding-bottom: 80rpx; /* 为右下角按钮留出空间 */
   border-bottom: 1rpx solid #f2f2f7;
   position: relative;
+  min-height: 180rpx;
 }
 
 .cart-item:last-child {
@@ -483,7 +485,17 @@
   display: flex;
   gap: 12rpx;
   margin-top: 16rpx;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+/* 🔥 设计师状态行 - 绝对定位到卡片右下角 */
+.designer-status-row {
+  position: absolute;
+  right: 35rpx;
+  bottom: 35rpx;
+  display: flex;
+  align-items: center;
 }
 
 .mini-btn {
@@ -506,3 +518,305 @@
   border-color: #007AFF !important;
   color: #fff !important;
 }
+
+/* 已分配设计师信息样式 */
+.designer-assigned {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1rpx solid #0ea5e9;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.designer-label {
+  color: #64748b;
+}
+
+.designer-name {
+  color: #0284c7;
+  font-weight: 500;
+}
+
+/* 🔥 待确认状态样式 */
+.designer-pending {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1rpx solid #f59e0b;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.designer-status-pending {
+  color: #d97706;
+  font-weight: 500;
+}
+
+/* 🔥 选配服务多行显示 */
+.item-specs-multi {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.specs-line {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.specs-line-sub {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 未登录提示样式 */
+.login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 40rpx;
+}
+
+.login-prompt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.login-prompt-icon {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 32rpx;
+  opacity: 0.6;
+}
+
+.login-prompt-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 16rpx;
+}
+
+.login-prompt-desc {
+  font-size: 28rpx;
+  color: #86868b;
+  margin-bottom: 40rpx;
+  line-height: 1.5;
+}
+
+.login-prompt-btn {
+  width: 320rpx;
+  height: 88rpx;
+  background: #007aff;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-prompt-btn:active {
+  background: #0066d6;
+}
+
+.login-prompt-tip {
+  font-size: 24rpx;
+  color: #86868b;
+  margin-top: 24rpx;
+}
+
+/* ========== 商城订单卡片样式 ========== */
+.mall-order-card {
+  flex-direction: column;
+  align-items: stretch; /* 覆盖 .cart-item 的 flex-start，让子元素撑满宽度 */
+  padding: 0;
+  padding-bottom: 0;
+  margin-bottom: 30rpx; /* 增加卡片间距 */
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05); /* 增加阴影 */
+  border-radius: 24rpx; /* 统一圆角 */
+  overflow: hidden;
+}
+
+.mall-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* 支持多行 */
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  background-color: #fff;
+}
+
+.mall-order-title-wrap {
+  flex: 1;
+  margin-right: 20rpx;
+  display: flex;
+  flex-direction: column; /* 垂直排列 */
+}
+
+.mall-order-title {
+  font-size: 28rpx;
+  font-weight: 600; /* 加粗标题 */
+  color: #1d1d1f;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  margin-bottom: 6rpx;
+}
+
+.mall-order-time {
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+.mall-order-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+  height: 40rpx; /* 与标题行高度对齐 */
+  margin-left: auto; /* 靠右对齐 */
+}
+
+.mall-order-status {
+  font-size: 26rpx;
+  font-weight: 500;
+  text-align: right; /* 确保文字靠右 */
+}
+
+/* 订单状态颜色 */
+.mall-order-status.status-pending { color: #ff9500; }
+.mall-order-status.status-paid { color: #007aff; }
+.mall-order-status.status-shipped { color: #5856d6; }
+.mall-order-status.status-completed { color: #34c759; }
+.mall-order-status.status-closed { color: #8e8e93; }
+.mall-order-status.status-refunded { color: #ff3b30; }
+
+.mall-order-content {
+  display: flex;
+  padding: 30rpx;
+  background-color: #fff;
+}
+
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx; /* 统一图片圆角 */
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  background-color: #f5f5f5;
+}
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* 上下对齐 */
+  height: 160rpx; /* 与图片高度一致 */
+}
+
+.item-specs {
+  font-size: 28rpx;
+  color: #1d1d1f;
+  margin-bottom: 8rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* 最多显示2行 */
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.item-quantity {
+  font-size: 24rpx;
+  color: #8e8e93;
+  margin-bottom: auto;
+}
+
+.item-price {
+  font-size: 30rpx; /* 加大价格字号 */
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.mall-order-footer {
+  display: flex;
+  justify-content: flex-end; /* 底部内容全部靠右 */
+  align-items: center;
+  padding: 24rpx 30rpx;
+  border-top: 1rpx solid #f5f5f5;
+  background: #fff; /* 改为白色背景 */
+}
+
+.mall-order-actions {
+  display: flex;
+  gap: 20rpx; /* 增加按钮间距 */
+  align-items: center;
+}
+
+/* 统一按钮样式 */
+.mini-btn {
+  margin: 0 !important;
+  font-size: 26rpx !important;
+  height: 60rpx !important;
+  line-height: 58rpx !important; /* 减去边框高度 */
+  padding: 0 30rpx !important;
+  border-radius: 30rpx !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 去支付按钮 - 醒目样式 */
+.pay-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff3b30 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4rpx 10rpx rgba(255, 59, 48, 0.3);
+}
+
+.pay-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+/* 订单详情按钮 */
+.detail-btn {
+  background: #fff !important;
+  border: 1rpx solid #d1d1d6 !important;
+  color: #1d1d1f !important;
+}
+
+.detail-btn:active {
+  background: #f2f2f7 !important;
+}
+
+/* 删除按钮样式优化 */
+.request-delete {
+  position: absolute;
+  top: 24rpx;
+  right: 30rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: transparent;
+  color: #c7c7cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+/* 只有当订单已取消/关闭时，删除按钮才显示，但这会和状态标签冲突 */
+/* 建议将删除按钮移到底部操作区，或者仅在左滑时显示，这里先保持在卡片内但不覆盖状态 */

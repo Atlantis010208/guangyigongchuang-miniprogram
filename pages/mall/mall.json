@@ -1,5 +1,7 @@
 {
-  "navigationBarTitleText": "电子商城"
+  "navigationBarTitleText": "电子商城",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 100
 }
 
 

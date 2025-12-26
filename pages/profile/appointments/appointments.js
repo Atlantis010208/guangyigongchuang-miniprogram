@@ -1,6 +1,6 @@
 /**
  * 预约列表页面
- * 功能：展示用户预约列表、取消预约、改期预约
+ * 功能：展示用户预约列表、取消预约、联系设计师
  */
 const util = require('../../../utils/util')
 
@@ -14,13 +14,9 @@ Page({
     hasMore: true,          // 是否有更多数据
     total: 0,               // 总数量
     
-    // 改期弹窗相关
-    showReschedule: false,  // 是否显示改期弹窗
-    rescheduleId: '',       // 改期的预约ID
-    rescheduleDate: '',     // 新日期
-    rescheduleTime: '',     // 新时间
-    rescheduleReason: '',   // 改期原因
-    minDate: '',            // 最小可选日期（今天）
+    // 详情弹窗
+    showDetail: false,
+    currentAppointment: null,
     
     // 状态筛选
     currentStatus: '',      // 当前筛选状态
@@ -34,26 +30,12 @@ Page({
   },
 
   onLoad() {
-    this.initMinDate()
     this.loadAppointments()
   },
 
   onShow() {
     // 页面显示时刷新数据
     this.refreshData()
-  },
-
-  /**
-   * 初始化最小可选日期（今天）
-   */
-  initMinDate() {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    this.setData({
-      minDate: `${year}-${month}-${day}`
-    })
   },
 
   /**
@@ -118,15 +100,28 @@ Page({
       if (res && res.success && res.data) {
         const { list, total, hasMore } = res.data
         
+        // 格式化数据
+        const formattedList = list.map(item => {
+          let createdAtText = '-'
+          if (item.createdAt) {
+            const date = new Date(item.createdAt)
+            createdAtText = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+          }
+          return {
+            ...item,
+            createdAtText
+          }
+        })
+        
         this.setData({
-          appointments: append ? [...this.data.appointments, ...list] : list,
+          appointments: append ? [...this.data.appointments, ...formattedList] : formattedList,
           total,
           hasMore
         })
         
         // 同步到本地存储作为缓存
-        if (!append && list.length > 0) {
-          wx.setStorageSync('user_appointments', list)
+        if (!append && formattedList.length > 0) {
+          wx.setStorageSync('user_appointments', formattedList)
         }
       } else {
         // 云函数调用失败，尝试从本地缓存读取
@@ -244,9 +239,9 @@ Page({
   },
 
   /**
-   * 打开改期弹窗
+   * 查看预约详情
    */
-  rescheduleAppointment(e) {
+  viewDetail(e) {
     const id = e.currentTarget.dataset.id
     const appointment = this.data.appointments.find(item => item.id === id)
     
@@ -255,121 +250,58 @@ Page({
       return
     }
     
-    // 检查改期次数限制
-    if (appointment.rescheduleCount >= 3) {
-      util.showToast('该预约已达到最大改期次数')
+    this.setData({
+      showDetail: true,
+      currentAppointment: appointment
+    })
+  },
+
+  /**
+   * 关闭详情弹窗
+   */
+  closeDetail() {
+    this.setData({
+      showDetail: false,
+      currentAppointment: null
+    })
+  },
+
+  /**
+   * 拨打电话
+   */
+  makeCall(e) {
+    const phone = e.currentTarget.dataset.phone
+    if (!phone) {
+      util.showToast('暂无电话号码')
       return
     }
     
-    this.setData({
-      showReschedule: true,
-      rescheduleId: id,
-      rescheduleDate: '',
-      rescheduleTime: '',
-      rescheduleReason: ''
-    })
-  },
-
-  /**
-   * 关闭改期弹窗
-   */
-  closeReschedule() {
-    this.setData({
-      showReschedule: false,
-      rescheduleId: '',
-      rescheduleDate: '',
-      rescheduleTime: '',
-      rescheduleReason: ''
-    })
-  },
-
-  /**
-   * 选择改期日期
-   */
-  onRescheduleDateChange(e) {
-    this.setData({
-      rescheduleDate: e.detail.value
-    })
-  },
-
-  /**
-   * 选择改期时间
-   */
-  onRescheduleTimeChange(e) {
-    this.setData({
-      rescheduleTime: e.detail.value
-    })
-  },
-
-  /**
-   * 输入改期原因
-   */
-  onRescheduleReasonInput(e) {
-    this.setData({
-      rescheduleReason: e.detail.value
-    })
-  },
-
-  /**
-   * 确认改期
-   */
-  async confirmReschedule() {
-    const { rescheduleId, rescheduleDate, rescheduleTime, rescheduleReason } = this.data
-    
-    if (!rescheduleDate) {
-      util.showToast('请选择新的日期')
-      return
-    }
-    
-    if (!rescheduleTime) {
-      util.showToast('请选择新的时间')
-      return
-    }
-    
-    util.showLoading('提交中...')
-    
-    try {
-      const res = await util.callCf('appointments_operations', {
-        action: 'reschedule',
-        appointmentId: rescheduleId,
-        rescheduleData: {
-          newDate: rescheduleDate,
-          newTime: rescheduleTime,
-          reason: rescheduleReason
+    wx.makePhoneCall({
+      phoneNumber: phone,
+      fail: (err) => {
+        if (err.errMsg !== 'makePhoneCall:fail cancel') {
+          util.showToast('拨打失败')
         }
-      })
-      
-      util.hideLoading()
-      
-      if (res && res.success) {
-        util.showSuccess('改期成功')
-        this.closeReschedule()
-        
-        // 更新本地列表
-        const newTime = `${rescheduleDate} ${rescheduleTime}`
-        const appointments = this.data.appointments.map(item => {
-          if (item.id === rescheduleId) {
-            return {
-              ...item,
-              appointmentTime: newTime,
-              status: 'pending',
-              statusText: '待确认',
-              rescheduleCount: (item.rescheduleCount || 0) + 1
-            }
-          }
-          return item
-        })
-        
-        this.setData({ appointments })
-        wx.setStorageSync('user_appointments', appointments)
-      } else {
-        util.showError(res?.message || '改期失败')
       }
-    } catch (err) {
-      util.hideLoading()
-      console.error('改期失败:', err)
-      util.showError('改期失败')
+    })
+  },
+
+  /**
+   * 复制联系方式
+   */
+  copyContact(e) {
+    const { type, value } = e.currentTarget.dataset
+    if (!value) {
+      util.showToast('内容为空')
+      return
     }
+    
+    wx.setClipboardData({
+      data: value,
+      success: () => {
+        util.showSuccess(`已复制${type}`)
+      }
+    })
   },
 
   /**
@@ -389,20 +321,11 @@ Page({
   },
 
   /**
-   * 立即预约（跳转到产品页）
+   * 立即预约（跳转到设计师页）
    */
   makeAppointment() {
-    wx.switchTab({
-      url: '/pages/products/products'
+    wx.navigateTo({
+      url: '/pages/designers/list/list'
     })
-  },
-
-  /**
-   * 查看预约详情
-   */
-  viewDetail(e) {
-    const id = e.currentTarget.dataset.id
-    // 可以跳转到详情页或展开详情
-    util.showToast('详情功能开发中')
   }
 })

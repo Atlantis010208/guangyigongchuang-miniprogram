@@ -1,0 +1,12 @@
+{
+  "name": "admin_accounts_reset_password",
+  "version": "1.0.0",
+  "description": "重置账号密码",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
+

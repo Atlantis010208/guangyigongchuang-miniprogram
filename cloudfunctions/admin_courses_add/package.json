@@ -1,0 +1,10 @@
+﻿{
+    "name":  "admin_courses_add",
+    "version":  "1.0.0",
+    "description":  "鏂板璇剧▼",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "latest",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
+}

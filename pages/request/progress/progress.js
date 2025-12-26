@@ -1,5 +1,18 @@
 Page({
-  data:{ req:{}, beijingTime:'', isDesigner:false, userConfirmed:false, designerConfirmed:false },
+  data:{ 
+    req:{}, 
+    beijingTime:'', 
+    isDesigner:false, 
+    userConfirmed:false, 
+    designerConfirmed:false,
+    // 顶部步骤条：待确认 → 进行中 → 已完成
+    progressSteps: [
+      { text: '待确认' },
+      { text: '进行中' },
+      { text: '已完成' }
+    ],
+    progressActive: 0  // 0=待确认, 1=进行中, 2=已完成
+  },
   onLoad(options){
     this.id = options.id
     this.eventChannel = this.getOpenerEventChannel && this.getOpenerEventChannel()
@@ -14,38 +27,188 @@ Page({
   },
   async loadData(){
     try{
-      const db = wx.cloud && wx.cloud.database ? wx.cloud.database() : null
       let req = {}
-      if (db) {
-        const r = await db.collection('requests').where({ orderNo: this.id }).limit(1).get()
-        const doc = (r && r.data && r.data[0]) || null
-        if (doc) {
-          req = {
-            id: String(doc.orderNo || doc._id || ''),
-            source: String(doc.category || ''),
-            space: (doc.params && doc.params.space) || '',
-            status: doc.status || 'submitted',
-            steps: [],
-            createdAt: doc.createdAt || '',
-            userConfirmed: false,
-            designerConfirmed: false
+      let doc = null
+      let progressActive = 0  // 步骤条：0=待确认, 1=进行中, 2=已完成
+      
+      // 🔥 优先使用云函数查询（避免权限问题）
+      try {
+        console.log('[progress.loadData] 使用云函数查询 orderNo:', this.id)
+        const cloudRes = await wx.cloud.callFunction({
+          name: 'requests_detail',
+          data: { orderNo: this.id }
+        })
+        console.log('[progress.loadData] 云函数返回:', cloudRes.result)
+        if (cloudRes.result && cloudRes.result.success && cloudRes.result.data) {
+          doc = cloudRes.result.data
+        }
+      } catch (cfErr) {
+        console.warn('[progress.loadData] 云函数查询失败，尝试直接查询:', cfErr)
+        // 云函数不存在或失败，降级为直接查询数据库
+        const db = wx.cloud && wx.cloud.database ? wx.cloud.database() : null
+        if (db) {
+          const r = await db.collection('requests').where({ orderNo: this.id }).limit(1).get()
+          doc = (r && r.data && r.data[0]) || null
+          console.log('[progress.loadData] 直接查询结果:', doc)
+        }
+      }
+      
+      if (doc) {
+        const params = doc.params || {}
+        const category = String(doc.category || '')
+        
+        // 🔥 计算步骤条进度
+        // 待确认(0): 未分配设计师 且 未预约
+        // 进行中(1): 已分配设计师 且 工作流阶段不是 'completed'
+        // 已完成(2): 工作流阶段为 'completed'
+        const workflowStage = doc.stage || 'publish'
+        const hasDesigner = !!doc.designerId
+        const hasAppointment = !!doc.appointmentId || !!doc.hasAppointment
+        
+        if (workflowStage === 'completed') {
+          // 已完成阶段
+          progressActive = 2
+        } else if (hasDesigner || hasAppointment) {
+          // 已分配设计师或有预约，进入进行中
+          progressActive = 1
+        } else {
+          // 待确认：未分配且未预约
+          progressActive = 0
+        }
+        
+        console.log('[progress] 步骤条状态:', { workflowStage, hasDesigner, hasAppointment, progressActive })
+          
+          // 根据不同类型映射字段
+          let space = '', service = '', budget = '', area = '', stage = '', target = ''
+          
+          if (category === 'publish') {
+            // 发布需求类型
+            space = params.space || ''
+            service = params.service || ''
+            budget = params.budget || ''
+            area = params.area || ''
+            stage = params.stage || ''
+          } else if (category === 'residential' || category === 'commercial' || category === 'office' || category === 'hotel') {
+            // 住宅/商业/办公/酒店照明类型
+            space = category === 'residential' ? '住宅照明' : (category === 'commercial' ? '商业照明' : (category === 'office' ? '办公照明' : '酒店照明'))
+            service = params.renovationTypeText || params.style || ''
+            budget = params.estTotal ? `¥${params.estTotal}` : ''
+            area = params.areaBucketText || ''
+            stage = params.progressText || ''
+          } else if (category === 'selection') {
+            // 选配服务 - 使用 selection.js 中定义的字段
+            space = '选配服务'
+            budget = params.budget || ''
+            stage = params.stage || ''
+          } else if (category === 'optimize') {
+            // 灯光施工图优化
+            space = '灯光施工图优化'
+            target = params.target || ''
+          } else if (category === 'custom') {
+            // 个性需求定制 - 使用 buildQuestions() 中定义的字段
+            space = '个性需求定制'
+            // 映射个性需求定制的特有字段
+            service = params.style || '' // 风格意向
+            budget = params.budgetTotal || '' // 整体装修预算
+            area = params.area || '' // 套内面积
+            stage = params.progress || '' // 装修进度
           }
+          
+          // 额外字段用于个性需求定制的详细展示
+          const customFields = category === 'custom' ? {
+            age: params.age || '',
+            renoType: params.renoType || '',
+            layout: params.layout || '',
+            cctPreference: params.cctPreference || '',
+            smartHome: params.smartHome || '',
+            smartLighting: params.smartLighting || ''
+          } : {}
+          
+          // 选配服务额外字段
+          const selectionFields = category === 'selection' ? {
+            ceilingDrop: params.ceilingDrop || '',
+            bodyHeight: params.bodyHeight || '',
+            trimless: params.trimless || '',
+            spotPrice: params.spotPrice || '',
+            note: params.note || ''
+          } : {}
+          
+          // 灯光施工图优化额外字段
+          const optimizeFields = category === 'optimize' ? {
+            needs: params.needs || [],  // 优化方向数组
+            needsText: (params.needs || []).join('、') || '-',  // 格式化的优化方向
+            deliverables: params.deliverables || [],  // 期望交付数组
+            deliverablesText: (params.deliverables || []).join('、') || '-',  // 格式化的期望交付
+            files: params.files || [],  // 上传的文件
+            filesCount: (params.files || []).length,  // 文件数量
+            note: params.note || ''  // 备注
+          } : {}
+          
+        // 🔥 处理设计师信息（预约成功或分配成功后可见）
+        // 优先使用用户自定义的联系方式，其次使用系统分配的设计师信息
+        const customContact = doc.customDesignerInfo || null
+        const systemContact = doc.designerInfo || null
+        const designerInfo = customContact || systemContact
+        const hasDesignerContact = !!(systemContact && (systemContact.phone || systemContact.wechat || systemContact.email))
+        const hasCustomContact = !!(customContact && (customContact.name || customContact.phone || customContact.wechat))
+        
+        req = {
+          id: String(doc.orderNo || doc._id || ''),
+          source: category,
+          space: space,
+          service: service,
+          budget: budget,
+          area: area,
+          stage: stage,
+          target: target,
+          status: doc.status || 'submitted',
+          steps: [],
+          createdAt: doc.createdAt || '',
+          priority: !!doc.priority,  // 🔥 从云数据库读取 priority
+          userConfirmed: false,
+          designerConfirmed: false,
+          // 设计师信息（预约成功或分配成功后显示）
+          designerInfo: designerInfo,
+          hasDesignerContact: hasDesignerContact,
+          hasCustomContact: hasCustomContact,
+          // 个性需求定制额外字段
+          ...customFields,
+          // 选配服务额外字段
+          ...selectionFields,
+          // 灯光施工图优化额外字段
+          ...optimizeFields
         }
       }
       // fallback 本地
       if (!req || !req.id) {
+        console.log('[progress.loadData] 云端无数据，使用本地存储 fallback')
         const list = wx.getStorageSync('lighting_requests') || []
         req = list.find(i=>i.id===this.id) || {}
       }
-      const isPriority = !!wx.getStorageSync('deposit_paid')
+      // 🔥 优先使用云端的 priority，fallback 到本地存储
+      const isPriority = req.priority !== undefined ? !!req.priority : !!wx.getStorageSync('deposit_paid')
       const bj = this.formatBeijing(req.createdAt)
-      this.setData({ req: Object.assign({}, req, { priority: isPriority }), beijingTime: bj, userConfirmed: !!req.userConfirmed, designerConfirmed: !!req.designerConfirmed })
+      console.log('[progress.loadData] 最终数据:', { id: req.id, category: req.source, space: req.space, priority: isPriority, progressActive })
+      this.setData({ 
+        req: Object.assign({}, req, { priority: isPriority }), 
+        beijingTime: bj, 
+        userConfirmed: !!req.userConfirmed, 
+        designerConfirmed: !!req.designerConfirmed,
+        progressActive  // 🔥 步骤条当前激活索引
+      })
     }catch(err){
       const list = wx.getStorageSync('lighting_requests') || []
       const req = list.find(i=>i.id===this.id) || {}
       const isPriority = !!wx.getStorageSync('deposit_paid')
       const bj = this.formatBeijing(req.createdAt)
-      this.setData({ req: Object.assign({}, req, { priority: isPriority }), beijingTime: bj, userConfirmed: !!req.userConfirmed, designerConfirmed: !!req.designerConfirmed })
+      // 本地 fallback 时默认待确认阶段
+      this.setData({ 
+        req: Object.assign({}, req, { priority: isPriority }), 
+        beijingTime: bj, 
+        userConfirmed: !!req.userConfirmed, 
+        designerConfirmed: !!req.designerConfirmed,
+        progressActive: 0  // 本地 fallback 默认待确认
+      })
     }
   },
   startDepositMonitor(){
@@ -180,18 +343,36 @@ Page({
     wx.showModal({
       title:'确认撤销',
       content:'撤销后将无法继续处理该需求，是否确认？',
-      success: (res)=>{
+      success: async (res)=>{
         if(res.confirm){
-          const list = wx.getStorageSync('lighting_requests') || []
-          const idx = list.findIndex(i=>i.id===this.id)
-          if(idx>-1){
-            list[idx].status='canceled'
-            list[idx].steps.forEach((s,i)=>{ s.done = (i===0) })
-            wx.setStorageSync('lighting_requests', list)
-            // 云端保留记录，不删除
+          wx.showLoading({ title:'撤销中...', mask:true })
+          try {
+            // 调用云函数更新云数据库
+            const util = require('../../../utils/util')
+            const result = await util.callCf('requests_update', {
+              orderNo: this.id,
+              patch: { status: 'canceled' }
+            })
+            
+            // 同时更新本地存储
+            const list = wx.getStorageSync('lighting_requests') || []
+            const idx = list.findIndex(i=>i.id===this.id)
+            if(idx>-1){
+              list[idx].status='canceled'
+              list[idx].steps.forEach((s,i)=>{ s.done = (i===0) })
+              wx.setStorageSync('lighting_requests', list)
+            }
+            
+            wx.hideLoading()
+            wx.showToast({ title:'已撤销', icon:'success' })
+            
+            // 重新加载数据
             this.loadData()
             this.eventChannel && this.eventChannel.emit && this.eventChannel.emit('requestUpdated')
-            wx.showToast({ title:'已撤销', icon:'none' })
+          } catch (err) {
+            wx.hideLoading()
+            console.error('撤销订单失败:', err)
+            wx.showToast({ title:'撤销失败，请重试', icon:'none' })
           }
         }
       }
@@ -216,13 +397,23 @@ Page({
     wx.navigateTo({ url: '/pages/profile/deposit/deposit' })
   },
   onMoreTap(){
-    const items = ['撤销订单','删除订单']
+    const status = this.data.req && this.data.req.status
+    const isCanceled = status === 'canceled'
+    
+    // 未撤销时只能撤销，已撤销后才能删除
+    const items = isCanceled ? ['删除订单'] : ['撤销订单']
+    
     wx.showActionSheet({
       itemList: items,
       success: (res)=>{
         if(typeof res.tapIndex !== 'number') return
-        if(res.tapIndex === 0){ this.onCancel(); return }
-        if(res.tapIndex === 1){ this.onDeleteOrder(); return }
+        if(isCanceled) {
+          // 已撤销状态：只有删除选项
+          if(res.tapIndex === 0){ this.onDeleteOrder(); return }
+        } else {
+          // 未撤销状态：只有撤销选项
+          if(res.tapIndex === 0){ this.onCancel(); return }
+        }
       }
     })
   },
@@ -230,19 +421,64 @@ Page({
     wx.showModal({
       title:'删除订单',
       content:'删除后将无法恢复，确认删除？',
-      success:(r)=>{
+      success: async (r)=>{
         if(!r.confirm) return
-        const list = wx.getStorageSync('lighting_requests') || []
-        const next = list.filter(i=> i.id !== this.id)
-        wx.setStorageSync('lighting_requests', next)
-        try{
+        wx.showLoading({ title:'删除中...', mask:true })
+        try {
           const util = require('../../../utils/util')
-          util.callCf('orders_remove', { orderNo: this.id }).catch(()=>{})
-          util.callCf('requests_remove', { orderNo: this.id }).catch(()=>{})
-        }catch(err){ }
-        this.eventChannel && this.eventChannel.emit && this.eventChannel.emit('requestUpdated')
-        wx.showToast({ title:'已删除', icon:'none' })
-        setTimeout(()=>{ wx.navigateBack({ delta: 1 }) }, 300)
+          // 等待云函数执行完成
+          await Promise.all([
+            util.callCf('orders_remove', { orderNo: this.id }),
+            util.callCf('requests_remove', { orderNo: this.id })
+          ])
+          
+          // 更新本地存储
+          const list = wx.getStorageSync('lighting_requests') || []
+          const next = list.filter(i=> i.id !== this.id)
+          wx.setStorageSync('lighting_requests', next)
+          
+          wx.hideLoading()
+          wx.showToast({ title:'已删除', icon:'success' })
+          this.eventChannel && this.eventChannel.emit && this.eventChannel.emit('requestUpdated')
+          setTimeout(()=>{ wx.navigateBack({ delta: 1 }) }, 500)
+        } catch(err) {
+          wx.hideLoading()
+          console.error('删除订单失败:', err)
+          wx.showToast({ title:'删除失败，请重试', icon:'none' })
+        }
+      }
+    })
+  },
+  // 🔥 长按复制电话
+  onLongPressPhone(e){
+    const phone = e.currentTarget.dataset.phone
+    if(!phone) return
+    wx.setClipboardData({
+      data: phone,
+      success: ()=>{
+        wx.showToast({ title:'电话已复制', icon:'success' })
+      }
+    })
+  },
+  // 🔥 长按复制微信号
+  onLongPressWechat(e){
+    const wechat = e.currentTarget.dataset.wechat
+    if(!wechat) return
+    wx.setClipboardData({
+      data: wechat,
+      success: ()=>{
+        wx.showToast({ title:'微信号已复制', icon:'success' })
+      }
+    })
+  },
+  // 🔥 长按复制邮箱
+  onLongPressEmail(e){
+    const email = e.currentTarget.dataset.email
+    if(!email) return
+    wx.setClipboardData({
+      data: email,
+      success: ()=>{
+        wx.showToast({ title:'邮箱已复制', icon:'success' })
       }
     })
   }

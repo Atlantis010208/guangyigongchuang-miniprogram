@@ -1,0 +1,11 @@
+{
+  "name": "admin_orders_update",
+  "version": "1.0.0",
+  "description": "订单状态更新",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

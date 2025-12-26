@@ -1,4 +1,7 @@
-.detail-page { background:#f2f2f7; min-height:100vh; }
+/* 引入 Vant 公共样式 */
+@import '/miniprogram_npm/@vant/weapp/common/index.wxss';
+
+.detail-page { background:#f2f2f7; min-height:100vh; padding-bottom: env(safe-area-inset-bottom); }
 .banner { width:100%; height: 560rpx; }
 .banner-image { width:100%; height:100%; object-fit: cover; }
 .info { background:#fff; padding: 28rpx 30rpx; }
@@ -7,29 +10,194 @@
 .card { background:#fff; margin-top: 20rpx; padding: 28rpx 30rpx; }
 .section-title { font-size: 32rpx; font-weight: 700; color:#000; display:block; margin-bottom: 16rpx; }
 .desc { font-size: 28rpx; color:#1c1c1e; line-height: 1.6; }
-.variant-group { margin-bottom: 16rpx; }
-.variant-name { font-size: 26rpx; color:#8e8e93; display:block; margin-bottom: 8rpx; }
-.variant-options { display:flex; flex-wrap: wrap; }
-.variant-chip { padding: 16rpx 24rpx; border-radius: 28rpx; background:#f7f7f9; font-size: 26rpx; color:#1c1c1e; line-height: 1; margin: 12rpx 16rpx 0 0; }
-.variant-chip.selected { background:#000; color:#fff; }
-.quantity { display:flex; justify-content: space-between; align-items:center; margin-top: 10rpx; }
-.q-label { font-size: 26rpx; color:#8e8e93; }
-.stepper { display:flex; align-items:center; gap: 20rpx; }
-.step-btn { width: 64rpx; height: 64rpx; border-radius: 18rpx; background:#f7f7f9; display:flex; align-items:center; justify-content:center; font-size: 36rpx; color:#000; }
-.step-val { font-size: 28rpx; color:#000; min-width: 40rpx; text-align:center; }
-.total-line{ display:flex; justify-content: space-between; align-items:center; margin-top: 16rpx; }
-.total-label{ font-size: 28rpx; color:#8e8e93 }
-.total-val{ font-size: 32rpx; font-weight:700; color:#000 }
-.params { display:flex; flex-direction: column; gap: 10rpx; }
-.param-row { display:block; }
-.param-line { font-size: 26rpx; color:#1c1c1e; line-height: 1.6; }
-.actions { position: fixed; left:0; right:0; bottom: 0; display:flex; gap: 20rpx; padding: 12rpx 16rpx calc(16rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,0.96); backdrop-filter: blur(6rpx); align-items:center; }
-.action-icons { display:flex; gap: 20rpx; }
-.icon-btn { width: 120rpx; display:flex; flex-direction: column; align-items:center; justify-content:center; color:#1c1c1e; }
-.icon { width: 44rpx; height: 44rpx; margin-bottom: 6rpx; }
-.icon-text { font-size: 22rpx; color:#1c1c1e; }
-.btn { flex:1; padding: 22rpx 0; border-radius: 30rpx; border:none; font-size: 28rpx; }
-.btn.primary { background:#007aff; color:#fff; }
-.btn + .btn { margin-left: 16rpx; }
+
+/* 规格预览入口 */
+.spec-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.spec-entry-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+.spec-entry-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.spec-entry-value {
+  font-size: 26rpx;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==================== 规格选择弹窗样式 ==================== */
+.sku-popup {
+  padding: 30rpx;
+  padding-bottom: calc(30rpx + env(safe-area-inset-bottom));
+}
+
+/* 弹窗头部 - 商品信息 */
+.sku-header {
+  display: flex;
+  padding-bottom: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.sku-thumb {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+.sku-info {
+  flex: 1;
+  margin-left: 24rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.sku-price {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #ff3b30;
+}
+.sku-stock {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+.sku-selected {
+  font-size: 26rpx;
+  color: #666;
+  margin-top: 16rpx;
+  line-height: 1.4;
+}
+
+/* 弹窗主体 - 规格选择 */
+.sku-body {
+  max-height: 50vh;
+  padding: 20rpx 0;
+}
+.sku-group {
+  margin-bottom: 30rpx;
+}
+.sku-group-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 16rpx;
+}
+.sku-group-options {
+  display: flex;
+  flex-wrap: wrap;
+}
+.sku-chip {
+  padding: 16rpx 28rpx;
+  border-radius: 8rpx;
+  background: #f5f5f5;
+  font-size: 26rpx;
+  color: #333;
+  margin: 0 16rpx 16rpx 0;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+.sku-chip.selected {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 无规格提示 */
+.sku-no-spec {
+  padding: 30rpx 0;
+  text-align: center;
+}
+.sku-no-spec-text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 数量选择 */
+.sku-quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+}
+.sku-quantity-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 弹窗底部 - 按钮区域 */
+.sku-footer {
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.sku-total {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 20rpx;
+}
+.sku-total-label {
+  font-size: 26rpx;
+  color: #666;
+}
+.sku-total-price {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ff3b30;
+}
+.sku-actions {
+  display: flex;
+  gap: 20rpx;
+}
+.sku-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.sku-btn-cart {
+  background: #fff;
+  color: #1890ff;
+  border: 2rpx solid #1890ff;
+}
+.sku-btn-buy {
+  background: linear-gradient(to right, #36cfc9, #1890ff);
+  color: #fff;
+}
+
+/* Vant 商品导航底部安全区域占位 - 为固定底部导航预留空间 */
 .bottom-spacer { height: 120rpx; }
+
+/* 确保 Vant 商品导航组件正确显示 */
+page {
+  --goods-action-background-color: #fff;
+  --goods-action-height: 50px;
+  --goods-action-icon-width: 48px;
+  --goods-action-icon-height: 50px;
+  --goods-action-icon-color: #323233;
+  --goods-action-icon-size: 18px;
+  --goods-action-icon-font-size: 10px;
+  --goods-action-icon-text-color: #646566;
+  --goods-action-button-height: 40px;
+  --goods-action-button-warning-color: #bae7ff;
+  --goods-action-button-danger-color: #0050b3;
+  --goods-action-button-plain-color:rgb(255, 255, 255);
+}
 

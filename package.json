@@ -1,5 +1,9 @@
 {
   "devDependencies": {
+    "@cloudbase/cli": "^2.11.6",
     "shadcn": "^3.5.0"
+  },
+  "dependencies": {
+    "@vant/weapp": "^1.11.7"
   }
 }

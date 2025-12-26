@@ -1,28 +1,42 @@
 <scroll-view class="page" scroll-y>
   <text class="page-title">账户</text>
 
-  <view class="profile-card unified">
-    <view class="top" bindtap="editProfile">
-      <image class="avatar" src="{{user.avatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
-      <view class="info">
-        <text class="name">{{user.name}}</text>
-        <text class="phone" bindtap="callPhone">{{user.phone}}</text>
-      </view>
-      <text class="edit-arrow">〉</text>
+  <!-- 未登录提示 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-prompt-card">
+    <image class="login-prompt-avatar" src="/images/个人中心.png" mode="aspectFill"></image>
+    <view class="login-prompt-info">
+      <text class="login-prompt-title">登录后查看个人信息</text>
+      <text class="login-prompt-desc">登录后可管理订单、预约、收藏等</text>
     </view>
-
-  <view class="cells inline">
-      <view class="cell" bindtap="go" data-url="/pages/cart/cart"><text>订单</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart"><text>购物车</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit"><text>押金</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/services/services"><text>服务</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/addresses/addresses"><text>主要送货地址</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/favorites/favorites"><text>我的收藏</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/receipts/receipts"><text>自助结账收据</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/feedback/feedback"><text>提供反馈意见</text><text class="arrow">〉</text></view>
-      <view class="cell" bindtap="go" data-url="/pages/profile/settings/settings"><text>设置</text><text class="arrow">〉</text></view>
-    </view>
+    <button class="login-prompt-btn" bindtap="onGoLogin">登录</button>
   </view>
+
+  <!-- 已登录显示正常内容 -->
+  <block wx:if="{{isLoggedIn}}">
+    <view class="profile-card unified">
+      <view class="top" bindtap="editProfile">
+        <image class="avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+        <view class="info">
+          <text class="name">{{user.name || '点击完善资料'}}</text>
+          <text class="phone" bindtap="callPhone">{{user.phone || '未绑定手机号'}}</text>
+        </view>
+        <text class="edit-arrow">〉</text>
+      </view>
+
+      <view class="cells inline">
+        <view class="cell" bindtap="go" data-url="/pages/cart/cart"><text>订单</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/appointments/appointments"><text>我的预约</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart"><text>购物车</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit"><text>押金</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/services/services"><text>服务</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/addresses/addresses"><text>主要送货地址</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/favorites/favorites"><text>我的收藏</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/receipts/receipts"><text>自助结账收据</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/feedback/feedback"><text>提供反馈意见</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/settings/settings"><text>设置</text><text class="arrow">〉</text></view>
+      </view>
+    </view>
+  </block>
 </scroll-view>
 
 <!-- 悬浮联系客服按钮 -->

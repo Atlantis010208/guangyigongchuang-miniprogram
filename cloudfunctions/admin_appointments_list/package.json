@@ -1,0 +1,10 @@
+﻿{
+    "name":  "admin_appointments_list",
+    "version":  "1.0.0",
+    "description":  "棰勭害鍒楄〃鏌ヨ",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "latest",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
+}

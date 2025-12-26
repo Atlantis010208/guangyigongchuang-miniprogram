@@ -1,13 +1,108 @@
-.page{min-height:100vh;background:#f2f2f7}
-.header{padding:30rpx}
-.title{font-size:44rpx;font-weight:700}
-.list{padding:0 30rpx}
-.card{background:#fff;border-radius:30rpx;padding:24rpx 20rpx;margin-bottom:20rpx}
-.row{display:flex;align-items:center}
-.between{justify-content:space-between}
-.name{font-size:30rpx;font-weight:600}
-.status{font-size:26rpx;color:#007aff}
-.desc{font-size:26rpx;color:#8e8e93;margin:10rpx 0}
-.time{font-size:24rpx;color:#c7c7cc}
-.link{border-radius:40rpx;padding:12rpx 22rpx;background:#000;color:#fff}
+.page { min-height: 100vh; background: #f2f2f7; }
+.header { padding: 30rpx; }
+.title { font-size: 44rpx; font-weight: 700; }
 
+.loading-tip {
+  text-align: center;
+  padding: 40rpx;
+  color: #8e8e93;
+  font-size: 28rpx;
+}
+
+.list { padding: 0 30rpx; }
+.card { 
+  background: #fff; 
+  border-radius: 30rpx; 
+  padding: 24rpx 20rpx; 
+  margin-bottom: 20rpx; 
+}
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.name-wrap { display: flex; align-items: center; flex: 1; margin-right: 16rpx; }
+.name { font-size: 30rpx; font-weight: 600; }
+
+/* 优先标签 */
+.tag-priority {
+  margin-left: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: #000;
+  color: #d4af37;
+  font-size: 20rpx;
+  border: 1rpx solid #d4af37;
+}
+.desc { font-size: 26rpx; color: #8e8e93; margin: 10rpx 0; display: block; }
+.time { font-size: 24rpx; color: #c7c7cc; }
+
+/* 状态样式 */
+.status { 
+  font-size: 24rpx; 
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  white-space: nowrap;
+}
+.status-paid { 
+  color: #34c759; 
+  background: rgba(52, 199, 89, 0.1);
+}
+.status-pending { 
+  color: #ff9500; 
+  background: rgba(255, 149, 0, 0.1);
+}
+.status-closed { 
+  color: #8e8e93; 
+  background: rgba(142, 142, 147, 0.1);
+}
+.status-processing { 
+  color: #007aff; 
+  background: rgba(0, 122, 255, 0.1);
+}
+.status-completed { 
+  color: #34c759; 
+  background: rgba(52, 199, 89, 0.1);
+}
+
+/* 底部操作区 */
+.footer { 
+  margin-top: 16rpx; 
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f2f2f7;
+}
+.actions { 
+  display: flex; 
+  gap: 16rpx; 
+}
+
+/* 按钮样式 */
+.btn {
+  border: none;
+  border-radius: 40rpx;
+  padding: 12rpx 22rpx;
+  font-size: 26rpx;
+  line-height: 1.4;
+}
+.btn-pay {
+  background: #007aff;
+  color: #fff;
+}
+.btn-detail {
+  background: #1c1c1e;
+  color: #fff;
+}
+.btn-mall {
+  background: #1c1c1e;
+  color: #fff;
+  margin-top: 20rpx;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+.empty-text {
+  font-size: 28rpx;
+  color: #8e8e93;
+  display: block;
+  margin-bottom: 30rpx;
+}

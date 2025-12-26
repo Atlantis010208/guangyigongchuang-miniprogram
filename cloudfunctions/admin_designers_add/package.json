@@ -1,0 +1,10 @@
+{
+  "name": "admin_designers_add",
+  "version": "1.0.0",
+  "description": "新增设计师",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

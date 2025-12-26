@@ -1,3 +1,16 @@
+<wxs module="tools">
+var formatOption = function(str) {
+  if (!str) return '';
+  // 匹配中文或英文括号及其内容
+  var reg = getRegExp('[\(（][^\)）]*[\)）]', 'g');
+  // 替换为空并去除首尾空格
+  return str.replace(reg, '').trim();
+}
+module.exports = {
+  formatOption: formatOption
+};
+</wxs>
+
 <view class="detail-page">
   <swiper class="banner" indicator-dots autoplay circular>
     <block wx:for="{{images}}" wx:key="*this">
@@ -12,24 +25,13 @@
     <text class="price">¥{{price}}</text>
   </view>
 
-  <!-- 规格选择 -->
-  <view class="card">
-    <text class="section-title">选择规格</text>
-    <view wx:for="{{variantGroups}}" wx:key="name" class="variant-group">
-      <text class="variant-name">{{item.name}}</text>
-      <view class="variant-options">
-        <view wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt" class="variant-chip {{item.selected===opt ? 'selected' : ''}}" data-group="{{item.key}}" data-value="{{opt}}" bindtap="onSelectVariant">{{opt}}</view>
-      </view>
+  <!-- 规格预览入口 (点击弹出选择弹窗) -->
+  <view class="card spec-entry" bindtap="onShowSkuPopup" data-action="preview" wx:if="{{variantGroups && variantGroups.length > 0}}">
+    <view class="spec-entry-left">
+      <text class="spec-entry-label">选择</text>
+      <text class="spec-entry-value">{{selectedSpecsText || '请选择规格'}}</text>
     </view>
-    <view class="quantity">
-      <text class="q-label">数量</text>
-      <view class="stepper">
-        <view class="step-btn" bindtap="onDec">-</view>
-        <text class="step-val">{{quantity}}</text>
-        <view class="step-btn" bindtap="onInc">+</view>
-      </view>
-    </view>
-    <view class="total-line"><text class="total-label">合计</text><text class="total-val">¥{{totalPrice || (price * quantity)}}</text></view>
+    <van-icon name="arrow" size="16px" color="#999" />
   </view>
 
   <!-- 商品简介 -->
@@ -38,34 +40,127 @@
     <text class="desc">{{desc}}</text>
   </view>
 
-  <!-- 规格参数 -->
-  <view class="card">
-    <text class="section-title">参数</text>
-    <view class="params">
-      <view wx:for="{{params}}" wx:key="key" class="param-row">
-        <text class="param-line">{{item.key}}：{{item.value}}</text>
-      </view>
-    </view>
-  </view>
+  <!-- 产品参数 -->
+  <product-specs 
+    product="{{product}}" 
+    groupedSpecs="{{product.groupedFixedSpecs}}"
+    params="{{params}}"
+  />
 
-  <view class="actions">
-    <view class="action-icons">
-      <view class="icon-btn" bindtap="onContact">
-        <image class="icon" src="/images/客服.png" mode="aspectFit"></image>
-        <text class="icon-text">客服</text>
-      </view>
-      <view class="icon-btn" bindtap="onToggleFav">
-        <image class="icon" src="{{fav ? '/images/收藏-active.png' : '/images/收藏.png'}}" mode="aspectFit"></image>
-        <text class="icon-text">收藏</text>
-      </view>
-      <view class="icon-btn" bindtap="onGoCart">
-        <image class="icon" src="/images/购物车.png" mode="aspectFit"></image>
-        <text class="icon-text">购物车</text>
-      </view>
-    </view>
-    <button class="btn primary" bindtap="onAddToCart">加入购物车</button>
-    <button class="btn primary" bindtap="onBuyNow">立即购买</button>
-  </view>
+  <!-- 底部占位 -->
   <view class="bottom-spacer"></view>
 </view>
+
+<!-- 规格选择弹窗 -->
+<van-popup 
+  show="{{showSkuPopup}}" 
+  position="bottom" 
+  round
+  closeable
+  safe-area-inset-bottom
+  bind:close="onCloseSkuPopup"
+  custom-style="max-height: 80vh;"
+>
+  <view class="sku-popup">
+    <!-- 商品信息头部 -->
+    <view class="sku-header">
+      <image class="sku-thumb" src="{{images[0]}}" mode="aspectFill"></image>
+      <view class="sku-info">
+        <text class="sku-price">¥{{price}}</text>
+        <text class="sku-stock">库存充足</text>
+        <text class="sku-selected">已选：{{selectedSpecsText || '请选择规格'}}</text>
+      </view>
+    </view>
+    
+    <!-- 规格选择区域 -->
+    <scroll-view class="sku-body" scroll-y>
+      <!-- 有规格时显示规格选择 -->
+      <block wx:if="{{variantGroups && variantGroups.length > 0}}">
+        <view wx:for="{{variantGroups}}" wx:key="name" class="sku-group">
+          <text class="sku-group-name">{{item.name}}</text>
+          <view class="sku-group-options">
+            <view 
+              wx:for="{{item.options}}" 
+              wx:key="*this" 
+              wx:for-item="opt" 
+              class="sku-chip {{item.selected===opt ? 'selected' : ''}}" 
+              data-group="{{item.key}}" 
+              data-value="{{opt}}" 
+              bindtap="onSelectVariant"
+            >{{tools.formatOption(opt)}}</view>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 无规格时提示 -->
+      <view wx:if="{{!variantGroups || variantGroups.length === 0}}" class="sku-no-spec">
+        <text class="sku-no-spec-text">该商品无可选规格</text>
+      </view>
+      
+      <!-- 数量选择 -->
+      <view class="sku-quantity">
+        <text class="sku-quantity-label">数量</text>
+        <van-stepper 
+          value="{{quantity}}" 
+          min="1" 
+          max="99"
+          bind:change="onQuantityChange"
+        />
+      </view>
+    </scroll-view>
+    
+    <!-- 底部按钮 -->
+    <view class="sku-footer">
+      <view class="sku-total">
+        <text class="sku-total-label">合计：</text>
+        <text class="sku-total-price">¥{{totalPrice || (price * quantity)}}</text>
+      </view>
+      <view class="sku-actions">
+        <view class="sku-btn sku-btn-cart" bindtap="onConfirmAddToCart">加入购物车</view>
+        <view class="sku-btn sku-btn-buy" bindtap="onConfirmBuyNow">立即购买</view>
+      </view>
+    </view>
+  </view>
+</van-popup>
+
+<!-- Vant Weapp 商品导航组件 - 必须放在页面容器外部 -->
+<van-goods-action safe-area-inset-bottom>
+  <!-- 左侧图标按钮：客服 - 使用 dot 属性显示小红点 -->
+  <van-goods-action-icon
+    icon="chat-o"
+    text="客服"
+    dot
+    bind:click="onContact"
+  />
+  <!-- 购物车 - 使用 info 属性显示数量徽标 -->
+  <van-goods-action-icon
+    icon="cart-o"
+    text="购物车"
+    info="{{cartCount}}"
+    bind:click="onGoCart"
+  />
+  <!-- 收藏按钮 -->
+  <van-goods-action-icon
+    icon="{{favIcon}}"
+    text="收藏"
+    bind:click="onToggleFav"
+  />
+  <!-- 朴素按钮：加入购物车 -->
+  <van-goods-action-button
+    text="加入购物车"
+    type="warning"
+    plain
+    color="#36cfc9"
+    bind:click="onShowSkuPopup"
+    data-action="cart"
+  />
+  <!-- 主按钮：立即购买 -->
+  <van-goods-action-button
+    text="立即购买"
+    type="danger"
+    color="linear-gradient(to right, #36cfc9, #1890ff)"
+    bind:click="onShowSkuPopup"
+    data-action="buy"
+  />
+</van-goods-action>
 

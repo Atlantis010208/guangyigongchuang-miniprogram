@@ -30,25 +30,47 @@
     </view>
   </view>
 
-  <view class="actions">
-    <view class="action-icons">
-      <view class="icon-btn" bindtap="onContact">
-        <image class="icon" src="/images/客服.png" mode="aspectFit"></image>
-        <text class="icon-text">客服</text>
-      </view>
-      <view class="icon-btn" bindtap="onToggleFav">
-        <image class="icon" src="{{fav ? '/images/收藏-active.png' : '/images/收藏.png'}}" mode="aspectFit"></image>
-        <text class="icon-text">收藏</text>
-      </view>
-      <view class="icon-btn" bindtap="onGoCart">
-        <image class="icon" src="/images/购物车.png" mode="aspectFit"></image>
-        <text class="icon-text">购物车</text>
-      </view>
-    </view>
-    <button class="btn primary" bindtap="onAddToCart">加入购物车</button>
-    <button class="btn primary" bindtap="onBuyNow">立即购买</button>
-  </view>
+  <!-- 底部占位 -->
   <view class="bottom-spacer"></view>
 </view>
+
+<!-- Vant Weapp 商品导航组件 - 必须放在页面容器外部 -->
+<van-goods-action safe-area-inset-bottom>
+  <!-- 左侧图标按钮：客服 - 使用 dot 属性显示小红点 -->
+  <van-goods-action-icon
+    icon="chat-o"
+    text="客服"
+    dot
+    bind:click="onContact"
+  />
+  <!-- 购物车 - 使用 info 属性显示数量徽标 -->
+  <van-goods-action-icon
+    icon="cart-o"
+    text="购物车"
+    info="{{cartCount}}"
+    bind:click="onGoCart"
+  />
+  <!-- 收藏按钮 -->
+  <van-goods-action-icon
+    icon="{{favIcon}}"
+    text="收藏"
+    bind:click="onToggleFav"
+  />
+  <!-- 朴素按钮：加入购物车 - 使用 plain 属性，蓝色渐变 -->
+  <van-goods-action-button
+    text="加入购物车"
+    type="warning"
+    plain
+    color=" #36cfc9"
+    bind:click="onAddToCart"
+  />
+  <!-- 主按钮：立即购买 - 使用蓝色渐变 -->
+  <van-goods-action-button
+    text="立即购买"
+    type="danger"
+    color="linear-gradient(to right, #36cfc9, #1890ff)"
+    bind:click="onBuyNow"
+  />
+</van-goods-action>
 
 

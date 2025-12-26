@@ -1,18 +1,59 @@
-<scroll-view class="page" scroll-y>
-  <view class="header"><text class="title">我的订单</text></view>
+<scroll-view class="page" scroll-y refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+  <view class="header">
+    <text class="title">我的订单</text>
+  </view>
+  
+  <!-- 加载提示 -->
+  <view class="loading-tip" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  
+  <!-- 订单列表 -->
   <view class="list">
     <view wx:for="{{orders}}" wx:key="id" class="card">
+      <!-- 订单标题和状态 -->
       <view class="row between">
+        <view class="name-wrap">
         <text class="name">{{item.title}}</text>
-        <text class="status">{{item.status}}</text>
+          <text wx:if="{{item.priority}}" class="tag-priority">优先</text>
+        </view>
+        <view class="status-wrap">
+          <van-tag wx:if="{{item.afterSaleStatus === '待售后'}}" type="warning" plain size="small">售后中</van-tag>
+          <van-tag wx:if="{{item.afterSaleStatus === '售后完成'}}" type="success" plain size="small">售后完成</van-tag>
+        <text class="status status-{{item.statusType}}">{{item.status}}</text>
+        </view>
       </view>
+      
+      <!-- 订单描述 -->
       <text class="desc">{{item.desc}}</text>
-      <view class="row between">
+      
+      <!-- 底部操作区 -->
+      <view class="row between footer">
         <text class="time">{{item.time}}</text>
-        <button class="link" data-id="{{item.id}}" data-type="{{item._type}}" bindtap="onDetail">订单详情</button>
+        <view class="actions">
+          <!-- 待支付订单显示去支付按钮 -->
+          <button 
+            wx:if="{{item.canPay}}" 
+            class="btn btn-pay" 
+            data-orderno="{{item.orderNo}}" 
+            bindtap="onPay"
+          >去支付</button>
+          <!-- 订单详情按钮 -->
+          <button 
+            class="btn btn-detail" 
+            data-id="{{item.id}}" 
+            data-orderno="{{item.orderNo}}" 
+            data-type="{{item._type}}" 
+            bindtap="onDetail"
+          >订单详情</button>
+        </view>
       </view>
+    </view>
+    
+    <!-- 空状态 -->
+    <view class="empty" wx:if="{{!loading && orders.length === 0}}">
+      <text class="empty-text">暂无订单</text>
+      <button class="btn btn-mall" bindtap="goMall">去购物</button>
     </view>
   </view>
 </scroll-view>
-
-

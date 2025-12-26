@@ -1,0 +1,10 @@
+{
+  "name": "admin_cleanup_chunks",
+  "version": "1.0.0",
+  "description": "清理临时分片云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

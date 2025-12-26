@@ -1,31 +1,57 @@
 // pages/order/edit/edit.js
 Page({
-  data:{ order:null, items:[], address:null, subtotal:0, total:0 },
+  data:{ order:null, items:[], address:null, addressText:'', subtotal:0, total:0 },
   onLoad(query){
     const id = query && query.id
     const list = wx.getStorageSync('mall_orders') || []
     const order = list.find(o => String(o.id)===String(id)) || null
     if(!order){ wx.showToast({ title:'订单不存在', icon:'none' }); return }
     const address = order.addressSnapshot || this.getDefaultAddress()
-    const items = (order.items || []).map(it => Object.assign({}, it))
-    this.setData({ order, items, address }, ()=>{ this.recalc() })
+    // 预处理商品数据，包括规格文本和小计
+    const items = (order.items || []).map(it => {
+      const specs = it.specs || {}
+      const quantity = Number(it.quantity || 1)
+      const price = Number(it.amount || it.price || 0)
+      return {
+        ...it,
+        price: price,
+        quantity: quantity,
+        specsText: this.formatSpecs(specs),
+        subtotal: Math.round(price * quantity * 100) / 100
+      }
+    })
+    // 预处理地址文本
+    const addressText = this.formatAddress(address)
+    this.setData({ order, items, address, addressText }, ()=>{ this.recalc() })
   },
   getDefaultAddress(){
     const list = wx.getStorageSync('user_addresses') || []
     return list.find(a=>a && a.isDefault) || null
   },
+  formatAddress(addr){
+    if(!addr) return ''
+    if(addr.full) return addr.full
+    const regionStr = Array.isArray(addr.region) ? addr.region.join(' ') : ''
+    return [regionStr, addr.town || '', addr.detail || ''].filter(Boolean).join(' ')
+  },
   recalc(){
-    const subtotal = (this.data.items || []).reduce((s,it)=> s + Number(it.price||0)*Number(it.quantity||1), 0)
-    this.setData({ subtotal, total: subtotal })
+    // 更新每个商品的 subtotal 并计算总价
+    const items = (this.data.items || []).map(it => {
+      const price = Number(it.price || 0)
+      const quantity = Number(it.quantity || 1)
+      return { ...it, subtotal: Math.round(price * quantity * 100) / 100 }
+    })
+    const subtotal = items.reduce((s, it) => s + (it.subtotal || 0), 0)
+    this.setData({ items, subtotal, total: Math.round(subtotal * 100) / 100 })
   },
   inc(e){
     const id = e.currentTarget.dataset.id
-    const items = (this.data.items || []).map(it => it.id===id ? Object.assign({}, it, { quantity: Math.max(1, Number(it.quantity||1)+1) }) : it)
+    const items = (this.data.items || []).map(it => it.id===id ? { ...it, quantity: Math.max(1, Number(it.quantity||1)+1) } : it)
     this.setData({ items }, ()=> this.recalc())
   },
   dec(e){
     const id = e.currentTarget.dataset.id
-    const items = (this.data.items || []).map(it => it.id===id ? Object.assign({}, it, { quantity: Math.max(1, Number(it.quantity||1)-1) }) : it)
+    const items = (this.data.items || []).map(it => it.id===id ? { ...it, quantity: Math.max(1, Number(it.quantity||1)-1) } : it)
     this.setData({ items }, ()=> this.recalc())
   },
   onAddAddress(){ wx.navigateTo({ url:'/pages/profile/addresses/edit' }) },

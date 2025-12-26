@@ -1,0 +1,16 @@
+{
+  "name": "admin_deposits_list",
+  "version": "1.0.0",
+  "description": "管理后台押金列表查询云函数",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
+

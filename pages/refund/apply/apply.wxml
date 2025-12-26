@@ -1,0 +1,133 @@
+<!--pages/refund/apply/apply.wxml-->
+<view class="page">
+  <!-- 订单信息卡片 -->
+  <view class="card order-card">
+    <view class="card-header">
+      <text class="card-title">订单信息</text>
+      <text class="order-no">{{orderNo}}</text>
+    </view>
+    <view class="order-items">
+      <view class="order-item" wx:for="{{orderItems}}" wx:key="id">
+        <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-specs" wx:if="{{item.specsText}}">{{item.specsText}}</text>
+          <text class="item-qty">× {{item.quantity}}</text>
+        </view>
+        <text class="item-price">¥{{item.price}}</text>
+      </view>
+    </view>
+    <view class="order-total">
+      <text class="total-label">退款金额</text>
+      <text class="total-amount">¥{{refundAmount}}</text>
+    </view>
+  </view>
+
+  <!-- 退款类型 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">退款类型</text>
+    </view>
+    <view class="refund-type">
+      <view class="type-item {{refundType === 'refund_only' ? 'active' : ''}}" bindtap="onSelectType" data-type="refund_only">
+        <view class="type-icon">
+          <van-icon name="gold-coin-o" size="24px" color="{{refundType === 'refund_only' ? '#007AFF' : '#999'}}"/>
+        </view>
+        <view class="type-content">
+          <text class="type-name">仅退款</text>
+          <text class="type-desc">适用于虚拟商品或无需退回商品</text>
+        </view>
+        <view class="type-check">
+          <van-icon wx:if="{{refundType === 'refund_only'}}" name="success" size="20px" color="#007AFF"/>
+        </view>
+      </view>
+      <view class="type-item {{refundType === 'return_refund' ? 'active' : ''}}" bindtap="onSelectType" data-type="return_refund">
+        <view class="type-icon">
+          <van-icon name="logistics" size="24px" color="{{refundType === 'return_refund' ? '#007AFF' : '#999'}}"/>
+        </view>
+        <view class="type-content">
+          <text class="type-name">退货退款</text>
+          <text class="type-desc">需先寄回商品，商家确认后退款</text>
+        </view>
+        <view class="type-check">
+          <van-icon wx:if="{{refundType === 'return_refund'}}" name="success" size="20px" color="#007AFF"/>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 退款原因 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">退款原因</text>
+      <text class="required">*</text>
+    </view>
+    <view class="reason-picker" bindtap="onShowReasonPicker">
+      <text class="{{selectedReason ? 'reason-text' : 'reason-placeholder'}}">
+        {{selectedReason || '请选择退款原因'}}
+      </text>
+      <van-icon name="arrow" size="16px" color="#999"/>
+    </view>
+  </view>
+
+  <!-- 详细说明 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">详细说明</text>
+      <text class="optional">（选填）</text>
+    </view>
+    <van-field
+      value="{{reasonDetail}}"
+      type="textarea"
+      placeholder="请详细描述您的问题，以便我们更好地处理"
+      autosize="{{ { minHeight: 80 } }}"
+      maxlength="200"
+      show-word-limit
+      bind:change="onReasonDetailChange"
+      border="{{false}}"
+      custom-class="detail-field"
+    />
+  </view>
+
+  <!-- 上传凭证 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">上传凭证</text>
+      <text class="optional">（选填，最多9张）</text>
+    </view>
+    <view class="uploader-wrap">
+      <van-uploader
+        file-list="{{imageList}}"
+        max-count="9"
+        bind:after-read="onAfterRead"
+        bind:delete="onDeleteImage"
+        upload-text="添加图片"
+      />
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-wrap">
+    <van-button 
+      type="primary" 
+      block 
+      round
+      loading="{{submitting}}"
+      disabled="{{!canSubmit}}"
+      bind:click="onSubmit"
+    >
+      提交申请
+    </van-button>
+  </view>
+
+  <!-- 退款原因选择器 -->
+  <van-action-sheet
+    show="{{showReasonPicker}}"
+    actions="{{reasonOptions}}"
+    bind:close="onCloseReasonPicker"
+    bind:select="onSelectReason"
+    cancel-text="取消"
+    close-on-click-overlay
+  />
+</view>
+

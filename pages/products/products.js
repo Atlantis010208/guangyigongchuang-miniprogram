@@ -7,7 +7,8 @@ Page({
    * 页面的初始数据
    */
   data: {
-    userAvatar: '', // 用户头像URL
+    userAvatar: '', // 用户头像URL（临时链接）
+    avatarFileID: '', // 用户头像 cloud:// fileID（用于重试）
     assistantToolkitCover: '',
     assistantCourseCover: '',
     // features 已移除，改为电子商城入口
@@ -28,28 +29,79 @@ Page({
       this.setData({ showIntro: true })
     }
 
-    // 从工具包与课程页的首图作为封面（使用当前云环境的 fileID 并尽量转换为 https）
+    // 从数据库动态获取工具包和课程的封面图片
+    this.loadAssistantCovers()
+  },
+
+  /**
+   * 从数据库加载工具包和课程的封面图片
+   * 小程序端可以直接使用 cloud:// 协议显示图片
+   */
+  async loadAssistantCovers() {
+    // 默认封面（使用数据库中的第一张主图，小程序直接支持 cloud:// 协议）
+    const defaultToolkitCover = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg'
+    const defaultCourseCover = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图1-¥365有圈子的灯光课 5.jpg'
+    
+    // 先设置默认封面，确保图片能立即显示
+    this.setData({
+      assistantToolkitCover: defaultToolkitCover,
+      assistantCourseCover: defaultCourseCover
+    })
+    console.log('[首页] 已设置默认封面')
+    
+    // 然后尝试从数据库获取最新封面（异步更新）
     try {
-      const toolkitCoverId = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg'
-      const courseCoverId = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图1-¥365有圈子的灯光课 5.jpg'
-      const fileList = [toolkitCoverId, courseCoverId]
-      if (wx.cloud && wx.cloud.getTempFileURL) {
-        wx.cloud.getTempFileURL({ fileList })
-          .then(res => {
-            const dict = {}
-            ;(res && res.fileList || []).forEach(x=>{ if(x && x.fileID) dict[x.fileID] = x.tempFileURL || x.fileID })
-            this.setData({
-              assistantToolkitCover: dict[toolkitCoverId] || toolkitCoverId,
-              assistantCourseCover: dict[courseCoverId] || courseCoverId
-            })
-          })
-          .catch(() => {
-            this.setData({ assistantToolkitCover: toolkitCoverId, assistantCourseCover: courseCoverId })
-          })
-      } else {
-        this.setData({ assistantToolkitCover: toolkitCoverId, assistantCourseCover: courseCoverId })
+      if (!wx.cloud) {
+        console.warn('[首页] 云开发不可用')
+        return
       }
-    } catch (e) {}
+
+      const db = wx.cloud.database()
+
+      // 并行查询工具包和课程
+      const [toolkitRes, courseRes] = await Promise.all([
+        db.collection('toolkits')
+          .where({ status: 'active' })
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get()
+          .catch(e => { console.warn('[首页] 查询工具包失败:', e); return { data: [] } }),
+        db.collection('courses')
+          .where({ status: 'published' })
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get()
+          .catch(e => { console.warn('[首页] 查询课程失败:', e); return { data: [] } })
+      ])
+
+      // 提取封面图片（优先使用 cover，其次使用 images[0]）
+      let toolkitCover = defaultToolkitCover
+      let courseCover = defaultCourseCover
+
+      if (toolkitRes.data && toolkitRes.data.length > 0) {
+        const toolkit = toolkitRes.data[0]
+        toolkitCover = toolkit.cover || (toolkit.images && toolkit.images[0]) || defaultToolkitCover
+        console.log('[首页] 从数据库获取工具包封面:', toolkitCover)
+      }
+
+      if (courseRes.data && courseRes.data.length > 0) {
+        const course = courseRes.data[0]
+        courseCover = course.cover || (course.images && course.images[0]) || defaultCourseCover
+        console.log('[首页] 从数据库获取课程封面:', courseCover)
+      }
+
+      // 更新封面（如果与默认不同）
+      if (toolkitCover !== defaultToolkitCover || courseCover !== defaultCourseCover) {
+        this.setData({
+          assistantToolkitCover: toolkitCover,
+          assistantCourseCover: courseCover
+        })
+        console.log('[首页] 封面已更新')
+      }
+    } catch (e) {
+      console.warn('[首页] 加载封面失败:', e)
+      // 保持默认封面
+    }
   },
 
   /**
@@ -76,6 +128,7 @@ Page({
     try {
       const app = getApp()
       let avatarUrl = ''
+      let avatarFileID = '' // 保存原始 fileID 用于重试
 
       // 优先从全局数据获取
       if (app.globalData && app.globalData.userDoc && app.globalData.userDoc.avatarUrl) {
@@ -89,37 +142,58 @@ Page({
       }
 
       if (!avatarUrl) {
-        this.setData({ userAvatar: '' })
+        console.log('用户未设置头像，显示默认图标')
+        this.setData({ userAvatar: '', avatarFileID: '' })
         return
       }
 
       // 如果头像是云存储的 fileID，需要转换为临时链接
       if (avatarUrl.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
+        avatarFileID = avatarUrl // 保存原始 fileID
         try {
+          console.log('正在转换头像 fileID:', avatarUrl)
           const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
-          if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-            this.setData({ userAvatar: res.fileList[0].tempFileURL })
+          if (res && res.fileList && res.fileList[0]) {
+            const fileItem = res.fileList[0]
+            if (fileItem.tempFileURL) {
+              console.log('头像转换成功:', fileItem.tempFileURL)
+              this.setData({ 
+                userAvatar: fileItem.tempFileURL,
+                avatarFileID: avatarFileID 
+              })
+            } else if (fileItem.status !== 0) {
+              // 文件可能已被删除
+              console.warn('头像文件可能已被删除:', fileItem.status)
+              this.setData({ userAvatar: '', avatarFileID: '' })
+            } else {
+              console.warn('头像转换返回空链接')
+              this.setData({ userAvatar: '', avatarFileID: avatarFileID })
+            }
           } else {
-            this.setData({ userAvatar: '' })
+            console.warn('头像转换返回数据异常')
+            this.setData({ userAvatar: '', avatarFileID: avatarFileID })
           }
         } catch (e) {
           console.warn('转换头像URL失败', e)
-          this.setData({ userAvatar: '' })
+          // 保存 fileID 以便稍后重试
+          this.setData({ userAvatar: '', avatarFileID: avatarFileID })
         }
         return
       }
 
       // 如果是 tcb.qcloud.la 的临时链接（可能已过期），需要从云数据库重新获取
       if (avatarUrl.includes('tcb.qcloud.la') || avatarUrl.includes('.tcb.')) {
+        console.log('检测到临时链接，尝试刷新')
         await this.refreshAvatarFromCloud()
         return
       }
 
       // 其他情况（如普通 http/https 外链），直接使用
-      this.setData({ userAvatar: avatarUrl })
+      console.log('使用外部头像链接:', avatarUrl)
+      this.setData({ userAvatar: avatarUrl, avatarFileID: '' })
     } catch (e) {
       console.warn('加载用户头像失败', e)
-      this.setData({ userAvatar: '' })
+      this.setData({ userAvatar: '', avatarFileID: '' })
     }
   },
 
@@ -128,7 +202,8 @@ Page({
    */
   async refreshAvatarFromCloud() {
     if (!wx.cloud) {
-      this.setData({ userAvatar: '' })
+      console.warn('云开发不可用')
+      this.setData({ userAvatar: '', avatarFileID: '' })
       return
     }
 
@@ -138,33 +213,51 @@ Page({
       const userId = userDoc && userDoc._id
 
       if (!userId && !openid) {
-        this.setData({ userAvatar: '' })
+        console.log('用户未登录，无法刷新头像')
+        this.setData({ userAvatar: '', avatarFileID: '' })
         return
       }
 
+      console.log('从云数据库获取头像...', { userId, openid })
       const db = wx.cloud.database()
       let userRecord = null
 
       if (userId) {
-        const res = await db.collection('users').doc(userId).get()
-        userRecord = res && res.data
-      } else if (openid) {
-        const res = await db.collection('users').where({ _openid: openid }).limit(1).get()
-        userRecord = res && res.data && res.data[0]
+        try {
+          const res = await db.collection('users').doc(userId).get()
+          userRecord = res && res.data
+        } catch (e) {
+          console.warn('通过 userId 查询失败:', e.message)
+        }
+      }
+      
+      if (!userRecord && openid) {
+        try {
+          const res = await db.collection('users').where({ _openid: openid }).limit(1).get()
+          userRecord = res && res.data && res.data[0]
+        } catch (e) {
+          console.warn('通过 openid 查询失败:', e.message)
+        }
       }
 
       if (!userRecord || !userRecord.avatarUrl) {
-        this.setData({ userAvatar: '' })
+        console.log('用户记录不存在或无头像')
+        this.setData({ userAvatar: '', avatarFileID: '' })
         return
       }
 
       const fileID = userRecord.avatarUrl
+      console.log('数据库中的头像:', fileID)
 
       // 如果数据库中存的是 cloud:// fileID，则转换
       if (fileID.startsWith('cloud://')) {
         const res = await wx.cloud.getTempFileURL({ fileList: [fileID] })
         if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({ userAvatar: res.fileList[0].tempFileURL })
+          console.log('头像刷新成功')
+          this.setData({ 
+            userAvatar: res.fileList[0].tempFileURL,
+            avatarFileID: fileID 
+          })
 
           // 更新本地缓存中的 avatarUrl 为 fileID（确保缓存的是原始 fileID）
           const cachedDoc = util.getStorage('userDoc') || {}
@@ -177,15 +270,17 @@ Page({
             app.globalData.userDoc.avatarUrl = fileID
           }
         } else {
-          this.setData({ userAvatar: '' })
+          console.warn('头像文件可能已被删除')
+          this.setData({ userAvatar: '', avatarFileID: '' })
         }
       } else {
-        // 数据库中存的不是 fileID，直接使用
-        this.setData({ userAvatar: fileID })
+        // 数据库中存的不是 fileID（可能是外部链接），直接使用
+        console.log('使用外部头像链接')
+        this.setData({ userAvatar: fileID, avatarFileID: '' })
       }
     } catch (e) {
       console.warn('从云数据库刷新头像失败', e)
-      this.setData({ userAvatar: '' })
+      this.setData({ userAvatar: '', avatarFileID: '' })
     }
   },
 
@@ -310,8 +405,34 @@ Page({
   // 个人中心：点击右上角头像 -> 显示功能提示
   onUserTap() {
     wx.navigateTo({ url: '/pages/profile/home/home' })
-  }
-  ,
+  },
+
+  /**
+   * 头像图片加载失败时的处理
+   * 当临时链接过期或文件不存在时触发
+   */
+  async onAvatarError() {
+    console.warn('头像图片加载失败，尝试重新获取')
+    
+    const { avatarFileID } = this.data
+    
+    // 如果有保存的 fileID，尝试重新获取临时链接
+    if (avatarFileID && avatarFileID.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
+      try {
+        const res = await wx.cloud.getTempFileURL({ fileList: [avatarFileID] })
+        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+          console.log('重新获取头像成功')
+          this.setData({ userAvatar: res.fileList[0].tempFileURL })
+          return
+        }
+      } catch (e) {
+        console.warn('重新获取头像失败', e)
+      }
+    }
+    
+    // 重试失败，尝试从云数据库重新获取
+    await this.refreshAvatarFromCloud()
+  },
 
   // 助手封面图兜底：若 cloud:// 无法显示则替换为 https 或占位图
   onAssistantImageError(e){

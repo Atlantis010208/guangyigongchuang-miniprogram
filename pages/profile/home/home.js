@@ -7,14 +7,24 @@ const auth = require('../../../utils/auth.js')
 Page({
   data: {
     user: { name: '', phone: '', avatar: '' },
+    userAvatarDisplay: '', // 用于显示的头像临时链接
+    userAvatarFileID: '', // 原始 cloud:// fileID
     userId: '',
     openid: '',
     isAdmin: false,
-    isDesigner: false
+    isDesigner: false,
+    isLoggedIn: false // 登录状态
   },
 
   onShow() {
-    this.loadUserData()
+    // 检查登录状态
+    const app = getApp()
+    const isLoggedIn = app.isLoggedIn()
+    this.setData({ isLoggedIn })
+    
+    if (isLoggedIn) {
+      this.loadUserData()
+    }
   },
 
   /**
@@ -78,6 +88,11 @@ Page({
           isAdmin: auth.isAdmin(doc),
           isDesigner: auth.isDesigner(doc)
         })
+
+        // 转换头像为临时链接
+        if (doc.avatarUrl) {
+          await this.convertAvatarUrl(doc.avatarUrl)
+        }
         return
       }
 
@@ -100,17 +115,23 @@ Page({
   /**
    * 从本地存储加载用户信息（兜底方案）
    */
-  loadFromLocalStorage() {
+  async loadFromLocalStorage() {
     const local = wx.getStorageSync('user_profile') || {}
     const cachedDoc = wx.getStorageSync('userDoc') || {}
+    const avatarUrl = local.avatar || cachedDoc.avatarUrl || ''
     
     this.setData({
       user: {
         name: local.name || cachedDoc.nickname || '',
         phone: local.phone || cachedDoc.phoneNumber || '',
-        avatar: local.avatar || cachedDoc.avatarUrl || ''
+        avatar: avatarUrl
       }
     })
+
+    // 转换头像
+    if (avatarUrl) {
+      await this.convertAvatarUrl(avatarUrl)
+    }
   },
 
   /**
@@ -186,5 +207,72 @@ Page({
    */
   onContact() { 
     wx.navigateTo({ url: '/pages/support/contact/contact' }) 
+  },
+
+  /**
+   * 跳转到登录页面
+   */
+  onGoLogin() {
+    wx.navigateTo({
+      url: '/pages/auth/login/login?redirect=' + encodeURIComponent('/pages/profile/home/home')
+    })
+  },
+
+  /**
+   * 转换头像 URL
+   * 如果是 cloud:// fileID，需要转换为临时链接
+   */
+  async convertAvatarUrl(avatarUrl) {
+    if (!avatarUrl) {
+      this.setData({ userAvatarDisplay: '', userAvatarFileID: '' })
+      return
+    }
+
+    // 如果是 cloud:// fileID，需要转换
+    if (avatarUrl.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
+      try {
+        const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+          this.setData({ 
+            userAvatarDisplay: res.fileList[0].tempFileURL,
+            userAvatarFileID: avatarUrl 
+          })
+        } else {
+          console.warn('头像转换失败')
+          this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
+        }
+      } catch (e) {
+        console.warn('头像转换异常', e)
+        this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
+      }
+    } else {
+      // 不是 cloud:// 格式，直接使用
+      this.setData({ userAvatarDisplay: avatarUrl, userAvatarFileID: '' })
+    }
+  },
+
+  /**
+   * 头像加载失败时的处理
+   */
+  async onAvatarError() {
+    console.warn('头像图片加载失败')
+    
+    const { userAvatarFileID } = this.data
+    
+    // 如果有 fileID，尝试重新获取
+    if (userAvatarFileID && userAvatarFileID.startsWith('cloud://') && wx.cloud) {
+      try {
+        const res = await wx.cloud.getTempFileURL({ fileList: [userAvatarFileID] })
+        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+          this.setData({ userAvatarDisplay: res.fileList[0].tempFileURL })
+          return
+        }
+      } catch (e) {
+        console.warn('重新获取头像失败', e)
+      }
+    }
+    
+    // 失败则显示默认头像
+    this.setData({ userAvatarDisplay: '' })
   }
 })

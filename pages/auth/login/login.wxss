@@ -268,25 +268,79 @@
   color: #86868b;
 }
 
-/* 底部协议 */
-.footer {
+/* 协议同意区域 */
+.agreement-section {
+  padding: 20rpx 0 50rpx;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: 30rpx 0 50rpx;
 }
 
-.footer .tip {
-  font-size: 22rpx;
+.agreement-checkbox-wrap {
+  display: flex;
+  align-items: flex-start;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 3rpx solid #c7c7cc;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  margin-top: 2rpx;
+  transition: all 0.2s ease;
+}
+
+.checkbox.checked {
+  background: #007aff;
+  border-color: #007aff;
+}
+
+.check-icon {
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.agreement-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  line-height: 1.6;
+}
+
+.agreement-text .tip {
+  font-size: 24rpx;
   color: #86868b;
 }
 
-.footer .link {
-  font-size: 22rpx;
+.agreement-text .link {
+  font-size: 24rpx;
   color: #007aff;
+  font-weight: 500;
 }
 
-.footer .link:active {
+.agreement-text .link:active {
   opacity: 0.7;
+}
+
+.agreement-hint {
+  font-size: 22rpx;
+  color: #ff3b30;
+  margin-top: 12rpx;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6rpx); }
+  75% { transform: translateX(6rpx); }
 }

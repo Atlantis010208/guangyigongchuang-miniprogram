@@ -1,0 +1,10 @@
+{
+  "name": "wxpayRefundCallback",
+  "version": "1.0.0",
+  "description": "微信支付退款回调",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
+

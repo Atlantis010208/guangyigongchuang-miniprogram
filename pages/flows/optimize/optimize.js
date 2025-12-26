@@ -7,10 +7,53 @@ Page({
     serviceWeChat:'gy-lighting',
     needs:[],
     deliverables:[],
-    contact:'',
     note:'',
-    submitting:false
+    submitting:false,
+    depositStatus: 'unknown', // unknown/unpaid/paid
+    depositChecking: false
   },
+
+  onLoad() {
+    // 页面加载时预查询押金状态
+    this.checkDepositStatus()
+  },
+
+  onShow() {
+    // 每次显示页面时刷新押金状态（可能从押金页面返回）
+    this.checkDepositStatus()
+  },
+
+  /**
+   * 查询押金状态
+   */
+  async checkDepositStatus() {
+    try {
+      this.setData({ depositChecking: true })
+      const res = await wx.cloud.callFunction({
+        name: 'deposit_query'
+      })
+      
+      if (res.result && res.result.code === 0) {
+        const { status } = res.result.data
+        // 更新押金状态
+        this.setData({ 
+          depositStatus: status,
+          depositChecking: false
+        })
+        // 同步更新本地存储
+        if (status === 'paid') {
+          wx.setStorageSync('deposit_paid', true)
+        }
+        console.log('押金状态:', status)
+      } else {
+        this.setData({ depositChecking: false })
+      }
+    } catch (error) {
+      console.warn('查询押金状态失败:', error)
+      this.setData({ depositChecking: false })
+    }
+  },
+
   onChooseFile(){
     const that = this
     wx.chooseMessageFile({
@@ -19,23 +62,127 @@ Page({
       success(res){
         const picked = (res.tempFiles||[]).map(f=>{
           const sizeMb = f.size/1024/1024
-          return { path:f.path, name:f.name||'文件', size:f.size, sizeText: sizeMb.toFixed(2)+'MB' }
+          return { 
+            path: f.path, 
+            name: f.name || '文件', 
+            size: f.size, 
+            sizeText: sizeMb.toFixed(2) + 'MB',
+            uploaded: false,  // 标记是否已上传
+            fileID: ''        // 云存储文件ID
+          }
         })
         that.setData({ files: picked })
       }
     })
   },
+
+  /**
+   * 上传文件到云存储
+   * @param {object} file - 文件对象
+   * @param {string} orderNo - 订单号
+   * @returns {Promise<string>} - 返回云存储 fileID
+   */
+  async uploadFileToCloud(file, orderNo) {
+    return new Promise((resolve, reject) => {
+      // 获取文件扩展名
+      const ext = file.name.split('.').pop() || 'file'
+      // 生成云端路径：optimize/订单号/时间戳_文件名
+      const cloudPath = `optimize/${orderNo}/${Date.now()}_${file.name}`
+      
+      wx.cloud.uploadFile({
+        cloudPath: cloudPath,
+        filePath: file.path,
+        success: (res) => {
+          console.log('文件上传成功:', res.fileID)
+          resolve(res.fileID)
+        },
+        fail: (err) => {
+          console.error('文件上传失败:', err)
+          reject(err)
+        }
+      })
+    })
+  },
+
+  /**
+   * 批量上传所有文件
+   * @param {string} orderNo - 订单号
+   * @returns {Promise<Array>} - 返回上传后的文件信息数组
+   */
+  async uploadAllFiles(orderNo) {
+    const uploadedFiles = []
+    const files = this.data.files
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      wx.showLoading({ 
+        title: `上传文件 ${i + 1}/${files.length}...`,
+        mask: true
+      })
+      
+      try {
+        const fileID = await this.uploadFileToCloud(file, orderNo)
+        uploadedFiles.push({
+          name: file.name,
+          size: file.size,
+          sizeText: file.sizeText,
+          fileID: fileID,
+          cloudPath: `optimize/${orderNo}/${Date.now()}_${file.name}`
+        })
+      } catch (err) {
+        wx.hideLoading()
+        throw new Error(`文件 "${file.name}" 上传失败`)
+      }
+    }
+    
+    wx.hideLoading()
+    return uploadedFiles
+  },
   onNeedsChange(e){ this.setData({ needs: e.detail.value }) },
   onDeliverablesChange(e){ this.setData({ deliverables: e.detail.value }) },
-  onContact(e){ this.setData({ contact: e.detail.value }) },
   onNote(e){ this.setData({ note: e.detail.value }) },
-  onSubmit(){
+
+  async onSubmit(){
+    // 登录检查：未登录时跳转登录页
+    const app = getApp()
+    if (!app.requireLogin(true, '/pages/flows/optimize/optimize')) {
+      return // 未登录，阻止提交并跳转登录页
+    }
     if (this.data.submitting || this._submitting) return
-    const depositPaid = !!wx.getStorageSync('deposit_paid')
-    const paid = !!wx.getStorageSync('deposit_paid')
+    
     const userDoc = wx.getStorageSync('userDoc') || {}
     const userIdLocal = (userDoc && userDoc._id) ? userDoc._id : null
-    if(!paid){
+
+    // 实时查询押金状态
+    let depositPaid = this.data.depositStatus === 'paid'
+    
+    // 如果状态未知或正在检查，先等待查询结果
+    if (this.data.depositStatus === 'unknown' || this.data.depositChecking) {
+      wx.showLoading({ title: '检查押金状态...' })
+      try {
+        const res = await wx.cloud.callFunction({
+          name: 'deposit_query'
+        })
+        wx.hideLoading()
+        
+        if (res.result && res.result.code === 0) {
+          const { status } = res.result.data
+          this.setData({ depositStatus: status })
+          depositPaid = (status === 'paid')
+          if (depositPaid) {
+            wx.setStorageSync('deposit_paid', true)
+          }
+        }
+      } catch (error) {
+        wx.hideLoading()
+        console.warn('查询押金状态失败:', error)
+        // 查询失败时，使用本地缓存作为降级方案
+        depositPaid = !!wx.getStorageSync('deposit_paid')
+      }
+    }
+
+    // 如果押金未缴纳，显示提示弹窗
+    if (!depositPaid) {
       wx.showModal({
         title:'温馨提示',
         content:'发布需求前需缴纳¥100押金，订单完成后自动原路退回。是否前往缴纳并查看押金规则？',
@@ -46,8 +193,8 @@ Page({
       return
     }
 
+    // 押金已缴纳，继续验证表单
     if(!this.data.files.length){ wx.showToast({ title:'请先上传图纸文件', icon:'none' }); return }
-    if(!this.data.contact){ wx.showToast({ title:'请填写联系方式', icon:'none' }); return }
     const totalSize = this.data.files.reduce((s,f)=>s+f.size,0)
     const totalMb = totalSize/1024/1024
     if(totalMb > 20){
@@ -70,25 +217,35 @@ Page({
     const id = Date.now().toString()
     this._submitting = true
     this.setData({ submitting: true })
+
+    // 🔥 先上传文件到云存储
+    let uploadedFiles = []
+    try {
+      uploadedFiles = await this.uploadAllFiles(id)
+      console.log('所有文件上传完成:', uploadedFiles)
+    } catch (err) {
+      this._submitting = false
+      this.setData({ submitting: false })
+      wx.showToast({ title: err.message || '文件上传失败', icon: 'none' })
+      return
+    }
+
     // 生成单行摘要（不换行）
     const joinOrDash = (arr)=> (arr && arr.length) ? arr.join('/') : '-'
     const compactNote = (this.data.note||'').replace(/\s+/g,' ')
-    const compactContact = (this.data.contact||'').replace(/\s+/g,'')
     const target = [
       `方向:${joinOrDash(this.data.needs)}`,
       `交付:${joinOrDash(this.data.deliverables)}`,
-      `联系:${compactContact}`,
       compactNote ? `备注:${compactNote}` : ''
     ].filter(Boolean).join(' · ')
     const req = {
       id,
       space: '灯光施工图优化',
       target,
-      files: this.data.files.map(f=>({ name:f.name, size:f.size })),
+      files: uploadedFiles, // 🔥 使用上传后的文件信息（包含 fileID）
       
       needs: this.data.needs,
       deliverables: this.data.deliverables,
-      contact: this.data.contact,
       note: this.data.note,
       createdAt: new Date().toISOString(),
       source: 'optimize',
@@ -108,23 +265,34 @@ Page({
       if (db) {
         const userDoc = wx.getStorageSync('userDoc') || {}
         const userId = (userDoc && userDoc._id) ? userDoc._id : null
-        const params = { target, files: this.data.files.map(f=>({ name:f.name, size:f.size })), needs: this.data.needs, deliverables: this.data.deliverables, contact: this.data.contact, note: this.data.note }
-        util.callCf('requests_create', { request: { orderNo: id, category: 'optimize', params, userId, status: 'submitted' } })
+        // 🔥 params 中包含带 fileID 的文件列表
+        const params = { 
+          target, 
+          files: uploadedFiles, // 包含 fileID
+          needs: this.data.needs, 
+          deliverables: this.data.deliverables, 
+          note: this.data.note 
+        }
+        util.callCf('requests_create', { request: { orderNo: id, category: 'optimize', params, userId, status: 'submitted', priority: depositPaid } })
           .catch(err => {
             const msg = (err && (err.message || err.errMsg)) || ''
             if (msg.indexOf('collection not exists') !== -1 || (err && err.errCode === -502005)) {
               if (wx.cloud && wx.cloud.callFunction) {
                 wx.cloud.callFunction({ name: 'initCollections' }).then(() => {
-                  util.callCf('requests_create', { request: { orderNo: id, category: 'optimize', params, userId, status: 'submitted' } }).catch(()=>{})
+                  util.callCf('requests_create', { request: { orderNo: id, category: 'optimize', params, userId, status: 'submitted', priority: depositPaid } }).catch(()=>{})
                 }).catch(()=>{})
               }
             }
           })
-        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'optimize', params, status:'submitted', paid:false, userId } })
+        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'optimize', params, status:'submitted', paid:false, userId, priority: depositPaid } })
           .catch(()=>{})
       }
     }catch(err){}
-    wx.switchTab({ url:'/pages/cart/cart' })
+    
+    wx.showToast({ title: '提交成功', icon: 'success' })
+    setTimeout(() => {
+      wx.switchTab({ url:'/pages/cart/cart' })
+    }, 1000)
     this._submitting = false
     this.setData({ submitting:false })
   }

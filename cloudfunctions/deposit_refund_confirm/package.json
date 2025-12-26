@@ -1,0 +1,10 @@
+{
+  "name": "deposit_refund_confirm",
+  "version": "1.0.0",
+  "description": "押金退款状态兜底确认",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

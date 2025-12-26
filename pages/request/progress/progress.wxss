@@ -1,5 +1,89 @@
 .page{min-height:100vh;background:#f2f2f7}
 .header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+
+/* 顶部步骤条样式 */
+.steps-section {
+  background: #fff;
+  border-radius: 24rpx;
+  margin: 0 30rpx 20rpx;
+  /* 增加底部内边距，防止图标被截断 */
+  padding: 36rpx 10rpx 40rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  /* 自定义 Vant Steps 样式变量 */
+  --steps-icon-size: 36rpx;
+  --steps-title-font-size: 28rpx;
+  --steps-description-font-size: 24rpx;
+  --steps-line-color: #ebedf0;
+  --steps-finish-line-color: #007AFF;
+  --steps-finish-text-color: #007AFF;
+  --steps-process-text-color: #007AFF;
+}
+
+.steps-section .van-steps {
+  background: transparent !important;
+  /* 确保 Steps 内部有足够的 padding 容纳首尾文字 */
+  padding-left: 40rpx !important;
+  padding-right: 40rpx !important;
+  padding-bottom: 24rpx !important; /* 增加底部 padding */
+  overflow: visible !important;
+}
+
+/* 强制让内部容器也溢出显示 */
+.steps-section .van-step, 
+.steps-section .van-step__wrapper {
+  overflow: visible !important;
+}
+
+/* 步骤圆点样式 */
+.steps-section .van-step__circle {
+  width: 18rpx !important;
+  height: 18rpx !important;
+  background-color: #ebedf0 !important;
+}
+
+/* 步骤图标样式 */
+.steps-section .van-step__icon {
+  font-size: 38rpx !important; /* 稍微加大一点字号 */
+  /* 确保图标垂直居中且不被截断 */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 38rpx !important;
+  height: auto !important; /* 取消固定高度，避免截断 */
+  line-height: 1 !important;
+}
+
+/* 步骤标题样式 */
+.steps-section .van-step__title {
+  font-size: 28rpx !important;
+  font-weight: 500;
+  /* 增加文字与图标的间距 */
+  padding-bottom: 16rpx !important; 
+  padding-top: 0 !important;
+}
+
+/* 步骤连接线样式 */
+.steps-section .van-step__line {
+  height: 4rpx !important;
+  top: 60rpx !important; /* 微调线条位置以对齐图标 */
+  background-color: #ebedf0 !important;
+}
+
+/* 步骤标题样式 */
+.steps-section .van-step__title {
+  font-size: 28rpx !important;
+  font-weight: 500;
+  /* 增加文字与图标的间距 */
+  padding-bottom: 12rpx !important; 
+  padding-top: 0 !important;
+}
+
+/* 步骤连接线样式 */
+.steps-section .van-step__line {
+  height: 4rpx !important;
+  top: 60rpx !important; /* 微调线条位置以对齐图标 */
+  background-color: #ebedf0 !important;
+}
 .section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:30rpx}
 .info .row{display:block;font-size:28rpx;color:#000;margin-bottom:10rpx}
 .block-title{font-size:32rpx;font-weight:700;color:#000;display:block;margin-bottom:12rpx}
@@ -25,4 +109,65 @@
 .btn.more{flex:0 0 65rpx;height:58rpx;padding:0;display:flex;align-items:center;justify-content:center;border-radius:36rpx;border:none;background:transparent}
 .more-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8rpx;height:30rpx}
 .more-icon .dot{width:10rpx;height:10rpx;border-radius:50%;background:#1C1C1E}
+
+/* 文件列表样式 */
+.files-section {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f8f8fa;
+  border-radius: 16rpx;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e8e8ea;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-icon {
+  font-size: 32rpx;
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.file-name {
+  font-size: 26rpx;
+  color: #1c1c1e;
+  word-break: break-all;
+}
+
+.file-size {
+  font-size: 22rpx;
+  color: #8e8e93;
+}
+
+/* 长按复制样式 */
+.val.phone,
+.val.wechat {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  letter-spacing: 0.5rpx;
+}
+
+.longpress-copy {
+  position: relative;
+  padding: 8rpx 16rpx;
+  margin: -8rpx -16rpx;
+  border-radius: 8rpx;
+  transition: background 0.2s;
+}
+
+.longpress-copy:active {
+  background: #f2f2f7;
+}
 

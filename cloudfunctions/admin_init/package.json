@@ -1,0 +1,10 @@
+﻿{
+    "name":  "admin_init",
+    "version":  "1.0.0",
+    "description":  "鍒濆鍖栫鐞嗗憳璐﹀彿",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "~2.6.3",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
+}

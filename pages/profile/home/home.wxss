@@ -19,3 +19,57 @@
 .float-icon{ width: 36rpx; height: 36rpx; margin-right: 8rpx }
 .float-text{ font-size: 26rpx; color: #1c1c1e }
 
+/* 未登录提示卡片 */
+.login-prompt-card {
+  margin: 0 30rpx 20rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 40rpx 28rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+
+.login-prompt-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #e5e5ea;
+  flex-shrink: 0;
+}
+
+.login-prompt-info {
+  flex: 1;
+  margin-left: 24rpx;
+  margin-right: 16rpx;
+}
+
+.login-prompt-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 8rpx;
+}
+
+.login-prompt-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #86868b;
+}
+
+.login-prompt-btn {
+  flex-shrink: 0;
+  padding: 16rpx 32rpx;
+  background: #007aff;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  border-radius: 999rpx;
+  border: none;
+}
+
+.login-prompt-btn:active {
+  background: #0066d6;
+}
+

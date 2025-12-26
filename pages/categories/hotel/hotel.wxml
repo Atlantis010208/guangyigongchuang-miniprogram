@@ -84,7 +84,7 @@
       <button class="submit-btn" bindtap="onSubmitOrder">提交订单</button>
     </view>
   </view>
-   <!-- Apple 内容 -->
+   <!-- 光乙 内容 -->
    <view class="section">
     <text class="section-title center">你关心的照明内容</text>
     <view class="content-tags">
@@ -97,14 +97,14 @@
     <!-- 二维码 -->
     <view class="qr-section">
       <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
-      <text class="qr-title">获得 Apple 的官方支持</text>
-      <text class="qr-subtitle">长按关注Apple官方公众号，输入你想问的问题获得在线支持</text>
+      <text class="qr-title">获得 光乙 的官方支持</text>
+      <text class="qr-subtitle">长按关注光乙官方客服，输入你想问的问题获得在线支持</text>
     </view>
   </view>
 
   <!-- 折抵换购说明 -->
   <view class="disclaimer">
-    <text class="disclaimer-text">* 折抵换购服务由 Apple 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
+    <text class="disclaimer-text">* 折抵换购服务由 光乙 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
     <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
   </view>
 

@@ -1,10 +1,12 @@
 {
   "name": "appointments_create",
   "version": "1.0.0",
-  "description": "Create appointment document for designer",
+  "description": "创建预约云函数 - 支持设计师预约、服务预约等功能",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "^2.6.3"
-  }
+    "wx-server-sdk": "~2.6.3"
+  },
+  "author": "guangyi",
+  "license": "ISC"
 }
 

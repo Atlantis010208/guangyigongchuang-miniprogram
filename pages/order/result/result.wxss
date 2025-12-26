@@ -4,12 +4,57 @@
 .status-icon { width: 140rpx; height: 140rpx; margin-bottom: 20rpx; }
 .status-text { font-size: 36rpx; font-weight: 700; color:#000; display:block; margin-bottom: 10rpx; }
 .amount { font-size: 32rpx; color:#000; display:block; margin-bottom: 8rpx; }
-.order-id { font-size: 24rpx; color:#8e8e93; }
-.actions { display:flex; margin-top: 24rpx; }
-.btn { flex:1; border:none; border-radius: 28rpx; padding: 22rpx 0; font-size: 28rpx; }
-.btn-dark { background:#1c1c1e; color:#fff; }
-/* 统一黑底白字，light 不再使用 */
-/* 兼容性：使用 margin 控制按钮间距，避免 gap 在部分版本不生效 */
-.actions .btn + .btn { margin-left: 28rpx; }
+.order-id { font-size: 24rpx; color:#8e8e93; display: block; margin-bottom: 20rpx; }
 
+/* 提示信息 */
+.success-tips, .cancel-tips, .fail-tips {
+  margin: 24rpx 0;
+  padding: 20rpx;
+  background: #f5f5f7;
+  border-radius: 16rpx;
+}
+.tip-text {
+  font-size: 26rpx;
+  color: #1c1c1e;
+  display: block;
+}
+.tip-sub {
+  font-size: 24rpx;
+  color: #8e8e93;
+  display: block;
+  margin-top: 8rpx;
+}
 
+/* 按钮区域 */
+.actions { 
+  display: flex; 
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 30rpx; 
+}
+.btn { 
+  flex: 1; 
+  min-width: 200rpx;
+  border: none; 
+  border-radius: 28rpx; 
+  padding: 22rpx 0; 
+  font-size: 28rpx; 
+}
+.btn-dark { 
+  background: #1c1c1e; 
+  color: #fff; 
+}
+.btn-primary {
+  background: #007aff;
+  color: #fff;
+}
+.btn-outline {
+  background: #fff;
+  color: #1c1c1e;
+  border: 2rpx solid #e5e5e5;
+}
+
+/* 按钮间距兼容性处理 */
+.actions .btn + .btn { 
+  margin-left: 0; 
+}

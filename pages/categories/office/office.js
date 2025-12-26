@@ -108,11 +108,29 @@ Page({
   },
 
   async onSubmitOrder(){
+    // 登录检查：未登录时跳转登录页
+    const app = getApp()
+    if (!app.requireLogin(true, '/pages/categories/office/office')) {
+      return // 未登录，阻止提交并跳转登录页
+    }
     const { schemeText, styleText, areaBucketText, avgFixturePriceText, designUnitText, renovationTypeText, progressText, diningPendantText, smartHomeText, smartLightText, ceilingAdjustText, estFixtures, estDesign, estTotal, note } = this.data
     if(schemeText==='请选择'){ wx.showToast({ title:'请选择方案', icon:'none' }); return }
     if(styleText==='请选择' || areaBucketText==='请选择' || avgFixturePriceText==='请选择' || designUnitText==='请选择'){
       wx.showToast({ title:'请完善参数', icon:'none' }); return
     }
+    
+    // 🔥 查询云端押金状态，用于优先服务标记
+    let depositPaid = false
+    try {
+      const depositRes = await wx.cloud.callFunction({ name: 'deposit_query' })
+      if (depositRes.result && depositRes.result.code === 0) {
+        depositPaid = depositRes.result.data.hasPaid === true
+      }
+      console.log('押金状态:', depositPaid ? '已缴纳' : '未缴纳')
+    } catch (err) {
+      console.warn('查询押金状态失败，使用默认值:', err)
+    }
+    
     const id = Date.now().toString()
     const order = {
       id, source:'scheme', category:'office', scheme: schemeText,
@@ -129,18 +147,20 @@ Page({
         const userDoc = wx.getStorageSync('userDoc') || {}
         const userId = (userDoc && userDoc._id) ? userDoc._id : null
         try{
-          const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'office', params: order.params, userId, status: 'submitted' } })
+          // 🔥 添加 priority 参数
+          const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'office', params: order.params, userId, status: 'submitted', priority: depositPaid } })
           if (!r1 || !r1.success) throw new Error((r1 && r1.errorMessage) || 'requests_create failed')
         }catch(err){
           const msg = (err && (err.message || err.errMsg)) || ''
           if (msg.indexOf('collection not exists') !== -1 || (err && err.errCode === -502005)) {
             if (wx.cloud && wx.cloud.callFunction) {
               await wx.cloud.callFunction({ name: 'initCollections' }).catch(()=>{})
-              await util.callCf('requests_create', { request: { orderNo: id, category: 'office', params: order.params, userId, status: 'submitted' } }).catch(()=>{})
+              await util.callCf('requests_create', { request: { orderNo: id, category: 'office', params: order.params, userId, status: 'submitted', priority: depositPaid } }).catch(()=>{})
             }
           }
         }
-        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'office', params: order.params, status:'submitted', paid:false, userId } }).catch(()=>{})
+        // 🔥 添加 priority 参数
+        util.callCf('orders_create', { order: { type:'products', orderNo: id, category:'office', params: order.params, status:'submitted', paid:false, userId, priority: depositPaid } }).catch(()=>{})
       }
     }catch(err){}
     wx.showToast({ title:'已下单', icon:'success' })

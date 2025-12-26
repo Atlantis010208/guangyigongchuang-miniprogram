@@ -75,17 +75,46 @@ exports.main = async (event, context) => {
 
     const products = productsResult.data
 
-    // 处理商品图片URL
+    // 处理商品图片URL - 智能处理不同格式的图片
     for (let product of products) {
       if (product.images && product.images.length > 0) {
         try {
-          const tempFileResult = await cloud.getTempFileURL({
-            fileList: product.images
+          // 分类处理不同格式的图片
+          const cloudFileIds = [] // cloud:// 格式的文件ID
+          const cloudFileIndexes = [] // 对应的索引位置
+          const processedImages = [...product.images] // 复制原始数组
+
+          product.images.forEach((image, index) => {
+            if (typeof image === 'string') {
+              if (image.startsWith('cloud://')) {
+                // 云文件ID，需要转换为临时URL
+                cloudFileIds.push(image)
+                cloudFileIndexes.push(index)
+              }
+              // 其他格式（https://、data:image/ 等）保持原样
+            }
           })
-          product.images = tempFileResult.fileList.map(file => file.tempFileURL)
+
+          // 只对 cloud:// 格式的文件ID调用 getTempFileURL
+          if (cloudFileIds.length > 0) {
+            const tempFileResult = await cloud.getTempFileURL({
+              fileList: cloudFileIds
+            })
+            
+            // 将转换后的临时URL填回对应位置
+            tempFileResult.fileList.forEach((file, i) => {
+              const originalIndex = cloudFileIndexes[i]
+              if (file.tempFileURL) {
+                processedImages[originalIndex] = file.tempFileURL
+              }
+              // 如果转换失败，保持原始的 cloud:// URL
+            })
+          }
+
+          product.images = processedImages
         } catch (error) {
           console.warn('获取商品图片URL失败:', error)
-          // 保持原始云文件ID
+          // 保持原始图片数据
         }
       }
     }

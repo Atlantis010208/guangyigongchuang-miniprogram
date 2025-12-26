@@ -1,0 +1,10 @@
+{
+  "name": "refund_detail",
+  "version": "1.0.0",
+  "description": "查询退款详情",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
+

@@ -1,0 +1,10 @@
+﻿{
+    "name":  "admin_users_update",
+    "version":  "1.0.0",
+    "description":  "鐢ㄦ埛淇℃伅鏇存柊",
+    "main":  "index.js",
+    "dependencies":  {
+                         "wx-server-sdk":  "latest",
+                         "@cloudbase/node-sdk":  "^3.0.0"
+                     }
+}

@@ -1,0 +1,82 @@
+/**
+ * 商品参数展示组件样式
+ * 纯文字样式，与选择规格布局一致
+ */
+
+/* 卡片容器 */
+.specs-card {
+  background: #fff;
+  margin-top: 20rpx;
+  padding: 28rpx 30rpx;
+}
+
+/* 标题 */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #000;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+/* 参数组 */
+.param-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.param-group:last-child {
+  border-bottom: none;
+}
+
+/* 参数名称 */
+.param-name {
+  font-size: 28rpx;
+  color: #8e8e93;
+  flex-shrink: 0;
+}
+
+.param-name.important {
+  color: #ff3b30;
+}
+
+/* 参数值容器 */
+.param-values {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1;
+  margin-left: 20rpx;
+}
+
+/* 参数值文字 */
+.param-value {
+  font-size: 28rpx;
+  color: #1c1c1e;
+  text-align: right;
+}
+
+/* 高亮状态 - 用于重要参数 */
+.param-value.highlight {
+  color: #ff3b30;
+  font-weight: 500;
+}
+
+/* 分组分隔线 */
+.param-divider {
+  display: flex;
+  align-items: center;
+  margin: 20rpx 0 8rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #e8e8e8;
+}
+
+.divider-text {
+  font-size: 26rpx;
+  color: #666;
+  font-weight: 600;
+}
+

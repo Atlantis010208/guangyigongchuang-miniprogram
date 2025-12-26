@@ -1,3 +1,6 @@
 {
-  "usingComponents": {}
+  "usingComponents": {},
+  "navigationBarTitleText": "我的需求",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

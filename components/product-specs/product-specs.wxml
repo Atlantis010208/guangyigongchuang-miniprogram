@@ -1,0 +1,127 @@
+<!--
+  商品参数展示组件
+  用于在商品详情页展示灯具专业参数
+  纯文字布局，简洁清晰
+  
+  使用方式：
+  <product-specs 
+    product="{{product}}" 
+    groupedSpecs="{{product.groupedFixedSpecs}}"
+  />
+-->
+
+<wxs module="specUtils">
+/**
+ * 格式化规格值，避免单位重复显示
+ * 例如：value="7W", unit="W" 应该只显示 "7W" 而不是 "7WW"
+ */
+module.exports.formatValue = function(value, unit) {
+  if (!value && value !== 0) return '-';
+  if (!unit) return value;
+  
+  // WXS 中使用 + '' 来转换为字符串（不支持 String 构造函数）
+  var strVal = value + '';
+  var strUnit = unit + '';
+  
+  // 如果 value 已经以 unit 结尾（不区分大小写），则不再追加
+  // WXS 不支持 toLowerCase()，使用正则匹配
+  var regex = getRegExp(strUnit + '$', 'i');
+  if (regex.test(strVal)) {
+    return strVal;
+  }
+  
+  return strVal + strUnit;
+}
+</wxs>
+
+<view class="specs-card" wx:if="{{hasSpecs}}">
+  <text class="section-title">产品参数</text>
+  
+  <!-- 基础信息 (品牌/型号) -->
+  <view class="param-group" wx:if="{{product.brand}}">
+    <text class="param-name">品牌</text>
+    <view class="param-values">
+      <text class="param-value">{{brandLabel}}</text>
+    </view>
+  </view>
+  
+  <view class="param-group" wx:if="{{product.model}}">
+    <text class="param-name">型号</text>
+    <view class="param-values">
+      <text class="param-value">{{product.model}}</text>
+    </view>
+  </view>
+
+  <!-- 分组参数 - 光学参数 -->
+  <block wx:if="{{groupedSpecs.optical && groupedSpecs.optical.length > 0}}">
+    <view class="param-divider">
+      <text class="divider-text">光学参数</text>
+    </view>
+    <view class="param-group" wx:for="{{groupedSpecs.optical}}" wx:key="key">
+      <text class="param-name {{item.important ? 'important' : ''}}">{{item.label}}</text>
+      <view class="param-values">
+        <text class="param-value {{item.important ? 'highlight' : ''}}">{{specUtils.formatValue(item.value, item.unit)}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 分组参数 - 电气参数 -->
+  <block wx:if="{{groupedSpecs.electrical && groupedSpecs.electrical.length > 0}}">
+    <view class="param-divider">
+      <text class="divider-text">电气参数</text>
+    </view>
+    <view class="param-group" wx:for="{{groupedSpecs.electrical}}" wx:key="key">
+      <text class="param-name {{item.important ? 'important' : ''}}">{{item.label}}</text>
+      <view class="param-values">
+        <text class="param-value {{item.important ? 'highlight' : ''}}">{{specUtils.formatValue(item.value, item.unit)}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 分组参数 - 物理参数 -->
+  <block wx:if="{{groupedSpecs.physical && groupedSpecs.physical.length > 0}}">
+    <view class="param-divider">
+      <text class="divider-text">物理参数</text>
+    </view>
+    <view class="param-group" wx:for="{{groupedSpecs.physical}}" wx:key="key">
+      <text class="param-name {{item.important ? 'important' : ''}}">{{item.label}}</text>
+      <view class="param-values">
+        <text class="param-value {{item.important ? 'highlight' : ''}}">{{specUtils.formatValue(item.value, item.unit)}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 分组参数 - 功能参数 -->
+  <block wx:if="{{groupedSpecs.functional && groupedSpecs.functional.length > 0}}">
+    <view class="param-divider">
+      <text class="divider-text">功能参数</text>
+    </view>
+    <view class="param-group" wx:for="{{groupedSpecs.functional}}" wx:key="key">
+      <text class="param-name {{item.important ? 'important' : ''}}">{{item.label}}</text>
+      <view class="param-values">
+        <text class="param-value {{item.important ? 'highlight' : ''}}">{{specUtils.formatValue(item.value, item.unit)}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 旧版规格数据兼容 - specifications -->
+  <block wx:if="{{!hasGroupedSpecs && product.specifications && product.specifications.length > 0}}">
+    <view class="param-group" wx:for="{{product.specifications}}" wx:key="key">
+      <text class="param-name">{{item.key || item.label}}</text>
+      <view class="param-values">
+        <text class="param-value">{{specUtils.formatValue(item.value, item.unit)}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 旧版规格数据兼容 - params (演示数据) -->
+  <block wx:if="{{!hasGroupedSpecs && params && params.length > 0}}">
+    <view class="param-group" wx:for="{{params}}" wx:key="key">
+      <text class="param-name">{{item.key}}</text>
+      <view class="param-values">
+        <text class="param-value">{{item.value}}</text>
+      </view>
+    </view>
+  </block>
+</view>
+

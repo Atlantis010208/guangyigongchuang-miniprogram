@@ -1,0 +1,11 @@
+{
+  "name": "admin_appointments_update",
+  "version": "1.0.0",
+  "description": "预约状态更新",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
+

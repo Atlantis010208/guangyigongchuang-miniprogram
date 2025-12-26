@@ -334,21 +334,8 @@ App({
         this.clearLoginCache()
         this.globalData.isLoggedIn = false
         this.globalData.loginExpired = true
-        
-        // 如果当前不在登录页，提示用户
-        const pages = getCurrentPages()
-        const currentPage = pages[pages.length - 1]
-        if (currentPage && currentPage.route !== 'pages/auth/login/login') {
-          wx.showModal({
-            title: '登录已失效',
-            content: '您的登录状态已失效，请重新登录',
-            showCancel: false,
-            confirmText: '去登录',
-            success: () => {
-              wx.reLaunch({ url: '/pages/auth/login/login' })
-            }
-          })
-        }
+        // 不再强制跳转登录页，让用户可以继续浏览
+        // 需要登录的功能会在使用时引导用户登录
         return
       }
 
@@ -423,19 +410,53 @@ App({
   /**
    * 检查是否需要登录
    * 如果需要登录，跳转到登录页面
-   * @param {boolean} redirect 是否自动跳转登录页
+   * @param {object} options 配置选项
+   * @param {boolean} options.redirect 是否自动跳转登录页，默认 true
+   * @param {boolean} options.showModal 是否显示确认弹窗，默认 true
+   * @param {string} options.redirectUrl 登录成功后的回调页面 URL
    * @returns {boolean} 是否已登录
    */
-  requireLogin(redirect = true) {
+  requireLogin(options = {}) {
+    const { redirect = true, showModal = true, redirectUrl = '' } = options
+    
     this.checkLoginStatus()
     
     if (!this.globalData.isLoggedIn) {
       if (redirect) {
-        wx.navigateTo({ url: '/pages/auth/login/login' })
+        if (showModal) {
+          wx.showModal({
+            title: '需要登录',
+            content: '此功能需要登录后使用，是否前往登录？',
+            confirmText: '去登录',
+            cancelText: '暂不登录',
+            success: (res) => {
+              if (res.confirm) {
+                const url = redirectUrl 
+                  ? `/pages/auth/login/login?redirect=${encodeURIComponent(redirectUrl)}`
+                  : '/pages/auth/login/login'
+                wx.navigateTo({ url })
+              }
+            }
+          })
+        } else {
+          const url = redirectUrl 
+            ? `/pages/auth/login/login?redirect=${encodeURIComponent(redirectUrl)}`
+            : '/pages/auth/login/login'
+          wx.navigateTo({ url })
+        }
       }
       return false
     }
     return true
+  },
+
+  /**
+   * 检查是否已登录（不跳转，仅返回状态）
+   * @returns {boolean} 是否已登录
+   */
+  isLoggedIn() {
+    this.checkLoginStatus()
+    return this.globalData.isLoggedIn
   },
 
   /**

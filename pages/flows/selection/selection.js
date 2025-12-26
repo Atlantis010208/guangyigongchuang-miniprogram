@@ -106,9 +106,26 @@ Page({
     })
   },
 
-  onSubmitSelection(){
+  async onSubmitSelection(){
+    // 登录检查：未登录时跳转登录页
+    const app = getApp()
+    if (!app.requireLogin(true, '/pages/flows/selection/selection')) {
+      return // 未登录，阻止提交并跳转登录页
+    }
     if (this.data.submitting || this._submitting) return
-    const depositPaid = !!wx.getStorageSync('deposit_paid')
+    
+    // 🔥 查询云端押金状态，用于优先服务标记
+    let depositPaid = false
+    try {
+      const depositRes = await wx.cloud.callFunction({ name: 'deposit_query' })
+      if (depositRes.result && depositRes.result.code === 0) {
+        depositPaid = depositRes.result.data.hasPaid === true
+      }
+      console.log('押金状态:', depositPaid ? '已缴纳' : '未缴纳')
+    } catch (err) {
+      console.warn('查询押金状态失败，使用默认值:', err)
+    }
+    
     const userDoc = wx.getStorageSync('userDoc') || {}
     const userIdLocal = (userDoc && userDoc._id) ? userDoc._id : null
 
@@ -145,18 +162,20 @@ Page({
         const userDoc = wx.getStorageSync('userDoc') || {}
         const userId = (userDoc && userDoc._id) ? userDoc._id : null
         const params = { budget:this.data.budget, stage:this.data.stageOptions[this.data.stageIdx], ceilingDrop:this.data.dropDisplay, bodyHeight:this.data.bodyHeightOptions[this.data.bodyHeightIdx], trimless:this.data.trimlessOptions[this.data.trimlessIdx], spotPrice:this.data.spotPriceOptions[this.data.spotPriceIdx], note:this.data.note }
-        util.callCf('requests_create', { request: { orderNo: req.id, category: 'selection', params, userId, status: 'submitted' } })
+        // 🔥 添加 priority 参数
+        util.callCf('requests_create', { request: { orderNo: req.id, category: 'selection', params, userId, status: 'submitted', priority: depositPaid } })
           .catch(err => {
             const msg = (err && (err.message || err.errMsg)) || ''
             if (msg.indexOf('collection not exists') !== -1 || (err && err.errCode === -502005)) {
               if (wx.cloud && wx.cloud.callFunction) {
                 wx.cloud.callFunction({ name: 'initCollections' }).then(() => {
-                  util.callCf('requests_create', { request: { orderNo: req.id, category: 'selection', params, userId, status: 'submitted' } }).catch(()=>{})
+                  util.callCf('requests_create', { request: { orderNo: req.id, category: 'selection', params, userId, status: 'submitted', priority: depositPaid } }).catch(()=>{})
                 }).catch(()=>{})
               }
             }
           })
-        util.callCf('orders_create', { order: { type:'products', orderNo: req.id, category:'selection', params, status:'submitted', paid:false, userId } })
+        // 🔥 添加 priority 参数
+        util.callCf('orders_create', { order: { type:'products', orderNo: req.id, category:'selection', params, status:'submitted', paid:false, userId, priority: depositPaid } })
           .catch(()=>{})
       }
     }catch(err){}

@@ -1,0 +1,150 @@
+<!--pages/refund/detail/detail.wxml-->
+<view class="page">
+  <!-- 步骤条 -->
+  <view class="steps-card">
+    <van-steps 
+      steps="{{steps}}" 
+      active="{{activeStep}}"
+      active-color="#007AFF"
+      inactive-color="#c7c7cc"
+    />
+  </view>
+
+  <!-- 当前状态卡片 -->
+  <view class="status-card">
+    <view class="status-icon {{statusClass}}">
+      <van-icon name="{{statusIcon}}" size="48px" color="#fff"/>
+    </view>
+    <view class="status-info">
+      <text class="status-title">{{refund.status}}</text>
+      <text class="status-desc">{{statusDesc}}</text>
+    </view>
+  </view>
+
+  <!-- 退款信息 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">退款信息</text>
+    </view>
+    <view class="info-list">
+      <view class="info-item">
+        <text class="info-label">退款单号</text>
+        <text class="info-value mono">{{refund.refundNo}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">退款类型</text>
+        <van-tag plain type="primary">{{refund.refundTypeLabel}}</van-tag>
+      </view>
+      <view class="info-item">
+        <text class="info-label">退款金额</text>
+        <text class="info-value price">¥{{refund.refundAmount}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">退款原因</text>
+        <text class="info-value">{{refund.reason}}</text>
+      </view>
+      <view class="info-item" wx:if="{{refund.reasonDetail}}">
+        <text class="info-label">详细说明</text>
+        <text class="info-value detail">{{refund.reasonDetail}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">申请时间</text>
+        <text class="info-value">{{refund.createdAtText}}</text>
+      </view>
+      <view class="info-item" wx:if="{{refund.refundedAt}}">
+        <text class="info-label">退款时间</text>
+        <text class="info-value">{{refund.refundedAtText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 拒绝原因 -->
+  <view class="card reject-card" wx:if="{{refund.status === '已拒绝' && refund.rejectReason}}">
+    <view class="card-header">
+      <text class="card-title">拒绝原因</text>
+    </view>
+    <view class="reject-content">
+      <text>{{refund.rejectReason}}</text>
+    </view>
+  </view>
+
+  <!-- 凭证图片 -->
+  <view class="card" wx:if="{{refund.images && refund.images.length > 0}}">
+    <view class="card-header">
+      <text class="card-title">凭证图片</text>
+    </view>
+    <view class="image-list">
+      <image 
+        wx:for="{{refund.images}}" 
+        wx:key="*this"
+        class="evidence-image"
+        src="{{item}}"
+        mode="aspectFill"
+        bindtap="onPreviewImage"
+        data-src="{{item}}"
+      />
+    </view>
+  </view>
+
+  <!-- 订单信息 -->
+  <view class="card" wx:if="{{orderInfo}}">
+    <view class="card-header">
+      <text class="card-title">订单信息</text>
+      <text class="order-no">{{orderInfo.orderNo}}</text>
+    </view>
+    <view class="order-items">
+      <view class="order-item" wx:for="{{orderInfo.items}}" wx:key="id">
+        <image class="item-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-qty">× {{item.quantity}}</text>
+        </view>
+        <text class="item-price">¥{{item.price}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态记录 -->
+  <view class="card" wx:if="{{refund.statusLogs && refund.statusLogs.length > 0}}">
+    <view class="card-header">
+      <text class="card-title">处理记录</text>
+    </view>
+    <view class="timeline">
+      <view class="timeline-item" wx:for="{{refund.statusLogs}}" wx:key="time">
+        <view class="timeline-dot {{index === 0 ? 'active' : ''}}"></view>
+        <view class="timeline-content">
+          <view class="timeline-header">
+            <text class="timeline-status">{{item.status}}</text>
+            <text class="timeline-time">{{item.timeText}}</text>
+          </view>
+          <text class="timeline-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-wrap" wx:if="{{showCancelBtn}}">
+    <van-button 
+      type="default" 
+      block 
+      round
+      bindtap="onCancelRefund"
+    >
+      取消申请
+    </van-button>
+  </view>
+
+  <!-- 重新申请按钮（拒绝或退款失败时显示） -->
+  <view class="action-wrap" wx:if="{{refund.status === '已拒绝' || refund.status === '退款失败'}}">
+    <van-button 
+      type="primary" 
+      block 
+      round
+      bindtap="onReapply"
+    >
+      重新申请
+    </van-button>
+  </view>
+</view>
+

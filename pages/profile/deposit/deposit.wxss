@@ -1,20 +1,58 @@
 .page{min-height:100vh;background:#f2f2f7}
 .header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+
+/* 加载状态 */
+.loading-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100rpx 0}
+.loading-spinner{width:60rpx;height:60rpx;border:4rpx solid #e0e0e0;border-top-color:#007aff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{margin-top:20rpx;color:#8e8e93;font-size:28rpx}
+
+/* 卡片 */
 .card{background:#fff;border-radius:30rpx;padding:30rpx;margin:20rpx}
 .label{display:block;color:#8e8e93;font-size:26rpx}
 .amount{display:block;font-size:56rpx;font-weight:800;color:#000;margin:8rpx 0 6rpx}
-.status{display:block;color:#34c759;font-size:26rpx;margin-bottom:6rpx}
-.desc{display:block;color:#8e8e93;font-size:24rpx;line-height:1.6}
+
+/* 状态显示 */
+.status-box{margin-bottom:10rpx}
+.status-line{color:#8e8e93;font-size:26rpx}
+.status-value{font-weight:600;color:#8e8e93}
+.status-value.status-paid{color:#34c759}
+.status-value.status-refunding{color:#ff9500}
+
+/* 信息行 */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12rpx 0;border-bottom:1rpx solid #f2f2f7}
+.info-label{color:#8e8e93;font-size:26rpx}
+.info-value{color:#000;font-size:26rpx}
+
+/* 退款提示 */
+.refund-tip{background:#fff9e6;border-radius:12rpx;padding:16rpx 20rpx;margin:16rpx 0}
+.refund-tip-text{color:#ff9500;font-size:24rpx}
+
+/* 描述 */
+.desc{display:block;color:#8e8e93;font-size:24rpx;line-height:1.6;margin-top:10rpx}
+
+/* 按钮区域 */
 .actions{padding:0 20rpx;margin-top:10rpx;display:flex;gap:16rpx;justify-content:space-between}
 .btn{flex:0 0 46%;padding:20rpx;border-radius:40rpx;font-size:28rpx;border:2rpx solid #000;background:#fff;color:#000}
-.btn.primary{background:#fff;color:#000;border:2rpx solid #000}
+.btn.primary{background:#000;color:#fff;border:2rpx solid #000}
+.btn.primary.disabled{background:#ccc;border-color:#ccc;color:#fff}
 .btn.ghost{background:#fff;color:#000;border:2rpx solid #000}
+
+/* 退款中提示 */
+.refunding-notice{flex:0 0 46%;display:flex;align-items:center;justify-content:center;padding:20rpx;background:#f2f2f7;border-radius:40rpx}
+.refunding-notice text{color:#8e8e93;font-size:26rpx}
+
+/* 优先服务说明 */
+.priority-info{background:#fff;border-radius:30rpx;padding:24rpx;margin:20rpx}
+.priority-title{display:flex;align-items:center;font-size:30rpx;font-weight:700;margin-bottom:16rpx}
+.priority-icon{margin-right:10rpx;font-size:32rpx}
+.priority-list{background:#f8f8fc;border-radius:16rpx;padding:16rpx 20rpx}
+.priority-item{color:#666;font-size:26rpx;line-height:2;display:block}
+
+/* 联系方式 */
 .contact{background:#fff;border-radius:30rpx;padding:24rpx;margin:20rpx}
 .contact-title{display:block;font-size:30rpx;font-weight:700;margin-bottom:10rpx}
 .contact-row{display:flex;align-items:center;justify-content:space-between;padding:16rpx 0;border-bottom:1rpx solid #f2f2f7}
 .contact-row:last-child{border-bottom:none}
 .contact-label{color:#8e8e93;font-size:26rpx}
 .contact-value{color:#007aff;font-size:28rpx}
-
-/* 自定义规则弹窗样式已移除，恢复系统弹窗 */
-

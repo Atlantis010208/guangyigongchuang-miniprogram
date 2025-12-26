@@ -7,5 +7,10 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "cloudbase",
+    "shadcn"
+  ],
+  "enableAllProjectMcpServers": true
 }
