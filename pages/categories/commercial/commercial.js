@@ -25,8 +25,61 @@ Page({
     optionPopupTitle:'',
     optionList:[],
     optionTarget:'',
-    submitting:false
+    submitting:false,
+    // 级联选择配置
+    formFieldOrder: [
+      'scheme',      // 方案
+      'style',       // 风格
+      'areaBucket',  // 面积
+      'avgPrice',    // 灯具均价
+      'designUnit',  // 设计单价
+      'renovationType', // 装修类型
+      'progress',    // 装修进度
+      'diningPendant', // 餐吊灯
+      'smartHome',   // 智能家居
+      'smartLight',  // 智能灯光（条件显示）
+      'ceilingAdjust' // 天花调整
+    ]
   },
+  
+  // ========== 级联选择核心方法 ==========
+  triggerNextField(currentField) {
+    const order = this.data.formFieldOrder
+    const currentIndex = order.indexOf(currentField)
+    if (currentIndex === -1 || currentIndex >= order.length - 1) return
+    
+    const nextField = order[currentIndex + 1]
+    
+    // 特殊处理：智能灯光只在智能家居选择"确定做"时显示
+    if (nextField === 'smartLight' && this.data.smartHomeText !== '确定做') {
+      this.triggerNextField('smartLight')
+      return
+    }
+    
+    setTimeout(() => {
+      this.openFieldSelector(nextField)
+    }, 350)
+  },
+  
+  openFieldSelector(field) {
+    const fieldMap = {
+      'scheme': () => this.onTapScheme(true),
+      'style': () => this.onTapStyle(true),
+      'areaBucket': () => this.onTapAreaBucket(true),
+      'avgPrice': () => this.onTapAvgPrice(true),
+      'designUnit': () => this.onTapDesignUnit(true),
+      'renovationType': () => this.onTapRenovationType(true),
+      'progress': () => this.onTapProgress(true),
+      'diningPendant': () => this.onTapDiningPendant(true),
+      'smartHome': () => this.onTapSmartHome(true),
+      'smartLight': () => this.onTapSmartLight(true),
+      'ceilingAdjust': () => this.onTapCeilingAdjust(true)
+    }
+    if (fieldMap[field]) {
+      fieldMap[field]()
+    }
+  },
+
   showPagedSheet(list, onPick, pageIndex=0){
     const pageSize = 4
     const start = pageIndex * pageSize
@@ -60,38 +113,58 @@ Page({
     wx.previewImage({ current:url, urls })
   },
 
-  // ========== Picker change 事件处理方法 ==========
+  // ========== Picker change 事件处理方法（支持级联）==========
   onSchemeChange(e) {
     const idx = e.detail.value
-    this.setData({ schemeText: this.data.schemeOptionsTexts[idx] })
+    this.setData({ schemeText: this.data.schemeOptionsTexts[idx] }, () => {
+      this.triggerNextField('scheme')
+    })
   },
   onStyleChange(e) {
     const idx = e.detail.value
-    this.setData({ styleText: this.data.styleOptionsTexts[idx] }, this.recalc)
+    this.setData({ styleText: this.data.styleOptionsTexts[idx] }, () => {
+      this.recalc()
+      this.triggerNextField('style')
+    })
   },
   onAreaBucketChange(e) {
     const idx = e.detail.value
-    this.setData({ areaBucketText: this.data.areaBucketTexts[idx] }, this.recalc)
+    this.setData({ areaBucketText: this.data.areaBucketTexts[idx] }, () => {
+      this.recalc()
+      this.triggerNextField('areaBucket')
+    })
   },
   onAvgPriceChange(e) {
     const idx = e.detail.value
-    this.setData({ avgFixturePriceText: this.data.avgFixturePriceOptions[idx] }, this.recalc)
+    this.setData({ avgFixturePriceText: this.data.avgFixturePriceOptions[idx] }, () => {
+      this.recalc()
+      this.triggerNextField('avgPrice')
+    })
   },
   onDesignUnitChange(e) {
     const idx = e.detail.value
-    this.setData({ designUnitText: this.data.designUnitTexts[idx] }, this.recalc)
+    this.setData({ designUnitText: this.data.designUnitTexts[idx] }, () => {
+      this.recalc()
+      this.triggerNextField('designUnit')
+    })
   },
   onRenovationTypeChange(e) {
     const idx = e.detail.value
-    this.setData({ renovationTypeText: this.data.renovationTypeOptions[idx] })
+    this.setData({ renovationTypeText: this.data.renovationTypeOptions[idx] }, () => {
+      this.triggerNextField('renovationType')
+    })
   },
   onProgressChange(e) {
     const idx = e.detail.value
-    this.setData({ progressText: this.data.progressOptions[idx] })
+    this.setData({ progressText: this.data.progressOptions[idx] }, () => {
+      this.triggerNextField('progress')
+    })
   },
   onDiningPendantChange(e) {
     const idx = e.detail.value
-    this.setData({ diningPendantText: this.data.diningPendantOptions[idx] })
+    this.setData({ diningPendantText: this.data.diningPendantOptions[idx] }, () => {
+      this.triggerNextField('diningPendant')
+    })
   },
   onSmartHomeChange(e) {
     const idx = e.detail.value
@@ -100,33 +173,130 @@ Page({
     if (val !== '确定做') {
       next.smartLightText = '请选择'
     }
-    this.setData(next)
+    this.setData(next, () => {
+      this.triggerNextField('smartHome')
+    })
   },
   onSmartLightChange(e) {
     const idx = e.detail.value
-    this.setData({ smartLightText: this.data.smartLightOptions[idx] })
+    this.setData({ smartLightText: this.data.smartLightOptions[idx] }, () => {
+      this.triggerNextField('smartLight')
+    })
   },
   onCeilingAdjustChange(e) {
     const idx = e.detail.value
     this.setData({ ceilingAdjustText: this.data.ceilingAdjustOptions[idx] })
+    // 最后一项，不再触发下一项
   },
 
-  // ========== onTap* 方法（保留用于 ActionSheet 场景） ==========
-  onTapScheme(){ wx.showActionSheet({ itemList:this.data.schemeOptionsTexts, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ schemeText:this.data.schemeOptionsTexts[r.tapIndex] }) } } }) },
-  onTapStyle(){ this.openOptionPopup('style','选择风格', this.data.styleOptionsTexts||[]) },
-  onTapAreaBucket(){ wx.showActionSheet({ itemList:this.data.areaBucketTexts, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ areaBucketText:this.data.areaBucketTexts[r.tapIndex] }, this.recalc) } } }) },
-  onTapAvgPrice(){ wx.showActionSheet({ itemList:this.data.avgFixturePriceOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ avgFixturePriceText:this.data.avgFixturePriceOptions[r.tapIndex] }, this.recalc) } } }) },
-  onTapDesignUnit(){ this.openOptionPopup('designUnit','选择设计单价', this.data.designUnitTexts||[]) },
+  // ========== onTap* 方法（ActionSheet 场景，支持级联）==========
+  onTapScheme(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.schemeOptionsTexts, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ schemeText:this.data.schemeOptionsTexts[r.tapIndex] }, () => {
+          this.triggerNextField('scheme')
+        }) 
+      } 
+    } }) 
+  },
+  onTapStyle(isAutoTrigger){ this.openOptionPopup('style','选择风格', this.data.styleOptionsTexts||[]) },
+  onTapAreaBucket(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.areaBucketTexts, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ areaBucketText:this.data.areaBucketTexts[r.tapIndex] }, () => {
+          this.recalc()
+          this.triggerNextField('areaBucket')
+        }) 
+      } 
+    } }) 
+  },
+  onTapAvgPrice(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.avgFixturePriceOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ avgFixturePriceText:this.data.avgFixturePriceOptions[r.tapIndex] }, () => {
+          this.recalc()
+          this.triggerNextField('avgPrice')
+        }) 
+      } 
+    } }) 
+  },
+  onTapDesignUnit(isAutoTrigger){ this.openOptionPopup('designUnit','选择设计单价', this.data.designUnitTexts||[]) },
   openOptionPopup(target, title, list){ this.setData({ showOptionPopup:true, optionPopupTitle:title, optionList:list, optionTarget:target }) },
   closeOptionPopup(){ this.setData({ showOptionPopup:false }) },
-  onOptionPick(e){ const val=e.currentTarget.dataset.value; const target=this.data.optionTarget; if(target==='style'){ this.setData({ styleText:val, showOptionPopup:false }, this.recalc); return } if(target==='designUnit'){ this.setData({ designUnitText:val, showOptionPopup:false }, this.recalc); return } },
+  onOptionPick(e){ 
+    const val=e.currentTarget.dataset.value
+    const target=this.data.optionTarget
+    if(target==='style'){ 
+      this.setData({ styleText:val, showOptionPopup:false }, () => {
+        this.recalc()
+        this.triggerNextField('style')
+      })
+      return 
+    } 
+    if(target==='designUnit'){ 
+      this.setData({ designUnitText:val, showOptionPopup:false }, () => {
+        this.recalc()
+        this.triggerNextField('designUnit')
+      })
+      return 
+    } 
+  },
   noop(){},
-  onTapRenovationType(){ wx.showActionSheet({ itemList:this.data.renovationTypeOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ renovationTypeText:this.data.renovationTypeOptions[r.tapIndex] }) } } }) },
-  onTapProgress(){ wx.showActionSheet({ itemList:this.data.progressOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ progressText:this.data.progressOptions[r.tapIndex] }) } } }) },
-  onTapDiningPendant(){ wx.showActionSheet({ itemList:this.data.diningPendantOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ diningPendantText:this.data.diningPendantOptions[r.tapIndex] }) } } }) },
-  onTapSmartHome(){ wx.showActionSheet({ itemList:this.data.smartHomeOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ const val=this.data.smartHomeOptions[r.tapIndex]; const next={ smartHomeText:val }; if(val!=='确定做'){ next.smartLightText='请选择' } this.setData(next) } } }) },
-  onTapSmartLight(){ wx.showActionSheet({ itemList:this.data.smartLightOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ smartLightText:this.data.smartLightOptions[r.tapIndex] }) } } }) },
-  onTapCeilingAdjust(){ wx.showActionSheet({ itemList:this.data.ceilingAdjustOptions, success:(r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ ceilingAdjustText:this.data.ceilingAdjustOptions[r.tapIndex] }) } } }) },
+  onTapRenovationType(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.renovationTypeOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ renovationTypeText:this.data.renovationTypeOptions[r.tapIndex] }, () => {
+          this.triggerNextField('renovationType')
+        }) 
+      } 
+    } }) 
+  },
+  onTapProgress(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.progressOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ progressText:this.data.progressOptions[r.tapIndex] }, () => {
+          this.triggerNextField('progress')
+        }) 
+      } 
+    } }) 
+  },
+  onTapDiningPendant(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.diningPendantOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ diningPendantText:this.data.diningPendantOptions[r.tapIndex] }, () => {
+          this.triggerNextField('diningPendant')
+        }) 
+      } 
+    } }) 
+  },
+  onTapSmartHome(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.smartHomeOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        const val=this.data.smartHomeOptions[r.tapIndex]
+        const next={ smartHomeText:val }
+        if(val!=='确定做'){ next.smartLightText='请选择' } 
+        this.setData(next, () => {
+          this.triggerNextField('smartHome')
+        }) 
+      } 
+    } }) 
+  },
+  onTapSmartLight(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.smartLightOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ smartLightText:this.data.smartLightOptions[r.tapIndex] }, () => {
+          this.triggerNextField('smartLight')
+        }) 
+      } 
+    } }) 
+  },
+  onTapCeilingAdjust(isAutoTrigger){ 
+    wx.showActionSheet({ itemList:this.data.ceilingAdjustOptions, success:(r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ ceilingAdjustText:this.data.ceilingAdjustOptions[r.tapIndex] }) 
+      } 
+    } }) 
+  },
   onNote(e){ this.setData({ note: e.detail.value }) },
 
   recalc(){

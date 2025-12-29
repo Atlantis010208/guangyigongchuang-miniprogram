@@ -32,8 +32,71 @@ Page({
     optionFilteredList:[],
     optionSearch:'',
     optionTarget:'',
-    submitting:false
+    submitting:false,
+    // 级联选择配置
+    formFieldOrder: [
+      'scheme',      // 方案
+      'style',       // 风格
+      'areaBucket',  // 面积
+      'avgPrice',    // 灯具均价
+      'designUnit',  // 设计单价
+      'renovationType', // 装修类型
+      'progress',    // 装修进度
+      'diningPendant', // 餐吊灯
+      'smartHome',   // 智能家居
+      'smartLight',  // 智能灯光（条件显示）
+      'ceilingAdjust' // 天花调整
+    ]
   },
+  
+  // ========== 级联选择核心方法 ==========
+  /**
+   * 触发下一个表单项的选择器
+   * @param {string} currentField - 当前选择完成的字段名
+   */
+  triggerNextField(currentField) {
+    const order = this.data.formFieldOrder
+    const currentIndex = order.indexOf(currentField)
+    if (currentIndex === -1 || currentIndex >= order.length - 1) return
+    
+    const nextField = order[currentIndex + 1]
+    
+    // 特殊处理：智能灯光只在智能家居选择"确定做"时显示
+    if (nextField === 'smartLight' && this.data.smartHomeText !== '确定做') {
+      // 跳过智能灯光，直接到天花调整
+      this.triggerNextField('smartLight')
+      return
+    }
+    
+    // 延迟 350ms 后弹出下一个选择器，给用户反应时间
+    setTimeout(() => {
+      this.openFieldSelector(nextField)
+    }, 350)
+  },
+  
+  /**
+   * 根据字段名打开对应的选择器
+   * @param {string} field - 字段名
+   */
+  openFieldSelector(field) {
+    const fieldMap = {
+      'scheme': () => this.onTapScheme(true),
+      'style': () => this.onTapStyle(true),
+      'areaBucket': () => this.onTapAreaBucket(true),
+      'avgPrice': () => this.onTapAvgPrice(true),
+      'designUnit': () => this.onTapDesignUnit(true),
+      'renovationType': () => this.onTapRenovationType(true),
+      'progress': () => this.onTapProgress(true),
+      'diningPendant': () => this.onTapDiningPendant(true),
+      'smartHome': () => this.onTapSmartHome(true),
+      'smartLight': () => this.onTapSmartLight(true),
+      'ceilingAdjust': () => this.onTapCeilingAdjust(true)
+    }
+    if (fieldMap[field]) {
+      fieldMap[field]()
+    }
+  },
+
   // 通用分页操作表：解决 iOS showActionSheet 6 项限制
   showPagedSheet(list, onPick, pageIndex=0){
     const pageSize = 4
@@ -59,21 +122,42 @@ Page({
     } })
   },
   onSchemeTap(e){},
-  onTapScheme(){
+  onTapScheme(isAutoTrigger){
     wx.showActionSheet({ itemList: this.data.schemeOptionsTexts, success: (r)=>{
       if(typeof r.tapIndex==='number'){
         const title = this.data.schemeOptionsTexts[r.tapIndex]
-    this.setData({ schemeText:title, activeScheme:'picker', schemeMeta:{ title } })
+        this.setData({ schemeText:title, activeScheme:'picker', schemeMeta:{ title } }, () => {
+          // 级联触发下一项
+          this.triggerNextField('scheme')
+        })
       }
     } })
   },
-  onTapStyle(){
+  onTapStyle(isAutoTrigger){
     const list = this.data.styleOptionsTexts || []
     this.openOptionPopup('style', '选择风格', list)
   },
-  onTapAreaBucket(){ wx.showActionSheet({ itemList: this.data.areaBucketTexts, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ areaBucketText:this.data.areaBucketTexts[r.tapIndex] }, this.recalc) } } }) },
-  onTapAvgPrice(){ wx.showActionSheet({ itemList: this.data.avgFixturePriceOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ avgFixturePriceText:this.data.avgFixturePriceOptions[r.tapIndex] }, this.recalc) } } }) },
-  onTapDesignUnit(){
+  onTapAreaBucket(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.areaBucketTexts, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ areaBucketText:this.data.areaBucketTexts[r.tapIndex] }, () => {
+          this.recalc()
+          this.triggerNextField('areaBucket')
+        }) 
+      } 
+    } }) 
+  },
+  onTapAvgPrice(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.avgFixturePriceOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ avgFixturePriceText:this.data.avgFixturePriceOptions[r.tapIndex] }, () => {
+          this.recalc()
+          this.triggerNextField('avgPrice')
+        }) 
+      } 
+    } }) 
+  },
+  onTapDesignUnit(isAutoTrigger){
     const list = this.data.designUnitTexts || []
     this.openOptionPopup('designUnit', '选择设计单价', list)
   },
@@ -100,21 +184,77 @@ Page({
     const val = e.currentTarget.dataset.value
     const target = this.data.optionTarget
     if(target==='style'){
-      this.setData({ styleText: val, showOptionPopup:false }, this.recalc)
+      this.setData({ styleText: val, showOptionPopup:false }, () => {
+        this.recalc()
+        this.triggerNextField('style')
+      })
       return
     }
     if(target==='designUnit'){
-      this.setData({ designUnitText: val, showOptionPopup:false }, this.recalc)
+      this.setData({ designUnitText: val, showOptionPopup:false }, () => {
+        this.recalc()
+        this.triggerNextField('designUnit')
+      })
       return
     }
   },
   noop(){},
-  onTapRenovationType(){ wx.showActionSheet({ itemList: this.data.renovationTypeOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ renovationTypeText:this.data.renovationTypeOptions[r.tapIndex] }) } } }) },
-  onTapProgress(){ wx.showActionSheet({ itemList: this.data.progressOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ progressText:this.data.progressOptions[r.tapIndex] }) } } }) },
-  onTapDiningPendant(){ wx.showActionSheet({ itemList: this.data.diningPendantOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ diningPendantText:this.data.diningPendantOptions[r.tapIndex] }) } } }) },
-  onTapSmartHome(){ wx.showActionSheet({ itemList: this.data.smartHomeOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ const val=this.data.smartHomeOptions[r.tapIndex]; const next={ smartHomeText:val }; if(val!=='确定做'){ next.smartLightText='请选择' } this.setData(next) } } }) },
-  onTapSmartLight(){ wx.showActionSheet({ itemList: this.data.smartLightOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ smartLightText:this.data.smartLightOptions[r.tapIndex] }) } } }) },
-  onTapCeilingAdjust(){ wx.showActionSheet({ itemList: this.data.ceilingAdjustOptions, success: (r)=>{ if(typeof r.tapIndex==='number'){ this.setData({ ceilingAdjustText:this.data.ceilingAdjustOptions[r.tapIndex] }) } } }) },
+  onTapRenovationType(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.renovationTypeOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ renovationTypeText:this.data.renovationTypeOptions[r.tapIndex] }, () => {
+          this.triggerNextField('renovationType')
+        }) 
+      } 
+    } }) 
+  },
+  onTapProgress(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.progressOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ progressText:this.data.progressOptions[r.tapIndex] }, () => {
+          this.triggerNextField('progress')
+        }) 
+      } 
+    } }) 
+  },
+  onTapDiningPendant(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.diningPendantOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ diningPendantText:this.data.diningPendantOptions[r.tapIndex] }, () => {
+          this.triggerNextField('diningPendant')
+        }) 
+      } 
+    } }) 
+  },
+  onTapSmartHome(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.smartHomeOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        const val=this.data.smartHomeOptions[r.tapIndex]
+        const next={ smartHomeText:val }
+        if(val!=='确定做'){ next.smartLightText='请选择' }
+        this.setData(next, () => {
+          this.triggerNextField('smartHome')
+        })
+      } 
+    } }) 
+  },
+  onTapSmartLight(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.smartLightOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ smartLightText:this.data.smartLightOptions[r.tapIndex] }, () => {
+          this.triggerNextField('smartLight')
+        }) 
+      } 
+    } }) 
+  },
+  onTapCeilingAdjust(isAutoTrigger){ 
+    wx.showActionSheet({ itemList: this.data.ceilingAdjustOptions, success: (r)=>{ 
+      if(typeof r.tapIndex==='number'){ 
+        this.setData({ ceilingAdjustText:this.data.ceilingAdjustOptions[r.tapIndex] }) 
+        // 最后一项，不再触发下一项
+      } 
+    } }) 
+  },
   onNote(e){ this.setData({ note: e.detail.value }) },
   recalc(){
     const area = (()=>{

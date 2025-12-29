@@ -20,11 +20,48 @@ Page({
     spotPriceOptions:['70-100（国产优质光源）','100-160（进口品牌光源）','160-300（品牌高端款）'],
     spotPriceIdx:0,
     note:'',
-    submitting:false
+    submitting:false,
+    // 级联选择配置
+    formFieldOrder: ['budget', 'stage', 'drop', 'bodyHeight', 'trimless', 'spotPrice']
+  },
+
+  // ========== 级联选择核心方法 ==========
+  triggerNextField(currentField) {
+    const order = this.data.formFieldOrder
+    const currentIndex = order.indexOf(currentField)
+    if (currentIndex === -1 || currentIndex >= order.length - 1) return
+    
+    const nextField = order[currentIndex + 1]
+    
+    setTimeout(() => {
+      this.openFieldSelector(nextField)
+    }, 350)
+  },
+  
+  openFieldSelector(field) {
+    const fieldMap = {
+      'budget': () => {}, // 预算是输入框，不需要弹窗
+      'stage': () => this.onTapStage(true),
+      'drop': () => this.onTapDrop(true),
+      'bodyHeight': () => this.onTapBodyHeight(true),
+      'trimless': () => this.onTapTrimless(true),
+      'spotPrice': () => this.onTapSpotPrice(true)
+    }
+    if (fieldMap[field]) {
+      fieldMap[field]()
+    }
   },
 
   // 交互
-  onBudgetInput(e){ this.setData({ budget:e.detail.value }) },
+  onBudgetInput(e){ 
+    this.setData({ budget:e.detail.value })
+  },
+  onBudgetBlur(e){
+    // 预算输入完成后触发下一项
+    if(this.data.budget){
+      this.triggerNextField('budget')
+    }
+  },
   onStageChange(e){ this.setData({ stageIdx: Number(e.detail.value) }) },
   onDropChange(e){ this.setData({ dropIdx: Number(e.detail.value) }) },
   onBodyHeightChange(e){ this.setData({ bodyHeightIdx: Number(e.detail.value) }) },
@@ -32,19 +69,21 @@ Page({
   onSpotPriceChange(e){ this.setData({ spotPriceIdx: Number(e.detail.value) }) },
   onNote(e){ this.setData({ note:e.detail.value }) },
 
-  // 弹窗选择
-  onTapStage(){
+  // 弹窗选择（支持级联）
+  onTapStage(isAutoTrigger){
     const { stageOptions } = this.data
     wx.showActionSheet({
       itemList: stageOptions,
       success: (res) => {
         if(typeof res.tapIndex === 'number'){
-          this.setData({ stageIdx: res.tapIndex })
+          this.setData({ stageIdx: res.tapIndex }, () => {
+            this.triggerNextField('stage')
+          })
         }
       }
     })
   },
-  onTapDrop(){
+  onTapDrop(isAutoTrigger){
     const { dropOptions, dropCmOptions } = this.data
     wx.showActionSheet({
       itemList: dropOptions,
@@ -52,7 +91,9 @@ Page({
         if(typeof res.tapIndex !== 'number') return
         // 不下吊
         if(res.tapIndex === 0){
-          this.setData({ dropIdx: 0, dropDisplay: '不下吊' })
+          this.setData({ dropIdx: 0, dropDisplay: '不下吊' }, () => {
+            this.triggerNextField('drop')
+          })
           return
         }
         // 选择具体下吊厘米数
@@ -66,41 +107,48 @@ Page({
               dropIdx: 1,
               dropCmIdx: cmIdx,
               dropDisplay: `下吊了${cmVal}cm`
+            }, () => {
+              this.triggerNextField('drop')
             })
           }
         })
       }
     })
   },
-  onTapBodyHeight(){
+  onTapBodyHeight(isAutoTrigger){
     const { bodyHeightOptions } = this.data
     wx.showActionSheet({
       itemList: bodyHeightOptions,
       success: (res) => {
         if(typeof res.tapIndex === 'number'){
-          this.setData({ bodyHeightIdx: res.tapIndex })
+          this.setData({ bodyHeightIdx: res.tapIndex }, () => {
+            this.triggerNextField('bodyHeight')
+          })
         }
       }
     })
   },
-  onTapTrimless(){
+  onTapTrimless(isAutoTrigger){
     const { trimlessOptions } = this.data
     wx.showActionSheet({
       itemList: trimlessOptions,
       success: (res) => {
         if(typeof res.tapIndex === 'number'){
-          this.setData({ trimlessIdx: res.tapIndex })
+          this.setData({ trimlessIdx: res.tapIndex }, () => {
+            this.triggerNextField('trimless')
+          })
         }
       }
     })
   },
-  onTapSpotPrice(){
+  onTapSpotPrice(isAutoTrigger){
     const { spotPriceOptions } = this.data
     wx.showActionSheet({
       itemList: spotPriceOptions,
       success: (res) => {
         if(typeof res.tapIndex === 'number'){
           this.setData({ spotPriceIdx: res.tapIndex })
+          // 最后一项，不再触发下一个
         }
       }
     })

@@ -43,7 +43,7 @@ exports.main = async (event) => {
     // 生成唯一 courseId
     const courseId = `CO${Date.now()}`
     
-    // 构建课程数据（通过网盘链接交付，不需要章节管理）
+    // 构建课程数据（支持网盘交付或章节视频交付）
     const courseData = {
       courseId,
       title: data.title,
@@ -65,6 +65,20 @@ exports.main = async (event) => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       
+      // ========== 新增字段 ==========
+      
+      /** 课程副标题 */
+      subtitle: data.subtitle || '',
+      
+      /** 是否推荐 */
+      isFeatured: data.isFeatured || false,
+      
+      /** 课程详情图片 */
+      detailImages: data.detailImages || [],
+      
+      /** 课程章节列表 */
+      chapters: data.chapters || [],
+      
       // ========== 网盘交付配置 ==========
       
       /** 网盘链接（购买后可见） */
@@ -79,12 +93,12 @@ exports.main = async (event) => {
       /** 备用联系/说明（如：需要"夸克网盘"或"其他方式"下载，加vx：ceokpi） */
       driveAltContact: data.driveAltContact || '',
       
-      // ========== 小程序详情页扩展字段 ==========
+      // ========== 小程序详情页扩展字段（images 已废弃，保留兼容） ==========
       
-      /** 轮播图列表 */
-      images: data.images || [],
+      /** 轮播图列表（已废弃，使用 detailImages） */
+      images: data.images || data.detailImages || [],
       
-      /** 详情大图 */
+      /** 详情大图（已废弃，使用 detailImages） */
       detailImage: data.detailImage || '',
       
       /** 你将获得（收益列表） */

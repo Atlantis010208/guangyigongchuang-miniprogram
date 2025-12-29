@@ -15,6 +15,9 @@ const DEFAULT_TOOLKIT_DATA = {
       'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图5.jpg',
       'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图6.jpg'
     ],
+    detailImageFileIDs: [
+      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/灯光工具包介绍.png'
+    ],
     contentList: [
       { title: '空间照度验算计算文件', desc: '多维度综合智能照度计算表，包含常用材质利用系数参考' },
       { title: '住宅建筑照明设计标准', desc: '专业标准化可编辑的施工图模板，CAD直接可用' },
@@ -55,7 +58,8 @@ Page({
     favIcon: 'like-o',
     cartCount: 0,
     loading: true,
-    loadError: false
+    loadError: false,
+    detailImages: [] // 详情图列表
   },
 
   onLoad(query) {
@@ -102,12 +106,19 @@ Page({
           desc: toolkit.desc || toolkit.description || '',
           images: toolkit.images || [],
           cloudFileIDs: [], // 云端已转换，无需再转
+          detailImages: toolkit.detailImages || [], // 详情图
           contentList: toolkit.contentList || [],
           params: toolkit.params || [],
           variantGroups: this.enrichVariantGroups(toolkit.variantGroups || [], this.data.selectedVariants),
           loading: false,
           loadError: false
         })
+        
+        // 如果云端没有详情图，使用默认详情图
+        if (!toolkit.detailImages || toolkit.detailImages.length === 0) {
+          console.log('[toolkit-detail] 云端无详情图，使用默认详情图')
+          this.fetchDetailImageUrls()
+        }
         
         this.recalcPrices()
       } else {
@@ -142,6 +153,7 @@ Page({
     
     // 使用本地云存储 fileID 转换
     this.fetchCloudImageUrls()
+    this.fetchDetailImageUrls()
     this.recalcPrices()
   },
 
@@ -197,6 +209,36 @@ Page({
         })
     } else {
       this.setData({ images: list, current: 0 })
+    }
+  },
+
+  /**
+   * 转换详情图云存储 fileID 为临时链接（仅用于默认数据兜底）
+   */
+  fetchDetailImageUrls() {
+    const list = DEFAULT_TOOLKIT_DATA.detailImageFileIDs || []
+    if (!list.length) return
+    
+    if (wx.cloud && wx.cloud.getTempFileURL) {
+      wx.cloud.getTempFileURL({ fileList: list })
+        .then(res => {
+          const files = (res && res.fileList) || []
+          const urls = files.filter(i => i && i.status === 0 && i.tempFileURL).map(i => i.tempFileURL)
+          const failed = files.filter(i => !i || i.status !== 0).length
+          
+          if (failed === files.length) {
+            console.warn('详情图权限受限，请设置为所有用户可读')
+          }
+          
+          console.log('工具包详情图临时链接', files)
+          this.setData({ detailImages: (urls && urls.length ? urls : list) })
+        })
+        .catch((err) => {
+          console.error('获取详情图临时链接失败:', err)
+          this.setData({ detailImages: list })
+        })
+    } else {
+      this.setData({ detailImages: list })
     }
   },
 
@@ -348,6 +390,24 @@ Page({
       wx.previewImage({ current, urls })
     } catch (err) {
       if (urls && urls[0]) wx.previewImage({ urls: [urls[0]] })
+    }
+  },
+
+  /**
+   * 预览详情图
+   */
+  onPreviewDetailImage(e) {
+    const current = e.currentTarget.dataset.src
+    const urls = this.data.detailImages && this.data.detailImages.length ? this.data.detailImages : [current]
+    try {
+      wx.previewImage({ current, urls })
+    } catch (err) {
+      console.error('预览详情图失败:', err)
+      if (current) {
+        wx.previewImage({ urls: [current] }).catch(() => {
+          wx.showToast({ title: '图片加载失败', icon: 'none' })
+        })
+      }
     }
   },
 

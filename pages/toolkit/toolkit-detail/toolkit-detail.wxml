@@ -43,37 +43,27 @@
     <text class="desc">{{desc}}</text>
   </view>
 
-  <!-- 工具包内容 -->
-  <view class="card">
-    <text class="section-title">工具包内容</text>
-    <view class="content-list">
-      <view wx:for="{{contentList}}" wx:key="index" class="content-item">
-        <text class="content-title">{{item.title}}</text>
-        <text class="content-desc">{{item.desc}}</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 适用人群 -->
-  <view class="card">
-    <text class="section-title">适用人群</text>
-    <view class="target-groups">
-      <view class="group-card">
-        <text class="group-title">设计师、照明行业从业者</text>
-        <view class="group-features">
-          <text class="feature-item">• 掌握灯光设计的科学照度计算</text>
-          <text class="feature-item">• 了解住宅照明设计标准</text>
-          <text class="feature-item">• 加快科学灯光设计落地操作</text>
+  <!-- 商品详情图 -->
+  <view class="card detail-images">
+    <text class="section-title">商品详情</text>
+    <view class="detail-image-list">
+      <block wx:if="{{detailImages && detailImages.length}}">
+        <image 
+          wx:for="{{detailImages}}" 
+          wx:key="index" 
+          class="detail-image" 
+          src="{{item}}" 
+          mode="widthFix"
+          lazy-load
+          bindtap="onPreviewDetailImage"
+          data-src="{{item}}"
+        />
+      </block>
+      <block wx:else>
+        <view class="empty-detail">
+          <text class="empty-text">暂无详情图片</text>
         </view>
-      </view>
-      <view class="group-card">
-        <text class="group-title">装修业主、自装达人</text>
-        <view class="group-features">
-          <text class="feature-item">• 拥有专属自己的"灯光字典"</text>
-          <text class="feature-item">• 快速了解照明行业专业知识</text>
-          <text class="feature-item">• 打破信息闭塞，营造健康居住环境</text>
-        </view>
-      </view>
+      </block>
     </view>
   </view>
 

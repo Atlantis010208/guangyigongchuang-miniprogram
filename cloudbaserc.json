@@ -26,6 +26,24 @@
       "name": "admin_requests_update",
       "runtime": "Nodejs18.15",
       "installDependency": true
+    },
+    {
+      "name": "courses_list",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "获取课程列表（供小程序端使用）"
+    },
+    {
+      "name": "course_purchase_check",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "检查用户是否已购买课程"
+    },
+    {
+      "name": "course_videos",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "获取课程视频数据（需登录且已购买）"
     }
   ]
 }

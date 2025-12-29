@@ -1,0 +1,106 @@
+<scroll-view scroll-y class="container" style="padding-top: 20rpx;">
+  <!-- Page Header -->
+  <view class="header-section margin-bottom-medium">
+    <view class="flex-row flex-between">
+      <text class="title-large">课程中心</text>
+      <view class="user-avatar" bindtap="onUserTap">
+        <image class="avatar-small" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- Loading State -->
+  <view class="loading-state" wx:if="{{loading && !featuredCourse && courses.length === 0}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在加载课程...</text>
+  </view>
+
+  <!-- Error State -->
+  <view class="error-state" wx:elif="{{error}}">
+    <view class="error-icon-bg">
+      <text class="error-icon">!</text>
+    </view>
+    <text class="error-title">加载失败</text>
+    <text class="error-subtitle">{{error}}</text>
+    <view class="retry-btn" bindtap="onRetry">
+      <text>点击重试</text>
+    </view>
+  </view>
+
+  <!-- Content (only show when not loading/error) -->
+  <block wx:else>
+    <!-- Hero Card (Featured Course) -->
+    <view class="hero-card apple-card shadow-medium" wx:if="{{featuredCourse}}" bindtap="onCourseTap" data-id="{{featuredCourse.id}}">
+      <view class="hero-image-wrapper">
+        <!-- 背景模糊层：铺满并模糊 -->
+        <image src="{{featuredCourse.coverUrl}}" mode="aspectFill" class="hero-image-bg"></image>
+        <!-- 前景内容层：完整显示 -->
+        <image src="{{featuredCourse.coverUrl}}" mode="aspectFit" class="hero-image"></image>
+        <view class="hero-overlay"></view>
+        <view class="hero-content">
+          <text class="hero-title">{{featuredCourse.title}}</text>
+          <text class="hero-subtitle">{{featuredCourse.subtitle}}</text>
+        </view>
+      </view>
+      <view class="hero-footer padding-medium flex-row flex-between">
+        <view class="flex-column">
+          <text class="caption-text text-white" style="margin-bottom: 10rpx;">课程亮点</text>
+          <view class="flex-row">
+            <text class="tag-text" wx:for="{{featuredCourse.tags}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+        
+        <block wx:if="{{!isPurchased}}">
+          <view class="price-tag">
+            <text class="currency">¥</text>
+            <text class="amount">{{featuredCourse.price}}</text>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="play-btn-circle shadow-medium" catchtap="onPlayTap" data-id="{{featuredCourse.id}}">
+            <view class="icon-play-fill"></view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- Section: More Courses -->
+    <view class="section-header margin-bottom-medium margin-top-large" wx:if="{{courses && courses.length > 0}}">
+      <text class="title-medium">更多好课</text>
+      <text class="body-text text-blue">查看全部</text>
+    </view>
+
+    <block wx:if="{{courses && courses.length > 0}}">
+    <block wx:for="{{courses}}" wx:key="id">
+      <view class="course-item apple-card flex-row" bindtap="onCourseTap" data-id="{{item.id}}">
+        <image src="{{item.coverUrl}}" mode="aspectFill" class="course-thumb"></image>
+        <view class="course-info flex-column flex-1">
+          <view class="info-top">
+            <text class="title-small">{{item.title}}</text>
+            <text class="caption-text text-gray clamp-1">{{item.description}}</text>
+          </view>
+          <view class="flex-row flex-between align-end info-bottom">
+            <view class="tags-row">
+              <text class="tag-text" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" wx:if="{{index < 2}}">{{tag}}</text>
+            </view>
+            <view class="get-button">
+              <text>¥{{item.price}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+    </block>
+
+    <!-- Empty State (no featured course and no other courses) -->
+    <view class="empty-state" wx:if="{{!featuredCourse && (!courses || courses.length === 0)}}">
+      <view class="empty-icon-bg">
+        <view class="icon-box-open"></view>
+      </view>
+      <text class="empty-title">暂无课程</text>
+      <text class="empty-subtitle">新课程正在筹备中，敬请期待</text>
+    </view>
+
+    <view class="footer-space"></view>
+  </block>
+</scroll-view>

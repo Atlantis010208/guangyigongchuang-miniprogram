@@ -51,7 +51,9 @@ exports.main = async (event) => {
       'tags', 'status', 'isDelete',
       // 网盘交付配置
       'driveLink', 'drivePassword', 'driveContent', 'driveAltContact',
-      // 小程序详情页扩展字段
+      // 新增字段
+      'subtitle', 'isFeatured', 'detailImages', 'chapters',
+      // 小程序详情页扩展字段（images 已废弃，保留兼容）
       'images', 'detailImage', 'benefits', 'highlights', 'targetAudience'
     ]
     
@@ -60,6 +62,18 @@ exports.main = async (event) => {
         updateData[field] = data[field]
       }
     })
+    
+    // 关键字段保护：确保不会被设置为无效值
+    // status 必须是有效的枚举值
+    if (updateData.status && !['draft', 'published', 'offline'].includes(updateData.status)) {
+      delete updateData.status // 无效值不更新
+    }
+    // isDelete 必须是数字
+    if (updateData.isDelete !== undefined && typeof updateData.isDelete !== 'number') {
+      delete updateData.isDelete
+    }
+    
+    console.log('[admin_courses_update] 更新数据:', JSON.stringify(updateData))
     
     // 执行更新
     const result = await db.collection('courses')

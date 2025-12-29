@@ -1,381 +1,302 @@
-// pages/course/course-detail/course-detail.js
-const util = require('../../../utils/util')
-
-// 默认数据（兜底方案，当数据库无数据时使用）
-const DEFAULT_COURSE_DATA = {
-    id: 'course01',
-    name: '十年经验二哥 灯光设计课',
-    price: 0.01,
-  desc: '系统梳理十年一线灯光设计实战经验，讲解设计思维、方法与落地技巧。',
-    cloudFileIDs: [
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图1-¥365有圈子的灯光课 5.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图2-¥365有圈子的灯光课 6.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图3-¥365有圈子的灯光课 7.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图4-¥365有圈子的灯光课 8.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图5-¥365有圈子的灯光课.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图6-¥365有圈子的灯光课 3.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图7-¥365有圈子的灯光课 2.jpg',
-      'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/详情图-¥365有圈子的灯光课 4.jpg'
-    ],
-    benefits: [
-      '完整灯光设计方法论',
-      '从需求到落地的流程打法',
-      '常见场景案例复盘',
-      '避坑与调试技巧'
-  ]
-}
-
+/**
+ * 课程详情页
+ * 对接 course_detail 获取课程详情（包含章节大纲）
+ * 对接 course_purchase_check 检查购买状态
+ */
 Page({
   data: {
-    id: 'course01',
-    name: '十年经验二哥 灯光设计课',
-    price: 0.01,
-    current: 0,
-    bannerHeight: 560,
-    images: [],
-    detailImage: '',
-    cloudFileIDs: [],
-    desc: '',
-    benefits: [],
-    fav: false,
-    favIcon: 'like-o',
-    cartCount: 0,
+    course: null,
+    activeTab: 0, // 0: 介绍, 1: 目录
+    isPurchased: false, // 默认未购买
     loading: true,
-    loadError: false
+    error: null,
+    checkingPurchase: false
   },
 
-  onLoad(query) {
-    const { id, cover } = query || {}
-    // 默认使用数据库中的 courseId
-    const courseId = id || 'CO_DEFAULT_001'
-    this.setData({ id: courseId, loading: true })
+  onLoad(options) {
+    const { id, autoPlay } = options;
+    this.courseId = id;
+    this.autoPlay = autoPlay === '1';
     
-    // 优先从数据库加载数据
-    this.loadCourseFromCloud(courseId)
-    
-    // 如果传入了 cover 参数，先设置
-    if (cover) {
-      try {
-        const coverUrl = decodeURIComponent(cover)
-        if (coverUrl) {
-          this.setData({ images: [coverUrl] })
-        }
-      } catch (e) {}
+    if (id) {
+      this.loadCourseDetail(id);
     }
-    
-    this.syncFavState()
-    this.syncCartCount()
   },
 
   onShow() {
-    this.syncFavState()
-    this.syncCartCount()
+    // 页面显示时重新检查购买状态（用户可能刚完成支付）
+    if (this.courseId && this.data.course) {
+      this.checkPurchaseStatus(this.courseId);
+    }
   },
 
   /**
-   * 从云端加载课程数据
+   * 加载课程详情
    */
-  async loadCourseFromCloud(courseId) {
+  async loadCourseDetail(courseId) {
+    this.setData({ loading: true, error: null });
+
     try {
-      wx.showLoading({ title: '加载中...' })
-      
+      // 调用 course_detail 获取课程详情
       const res = await wx.cloud.callFunction({
         name: 'course_detail',
-        data: { id: courseId }
-      })
-      
-      wx.hideLoading()
-      
-      if (res.result && res.result.success && res.result.data) {
-        const course = res.result.data
-        console.log('[course-detail] 从云端加载数据成功:', course)
-        
-        // 更新页面数据
-        this.setData({
-          id: course.id || course._id,
-          name: course.name || course.title,
-          price: course.price || 0,
-          desc: course.desc || course.description || '',
-          images: course.images || [],
-          detailImage: course.detailImage || '',
-          cloudFileIDs: [], // 云端已转换，无需再转
-          benefits: course.benefits || [],
-          loading: false,
-          loadError: false
-        })
-      } else {
-        console.warn('[course-detail] 云端数据不可用，使用默认数据')
-        this.useDefaultData()
-      }
-    } catch (err) {
-      console.error('[course-detail] 加载云端数据失败:', err)
-      wx.hideLoading()
-      this.useDefaultData()
-    }
-  },
-
-  /**
-   * 使用默认数据（兜底方案）
-   */
-  useDefaultData() {
-    console.log('[course-detail] 使用默认硬编码数据')
-    
-    this.setData({
-      id: DEFAULT_COURSE_DATA.id,
-      name: DEFAULT_COURSE_DATA.name,
-      price: DEFAULT_COURSE_DATA.price,
-      desc: DEFAULT_COURSE_DATA.desc,
-      cloudFileIDs: DEFAULT_COURSE_DATA.cloudFileIDs,
-      benefits: DEFAULT_COURSE_DATA.benefits,
-      loading: false,
-      loadError: false
-    })
-    
-    // 使用本地云存储 fileID 转换
-    this.fetchCloudImageUrls()
-  },
-
-  /**
-   * 同步购物车商品数量
-   */
-  syncCartCount() {
-    try {
-      const list = wx.getStorageSync('cartItems') || []
-      const count = list.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
-      this.setData({ cartCount: count })
-    } catch (e) {
-      console.error('同步购物车数量失败:', e)
-    }
-  },
-
-  /**
-   * 同步收藏状态
-   */
-  async syncFavState() {
-    try {
-      const isFavorited = await util.checkFavorite(this.data.id)
-      if (isFavorited !== this.data.fav) {
-        this.setData({ fav: isFavorited, favIcon: isFavorited ? 'like' : 'like-o' })
-      }
-    } catch (e) {
-      try {
-        const list = wx.getStorageSync('mall_favorites') || []
-        const exists = (list || []).some(i => i.id === this.data.id)
-        if (exists !== this.data.fav) this.setData({ fav: exists, favIcon: exists ? 'like' : 'like-o' })
-      } catch (_) {}
-    }
-  },
-
-  onBannerLoad(e) {
-    const { width, height } = e.detail || {}
-    if (!width || !height) return
-    const sys = wx.getSystemInfoSync()
-    const screenWidthPx = sys && sys.windowWidth ? sys.windowWidth : 375
-    const ratio = height / width
-    const bannerHeightPx = screenWidthPx * ratio
-    const bannerHeightRpx = Math.round(bannerHeightPx * 750 / screenWidthPx)
-    const clamped = Math.max(360, Math.min(bannerHeightRpx, 1200))
-    if (clamped !== this.data.bannerHeight) this.setData({ bannerHeight: clamped })
-  },
-
-  onSwiperChange(e) {
-    const idx = e && e.detail ? e.detail.current : 0
-    this.setData({ current: idx })
-  },
-
-  /**
-   * 转换云存储 fileID 为临时链接（仅用于默认数据兜底）
-   */
-  fetchCloudImageUrls() {
-    const list = this.data.cloudFileIDs || []
-    if (!list.length) return
-    if (wx.cloud && wx.cloud.getTempFileURL) {
-      wx.cloud.getTempFileURL({ fileList: list })
-        .then(res => {
-          const urls = (res && res.fileList || []).map(i => i.tempFileURL).filter(Boolean)
-          const all = urls.length ? urls : list
-          if (all && all.length > 1) {
-            this.setData({ images: all.slice(0, all.length - 1), detailImage: all[all.length - 1] })
-          } else {
-            this.setData({ images: all || [], detailImage: '' })
-          }
-        })
-        .catch(() => {
-          if (list && list.length > 1) {
-            this.setData({ images: list.slice(0, list.length - 1), detailImage: list[list.length - 1] })
-          } else {
-            this.setData({ images: list || [], detailImage: '' })
-          }
-        })
-    } else {
-      if (list && list.length > 1) {
-        this.setData({ images: list.slice(0, list.length - 1), detailImage: list[list.length - 1] })
-      } else {
-        this.setData({ images: list || [], detailImage: '' })
-      }
-    }
-  },
-
-  onPreviewImage(e) {
-    const current = e.currentTarget.dataset.src
-    const urls = this.data.images
-    wx.previewImage({ current, urls })
-  },
-
-  onPreviewDetail() {
-    const img = this.data.detailImage
-    if (!img) return
-    wx.previewImage({ current: img, urls: [img].concat(this.data.images || []) })
-  },
-
-  onBuyNow() {
-    const app = getApp()
-    if (!app.isLoggedIn()) {
-      this.showLoginPrompt('立即购买')
-      return
-    }
-
-    const item = {
-      id: this.data.id,
-      name: this.data.name,
-      price: this.data.price,
-      image: (this.data.images && this.data.images[0]) || '',
-      quantity: 1,
-      specs: {}
-    }
-    const query = encodeURIComponent(JSON.stringify(item))
-    wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
-  },
-
-  onContact() { 
-    wx.navigateTo({ url: '/pages/support/contact/contact' }) 
-  },
-
-  async onToggleFav() {
-    const app = getApp()
-    if (!app.isLoggedIn()) {
-      this.showLoginPrompt('收藏商品')
-      return
-    }
-
-    const currentFav = this.data.fav
-    const primaryImage = (this.data.images && this.data.images[0]) || (this.data.cloudFileIDs && this.data.cloudFileIDs[0]) || ''
-    const product = {
-      id: this.data.id,
-      name: this.data.name,
-      price: this.data.price,
-      image: primaryImage,
-      specs: {},
-      description: this.data.desc || '',
-      category: 'course'
-    }
-
-    const newFav = !currentFav
-    this.setData({ fav: newFav, favIcon: newFav ? 'like' : 'like-o' })
-
-    try {
-      const result = await util.toggleFavorite(product, currentFav)
-      
-      if (result.success) {
-        wx.showToast({ title: result.message, icon: 'none' })
-      } else {
-        this.setData({ fav: currentFav, favIcon: currentFav ? 'like' : 'like-o' })
-        wx.showToast({ title: result.message || '操作失败', icon: 'none' })
-      }
-    } catch (err) {
-      console.error('切换收藏状态失败:', err)
-      this.setData({ fav: currentFav, favIcon: currentFav ? 'like' : 'like-o' })
-      wx.showToast({ title: '操作失败', icon: 'none' })
-    }
-  },
-
-  onGoCart() { 
-    wx.navigateTo({ url: '/pages/mall/cart/cart' }) 
-  },
-
-  async onAddToCart() {
-    const app = getApp()
-    if (!app.isLoggedIn()) {
-      this.showLoginPrompt('加入购物车')
-      return
-    }
-
-    const product = {
-      id: this.data.id,
-      name: this.data.name,
-      price: Number(this.data.price) || 0,
-      image: (this.data.images && this.data.images[0]) || (this.data.cloudFileIDs && this.data.cloudFileIDs[0]) || '',
-      specs: {}
-    }
-
-    wx.showLoading({ title: '添加中...' })
-    
-    try {
-      // 调用云函数将商品添加到云端购物车
-      const res = await wx.cloud.callFunction({
-        name: 'cart_operations',
         data: {
-          action: 'add',
-          product: product,
-          quantity: 1
+          id: courseId,
+          courseId: courseId
         }
-      })
+      });
 
-      wx.hideLoading()
+      console.log('[course-detail] course_detail Response:', res.result);
 
       if (res.result && res.result.success) {
-        // 同步更新本地存储，确保购物车数量立即更新
-        const item = { ...product, quantity: 1, title: product.name }
-        const list = wx.getStorageSync('cartItems') || []
-        const key = JSON.stringify({ id: item.id, specs: item.specs || {} })
-        let merged = false
-        for (const i of list) {
-          const k = JSON.stringify({ id: i.id, specs: i.specs || {} })
-          if (k === key) { i.quantity = Math.max(1, Number(i.quantity || 1)) + 1; merged = true; break }
+        const course = res.result.data;
+
+        // 确保 detailImages 是数组
+        // 注意：不再用 images 回退填充，因为 images 可能包含封面图（旧数据兼容逻辑）
+        // 详情图片和封面图应该是分开的
+        if (!Array.isArray(course.detailImages)) {
+          course.detailImages = [];
         }
-        if (!merged) list.unshift(item)
-        wx.setStorageSync('cartItems', list)
-        
-        wx.showToast({ title: '已加入购物车', icon: 'success' })
-        this.syncCartCount()
+
+        this.setData({
+          course,
+          loading: false
+        });
+
+        // 设置导航栏标题
+        wx.setNavigationBarTitle({
+          title: course.title
+        });
+
+        // 检查购买状态
+        await this.checkPurchaseStatus(course.id || course.courseId || courseId);
+
+        // 如果设置了自动播放且已购买，自动开始播放
+        if (this.autoPlay && this.data.isPurchased) {
+          this.onStartLearning();
+        }
       } else {
-        console.error('添加购物车失败:', res.result)
-        wx.showToast({ title: res.result?.message || '添加失败', icon: 'none' })
+        throw new Error(res.result?.errorMessage || '课程不存在');
       }
     } catch (err) {
-      wx.hideLoading()
-      console.error('添加购物车异常:', err)
-      
-      // 降级到本地存储
-      const item = { ...product, quantity: 1, title: product.name }
-      const list = wx.getStorageSync('cartItems') || []
-      const key = JSON.stringify({ id: item.id, specs: item.specs || {} })
-      let merged = false
-      for (const i of list) {
-        const k = JSON.stringify({ id: i.id, specs: i.specs || {} })
-        if (k === key) { i.quantity = Math.max(1, Number(i.quantity || 1)) + 1; merged = true; break }
-      }
-      if (!merged) list.unshift(item)
-      wx.setStorageSync('cartItems', list)
-      wx.showToast({ title: '已加入购物车', icon: 'none' })
-      this.syncCartCount()
+      console.error('[course-detail] Load error:', err);
+      this.setData({
+        loading: false,
+        error: err.message || '加载失败'
+      });
+      wx.showToast({
+        title: '加载失败',
+        icon: 'none'
+      });
     }
   },
 
-  showLoginPrompt(action) {
-    wx.showModal({
-      title: '需要登录',
-      content: `${action}需要登录后操作，是否前往登录？`,
-      confirmText: '去登录',
-      cancelText: '暂不登录',
-      success: (res) => {
-        if (res.confirm) {
-          const redirectUrl = `/pages/course/course-detail/course-detail?id=${this.data.id}`
-          wx.navigateTo({
-            url: '/pages/auth/login/login?redirect=' + encodeURIComponent(redirectUrl)
-          })
+  /**
+   * 检查用户是否已购买课程
+   */
+  async checkPurchaseStatus(courseId) {
+    this.setData({ checkingPurchase: true });
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'course_purchase_check',
+        data: { courseId }
+      });
+
+      console.log('[course-detail] purchase_check Response:', res.result);
+
+      if (res.result && res.result.success) {
+        const { isPurchased, purchasedAt, orderId } = res.result.data;
+        this.setData({
+          isPurchased: isPurchased || false,
+          checkingPurchase: false
+        });
+
+        // 记录购买信息（可用于后续逻辑）
+        if (isPurchased) {
+          this.purchaseInfo = { purchasedAt, orderId };
         }
+      } else {
+        this.setData({
+          isPurchased: false,
+          checkingPurchase: false
+        });
       }
-    })
+    } catch (err) {
+      console.error('[course-detail] Check purchase error:', err);
+      // 检查失败默认为未购买
+      this.setData({
+        isPurchased: false,
+        checkingPurchase: false
+      });
+    }
+  },
+
+  /**
+   * Tab 切换
+   */
+  onTabChange(e) {
+    const index = e.currentTarget.dataset.index;
+    
+    // 如果未购买且切换到大纲 Tab，提示购买
+    if (index === 1 && !this.data.isPurchased) {
+      wx.showToast({
+        title: '请先购买课程',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    this.setData({ activeTab: index });
+  },
+
+  /**
+   * 购买课程
+   */
+  onPurchase() {
+    const { course } = this.data;
+    if (!course) return;
+
+    // 构造订单商品数据（与确认订单页兼容）
+    const orderItem = {
+      id: course.id || course.courseId,
+      name: course.title,
+      title: course.title,
+      price: course.price,
+      quantity: 1,
+      image: course.coverUrl || course.cover,
+      category: 'course', // 标记为课程类商品
+      specs: {} // 课程无规格
+    };
+
+    // 跳转到订单确认页
+    wx.navigateTo({
+      url: `/pages/order/confirm/confirm?item=${encodeURIComponent(JSON.stringify(orderItem))}`
+    });
+  },
+
+  /**
+   * 开始学习（已购买状态）
+   */
+  onStartLearning() {
+    const { course, isPurchased } = this.data;
+    
+    if (!isPurchased) {
+      wx.showToast({
+        title: '请先购买课程',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 切换到大纲 Tab
+    this.setData({ activeTab: 1 });
+
+    // 跳转到视频播放页
+    const courseId = course.id || course.courseId;
+    wx.navigateTo({
+      url: `/pages/course/video-player/video-player?courseId=${courseId}`
+    });
+  },
+
+  /**
+   * 复制网盘链接
+   */
+  onCopyLink() {
+    const { course } = this.data;
+    if (!course || !course.driveLink) return;
+
+    wx.setClipboardData({
+      data: course.driveLink,
+      success: () => {
+        wx.showToast({
+          title: '链接已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制提取码
+   */
+  onCopyPassword() {
+    const { course } = this.data;
+    if (!course || !course.drivePassword) return;
+
+    wx.setClipboardData({
+      data: course.drivePassword,
+      success: () => {
+        wx.showToast({
+          title: '提取码已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制链接和提取码
+   */
+  onCopyAll() {
+    const { course } = this.data;
+    if (!course || !course.driveLink) return;
+
+    const content = `网盘链接：${course.driveLink}\n提取码：${course.drivePassword}`;
+
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '已复制到剪贴板',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 点击课时
+   */
+  onLessonTap(e) {
+    const { type, title, id } = e.currentTarget.dataset;
+    const { isPurchased, course } = this.data;
+
+    // 未购买状态不允许访问课时
+    if (!isPurchased) {
+      wx.showToast({
+        title: '请先购买课程',
+        icon: 'none'
+      });
+      return;
+    }
+
+    if (type === 'video') {
+      const courseId = course.id || course.courseId;
+      wx.navigateTo({
+        url: `/pages/course/video-player/video-player?courseId=${courseId}&lessonId=${id}`,
+        fail: (err) => {
+          console.error('Navigate failed:', err);
+          wx.showToast({ title: '无法打开播放页', icon: 'none' });
+        }
+      });
+    } else {
+      // 文件下载逻辑 - 需要调用 course_videos 获取文件链接
+      wx.showModal({
+        title: '下载资料',
+        content: '即将下载: ' + title,
+        confirmText: '下载',
+        confirmColor: '#007aff',
+        success: (res) => {
+          if (res.confirm) {
+            wx.showLoading({ title: '下载中...' });
+            setTimeout(() => {
+              wx.hideLoading();
+              wx.showToast({ title: '下载完成' });
+            }, 1500);
+          }
+        }
+      });
+    }
   }
-})
+});

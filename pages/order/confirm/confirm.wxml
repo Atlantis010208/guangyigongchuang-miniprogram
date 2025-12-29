@@ -3,20 +3,25 @@
     <text class="section-title">收货地址</text>
     <!-- 地址 -->
     <view wx:if="{{address}}" class="addr-filled" bindtap="onManageAddress">
-      <view class="addr-row">
-        <text class="addr-name">{{address.name}}</text>
-        <text class="addr-phone">{{address.phone}}</text>
-        <view class="spacer"></view>
-        <view wx:if="{{address.isDefault}}" class="addr-tag">默认</view>
+      <view class="addr-content">
+        <view class="addr-row">
+          <text class="addr-name">{{address.name}}</text>
+          <text class="addr-phone">{{address.phone}}</text>
+          <view wx:if="{{address.isDefault}}" class="addr-tag">默认</view>
+        </view>
+        <text class="addr-detail">{{addressText || address.full || address.detail}}</text>
       </view>
-      <text class="addr-detail">{{addressText || address.full || address.detail}}</text>
+      <van-icon name="arrow" color="#c7c7cc" size="16px" />
     </view>
-    <view wx:else class="addr-empty">
-      <text class="addr-empty-text">暂无默认收货地址</text>
-      <view class="addr-actions">
-        <button class="btn btn-light" bindtap="onAddAddress">新增地址</button>
-        <button class="btn btn-dark" bindtap="onManageAddress">管理地址</button>
+    
+    <view wx:else class="addr-add" bindtap="onManageAddress">
+      <view class="addr-add-left">
+        <view class="addr-icon-box">
+          <van-icon name="location-o" size="20px" color="#007AFF" />
+        </view>
+        <text class="addr-add-text">请选择收货地址</text>
       </view>
+      <van-icon name="arrow" color="#c7c7cc" size="16px" />
     </view>
 
     <view class="divider"></view>

@@ -1,0 +1,102 @@
+<!--
+  视频播放页
+  对接 course_videos 云函数
+  性能优化版 V2 - 深度优化卡顿问题
+-->
+<view class="container-dark">
+  <!-- Loading State -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- Error State -->
+  <view class="error-container" wx:elif="{{error}}">
+    <view class="error-icon">!</view>
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="onRetry">重试</button>
+  </view>
+
+  <!-- Main Content -->
+  <block wx:else>
+    <!-- Video Player Container -->
+    <view class="video-wrapper">
+      <!-- 缓冲提示层 - 长视频友好提示 -->
+      <view class="buffering-overlay" wx:if="{{isBuffering}}">
+        <view class="buffering-spinner"></view>
+        <text class="buffering-text">{{bufferingText || '视频加载中...'}}</text>
+        <text class="buffering-hint" wx:if="{{isLongVideo}}">长视频首次加载需要一点时间，请耐心等待</text>
+      </view>
+      
+      <!-- 只在有视频URL时才渲染video组件，避免空URL导致错误 -->
+      <video
+        wx:if="{{currentLesson && currentLesson.videoUrl}}"
+        id="courseVideo"
+        class="video-player"
+        src="{{currentLesson.videoUrl}}"
+        title="{{currentLesson.title || ''}}"
+        autoplay="{{autoplay}}"
+        controls="{{true}}"
+        show-center-play-btn="{{true}}"
+        show-play-btn="{{true}}"
+        show-fullscreen-btn="{{true}}"
+        show-progress="{{true}}"
+        show-mute-btn="{{true}}"
+        show-loading="{{true}}"
+        enable-progress-gesture="{{false}}"
+        enable-play-gesture="{{false}}"
+        object-fit="contain"
+        direction="{{0}}"
+        play-btn-position="center"
+        show-screen-lock-button="{{false}}"
+        vslide-gesture="{{false}}"
+        vslide-gesture-in-fullscreen="{{false}}"
+        enable-auto-rotation="{{false}}"
+        bindtimeupdate="onTimeUpdate"
+        bindended="onVideoEnded"
+        bindfullscreenchange="onFullscreenChange"
+        binderror="onVideoError"
+        bindplay="onVideoPlay"
+        bindpause="onVideoPause"
+        bindwaiting="onVideoWaiting"
+        bindloadedmetadata="onVideoLoaded"
+        bindprogress="onVideoProgress"
+        bindseeked="onVideoSeeked"
+      ></video>
+      
+      <!-- 无视频时显示占位 -->
+      <view wx:else class="video-placeholder">
+        <text class="placeholder-text">加载视频中...</text>
+      </view>
+    </view>
+
+    <!-- Playlist Section - 简化配置避免与video冲突 -->
+    <scroll-view scroll-y class="playlist-section">
+      <view class="section-header">
+        <text class="section-title">课程列表</text>
+        <text class="section-subtitle">当前播放: {{currentLesson.title}}</text>
+      </view>
+
+      <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter">
+        <view class="chapter-group">
+          <text class="chapter-title">{{chapter.title}}</text>
+          <block wx:for="{{chapter.lessons}}" wx:key="id" wx:for-item="lesson">
+            <view
+              class="lesson-item {{lesson.id === currentLesson.id ? 'active' : ''}}"
+              bindtap="onLessonTap"
+              data-lesson="{{lesson}}"
+            >
+              <view class="lesson-status">
+                <view class="status-icon {{lesson.id === currentLesson.id ? 'playing' : ''}}"></view>
+              </view>
+              <view class="lesson-info">
+                <text class="lesson-title {{lesson.id === currentLesson.id ? 'active-text' : ''}}">{{lesson.title}}</text>
+                <text class="lesson-duration">{{lesson.duration}}</text>
+              </view>
+            </view>
+          </block>
+        </view>
+      </block>
+    </scroll-view>
+  </block>
+</view>

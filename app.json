@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/products/products",
+    "pages/course/index/index",
     "pages/auth/login/login",
     "pages/auth/agreement/agreement",
     "pages/auth/profile-edit/profile-edit",
@@ -11,6 +12,7 @@
     "pages/mall/product-detail/product-detail",
     "pages/mall/cart/cart",
     "pages/course/course-detail/course-detail",
+    "pages/course/video-player/video-player",
     "pages/toolkit/toolkit-detail/toolkit-detail",
     "pages/order/detail/detail",
     "pages/order/edit/edit"
@@ -119,6 +121,12 @@
         "text": "灯光方案",
         "iconPath": "images/product.png",
         "selectedIconPath": "images/product-active.png"
+      },
+      {
+        "pagePath": "pages/course/index/index",
+        "text": "课程",
+        "iconPath": "images/explore.png",
+        "selectedIconPath": "images/explore-active.png"
       },
       {
         "pagePath": "pages/search/search",

@@ -12,6 +12,10 @@ Page({
     share:'愿意',
     coCreate:'愿意',
     submitting:false,
+    // 级联选择配置
+    formFieldOrder: ['space', 'service', 'budget', 'area', 'stage', 'share', 'coCreate'],
+    // 滚动位置（用于自动滚动）
+    scrollIntoView: ''
   },
 
   onLoad(){
@@ -28,16 +32,62 @@ Page({
     }
   },
 
-  // 交互事件
-  onSpaceChange(e){ this.setData({ space:e.detail.value }) },
+  // ========== 级联选择核心方法 ==========
+  triggerNextField(currentField) {
+    const order = this.data.formFieldOrder
+    const currentIndex = order.indexOf(currentField)
+    if (currentIndex === -1 || currentIndex >= order.length - 1) return
+    
+    const nextField = order[currentIndex + 1]
+    
+    // 延迟滚动到下一项
+    setTimeout(() => {
+      this.setData({ scrollIntoView: `section-${nextField}` })
+    }, 200)
+  },
+
+  // 交互事件（添加级联触发）
+  onSpaceChange(e){ 
+    this.setData({ space:e.detail.value }, () => {
+      this.triggerNextField('space')
+    }) 
+  },
   onSpaceOther(e){ this.setData({ spaceOther:e.detail.value }) },
-  onServiceChange(e){ this.setData({ service:e.detail.value }) },
-  onBudgetChange(e){ this.setData({ budget:e.detail.value }) },
+  onServiceChange(e){ 
+    this.setData({ service:e.detail.value }, () => {
+      this.triggerNextField('service')
+    }) 
+  },
+  onBudgetChange(e){ 
+    this.setData({ budget:e.detail.value }, () => {
+      this.triggerNextField('budget')
+    }) 
+  },
   onBudgetOther(e){ this.setData({ budgetOther:e.detail.value }) },
-  onArea(e){ this.setData({ area:e.detail.value }) },
-  onStageChange(e){ this.setData({ stage:e.detail.value }) },
-  onShareChange(e){ this.setData({ share:e.detail.value }) },
-  onCoCreateChange(e){ this.setData({ coCreate:e.detail.value }) },
+  onArea(e){ 
+    this.setData({ area:e.detail.value })
+    // 面积填写后不自动触发（因为是输入框，用户可能还在输入）
+  },
+  onAreaBlur(e){
+    // 面积输入框失焦后触发下一项
+    if(this.data.area){
+      this.triggerNextField('area')
+    }
+  },
+  onStageChange(e){ 
+    this.setData({ stage:e.detail.value }, () => {
+      this.triggerNextField('stage')
+    }) 
+  },
+  onShareChange(e){ 
+    this.setData({ share:e.detail.value }, () => {
+      this.triggerNextField('share')
+    }) 
+  },
+  onCoCreateChange(e){ 
+    this.setData({ coCreate:e.detail.value })
+    // 最后一项，不再触发
+  },
 
   async onSubmit(){
     if (this.data.submitting || this._submitting) return

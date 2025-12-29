@@ -1,76 +1,188 @@
-<view class="detail-page">
-  <swiper class="banner" indicator-dots autoplay circular style="height: {{bannerHeight}}rpx" current="{{current}}" bindchange="onSwiperChange">
-    <block wx:for="{{images}}" wx:key="*this">
-      <swiper-item>
-        <image class="banner-image" src="{{item}}" mode="aspectFit" bindtap="onPreviewImage" data-src="{{item}}" bindload="onBannerLoad" data-idx="{{index}}"></image>
-      </swiper-item>
-    </block>
-  </swiper>
-
-  <view class="info">
-    <text class="name">{{name}}</text>
-    <text class="price">¥{{price}}</text>
+<scroll-view scroll-y style="height: 100vh; background-color: #f2f2f7; padding-bottom: 180rpx;">
+  <!-- Cover Image Header -->
+  <view class="cover-wrapper">
+    <image src="{{course.coverUrl}}" mode="aspectFill" class="cover-image"></image>
+    <view class="cover-gradient"></view>
   </view>
 
-  <view class="card">
-    <text class="section-title">课程简介</text>
-    <text class="desc">{{desc}}</text>
-  </view>
+  <!-- Info Section -->
+  <view class="info-card apple-card padding-medium shadow-medium slide-up">
+    <text class="title-large">{{course.title}}</text>
+    <text class="subtitle-text">{{course.subtitle}}</text>
+    
+    <view class="flex-row flex-between margin-bottom-medium">
+      <view class="price-box">
+        <text class="currency">¥</text>
+        <text class="amount-large">{{course.price}}</text>
+        <text class="original-price" wx:if="{{course.originalPrice}}">¥{{course.originalPrice}}</text>
+      </view>
+    </view>
 
-  <!-- 详情大图（从轮播末图移至此处） -->
-  <view wx:if="{{detailImage}}" class="card">
-    <text class="section-title">课程详情</text>
-    <image class="detail-image" src="{{detailImage}}" mode="widthFix" bindtap="onPreviewDetail" />
-  </view>
-
-  <view class="card">
-    <text class="section-title">你将获得</text>
-    <view class="benefits">
-      <view wx:for="{{benefits}}" wx:key="*this" class="benefit-item">{{item}}</view>
+    <view class="tags-row">
+      <text class="apple-tag margin-right-small" wx:for="{{course.tags}}" wx:key="*this">{{item}}</text>
     </view>
   </view>
 
-  <!-- 底部占位 -->
-  <view class="bottom-spacer"></view>
+  <!-- Segment Control -->
+  <view class="segment-control margin-top-medium margin-bottom-medium">
+    <view class="segment-item {{activeTab === 0 ? 'active' : ''}}" bindtap="onTabChange" data-index="{{0}}">
+      <text class="segment-text">简介</text>
+      <view class="segment-line" wx:if="{{activeTab === 0}}"></view>
+    </view>
+    <view class="segment-item {{activeTab === 1 ? 'active' : ''}}" bindtap="onTabChange" data-index="{{1}}">
+      <text class="segment-text">大纲 & 资料</text>
+      <view class="segment-line" wx:if="{{activeTab === 1}}"></view>
+    </view>
+  </view>
+
+  <!-- Tab Content: Intro -->
+  <view class="tab-content" wx:if="{{activeTab === 0}}">
+    <view class="content-block apple-card padding-medium">
+      <text class="title-medium margin-bottom-small" style="display: block;">课程介绍</text>
+      <text class="intro-text">{{course.description}}</text>
+    </view>
+
+    <!-- 课程详情内容（图片展示） -->
+    <view class="detail-section margin-top-medium" wx:if="{{course.detailImages && course.detailImages.length > 0}}">
+      <text class="title-medium margin-bottom-medium margin-left-small">课程详情</text>
+      <view class="detail-images-list">
+        <block wx:for="{{course.detailImages}}" wx:key="*this">
+          <image src="{{item}}" mode="widthFix" class="detail-image shadow-medium" lazy-load></image>
+        </block>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab Content: Syllabus -->
+  <view class="tab-content" wx:if="{{activeTab === 1}}">
+    <!-- Purchased State: Show List -->
+    <block wx:if="{{isPurchased}}">
+      <!-- 视频课程章节 -->
+      <block wx:for="{{course.chapters}}" wx:key="title">
+        <view class="chapter-group margin-bottom-medium" wx:if="{{item.title !== '课程资料包'}}">
+          <text class="chapter-title margin-left-small margin-bottom-small">{{item.title}}</text>
+          <view class="apple-card overflow-hidden">
+            <block wx:for="{{item.lessons}}" wx:key="id" wx:for-item="lesson" wx:for-index="idx">
+              <view class="lesson-item flex-row padding-medium" hover-class="hover-bg" bindtap="onLessonTap" data-type="{{lesson.type}}" data-title="{{lesson.title}}" data-id="{{lesson.id}}">
+                <view class="icon-box {{lesson.type === 'video' ? 'bg-blue' : 'bg-green'}}">
+                   <!-- Simple Shapes for Icons -->
+                   <view class="play-triangle" wx:if="{{lesson.type === 'video'}}"></view>
+                   <view class="file-rect" wx:if="{{lesson.type === 'file'}}"></view>
+                </view>
+                <view class="flex-column flex-1 margin-left-medium">
+                  <text class="title-small">{{lesson.title}}</text>
+                  <text class="caption-text margin-top-small" wx:if="{{lesson.type === 'video'}}">{{lesson.duration}} {{lesson.isFree ? '· 试看' : ''}}</text>
+                  <text class="caption-text margin-top-small" wx:if="{{lesson.type === 'file'}}">{{lesson.format}} · {{lesson.size}}</text>
+                </view>
+                <view class="action-icon">
+                  <text class="arrow-right" wx:if="{{lesson.type === 'video'}}">▶</text>
+                  <text class="arrow-down" wx:if="{{lesson.type === 'file'}}">↓</text>
+                </view>
+              </view>
+              <view class="divider thick" style="margin: 0 40rpx;" wx:if="{{idx < item.lessons.length - 1}}"></view>
+            </block>
+          </view>
+        </view>
+      </block>
+
+      <!-- 课程资料包 - Apple 风格设计 -->
+      <view class="materials-section" wx:if="{{course.driveLink}}">
+        <text class="chapter-title margin-left-small margin-bottom-small">课程资料包</text>
+        
+        <view class="materials-card">
+          <!-- 资料内容列表 -->
+          <view class="content-list-section">
+            <view class="content-list-header">
+              <text class="content-list-title">资料内容</text>
+            </view>
+            <view class="content-list">
+              <view class="content-item">
+                <text class="item-text">灯光设计常用参数表.pdf</text>
+              </view>
+              <view class="content-item">
+                <text class="item-text">住宅照明CAD图库.dwg</text>
+              </view>
+              <view class="content-item">
+                <text class="item-text">灯具选型Excel表.xlsx</text>
+              </view>
+              <view class="content-item">
+                <text class="item-text">设计案例PSD源文件.psb</text>
+              </view>
+              <view class="content-item">
+                <text class="item-text">施工规范文档.docx</text>
+              </view>
+              <view class="content-item more">
+                <text class="item-text more-text">更多资料...</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="materials-divider"></view>
+
+          <!-- 网盘链接 -->
+          <view class="link-section">
+            <view class="link-label">
+              <text class="label-text">网盘链接</text>
+            </view>
+            <view class="link-input-wrapper">
+              <text class="link-text" selectable="true">{{course.driveLink}}</text>
+              <view class="copy-btn" hover-class="copy-btn-hover" bindtap="onCopyLink">
+                <text class="copy-text">复制</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 提取码 -->
+          <view class="link-section">
+            <view class="link-label">
+              <text class="label-text">提取码</text>
+            </view>
+            <view class="link-input-wrapper code-wrapper">
+              <text class="code-text">{{course.drivePassword}}</text>
+              <view class="copy-btn" hover-class="copy-btn-hover" bindtap="onCopyPassword">
+                <text class="copy-text">复制</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="materials-divider"></view>
+
+          <!-- 备注信息 -->
+          <view class="materials-note" wx:if="{{course.driveAltContact}}">
+            <text class="note-text">{{course.driveAltContact}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- Locked State -->
+    <view class="locked-state" wx:else>
+      <view class="lock-icon-bg">
+        <view class="icon-lock"></view>
+      </view>
+      <text class="locked-title">课程内容已锁定</text>
+      <text class="locked-subtitle">购买后即可解锁全部视频与资料</text>
+    </view>
+  </view>
+
+</scroll-view>
+
+<!-- Fixed Bottom Bar -->
+<view class="bottom-bar shadow-large">
+  <view class="bottom-bar-content flex-row flex-between">
+    <block wx:if="{{!isPurchased}}">
+      <view class="flex-column">
+        <text class="caption-text">总价</text>
+        <view class="flex-row align-baseline">
+          <text class="currency-red">¥</text>
+          <text class="amount-red">{{course.price}}</text>
+        </view>
+      </view>
+      <button class="apple-button" hover-class="button-hover" bindtap="onPurchase">立即购买</button>
+    </block>
+    <block wx:else>
+      <view></view> <!-- Spacer -->
+      <button class="apple-button" hover-class="button-hover" bindtap="onStartLearning">立即观看</button>
+    </block>
+  </view>
 </view>
-
-<!-- Vant Weapp 商品导航组件 - 必须放在页面容器外部 -->
-<van-goods-action safe-area-inset-bottom>
-  <!-- 左侧图标按钮：客服 - 使用 dot 属性显示小红点 -->
-  <van-goods-action-icon
-    icon="chat-o"
-    text="客服"
-    dot
-    bind:click="onContact"
-  />
-  <!-- 购物车 - 使用 info 属性显示数量徽标 -->
-  <van-goods-action-icon
-    icon="cart-o"
-    text="购物车"
-    info="{{cartCount}}"
-    bind:click="onGoCart"
-  />
-  <!-- 收藏按钮 -->
-  <van-goods-action-icon
-    icon="{{favIcon}}"
-    text="收藏"
-    bind:click="onToggleFav"
-  />
-  <!-- 朴素按钮：加入购物车 - 使用 plain 属性，蓝色渐变 -->
-  <van-goods-action-button
-    text="加入购物车"
-    type="warning"
-    plain
-    color=" #36cfc9"
-    bind:click="onAddToCart"
-  />
-  <!-- 主按钮：立即购买 - 使用蓝色渐变 -->
-  <van-goods-action-button
-    text="立即购买"
-    type="danger"
-    color="linear-gradient(to right, #36cfc9, #1890ff)"
-    bind:click="onBuyNow"
-  />
-</van-goods-action>
-
-

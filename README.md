@@ -229,6 +229,52 @@ approved → return_pending（待寄回）→ return_shipped（已寄回）→ r
 
 详细技术设计文档见：`specs/deposit/design.md`
 
+## 📚 课程功能
+
+### 功能概述
+用户可以浏览灯光设计课程列表，购买后解锁视频观看功能。
+
+### 业务规则
+1. **课程列表**：所有用户（无需登录）都可以浏览课程列表
+2. **购买检查**：系统检查用户是否已购买指定课程
+3. **视频访问**：只有已购买课程的用户才能观看课程视频
+4. **内容保护**：未购买用户无法获取任何视频链接
+
+### 课程相关云函数
+| 云函数名 | 功能 |
+|----------|------|
+| courses_list | 获取课程列表（公开） |
+| course_purchase_check | 检查用户是否已购买课程 |
+| course_videos | 获取课程视频数据（需登录且已购买） |
+
+### 课程相关页面
+| 页面路径 | 功能 |
+|----------|------|
+| pages/course/index/index | 课程列表页 |
+| pages/course/course-detail/course-detail | 课程详情页 |
+| pages/course/video-player/video-player | 视频播放页 |
+
+### 数据库集合
+- **courses**：课程数据集合
+  - 字段：courseId, title, subtitle, description, price, cover, images, instructorName, chapters 等
+  - chapters 包含 lessons 数组，每个 lesson 包含 videoUrl
+
+- **orders** 关联：
+  - `category='course'`：标识课程订单
+  - `status='paid'`/`'completed'`：已购买状态
+
+### 访问控制逻辑
+```
+用户访问课程 → courses_list(公开) → 获取列表（不含视频链接）
+         ↓
+用户查看详情 → course_purchase_check → isPurchased: true/false
+         ↓
+已购买 → course_videos → 返回完整章节和视频链接
+未购买 → 显示购买按钮，锁定"大纲 & 资料"
+```
+
+详细技术设计文档见：`specs/course_backend/design.md`
+
 ---
 
 ### 退款原因选项
@@ -288,7 +334,10 @@ miniprogram-4/
 │   ├── orderTimeoutCheck/    # 订单超时检查
 │   ├── orders_create/        # 创建订单
 │   ├── orders_update/        # 更新订单
-│   └── mall_orders_list/     # 查询订单列表
+│   ├── mall_orders_list/     # 查询订单列表
+│   ├── courses_list/         # 课程列表（供小程序端使用）
+│   ├── course_purchase_check/ # 检查用户是否已购买课程
+│   └── course_videos/        # 获取课程视频数据（需登录且已购买）
 ├── specs/                    # 技术文档
 │   ├── wechat_payment/       # 微信支付功能
 │   │   ├── requirements.md   # 需求文档

@@ -124,7 +124,7 @@
         <view class="assistant-card" bindtap="onAssistantTap" data-activity="photo">
           <image class="assistant-image" src="{{assistantCourseCover}}" mode="aspectFill" binderror="onAssistantImageError" data-key="course"/>
           <view class="assistant-content">
-            <text class="assistant-title">十年经验二哥 灯光设计课</text>
+            <text class="assistant-title">{{assistantCourseTitle || '十年经验二哥 灯光设计课'}}</text>
           </view>
         </view>
       </view>

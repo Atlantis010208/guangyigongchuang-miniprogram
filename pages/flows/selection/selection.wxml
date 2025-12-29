@@ -5,7 +5,7 @@
     <view class="cells">
       <view class="cell" hover-class="cell-active">
         <text class="label fixed">预算</text>
-        <input class="input" type="number" placeholder="请输入预算（元）" bindinput="onBudgetInput" value="{{budget}}"/>
+        <input class="input" type="number" placeholder="请输入预算（元）" bindinput="onBudgetInput" bindblur="onBudgetBlur" value="{{budget}}"/>
       </view>
 
       <view class="cell" hover-class="cell-active" bindtap="onTapStage">
@@ -44,4 +44,3 @@
     </view>
   </view>
 </scroll-view>
-

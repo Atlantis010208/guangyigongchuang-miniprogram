@@ -83,14 +83,6 @@
         "type": "folder"
       },
       {
-        "value": "images/explore.png",
-        "type": "file"
-      },
-      {
-        "value": "images/explore-active.png",
-        "type": "file"
-      },
-      {
         "value": "images/logo.txt",
         "type": "file"
       },

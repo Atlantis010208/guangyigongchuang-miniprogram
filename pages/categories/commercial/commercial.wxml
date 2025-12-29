@@ -20,51 +20,51 @@
       </view>
     </scroll-view>
   </view>
-  <!-- 参数与估价（参考住宅，无计算器） -->
+  <!-- 参数与估价（使用 bindtap 触发 ActionSheet，支持级联选择） -->
   <view class="section">
     <view class="cells">
-      <view class="cell"><text class="cell-text strong">方案</text>
-        <picker mode="selector" range="{{schemeOptionsTexts}}" bindchange="onSchemeChange"><view class="picker-text">{{schemeText}}</view></picker>
+      <view class="cell" bindtap="onTapScheme"><text class="cell-text strong">方案</text>
+        <view class="picker-text">{{schemeText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text strong">风格</text>
-        <picker mode="selector" range="{{styleOptionsTexts}}" bindchange="onStyleChange"><view class="picker-text">{{styleText}}</view></picker>
+      <view class="cell" bindtap="onTapStyle"><text class="cell-text strong">风格</text>
+        <view class="picker-text">{{styleText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">面积(㎡)</text>
-        <picker mode="selector" range="{{areaBucketTexts}}" bindchange="onAreaBucketChange"><view class="picker-text">{{areaBucketText}}</view></picker>
+      <view class="cell" bindtap="onTapAreaBucket"><text class="cell-text">面积(㎡)</text>
+        <view class="picker-text">{{areaBucketText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">灯具均价(元/盏)</text>
-        <picker mode="selector" range="{{avgFixturePriceOptions}}" bindchange="onAvgPriceChange"><view class="picker-text">{{avgFixturePriceText}}</view></picker>
+      <view class="cell" bindtap="onTapAvgPrice"><text class="cell-text">灯具均价(元/盏)</text>
+        <view class="picker-text">{{avgFixturePriceText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">设计单价(元/㎡)</text>
-        <picker mode="selector" range="{{designUnitTexts}}" bindchange="onDesignUnitChange"><view class="picker-text">{{designUnitText}}</view></picker>
+      <view class="cell" bindtap="onTapDesignUnit"><text class="cell-text">设计单价(元/㎡)</text>
+        <view class="picker-text">{{designUnitText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">装修类型</text>
-        <picker mode="selector" range="{{renovationTypeOptions}}" bindchange="onRenovationTypeChange"><view class="picker-text">{{renovationTypeText}}</view></picker>
+      <view class="cell" bindtap="onTapRenovationType"><text class="cell-text">装修类型</text>
+        <view class="picker-text">{{renovationTypeText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">装修进度</text>
-        <picker mode="selector" range="{{progressOptions}}" bindchange="onProgressChange"><view class="picker-text">{{progressText}}</view></picker>
+      <view class="cell" bindtap="onTapProgress"><text class="cell-text">装修进度</text>
+        <view class="picker-text">{{progressText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">餐吊灯</text>
-        <picker mode="selector" range="{{diningPendantOptions}}" bindchange="onDiningPendantChange"><view class="picker-text">{{diningPendantText}}</view></picker>
+      <view class="cell" bindtap="onTapDiningPendant"><text class="cell-text">餐吊灯</text>
+        <view class="picker-text">{{diningPendantText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">智能家居</text>
-        <picker mode="selector" range="{{smartHomeOptions}}" bindchange="onSmartHomeChange"><view class="picker-text">{{smartHomeText}}</view></picker>
+      <view class="cell" bindtap="onTapSmartHome"><text class="cell-text">智能家居</text>
+        <view class="picker-text">{{smartHomeText}}</view>
       </view>
 
-      <view class="cell" wx:if="{{smartHomeText==='确定做'}}"><text class="cell-text">智能灯光倾向</text>
-        <picker mode="selector" range="{{smartLightOptions}}" bindchange="onSmartLightChange"><view class="picker-text">{{smartLightText}}</view></picker>
+      <view class="cell" wx:if="{{smartHomeText==='确定做'}}" bindtap="onTapSmartLight"><text class="cell-text">智能灯光倾向</text>
+        <view class="picker-text">{{smartLightText}}</view>
       </view>
 
-      <view class="cell"><text class="cell-text">天花调整</text>
-        <picker mode="selector" range="{{ceilingAdjustOptions}}" bindchange="onCeilingAdjustChange"><view class="picker-text">{{ceilingAdjustText}}</view></picker>
+      <view class="cell" bindtap="onTapCeilingAdjust"><text class="cell-text">天花调整</text>
+        <view class="picker-text">{{ceilingAdjustText}}</view>
       </view>
 
       <view class="cell auto">
@@ -116,4 +116,18 @@
 </scroll-view>
 
 
-
+<!-- 通用选择弹窗（支持搜索） -->
+<view wx:if="{{showOptionPopup}}" class="popup-mask" catchtouchmove="noop">
+  <view class="popup-panel" catchtap="noop">
+    <view class="popup-header">
+      <text class="popup-title">{{optionPopupTitle}}</text>
+      <text class="popup-close" bindtap="closeOptionPopup">关闭</text>
+    </view>
+    <scroll-view scroll-y class="popup-body">
+      <block wx:for="{{optionList}}" wx:key="*this">
+        <view class="popup-item" data-value="{{item}}" bindtap="onOptionPick">{{item}}</view>
+      </block>
+    </scroll-view>
+  </view>
+  <view class="popup-backdrop" bindtap="closeOptionPopup"></view>
+</view>

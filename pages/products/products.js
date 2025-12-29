@@ -11,6 +11,8 @@ Page({
     avatarFileID: '', // 用户头像 cloud:// fileID（用于重试）
     assistantToolkitCover: '',
     assistantCourseCover: '',
+    assistantCourseId: '', // 课程 ID，用于跳转详情页
+    assistantCourseTitle: '', // 课程标题
     // features 已移除，改为电子商城入口
     showIntro: false,
     quizStep: 0,
@@ -41,13 +43,17 @@ Page({
     // 默认封面（使用数据库中的第一张主图，小程序直接支持 cloud:// 协议）
     const defaultToolkitCover = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg'
     const defaultCourseCover = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/二哥十年经验灯光设计课/主图1-¥365有圈子的灯光课 5.jpg'
+    const defaultCourseId = 'CO_DEFAULT_001' // 默认课程 ID
+    const defaultCourseTitle = '十年经验二哥 灯光设计课'
     
-    // 先设置默认封面，确保图片能立即显示
+    // 先设置默认封面和课程信息，确保立即可用
     this.setData({
       assistantToolkitCover: defaultToolkitCover,
-      assistantCourseCover: defaultCourseCover
+      assistantCourseCover: defaultCourseCover,
+      assistantCourseId: defaultCourseId,
+      assistantCourseTitle: defaultCourseTitle
     })
-    console.log('[首页] 已设置默认封面')
+    console.log('[首页] 已设置默认封面和课程信息')
     
     // 然后尝试从数据库获取最新封面（异步更新）
     try {
@@ -84,20 +90,30 @@ Page({
         console.log('[首页] 从数据库获取工具包封面:', toolkitCover)
       }
 
+      let courseId = ''
+      let courseTitle = ''
       if (courseRes.data && courseRes.data.length > 0) {
         const course = courseRes.data[0]
-        courseCover = course.cover || (course.images && course.images[0]) || defaultCourseCover
-        console.log('[首页] 从数据库获取课程封面:', courseCover)
+        // 提取封面：优先使用 cover，如果是对象则取其值
+        let cover = course.cover
+        if (cover && typeof cover === 'object') {
+          cover = cover.fileID || cover.downloadUrl || ''
+        }
+        courseCover = cover || (course.images && course.images[0]) || defaultCourseCover
+        // 保存课程 ID 和标题
+        courseId = course.courseId || course._id || ''
+        courseTitle = course.title || '灯光设计课'
+        console.log('[首页] 从数据库获取课程:', { courseCover, courseId, courseTitle })
       }
 
-      // 更新封面（如果与默认不同）
-      if (toolkitCover !== defaultToolkitCover || courseCover !== defaultCourseCover) {
-        this.setData({
-          assistantToolkitCover: toolkitCover,
-          assistantCourseCover: courseCover
-        })
-        console.log('[首页] 封面已更新')
-      }
+      // 更新封面和课程信息
+      this.setData({
+        assistantToolkitCover: toolkitCover,
+        assistantCourseCover: courseCover,
+        assistantCourseId: courseId,
+        assistantCourseTitle: courseTitle
+      })
+      console.log('[首页] 封面和课程信息已更新')
     } catch (e) {
       console.warn('[首页] 加载封面失败:', e)
       // 保持默认封面
@@ -340,14 +356,21 @@ Page({
 
   // 助手模块专属跳转，互不影响
   onAssistantTap(e){
-    const id = e.currentTarget.dataset.activity || 'video'
-    if (id === 'video') {
+    const type = e.currentTarget.dataset.activity || 'video'
+    if (type === 'video') {
+      // 灯光工具包
       wx.navigateTo({ url: '/pages/toolkit/toolkit-detail/toolkit-detail' })
       return
     }
-    // 第二张改为课程详情（参考商城购买页）
-    const cover = encodeURIComponent(this.data.assistantCourseCover || '')
-    wx.navigateTo({ url: `/pages/course/course-detail/course-detail?cover=${cover}` })
+    // 灯光设计课 - 跳转到课程详情页，传递课程 ID
+    const courseId = this.data.assistantCourseId
+    if (courseId) {
+      wx.navigateTo({ url: `/pages/course/course-detail/course-detail?id=${courseId}` })
+    } else {
+      // 如果没有获取到课程 ID，直接跳转到课程中心
+      wx.showToast({ title: '正在跳转课程中心...', icon: 'none' })
+      wx.switchTab({ url: '/pages/course/index/index' })
+    }
   },
 
   // 节能妙招：进入节能建议页（非卡片风格）

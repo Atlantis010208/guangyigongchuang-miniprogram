@@ -1,0 +1,10 @@
+{
+  "name": "course_purchase_check",
+  "version": "1.0.0",
+  "description": "检查用户是否已购买课程",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+
