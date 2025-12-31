@@ -32,7 +32,11 @@ Page({
     
     // 长视频友好提示
     isLongVideo: false,
-    bufferingText: '视频加载中...'
+    bufferingText: '视频加载中...',
+    
+    // 倍速控制
+    playbackRate: 1.0,
+    showOptionsPanel: false
   },
 
   // 实例属性（不触发渲染）
@@ -622,5 +626,61 @@ Page({
     
     // 超过 30 分钟认为是长视频
     return totalMinutes >= 30;
+  },
+
+  // ==================== 倍速控制 ====================
+
+  /**
+   * 打开更多选项面板
+   */
+  onMoreTap() {
+    this.setData({ showOptionsPanel: true });
+  },
+
+  /**
+   * 关闭选项面板
+   */
+  onCloseOptions() {
+    this.setData({ showOptionsPanel: false });
+  },
+
+  /**
+   * 选择播放速度
+   */
+  onSelectSpeed(e) {
+    const rate = parseFloat(e.currentTarget.dataset.rate);
+    this.setPlaybackRate(rate);
+  },
+
+  /**
+   * 设置播放速度
+   */
+  setPlaybackRate(rate) {
+    console.log('[video-player] setPlaybackRate:', rate);
+    
+    this.setData({ 
+      playbackRate: rate,
+      showOptionsPanel: false
+    });
+
+    // 重新获取 videoContext 并设置倍速
+    this.videoContext = wx.createVideoContext('courseVideo');
+    
+    if (this.videoContext) {
+      this.videoContext.playbackRate(rate);
+      
+      // 确保视频继续播放
+      setTimeout(() => {
+        if (this.videoContext) {
+          this.videoContext.play();
+        }
+      }, 100);
+    }
+
+    wx.showToast({
+      title: `已切换为 ${rate}x`,
+      icon: 'none',
+      duration: 1000
+    });
   }
 });

@@ -1,0 +1,10 @@
+{
+  "name": "admin_update_video_urls",
+  "version": "1.0.0",
+  "description": "批量更新课程视频地址",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

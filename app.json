@@ -125,8 +125,8 @@
       {
         "pagePath": "pages/course/index/index",
         "text": "课程",
-        "iconPath": "images/explore.png",
-        "selectedIconPath": "images/explore-active.png"
+        "iconPath": "images/24_课程(未选中).png",
+        "selectedIconPath": "images/24_课程.png"
       },
       {
         "pagePath": "pages/search/search",

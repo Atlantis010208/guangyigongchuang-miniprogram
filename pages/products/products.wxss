@@ -59,19 +59,23 @@
     margin-bottom: 40rpx;
   }
 
-  /* 主打服务横向滑动 */
+  /* 主打服务竖向列表 */
   .hero-section { padding-left: 0; padding-right: 0; }
-  .hero-section .section-title { margin-left: 30rpx; }
-  .hero-scroll { width:100%; padding:0; margin:0; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-left:0; margin-right:0; }
-  .hero-track { display:inline-flex; gap:0; padding: 0 30rpx; min-width:max-content; }
-  .hero-track .hero-card { width: calc(100vw - 40rpx); max-width: 680rpx; flex: none; }
-  .hero-track .hero-card + .hero-card { margin-left: 30rpx; }
+  .hero-section .section-title { margin-left: 30rpx; margin-bottom: 30rpx; }
+  
+  .hero-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 30rpx;
+    gap: 30rpx;
+  }
     
   /* 主打产品卡片 */
   .hero-card {
+      width: 100%;
       background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
       border-radius: 50rpx;
-      margin-bottom: 60rpx;
+      margin-bottom: 0; /* 由 gap 控制 */
       overflow: hidden;
       box-shadow: none;
       position: relative;
@@ -179,16 +183,19 @@
   }
   
   .category-card {
-    display: inline-block;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     margin-right: 20rpx;
-    width: 180rpx;
-    height: 225rpx;
+    width: 160rpx;
+    height: 190rpx;
     background-color: #ffffff;
-    border-radius: 45rpx;
+    border-radius: 32rpx;
     overflow: hidden;
-    box-shadow: none;
+    box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.02);
     position: relative;
-    /* 最后一个卡片右侧也保留间距 */
+    vertical-align: top;
   }
   
   /* 为最后一个卡片添加右侧间距，确保滚动结束后仍有空白 */
@@ -201,34 +208,27 @@
         margin-left: 30rpx;
       }
   
+  .category-icon-wrapper {
+    width: 80rpx;
+    height: 80rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20rpx;
+  }
+  
   .category-image {
     width: 100%;
     height: 100%;
-    display: block;
-    object-fit: cover;
-  }
-  
-  .category-text-overlay {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: auto;
-    min-height: 36%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 18rpx 12rpx 20rpx;
-    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);
-    z-index: 1;
+    object-fit: contain;
   }
   
   .category-text {
     font-size: 24rpx;
-    color: #ffffff;
-    font-weight: 600;
+    color: #000000;
+    font-weight: bold;
     text-align: center;
-    text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.45);
+    line-height: 1.2;
   }
     
   /* 删除：配件横向滚动样式（模块已移除） */
@@ -300,14 +300,29 @@
   /* 我的灯光需求助手：复用“表达您的需求”容器布局，避免左右滑动被裁剪 */
   .assistant-section { padding-left:0; padding-right:0; }
   .assistant-section .section-title { margin-left:30rpx; margin-right:30rpx; }
-  /* 独立的助手滚动与卡片样式，避免与 activities-* 冲突 */
+  /* 独立的助手滚动与卡片样式 - 改为胶囊按钮风格 */
   .assistant-scroller { width:100%; margin-top:20rpx; padding:0; box-sizing:border-box; overflow-x:auto; -webkit-overflow-scrolling:touch; border:none; }
-  .assistant-track { display:inline-flex; padding: 0 20rpx 6rpx; }
-  .assistant-card { flex:none; width: 520rpx; background:#fff; border-radius:50rpx; overflow:hidden; box-shadow:none; border:none; }
-  .assistant-card + .assistant-card { margin-left:24rpx; }
-  .assistant-image { width:100%; height:520rpx; object-fit:cover; border-radius: 40rpx 40rpx 0 0; display:block; }
-  .assistant-content { padding:30rpx; text-align:center; }
-  .assistant-title { font-size:28rpx; font-weight:600; color:#000; display:block; margin-bottom:15rpx; line-height:1.4; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-align:center; }
+  .assistant-track { display:inline-flex; padding: 0 30rpx 20rpx; gap: 24rpx; }
+  
+  .service-pill {
+    flex: none;
+    background-color: #ffffff;
+    padding: 24rpx 48rpx;
+    border-radius: 999rpx; /* 胶囊圆角 */
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .service-pill-text {
+    font-size: 30rpx;
+    font-weight: bold;
+    color: #000000;
+    line-height: 1;
+  }
+  
+  /* 删除旧的 assistant-card 相关样式 */
   
   /* Apple 内容标签 */
   .content-tags {

@@ -208,7 +208,10 @@ exports.main = async (event) => {
       driveLink: course.driveLink || '',
       drivePassword: course.drivePassword || '',
       driveContent: course.driveContent || '',
-      driveAltContact: course.driveAltContact || ''
+      driveAltContact: course.driveAltContact || '',
+      // 国际版网盘链接
+      driveLinkIntl: course.driveLinkIntl || '',
+      drivePasswordIntl: course.drivePasswordIntl || ''
     }
     
     return {

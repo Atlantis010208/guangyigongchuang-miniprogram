@@ -1,6 +1,12 @@
 // pages/products/products.js
 const util = require('../../utils/util')
 
+// 避坑指南 PDF 文件地址（压缩版）
+const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/（已压缩）2、工具包｜装修灯光注意事项-避坑指南（最新）.pdf'
+
+// 灯光设计服务说明书 PDF 文件地址
+const PDF_DESIGN_SERVICE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光设计服务说明书.pdf'
+
 Page({
 
   /**
@@ -133,6 +139,59 @@ Page({
    */
   onShow() {
     this.loadUserAvatar()
+    // 预加载避坑指南 PDF（后台静默下载）
+    this.preloadPdfFile(PDF_BIKENG_GUIDE)
+    // 预加载灯光设计服务说明书 PDF（后台静默下载）
+    this.preloadPdfFile(PDF_DESIGN_SERVICE)
+  },
+
+  /**
+   * 预加载 PDF 文件（后台静默下载，不显示加载提示）
+   * @param {string} fileID - 云存储文件 ID
+   */
+  preloadPdfFile(fileID) {
+    // 生成缓存 key
+    const cacheKey = 'pdf_cache_' + this.hashCode(fileID)
+    
+    // 检查是否已有缓存
+    try {
+      const cachedPath = wx.getStorageSync(cacheKey)
+      if (cachedPath) {
+        const fs = wx.getFileSystemManager()
+        try {
+          fs.accessSync(cachedPath)
+          console.log('[预加载] PDF 已缓存，无需下载')
+          return // 缓存有效，无需下载
+        } catch (e) {
+          // 缓存失效，继续下载
+          wx.removeStorageSync(cacheKey)
+        }
+      }
+    } catch (e) {
+      // 忽略缓存读取错误
+    }
+    
+    // 后台静默下载
+    console.log('[预加载] 开始下载 PDF...')
+    wx.cloud.downloadFile({
+      fileID: fileID,
+      success: res => {
+        const tempFilePath = res.tempFilePath
+        const fs = wx.getFileSystemManager()
+        const savedPath = `${wx.env.USER_DATA_PATH}/pdf_bikeng_${Date.now()}.pdf`
+        
+        try {
+          fs.saveFileSync(tempFilePath, savedPath)
+          wx.setStorageSync(cacheKey, savedPath)
+          console.log('[预加载] PDF 下载完成并缓存:', savedPath)
+        } catch (saveErr) {
+          console.warn('[预加载] PDF 保存失败:', saveErr)
+        }
+      },
+      fail: err => {
+        console.warn('[预加载] PDF 下载失败:', err)
+      }
+    })
   },
 
   /**
@@ -413,14 +472,152 @@ Page({
   },
 
   onCategoryTap(e) {
-    const map = {
-      residential: '/pages/categories/residential/residential',
-      commercial: '/pages/categories/commercial/commercial',
-      office: '/pages/categories/office/office',
-      hotel: '/pages/categories/hotel/hotel'
+    const category = e.currentTarget.dataset.category
+    
+    // 避坑指南 - 直接打开云存储中的 PDF 文件
+    if (category === 'residential') {
+      this.openPdfFile(PDF_BIKENG_GUIDE)
+      return
     }
-    const url = map[e.currentTarget.dataset.category]
-    if (url) wx.navigateTo({ url })
+    
+    // 设计流程 - 打开灯光设计服务说明书 PDF
+    if (category === 'commercial') {
+      this.openPdfFile(PDF_DESIGN_SERVICE)
+      return
+    }
+    
+    // 照度计算 - 跳转到照明计算页面
+    if (category === 'office') {
+      wx.switchTab({ url: '/pages/search/search' })
+      return
+    }
+    
+    // 酒店照明 - 功能开发中
+    if (category === 'hotel') {
+      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      return
+    }
+  },
+
+  /**
+   * 打开云存储中的 PDF 文件（带缓存优化）
+   * @param {string} fileID - 云存储文件 ID（cloud:// 协议）
+   */
+  async openPdfFile(fileID) {
+    // 生成缓存 key（使用 fileID 的 hash）
+    const cacheKey = 'pdf_cache_' + this.hashCode(fileID)
+    
+    // 先检查本地缓存
+    try {
+      const cachedPath = wx.getStorageSync(cacheKey)
+      if (cachedPath) {
+        // 验证缓存文件是否存在
+        const fs = wx.getFileSystemManager()
+        try {
+          fs.accessSync(cachedPath)
+          console.log('使用缓存的 PDF 文件:', cachedPath)
+          // 缓存有效，直接打开
+          wx.openDocument({
+            filePath: cachedPath,
+            fileType: 'pdf',
+            showMenu: true,
+            success: () => console.log('打开缓存 PDF 成功'),
+            fail: err => {
+              console.warn('打开缓存 PDF 失败，重新下载:', err)
+              // 缓存文件损坏，清除缓存并重新下载
+              wx.removeStorageSync(cacheKey)
+              this.downloadAndOpenPdf(fileID, cacheKey)
+            }
+          })
+          return
+        } catch (e) {
+          // 缓存文件不存在，清除缓存记录
+          console.log('缓存文件已失效，重新下载')
+          wx.removeStorageSync(cacheKey)
+        }
+      }
+    } catch (e) {
+      console.log('读取缓存失败:', e)
+    }
+    
+    // 没有缓存，下载文件
+    this.downloadAndOpenPdf(fileID, cacheKey)
+  },
+
+  /**
+   * 下载并打开 PDF 文件
+   */
+  downloadAndOpenPdf(fileID, cacheKey) {
+    // 显示下载进度
+    wx.showLoading({ title: '正在下载 0%', mask: true })
+    
+    const downloadTask = wx.cloud.downloadFile({
+      fileID: fileID,
+      success: res => {
+        wx.hideLoading()
+        const tempFilePath = res.tempFilePath
+        
+        // 保存到本地永久存储（避免临时文件被清理）
+        const fs = wx.getFileSystemManager()
+        const savedPath = `${wx.env.USER_DATA_PATH}/pdf_${Date.now()}.pdf`
+        
+        try {
+          fs.saveFileSync(tempFilePath, savedPath)
+          // 缓存文件路径
+          wx.setStorageSync(cacheKey, savedPath)
+          console.log('PDF 已缓存到:', savedPath)
+          
+          // 打开 PDF
+          wx.openDocument({
+            filePath: savedPath,
+            fileType: 'pdf',
+            showMenu: true,
+            success: () => console.log('打开 PDF 成功'),
+            fail: err => {
+              console.error('打开 PDF 失败:', err)
+              wx.showToast({ title: '打开文件失败', icon: 'none' })
+            }
+          })
+        } catch (saveErr) {
+          console.warn('保存 PDF 失败，使用临时文件:', saveErr)
+          // 保存失败，直接使用临时文件打开
+          wx.openDocument({
+            filePath: tempFilePath,
+            fileType: 'pdf',
+            showMenu: true,
+            success: () => console.log('打开临时 PDF 成功'),
+            fail: err => {
+              console.error('打开 PDF 失败:', err)
+              wx.showToast({ title: '打开文件失败', icon: 'none' })
+            }
+          })
+        }
+      },
+      fail: err => {
+        wx.hideLoading()
+        console.error('下载 PDF 失败:', err)
+        wx.showToast({ title: '下载失败，请检查网络', icon: 'none' })
+      }
+    })
+    
+    // 监听下载进度
+    downloadTask.onProgressUpdate(res => {
+      const progress = res.progress || 0
+      wx.showLoading({ title: `正在下载 ${progress}%`, mask: true })
+    })
+  },
+
+  /**
+   * 简单的字符串 hash 函数
+   */
+  hashCode(str) {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash
+    }
+    return Math.abs(hash).toString(16)
   },
 
   

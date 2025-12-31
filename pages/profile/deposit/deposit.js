@@ -17,7 +17,7 @@ function formatTime(isoString) {
 
 Page({
   data: {
-    amount: 0.01,              // 押金金额（测试环境 0.01 元）
+    amount: 100,               // 押金金额（正式环境 100 元）
     serviceWeChat: 'kevin55819',
     servicePhone: '17728117703',
     loading: true,             // 加载状态

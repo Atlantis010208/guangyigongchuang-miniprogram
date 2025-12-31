@@ -82,60 +82,58 @@
    <view class="product-categories">
       <scroll-view class="categories-scroll" scroll-x="true">
         <view class="category-card" bindtap="onCategoryTap" data-category="residential">
-          <image class="category-image" src="https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg" mode="aspectFill"></image>
-          <view class="category-text-overlay">
-            <text class="category-text">住宅照明</text>
+          <view class="category-icon-wrapper">
+            <image class="category-image" src="/images/避坑指南.png" mode="aspectFit"></image>
           </view>
+          <text class="category-text">避坑指南</text>
         </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
-          <image class="category-image" src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg" mode="aspectFill"></image>
-          <view class="category-text-overlay">
-            <text class="category-text">商业照明</text>
+          <view class="category-icon-wrapper">
+            <image class="category-image" src="/images/产品方案.png" mode="aspectFit"></image>
           </view>
+          <text class="category-text">设计流程</text>
         </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="office">
-          <image class="category-image" src="https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg" mode="aspectFill"></image>
-          <view class="category-text-overlay">
-            <text class="category-text">办公照明</text>
+          <view class="category-icon-wrapper">
+            <image class="category-image" src="/images/免费报价.png" mode="aspectFit"></image>
           </view>
+          <text class="category-text">照度计算</text>
         </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="hotel">
-          <image class="category-image" src="https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg" mode="aspectFill"></image>
-          <view class="category-text-overlay">
-            <text class="category-text">酒店照明</text>
+          <view class="category-icon-wrapper">
+            <image class="category-image" src="/images/_酒店.png" mode="aspectFit"></image>
           </view>
+          <text class="category-text">酒店照明</text>
         </view>
       </scroll-view>
-          </view>
+   </view>
 
 
-  <!-- 我的灯光需求助手（两张可滑动卡片，样式复用“表达您的需求”） -->
+  <!-- 服务（参考苹果商店“配件”胶囊按钮风格） -->
   <view class="section assistant-section">
-    <text class="section-title">我的灯光助手</text>
+    <text class="section-title">服务</text>
     <scroll-view class="assistant-scroller" scroll-x show-scrollbar="false" scroll-with-animation>
       <view class="assistant-track">
-        <view class="assistant-card" bindtap="onAssistantTap" data-activity="video">
-          <image class="assistant-image" src="{{assistantToolkitCover}}" mode="aspectFill" binderror="onAssistantImageError" data-key="toolkit"/>
-          <view class="assistant-content">
-            <text class="assistant-title">灯光工具包</text>
-          </view>
+        <view class="service-pill" bindtap="onAssistantTap" data-activity="video">
+            <text class="service-pill-text">灯光工具包</text>
         </view>
-
-        <view class="assistant-card" bindtap="onAssistantTap" data-activity="photo">
-          <image class="assistant-image" src="{{assistantCourseCover}}" mode="aspectFill" binderror="onAssistantImageError" data-key="course"/>
-          <view class="assistant-content">
-            <text class="assistant-title">{{assistantCourseTitle || '十年经验二哥 灯光设计课'}}</text>
-          </view>
+        <view class="service-pill" bindtap="onAssistantTap" data-activity="photo">
+            <text class="service-pill-text">设计课程</text>
+        </view>
+        <view class="service-pill" bindtap="onMallTap">
+            <text class="service-pill-text">灯具</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="full">
+            <text class="service-pill-text">设计服务</text>
         </view>
       </view>
     </scroll-view>
   </view>
 
-  <!-- 认识一下新朋友（主打服务横向滑动） -->
+  <!-- 认识一下新朋友（主打服务竖向展示） -->
   <view class="section hero-section">
     <text class="section-title">发布灯光需求</text>
-    <scroll-view class="hero-scroll" scroll-x>
-      <view class="hero-track">
+    <view class="hero-list">
         <view class="hero-card" bindtap="onServiceTap" data-service="selection">
           <view class="hero-content">
             <image class="hero-image" src="https://images.pexels.com/photos/331692/pexels-photo-331692.jpeg" mode="aspectFill"></image>
@@ -178,11 +176,11 @@
             </view>
           </view>
         </view>
-      </view>
-    </scroll-view>
+    </view>
   </view>
 
   <!-- 附近的精彩活动（从探索页移动过来） -->
+  <!-- 
   <view class="section nearby-activities-section">
     <text class="section-title">表达您的需求</text>
     <text class="section-description">思考，创作，让灵感飞扬！</text>
@@ -208,8 +206,10 @@
       </view>
     </scroll-view>
   </view>
+  -->
 
   <!-- 电子商城入口缩略图 -->
+  <!-- 
   <view class="section">
     <text class="section-title">电子商城</text>
     <view class="mall-card" bindtap="onMallTap">
@@ -220,8 +220,10 @@
       </view>
     </view>
   </view>
+  -->
 
   <!-- 省钱妙招 -->
+  <!-- 
   <view class="section">
     <text class="section-title">节能妙招</text>
     <view class="savings-card" bindtap="onSavingsTap">
@@ -232,6 +234,7 @@
       </view>
     </view>
   </view>
+  -->
 
   
 

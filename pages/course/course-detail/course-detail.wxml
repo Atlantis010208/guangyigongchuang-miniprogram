@@ -57,6 +57,21 @@
   <view class="tab-content" wx:if="{{activeTab === 1}}">
     <!-- Purchased State: Show List -->
     <block wx:if="{{isPurchased}}">
+      <!-- Courseware Bar -->
+      <view class="courseware-section margin-bottom-medium" wx:if="{{course.driveLink}}">
+        <view class="courseware-bar shadow-sm">
+          <view class="courseware-left">
+             <view class="icon-file-wrapper">
+               <view class="icon-file-doc"></view>
+             </view>
+             <text class="courseware-text">课程资料包</text>
+          </view>
+          <view class="download-btn" bindtap="onDownloadTap">
+            <text>下载</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 视频课程章节 -->
       <block wx:for="{{course.chapters}}" wx:key="title">
         <view class="chapter-group margin-bottom-medium" wx:if="{{item.title !== '课程资料包'}}">
@@ -84,75 +99,6 @@
           </view>
         </view>
       </block>
-
-      <!-- 课程资料包 - Apple 风格设计 -->
-      <view class="materials-section" wx:if="{{course.driveLink}}">
-        <text class="chapter-title margin-left-small margin-bottom-small">课程资料包</text>
-        
-        <view class="materials-card">
-          <!-- 资料内容列表 -->
-          <view class="content-list-section">
-            <view class="content-list-header">
-              <text class="content-list-title">资料内容</text>
-            </view>
-            <view class="content-list">
-              <view class="content-item">
-                <text class="item-text">灯光设计常用参数表.pdf</text>
-              </view>
-              <view class="content-item">
-                <text class="item-text">住宅照明CAD图库.dwg</text>
-              </view>
-              <view class="content-item">
-                <text class="item-text">灯具选型Excel表.xlsx</text>
-              </view>
-              <view class="content-item">
-                <text class="item-text">设计案例PSD源文件.psb</text>
-              </view>
-              <view class="content-item">
-                <text class="item-text">施工规范文档.docx</text>
-              </view>
-              <view class="content-item more">
-                <text class="item-text more-text">更多资料...</text>
-              </view>
-            </view>
-          </view>
-
-          <view class="materials-divider"></view>
-
-          <!-- 网盘链接 -->
-          <view class="link-section">
-            <view class="link-label">
-              <text class="label-text">网盘链接</text>
-            </view>
-            <view class="link-input-wrapper">
-              <text class="link-text" selectable="true">{{course.driveLink}}</text>
-              <view class="copy-btn" hover-class="copy-btn-hover" bindtap="onCopyLink">
-                <text class="copy-text">复制</text>
-              </view>
-            </view>
-          </view>
-
-          <!-- 提取码 -->
-          <view class="link-section">
-            <view class="link-label">
-              <text class="label-text">提取码</text>
-            </view>
-            <view class="link-input-wrapper code-wrapper">
-              <text class="code-text">{{course.drivePassword}}</text>
-              <view class="copy-btn" hover-class="copy-btn-hover" bindtap="onCopyPassword">
-                <text class="copy-text">复制</text>
-              </view>
-            </view>
-          </view>
-
-          <view class="materials-divider"></view>
-
-          <!-- 备注信息 -->
-          <view class="materials-note" wx:if="{{course.driveAltContact}}">
-            <text class="note-text">{{course.driveAltContact}}</text>
-          </view>
-        </view>
-      </view>
     </block>
 
     <!-- Locked State -->
@@ -166,6 +112,96 @@
   </view>
 
 </scroll-view>
+
+<!-- Download Modal -->
+<view class="modal-mask {{showDownloadModal ? 'show' : ''}}" wx:if="{{showDownloadModal}}" bindtap="onCloseModal" catchtouchmove="true">
+  <view class="modal-container" catchtap="stopProp">
+    <view class="modal-header">
+      <text class="modal-title">获取课程资料</text>
+    </view>
+
+    <!-- 分段控制器 (Segmented Control) -->
+    <view class="drive-tabs" wx:if="{{course.driveLinkIntl}}">
+      <view class="drive-tab-bg">
+        <view class="drive-tab-slider {{activeDriveTab === 1 ? 'slide-right' : ''}}"></view>
+        <view class="drive-tab-item {{activeDriveTab === 0 ? 'active' : ''}}" bindtap="onDriveTabChange" data-index="0">
+          <text>国内版</text>
+        </view>
+        <view class="drive-tab-item {{activeDriveTab === 1 ? 'active' : ''}}" bindtap="onDriveTabChange" data-index="1">
+          <text>国际版</text>
+        </view>
+      </view>
+    </view>
+    
+    <scroll-view scroll-y class="modal-body">
+      <!-- 国内版网盘 -->
+      <view class="link-section fade-in" wx:if="{{activeDriveTab === 0 || !course.driveLinkIntl}}">
+        <view class="info-card">
+          <!-- 链接行 -->
+          <view class="info-row">
+            <text class="info-label">网盘链接</text>
+            <view class="info-value-box" bindtap="onCopyLink" data-text="{{course.driveLink}}">
+              <text class="info-text">{{course.driveLink || '暂无链接'}}</text>
+              <view class="copy-icon-btn">
+                <view class="icon-copy"></view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 提取码行 -->
+          <view class="info-row" wx:if="{{course.drivePassword}}">
+            <text class="info-label">提取码</text>
+            <view class="info-value-box" bindtap="onCopyPassword" data-text="{{course.drivePassword}}">
+              <text class="info-code">{{course.drivePassword}}</text>
+              <view class="copy-icon-btn">
+                <view class="icon-copy"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="btn-group">
+          <button class="black-btn full-width" bindtap="onCopyAll">一键复制链接和提取码</button>
+        </view>
+      </view>
+
+      <!-- 国际版网盘 -->
+      <view class="link-section fade-in" wx:if="{{activeDriveTab === 1 && course.driveLinkIntl}}">
+        <view class="info-card">
+          <!-- 链接行 -->
+          <view class="info-row">
+            <text class="info-label">网盘链接 (TeraBox)</text>
+            <view class="info-value-box" bindtap="onCopyLinkIntl" data-text="{{course.driveLinkIntl}}">
+              <text class="info-text">{{course.driveLinkIntl}}</text>
+              <view class="copy-icon-btn">
+                <view class="icon-copy"></view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 提取码行 -->
+          <view class="info-row" wx:if="{{course.drivePasswordIntl}}">
+            <text class="info-label">提取码 (Extraction Code)</text>
+            <view class="info-value-box" bindtap="onCopyPasswordIntl" data-text="{{course.drivePasswordIntl}}">
+              <text class="info-code">{{course.drivePasswordIntl}}</text>
+              <view class="copy-icon-btn">
+                <view class="icon-copy"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="btn-group">
+          <button class="black-btn full-width" bindtap="onCopyAllIntl">一键复制链接和提取码</button>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="modal-footer" bindtap="onCloseModal">
+      <text>关闭</text>
+    </view>
+  </view>
+</view>
 
 <!-- Fixed Bottom Bar -->
 <view class="bottom-bar shadow-large">

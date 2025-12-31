@@ -41,14 +41,18 @@
         show-play-btn="{{true}}"
         show-fullscreen-btn="{{true}}"
         show-progress="{{true}}"
-        show-mute-btn="{{true}}"
+        show-mute-btn="{{false}}"
+        show-playback-rate-btn="{{true}}"
+        show-snapshot-button="{{false}}"
+        playback-rate="{{playbackRate}}"
         show-loading="{{true}}"
         enable-progress-gesture="{{false}}"
         enable-play-gesture="{{false}}"
         object-fit="contain"
-        direction="{{0}}"
+        direction="{{90}}"
         play-btn-position="center"
         show-screen-lock-button="{{false}}"
+        show-casting-button="{{false}}"
         vslide-gesture="{{false}}"
         vslide-gesture-in-fullscreen="{{false}}"
         enable-auto-rotation="{{false}}"
@@ -64,9 +68,50 @@
         bindseeked="onVideoSeeked"
       ></video>
       
+      <!-- 右上角更多按钮（三个点） -->
+      <view class="more-btn" bindtap="onMoreTap" wx:if="{{currentLesson && currentLesson.videoUrl}}">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
+      
       <!-- 无视频时显示占位 -->
       <view wx:else class="video-placeholder">
         <text class="placeholder-text">加载视频中...</text>
+      </view>
+    </view>
+
+    <!-- 底部播放选项弹窗 -->
+    <view class="options-mask {{showOptionsPanel ? 'show' : ''}}" wx:if="{{showOptionsPanel}}" bindtap="onCloseOptions">
+    </view>
+    <view class="options-panel {{showOptionsPanel ? 'show' : ''}}">
+      <view class="options-header">
+        <text class="options-title">播放选项</text>
+      </view>
+      <view class="options-content">
+        <view class="option-section">
+          <text class="option-label">倍速</text>
+          <view class="speed-options">
+            <view class="speed-item {{playbackRate === 0.5 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="0.5">
+              <text>0.5x</text>
+            </view>
+            <view class="speed-item {{playbackRate === 0.8 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="0.8">
+              <text>0.8x</text>
+            </view>
+            <view class="speed-item {{playbackRate === 1.0 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="1.0">
+              <text>1x</text>
+            </view>
+            <view class="speed-item {{playbackRate === 1.25 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="1.25">
+              <text>1.25x</text>
+            </view>
+            <view class="speed-item {{playbackRate === 1.5 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="1.5">
+              <text>1.5x</text>
+            </view>
+            <view class="speed-item {{playbackRate === 2.0 ? 'active' : ''}}" bindtap="onSelectSpeed" data-rate="2.0">
+              <text>2x</text>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
 

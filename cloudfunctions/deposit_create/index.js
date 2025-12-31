@@ -17,8 +17,7 @@ const db = cloud.database();
 
 // 押金配置
 const DEPOSIT_CONFIG = {
-  amount: 0.01,           // 押金金额（元），测试环境
-  // amount: 100,         // 正式环境
+  amount: 100,            // 押金金额（元），正式环境
   description: '光乙共创平台-押金'
 };
 

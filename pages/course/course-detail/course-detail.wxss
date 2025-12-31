@@ -49,6 +49,121 @@
   font-weight: 400;
 }
 
+/* ==========================================================================
+   Modal Content Styles (Fix for Truncated Text)
+   ========================================================================== */
+
+/* Reset info-card style within modal to avoid conflict with page style */
+.modal-body .info-card {
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
+  padding-bottom: 0;
+  box-shadow: none;
+  background-color: transparent;
+  display: block; /* Reset flex if needed */
+}
+
+.modal-body .info-row {
+  margin-bottom: 32rpx;
+}
+
+.modal-body .info-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.modal-body .info-value-box {
+  background-color: #f5f5f7; /* Apple System Gray 6 */
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align top to handle multi-line text */
+  min-height: auto;
+}
+
+.modal-body .info-text {
+  font-size: 28rpx;
+  color: #1d1d1f;
+  line-height: 1.6; /* Improve readability and prevent clipping */
+  word-break: break-all; /* Ensure long URLs wrap correctly */
+  flex: 1;
+  margin-right: 24rpx;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.modal-body .info-code {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: 4rpx;
+  font-family: -apple-system-monospaced, "SF Mono", Menlo, monospace;
+}
+
+.modal-body .copy-icon-btn {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2rpx; /* Visual alignment with text */
+}
+
+.modal-body .icon-copy {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #007aff;
+  border-radius: 6rpx;
+  position: relative;
+  background-color: transparent;
+}
+
+.modal-body .icon-copy::after {
+  content: '';
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #007aff; /* Opacity handled by color */
+  border-radius: 6rpx;
+  background-color: #f5f5f7; /* Match background to hide underlying line */
+  z-index: 1;
+}
+
+.modal-body .btn-group {
+  margin-top: 40rpx;
+  padding: 0 40rpx;
+}
+
+.black-btn {
+  background-color: #1d1d1f;
+  color: white;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  height: 88rpx;
+  line-height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.black-btn:active {
+  background-color: #3a3a3c;
+  transform: scale(0.98);
+}
+
+.full-width {
+  width: 100%;
+}
+
 .avatar-small {
   width: 80rpx;
   height: 80rpx;
@@ -168,23 +283,31 @@
 }
 
 .icon-box {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 16rpx;
+  width: 84rpx; /* 稍微增加尺寸以容纳圆形 */
+  height: 84rpx;
+  border-radius: 50%; /* 完美圆形 */
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* 防止压缩 */
 }
 
-.bg-blue { background-color: rgba(0, 122, 255, 0.1); }
-.bg-green { background-color: rgba(52, 199, 89, 0.1); }
+.bg-blue { 
+  background-color: #eff0f2; /* 苹果风格的高级灰 (System Gray 6 调整版) */
+}
+
+.bg-green { 
+  background-color: #e8f5e9; /* 保持文件图标的淡绿色，或者也可以统一成灰色 */
+}
 
 .play-triangle {
   width: 0; 
   height: 0; 
-  border-top: 10rpx solid transparent;
-  border-bottom: 10rpx solid transparent;
-  border-left: 16rpx solid #007aff;
+  border-top: 13rpx solid transparent;
+  border-bottom: 13rpx solid transparent;
+  border-left: 22rpx solid #1d1d1f; /* 接近黑色的深灰，更有质感 */
+  margin-left: 8rpx; /* 视觉居中校正 */
+  opacity: 0.9; /* 稍微柔和一点 */
 }
 
 .file-rect {
@@ -338,159 +461,6 @@
   transform: scale(0.98);
 }
 
-/* ========================================
-   课程资料包 - Apple 风格设计 (Minimalist)
-   ======================================== */
-
-.materials-section {
-  margin-top: 40rpx;
-  margin-bottom: 60rpx;
-}
-
-.materials-card {
-  background: #ffffff;
-  border-radius: 24rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid rgba(0, 0, 0, 0.05);
-}
-
-/* 资料内容列表 */
-.content-list-section {
-  padding: 32rpx;
-}
-
-.content-list-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.content-list-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: -0.5rpx;
-}
-
-.content-list {
-  padding-left: 0;
-}
-
-.content-item {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f5f5f7;
-}
-
-.content-item:last-child {
-  border-bottom: none;
-}
-
-.item-text {
-  font-size: 28rpx;
-  color: #333333;
-  line-height: 1.5;
-}
-
-.content-item.more .item-text.more-text {
-  color: #86868b;
-  font-size: 26rpx;
-}
-
-/* 分割线 */
-.materials-divider {
-  height: 1rpx;
-  background: #e5e5ea;
-  margin: 0 32rpx;
-}
-
-/* 链接区域 */
-.link-section {
-  padding: 24rpx 32rpx;
-}
-
-.link-label {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
-
-.label-text {
-  font-size: 24rpx;
-  color: #86868b;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1rpx;
-}
-
-.link-input-wrapper {
-  display: flex;
-  align-items: center;
-  background: #F2F2F7;
-  border-radius: 16rpx;
-  padding: 12rpx 12rpx 12rpx 24rpx;
-  min-height: 80rpx;
-}
-
-.link-text {
-  flex: 1;
-  font-size: 28rpx;
-  color: #1d1d1f;
-  word-break: break-all;
-  line-height: 1.4;
-  margin-right: 16rpx;
-}
-
-.code-wrapper {
-  justify-content: space-between;
-}
-
-.code-text {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: 4rpx;
-  font-family: -apple-system-monospaced, "SF Mono", Menlo, monospace;
-}
-
-.copy-btn {
-  background: #007AFF;
-  border-radius: 28rpx;
-  padding: 12rpx 32rpx;
-  flex-shrink: 0;
-  box-shadow: 0 2rpx 8rpx rgba(0, 122, 255, 0.2);
-  transition: all 0.2s;
-}
-
-.copy-btn-hover {
-  background: #0062cc;
-  transform: scale(0.96);
-}
-
-.copy-text {
-  font-size: 26rpx;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* 备注信息 */
-.materials-note {
-  display: flex;
-  padding: 24rpx 32rpx 32rpx;
-  background: #ffffff;
-  margin-top: 0;
-  align-items: flex-start;
-}
-
-.note-text {
-  font-size: 24rpx;
-  color: #8e8e93;
-  line-height: 1.5;
-  flex: 1;
-}
-
 /* 课程详情图片 */
 .detail-section {
   padding-bottom: 40rpx;
@@ -498,6 +468,10 @@
 
 .margin-left-small {
   margin-left: 10rpx;
+}
+
+.margin-left-medium {
+  margin-left: 36rpx; /* 增加图标与文字的间距 */
 }
 
 .detail-images-list {
@@ -511,4 +485,331 @@
   border-radius: 40rpx; /* Apple style large radius */
   display: block;
   background-color: white; /* Placeholder color */
+}
+
+/* ==========================================================================
+   Courseware Bar (New Design)
+   ========================================================================== */
+.courseware-section {
+  margin-top: 40rpx;
+  padding: 0 0;
+}
+
+.courseware-bar {
+  background: #ffffff;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.courseware-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.icon-file-wrapper {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 12rpx;
+  background-color: #f2f2f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+}
+
+.icon-file-doc {
+  width: 24rpx;
+  height: 32rpx;
+  border: 3rpx solid #333;
+  border-radius: 4rpx;
+  position: relative;
+}
+
+.icon-file-doc::after {
+  content: '';
+  position: absolute;
+  top: 6rpx;
+  left: 4rpx;
+  width: 12rpx;
+  height: 2rpx;
+  background-color: #333;
+  box-shadow: 0 6rpx 0 #333, 0 12rpx 0 #333;
+}
+
+.courseware-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.download-btn {
+  background-color: #007AFF;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 600; /* Slightly bolder to match apple-button */
+  padding: 14rpx 34rpx; /* Slightly larger touch area */
+  border-radius: 36rpx; /* Match apple-button rounded style */
+  margin-left: 20rpx;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.download-btn:active {
+  background-color: #0056cc;
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   Download Modal
+   ========================================================================== */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.modal-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  width: 620rpx;
+  background-color: #ffffff;
+  border-radius: 40rpx;
+  padding: 48rpx 0 0 0;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 分段控制器 */
+.drive-tabs {
+  padding: 0 40rpx;
+  margin-bottom: 32rpx;
+}
+
+.drive-tab-bg {
+  background-color: #f2f2f7;
+  border-radius: 16rpx;
+  height: 72rpx;
+  display: flex;
+  position: relative;
+  padding: 4rpx;
+}
+
+.drive-tab-item {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28rpx;
+  color: #8e8e93;
+  font-weight: 500;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s;
+}
+
+.drive-tab-item.active {
+  color: #000;
+  font-weight: 600;
+}
+
+.drive-tab-slider {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: calc(50% - 4rpx);
+  height: calc(100% - 8rpx);
+  background-color: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  z-index: 1;
+}
+
+.slide-right {
+  transform: translateX(100%);
+}
+
+.modal-body {
+  min-height: 480rpx;
+  transition: all 0.3s;
+}
+
+.link-section {
+  padding: 0 40rpx 32rpx 40rpx;
+}
+
+/* 移除旧的 section-title */
+.section-title {
+  display: none;
+}
+
+.modal-header {
+  padding: 0 48rpx;
+  display: flex;
+  justify-content: center; /* 标题居中 */
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5rpx;
+}
+
+.modal-desc {
+  padding: 0 48rpx;
+  font-size: 28rpx;
+  color: #86868b;
+  line-height: 1.4;
+  display: block;
+  margin-bottom: 48rpx;
+  text-align: center;
+}
+
+/* 网盘链接区域 */
+.link-section {
+  padding: 24rpx 40rpx 32rpx 40rpx;
+}
+
+.link-section:first-child {
+  padding-top: 0;
+}
+
+.section-title {
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.section-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  letter-spacing: 1rpx;
+}
+
+.link-card {
+  background-color: #f5f5f7; /* Apple System Gray 6 */
+  border-radius: 24rpx;
+  padding: 30rpx;
+}
+
+.margin-top {
+  margin-top: 24rpx;
+}
+
+.link-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.card-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.content-box {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  min-height: 40rpx;
+  display: flex;
+  align-items: center;
+  border: 1rpx solid rgba(0, 0, 0, 0.04); /* 微弱边框增加质感 */
+}
+
+.link-text {
+  font-size: 28rpx;
+  color: #1d1d1f;
+  word-break: break-all;
+  line-height: 1.5;
+  width: 100%;
+}
+
+.code-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  letter-spacing: 6rpx;
+  font-family: -apple-system-monospaced, "SF Mono", Menlo, monospace;
+  color: #1d1d1f;
+  text-align: left; /* 提取码通常较短，左对齐即可 */
+}
+
+.action-btn {
+  background-color: #007AFF;
+  color: white;
+  font-size: 30rpx;
+  font-weight: 600;
+  height: 88rpx; /* Apple Standard Button Height */
+  line-height: 88rpx;
+  border-radius: 18rpx;
+  text-align: center;
+  border: none;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.btn-hover {
+  background-color: #0062cc;
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+/* 国际版按钮样式（绿色主题） */
+.intl-btn {
+  background-color: #34C759;
+}
+
+.btn-hover-intl {
+  background-color: #2ca048;
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.modal-footer {
+  border-top: 1rpx solid #e5e5ea;
+  padding: 32rpx 0;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-footer text {
+  font-size: 32rpx;
+  color: #000;
+  font-weight: 400;
 }

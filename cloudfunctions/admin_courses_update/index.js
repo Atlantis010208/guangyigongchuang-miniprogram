@@ -51,6 +51,7 @@ exports.main = async (event) => {
       'tags', 'status', 'isDelete',
       // 网盘交付配置
       'driveLink', 'drivePassword', 'driveContent', 'driveAltContact',
+      'driveLinkIntl', 'drivePasswordIntl',
       // 新增字段
       'subtitle', 'isFeatured', 'detailImages', 'chapters',
       // 小程序详情页扩展字段（images 已废弃，保留兼容）

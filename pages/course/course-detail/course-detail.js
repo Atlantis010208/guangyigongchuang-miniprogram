@@ -10,7 +10,14 @@ Page({
     isPurchased: false, // 默认未购买
     loading: true,
     error: null,
-    checkingPurchase: false
+    checkingPurchase: false,
+    showDownloadModal: false,
+    activeDriveTab: 0 // 0: 国内版, 1: 国际版
+  },
+
+  onDriveTabChange(e) {
+    const index = parseInt(e.currentTarget.dataset.index);
+    this.setData({ activeDriveTab: index });
   },
 
   onLoad(options) {
@@ -280,15 +287,15 @@ Page({
           wx.showToast({ title: '无法打开播放页', icon: 'none' });
         }
       });
-    } else {
+      } else {
       // 文件下载逻辑 - 需要调用 course_videos 获取文件链接
-      wx.showModal({
+    wx.showModal({
         title: '下载资料',
         content: '即将下载: ' + title,
         confirmText: '下载',
         confirmColor: '#007aff',
-        success: (res) => {
-          if (res.confirm) {
+      success: (res) => {
+        if (res.confirm) {
             wx.showLoading({ title: '下载中...' });
             setTimeout(() => {
               wx.hideLoading();
@@ -298,5 +305,241 @@ Page({
         }
       });
     }
-  }
+  },
+
+  /**
+   * 显示下载弹窗
+   */
+  onDownloadTap() {
+    this.setData({ showDownloadModal: true });
+  },
+
+  /**
+   * 关闭下载弹窗
+   */
+  onCloseModal() {
+    this.setData({ showDownloadModal: false });
+  },
+
+  /**
+   * 一键复制链接和提取码
+   */
+  onCopyAll() {
+    const { course, activeDriveTab } = this.data;
+    if (!course) return;
+
+    let link, code, type;
+
+    if (activeDriveTab === 0 || !course.driveLinkIntl) {
+      // 国内版
+      link = course.driveLink;
+      code = course.drivePassword;
+      type = '国内版';
+    } else {
+      // 国际版
+      link = course.driveLinkIntl;
+      code = course.drivePasswordIntl;
+      type = '国际版';
+    }
+
+    if (!link) {
+      wx.showToast({ title: '暂无链接', icon: 'none' });
+      return;
+    }
+
+    let content = `网盘链接：${link}`;
+    if (code) {
+      content += `\n提取码：${code}`;
+    }
+
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '复制成功',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制网盘链接
+   */
+  onCopyLink(e) {
+    const text = e.currentTarget.dataset.text;
+    if (!text) {
+      wx.showToast({
+        title: '暂无链接',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: '链接已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制提取码
+   */
+  onCopyPassword(e) {
+    const text = e.currentTarget.dataset.text;
+    if (!text) {
+      wx.showToast({
+        title: '无需提取码',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: '提取码已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制国际版网盘链接
+   */
+  onCopyLinkIntl(e) {
+    const text = e.currentTarget.dataset.text;
+    if (!text) {
+      wx.showToast({
+        title: '暂无链接',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: '链接已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制国际版提取码
+   */
+  onCopyPasswordIntl(e) {
+    const text = e.currentTarget.dataset.text;
+    if (!text) {
+      wx.showToast({
+        title: '无需提取码',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: '提取码已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制全部信息
+   */
+  onCopyAll() {
+    const { course, activeDriveTab } = this.data;
+    let text = '';
+    let successMsg = '';
+
+    if (activeDriveTab === 0 || !course.driveLinkIntl) {
+      // 国内版
+      const link = course.driveLink || '暂无链接';
+      const code = course.drivePassword || '无';
+      text = `网盘链接：${link}\n提取码：${code}`;
+      successMsg = '信息已复制';
+    } else {
+      // 国际版
+      const link = course.driveLinkIntl || '暂无链接';
+      const code = course.drivePasswordIntl || '无';
+      text = `Link: ${link}\nExtraction Code: ${code}`;
+      successMsg = 'Copied';
+    }
+
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: successMsg,
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制国内版所有信息
+   */
+  onCopyAll() {
+    const { course } = this.data;
+    if (!course || !course.driveLink) return;
+    
+    let content = `网盘链接：${course.driveLink}`;
+    if (course.drivePassword) {
+      content += `\n提取码：${course.drivePassword}`;
+    }
+    
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '已复制全部信息',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制国际版所有信息
+   */
+  onCopyAllIntl() {
+    const { course } = this.data;
+    if (!course || !course.driveLinkIntl) return;
+    
+    let content = `网盘链接：${course.driveLinkIntl}`;
+    if (course.drivePasswordIntl) {
+      content += `\n提取码：${course.drivePasswordIntl}`;
+    }
+    
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '已复制全部信息',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 阻止冒泡
+   */
+  stopProp() {}
 });

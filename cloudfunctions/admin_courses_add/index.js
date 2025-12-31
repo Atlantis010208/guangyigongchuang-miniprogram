@@ -93,6 +93,12 @@ exports.main = async (event) => {
       /** 备用联系/说明（如：需要"夸克网盘"或"其他方式"下载，加vx：ceokpi） */
       driveAltContact: data.driveAltContact || '',
       
+      /** 国际版网盘链接（海外用户使用） */
+      driveLinkIntl: data.driveLinkIntl || '',
+      
+      /** 国际版网盘提取码 */
+      drivePasswordIntl: data.drivePasswordIntl || '',
+      
       // ========== 小程序详情页扩展字段（images 已废弃，保留兼容） ==========
       
       /** 轮播图列表（已废弃，使用 detailImages） */

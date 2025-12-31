@@ -28,6 +28,8 @@ Page({
   onShow() {
     // 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
     this.loadUserAvatar();
+    // 每次显示时刷新课程列表（确保获取最新数据，包括价格更新）
+    this.loadCourses();
   },
 
   onPullDownRefresh() {
@@ -69,9 +71,16 @@ Page({
       if (res.result && res.result.success) {
         const { data, total, pagination } = res.result;
         
+        // 🔍 调试日志：查看返回的课程数量
+        console.log('[课程中心] 云函数返回课程数量:', data.length);
+        console.log('[课程中心] 课程列表:', data);
+        
         // 区分推荐课程和普通课程
         const featuredCourse = data.find(c => c.isFeatured) || data[0] || null;
         const otherCourses = data.filter(c => c !== featuredCourse);
+        
+        console.log('[课程中心] 推荐课程:', featuredCourse);
+        console.log('[课程中心] 其他课程数量:', otherCourses.length);
 
         this.setData({
           courses: otherCourses,
