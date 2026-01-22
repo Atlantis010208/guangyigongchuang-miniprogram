@@ -1,0 +1,10 @@
+{
+  "name": "debug_purchase_records",
+  "version": "1.0.0",
+  "description": "调试购买记录：查询和删除用户的所有购买相关记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

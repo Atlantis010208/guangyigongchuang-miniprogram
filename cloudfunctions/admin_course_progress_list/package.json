@@ -1,0 +1,10 @@
+{
+  "name": "admin_course_progress_list",
+  "version": "1.0.0",
+  "description": "管理员查看用户学习进度列表",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

@@ -1,0 +1,15 @@
+{
+  "name": "admin_viewers_list",
+  "version": "1.0.0",
+  "description": "后台管理系统 - 获取观看者列表",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

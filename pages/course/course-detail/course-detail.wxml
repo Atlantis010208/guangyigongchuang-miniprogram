@@ -1,4 +1,15 @@
-<scroll-view scroll-y style="height: 100vh; background-color: #f2f2f7; padding-bottom: 180rpx;">
+<wxs module="anim" src="./course-detail.wxs"></wxs>
+<scroll-view 
+  scroll-y 
+  class="scroll-container"
+  enhanced="{{true}}"
+  bounces="{{true}}"
+  show-scrollbar="{{false}}"
+  bindscroll="{{anim.onScroll}}"
+  bindtouchstart="{{anim.touchStart}}"
+  bindtouchmove="{{anim.touchMove}}"
+  bindtouchend="{{anim.touchEnd}}"
+>
   <!-- Cover Image Header -->
   <view class="cover-wrapper">
     <image src="{{course.coverUrl}}" mode="aspectFill" class="cover-image"></image>
@@ -30,7 +41,7 @@
       <view class="segment-line" wx:if="{{activeTab === 0}}"></view>
     </view>
     <view class="segment-item {{activeTab === 1 ? 'active' : ''}}" bindtap="onTabChange" data-index="{{1}}">
-      <text class="segment-text">大纲 & 资料</text>
+      <text class="segment-text">课程章节</text>
       <view class="segment-line" wx:if="{{activeTab === 1}}"></view>
     </view>
   </view>
@@ -55,59 +66,62 @@
 
   <!-- Tab Content: Syllabus -->
   <view class="tab-content" wx:if="{{activeTab === 1}}">
-    <!-- Purchased State: Show List -->
-    <block wx:if="{{isPurchased}}">
-      <!-- Courseware Bar -->
-      <view class="courseware-section margin-bottom-medium" wx:if="{{course.driveLink}}">
-        <view class="courseware-bar shadow-sm">
-          <view class="courseware-left">
-             <view class="icon-file-wrapper">
-               <view class="icon-file-doc"></view>
-             </view>
-             <text class="courseware-text">课程资料包</text>
-          </view>
-          <view class="download-btn" bindtap="onDownloadTap">
-            <text>下载</text>
-          </view>
+    <!-- Courseware Bar -->
+    <view class="courseware-section margin-bottom-medium" wx:if="{{course.driveLink}}">
+      <view class="courseware-bar shadow-sm">
+        <view class="courseware-left">
+           <view class="icon-file-wrapper">
+             <view class="icon-file-doc"></view>
+           </view>
+           <text class="courseware-text">课程包</text>
+        </view>
+        <view class="download-btn" bindtap="onDownloadTap">
+          <text>下载</text>
         </view>
       </view>
+    </view>
 
-      <!-- 视频课程章节 -->
-      <block wx:for="{{course.chapters}}" wx:key="title">
-        <view class="chapter-group margin-bottom-medium" wx:if="{{item.title !== '课程资料包'}}">
-          <text class="chapter-title margin-left-small margin-bottom-small">{{item.title}}</text>
-          <view class="apple-card overflow-hidden">
-            <block wx:for="{{item.lessons}}" wx:key="id" wx:for-item="lesson" wx:for-index="idx">
-              <view class="lesson-item flex-row padding-medium" hover-class="hover-bg" bindtap="onLessonTap" data-type="{{lesson.type}}" data-title="{{lesson.title}}" data-id="{{lesson.id}}">
-                <view class="icon-box {{lesson.type === 'video' ? 'bg-blue' : 'bg-green'}}">
-                   <!-- Simple Shapes for Icons -->
-                   <view class="play-triangle" wx:if="{{lesson.type === 'video'}}"></view>
-                   <view class="file-rect" wx:if="{{lesson.type === 'file'}}"></view>
-                </view>
-                <view class="flex-column flex-1 margin-left-medium">
+    <!-- 视频课程章节 -->
+    <block wx:for="{{course.chapters}}" wx:key="title">
+      <view class="chapter-group margin-bottom-medium" wx:if="{{item.title !== '课程资料包'}}">
+        <text class="chapter-title">{{item.title}}</text>
+        <view class="apple-card overflow-hidden">
+          <block wx:for="{{item.lessons}}" wx:key="id" wx:for-item="lesson" wx:for-index="idx">
+            <view class="lesson-item flex-row padding-medium" hover-class="hover-bg" bindtap="onLessonTap" data-type="{{lesson.type}}" data-title="{{lesson.title}}" data-id="{{lesson.id}}" data-free="{{lesson.isFree}}">
+              <view class="icon-box {{lesson.type === 'video' ? 'bg-blue' : 'bg-green'}}">
+                 <!-- Simple Shapes for Icons -->
+                 <view class="play-triangle" wx:if="{{lesson.type === 'video'}}"></view>
+                 <view class="file-rect" wx:if="{{lesson.type === 'file'}}"></view>
+              </view>
+              <view class="flex-column flex-1 margin-left-medium">
+                <view class="flex-row align-center">
                   <text class="title-small">{{lesson.title}}</text>
-                  <text class="caption-text margin-top-small" wx:if="{{lesson.type === 'video'}}">{{lesson.duration}} {{lesson.isFree ? '· 试看' : ''}}</text>
-                  <text class="caption-text margin-top-small" wx:if="{{lesson.type === 'file'}}">{{lesson.format}} · {{lesson.size}}</text>
                 </view>
-                <view class="action-icon">
-                  <text class="arrow-right" wx:if="{{lesson.type === 'video'}}">▶</text>
-                  <text class="arrow-down" wx:if="{{lesson.type === 'file'}}">↓</text>
+                <view class="flex-row align-center margin-top-small">
+                  <text class="caption-text" wx:if="{{lesson.type === 'video'}}">{{lesson.duration}} {{lesson.isFree ? '· 试看' : ''}}</text>
+                  <text class="caption-text" wx:if="{{lesson.type === 'file'}}">{{lesson.format}} · {{lesson.size}}</text>
+                  <!-- 学习进度状态（仅已购买） -->
+                  <block wx:if="{{lesson.type === 'video' && isPurchased}}">
+                    <text class="lesson-status completed" wx:if="{{lesson.isCompleted}}">· 已学习</text>
+                    <text class="lesson-status learning" wx:elif="{{lesson.progress > 0}}">· 已学习 {{lesson.progress}}%</text>
+                    <text class="lesson-status not-started" wx:else>· 未学习</text>
+                  </block>
                 </view>
               </view>
-              <view class="divider thick" style="margin: 0 40rpx;" wx:if="{{idx < item.lessons.length - 1}}"></view>
-            </block>
-          </view>
+              <view class="action-icon">
+                <text class="arrow-right" wx:if="{{lesson.type === 'video'}}">▶</text>
+                <text class="arrow-down" wx:if="{{lesson.type === 'file'}}">↓</text>
+              </view>
+            </view>
+            <view class="divider thick" style="margin: 0 40rpx;" wx:if="{{idx < item.lessons.length - 1}}"></view>
+          </block>
         </view>
-      </block>
+      </view>
     </block>
 
-    <!-- Locked State -->
-    <view class="locked-state" wx:else>
-      <view class="lock-icon-bg">
-        <view class="icon-lock"></view>
-      </view>
-      <text class="locked-title">课程内容已锁定</text>
-      <text class="locked-subtitle">购买后即可解锁全部视频与资料</text>
+    <!-- 课程更新提示 -->
+    <view class="more-updates-tip">
+      <text>更多课程更新中。。。</text>
     </view>
   </view>
 
@@ -217,7 +231,10 @@
       <button class="apple-button" hover-class="button-hover" bindtap="onPurchase">立即购买</button>
     </block>
     <block wx:else>
-      <view></view> <!-- Spacer -->
+      <view class="flex-column progress-info">
+        <text class="progress-label">学习进度</text>
+        <text class="progress-value">{{progress}}%</text>
+      </view>
       <button class="apple-button" hover-class="button-hover" bindtap="onStartLearning">立即观看</button>
     </block>
   </view>

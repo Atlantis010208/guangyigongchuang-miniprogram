@@ -8,6 +8,7 @@ Page({
     course: null,
     activeTab: 0, // 0: 介绍, 1: 目录
     isPurchased: false, // 默认未购买
+    progress: 0, // 学习进度（0-100）
     loading: true,
     error: null,
     checkingPurchase: false,
@@ -25,15 +26,33 @@ Page({
     this.courseId = id;
     this.autoPlay = autoPlay === '1';
     
+    // 重置状态，确保数据干净
+    this.setData({
+      isPurchased: false,
+      progress: 0,
+      course: null,
+      chapters: []
+    });
+    
     if (id) {
       this.loadCourseDetail(id);
     }
   },
 
   onShow() {
-    // 页面显示时重新检查购买状态（用户可能刚完成支付）
-    if (this.courseId && this.data.course) {
-      this.checkPurchaseStatus(this.courseId);
+    // 页面显示时重新加载课程详情和购买状态（可能有新的学习进度）
+    // 重置自动播放标志，避免循环跳转
+    this.autoPlay = false;
+    
+    if (this.courseId) {
+      // ⚠️ 先重置状态，防止数据残留
+      this.setData({
+        isPurchased: false,
+        progress: 0
+      });
+      
+      // 重新加载课程详情，获取最新的每个课时的进度
+      this.loadCourseDetail(this.courseId);
     }
   },
 
@@ -41,7 +60,13 @@ Page({
    * 加载课程详情
    */
   async loadCourseDetail(courseId) {
-    this.setData({ loading: true, error: null });
+    // ⚠️ 加载前先重置购买状态，确保数据不会残留
+    this.setData({ 
+      loading: true, 
+      error: null,
+      isPurchased: false,
+      progress: 0
+    });
 
     try {
       // 调用 course_detail 获取课程详情
@@ -113,19 +138,32 @@ Page({
       console.log('[course-detail] purchase_check Response:', res.result);
 
       if (res.result && res.result.success) {
-        const { isPurchased, purchasedAt, orderId } = res.result.data;
+        const { isPurchased, purchasedAt, orderId, progress } = res.result.data;
+        
+        // ⚠️ 严格验证：确保 isPurchased 是明确的 true
+        const isActuallyPurchased = isPurchased === true;
+        const actualProgress = isActuallyPurchased ? (progress || 0) : 0;
+        
+        console.log('[course-detail] 最终购买状态:', {
+          isPurchased: isActuallyPurchased,
+          progress: actualProgress
+        });
+        
         this.setData({
-          isPurchased: isPurchased || false,
+          isPurchased: isActuallyPurchased,
+          progress: actualProgress,
           checkingPurchase: false
         });
 
         // 记录购买信息（可用于后续逻辑）
-        if (isPurchased) {
+        if (isActuallyPurchased) {
           this.purchaseInfo = { purchasedAt, orderId };
         }
       } else {
+        console.log('[course-detail] 检查失败，设置为未购买');
         this.setData({
           isPurchased: false,
+          progress: 0,
           checkingPurchase: false
         });
       }
@@ -134,26 +172,18 @@ Page({
       // 检查失败默认为未购买
       this.setData({
         isPurchased: false,
+        progress: 0,
         checkingPurchase: false
       });
     }
   },
+
 
   /**
    * Tab 切换
    */
   onTabChange(e) {
     const index = e.currentTarget.dataset.index;
-    
-    // 如果未购买且切换到大纲 Tab，提示购买
-    if (index === 1 && !this.data.isPurchased) {
-      wx.showToast({
-        title: '请先购买课程',
-        icon: 'none'
-      });
-      return;
-    }
-    
     this.setData({ activeTab: index });
   },
 
@@ -266,14 +296,22 @@ Page({
    * 点击课时
    */
   onLessonTap(e) {
-    const { type, title, id } = e.currentTarget.dataset;
+    const { type, title, id, free } = e.currentTarget.dataset;
     const { isPurchased, course } = this.data;
 
-    // 未购买状态不允许访问课时
-    if (!isPurchased) {
-      wx.showToast({
-        title: '请先购买课程',
-        icon: 'none'
+    // 未购买状态：如果不是试看课时，显示购买提示
+    if (!isPurchased && !free) {
+      wx.showModal({
+        title: '课程未购买',
+        content: '购买课程后即可观看完整内容和下载资料',
+        confirmText: '立即购买',
+        cancelText: '暂不购买',
+        confirmColor: '#007aff',
+        success: (res) => {
+          if (res.confirm) {
+            this.onPurchase();
+          }
+        }
       });
       return;
     }
@@ -311,6 +349,25 @@ Page({
    * 显示下载弹窗
    */
   onDownloadTap() {
+    const { isPurchased } = this.data;
+    
+    // 未购买状态：显示购买提示
+    if (!isPurchased) {
+      wx.showModal({
+        title: '课程未购买',
+        content: '购买课程后即可下载课程资料包',
+        confirmText: '立即购买',
+        cancelText: '暂不购买',
+        confirmColor: '#007aff',
+        success: (res) => {
+          if (res.confirm) {
+            this.onPurchase();
+          }
+        }
+      });
+      return;
+    }
+    
     this.setData({ showDownloadModal: true });
   },
 

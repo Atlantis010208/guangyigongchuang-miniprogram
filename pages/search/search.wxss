@@ -1,6 +1,58 @@
-/* 搜索页样式（照度计算器） */
-.page { background-color: #f8f8fb; min-height: 100vh; padding: 40rpx 30rpx 120rpx; }
-.search-title { margin-right: auto; font-size: 56rpx; font-weight: bold; }
+/* 照度计算器（统一版）- 合并免费版和付费版样式 */
+page {
+  background-color: #F5F7FA;
+  min-height: 100vh;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== 通用样式 ==================== */
+
+/* Loading 状态 */
+.loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #F5F7FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #e5e5ea;
+  border-top-color: #4080FF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #8e8e93;
+}
+
+/* ==================== 免费版样式 ==================== */
+
+.free-version {
+  background-color: #f8f8fb;
+  min-height: 100vh;
+  padding: 40rpx 30rpx 200rpx;
+}
 
 /* 顶部标签 */
 .tabs { display:flex; align-items:center; justify-content: space-between; padding: 0 0 20rpx; margin-top: 10rpx; }
@@ -14,17 +66,18 @@
 .cell { display:flex; align-items:center; justify-content: space-between; padding: 28rpx 24rpx; border-bottom: 1rpx solid #f2f2f7; transition: background-color .15s ease; }
 .cell:last-child { border-bottom: none; }
 .cell-active { background-color: #f7f7f9; }
-.label { font-size: 30rpx; color:#000; }
-.label.fixed { width: 220rpx; flex: 0 0 220rpx; }
-.input { flex:1; text-align:right; font-size: 30rpx; color:#000; }
+
+.free-version .label { font-size: 30rpx; color:#000; }
+.free-version .label.fixed { width: 220rpx; flex: 0 0 220rpx; }
+.free-version .input { flex:1; text-align:right; font-size: 30rpx; color:#000; }
 .unit { margin-left: 12rpx; color:#8e8e93; font-size: 28rpx; }
 .result { color: #ff3b30; font-weight: 700; font-size: 32rpx; }
 .card .value{margin-left:auto;display:flex;align-items:center;justify-content:flex-end}
 .card .result{display:inline-block;min-width:180rpx;text-align:right}
 .card .unit{display:inline-block;min-width:80rpx;text-align:left;margin-left:12rpx}
 
-.note { text-align:center; margin-top: 30rpx; }
-.note-text { color:#007aff; font-size: 28rpx; }
+.free-version .note { text-align:center; margin-top: 30rpx; }
+.free-version .note-text { color:#007aff; font-size: 28rpx; }
 
 /* 灯具类型行样式 */
 .card-heading{padding:6rpx 0 10rpx}
@@ -32,37 +85,1176 @@
 .heading-desc{display:block;color:#8e8e93;font-size:22rpx;margin-top:4rpx}
 .heading-actions{margin-top:10rpx;text-align:right}
 .param-btn{background:#000;color:#fff;border-radius:30rpx;padding:14rpx 24rpx;font-size:26rpx}
-.lamp-table{background:#fff;border-radius:20rpx;padding:20rpx 28rpx;margin-top:10rpx;box-sizing:border-box;overflow:visible}
-.lamp-table-header,.lamp-table-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:12rpx;align-items:stretch;min-height:60rpx}
-.lamp-table-header{color:#8e8e93;font-size:22rpx;margin-bottom:10rpx}
-.lamp-table-header .th{display:flex;flex-direction:column;align-items:center;justify-content:center}
-.lamp-table-header .th.name{align-items:flex-start}
-.lamp-table-header .title{font-size:24rpx;color:#8e8e93}
-.lamp-table-header .unit{font-size:20rpx;color:#c7c7cc;margin-top:4rpx}
-.lamp-table-row .td,.lamp-table-row .td-input{justify-self:center}
-.lamp-table-row .name{justify-self:start}
-.lamp-table-row{padding:0}
-.th.name,.td.name{text-align:left}
-.td-input{background:#fff;border:1rpx solid #e5e5ea;border-radius:12rpx;padding:16rpx 14rpx;text-align:right;width:100%;box-sizing:border-box;min-height:60rpx;line-height:1.4;font-size:28rpx;vertical-align:middle;display:flex;align-items:center}
 .lamp-cells .cell{align-items:flex-start}
 .lamp-inline{display:flex;align-items:center;gap:14rpx;flex-wrap:wrap;justify-content:flex-end}
 .spec{color:#8e8e93;font-size:24rpx}
 .lamp-input{flex:0 0 140rpx;background:#fff;border-radius:14rpx;padding:10rpx 14rpx}
 
-/* 弹窗样式 */
-.popup-mask{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:999;display:flex;align-items:center;justify-content:center;padding:40rpx}
-.popup-panel{width:100%;max-width:680rpx;background:#fff;border-radius:40rpx;overflow:hidden;position:relative;z-index:1}
-.popup-header{display:flex;align-items:center;justify-content:space-between;padding:24rpx 28rpx;border-bottom:1rpx solid #f2f2f7}
-.popup-title{font-size:32rpx;font-weight:700;color:#000}
-.popup-close{font-size:28rpx;color:#007aff}
-.popup-body{max-height:70vh;padding:24rpx;overflow-y:auto}
-.popup-actions{display:flex;justify-content:space-between;gap:16rpx;padding:16rpx;border-top:1rpx solid #f2f2f7}
-.btn{flex:0 0 46%;padding:20rpx;border-radius:30rpx;font-size:28rpx;border:2rpx solid #007aff;background:#fff;color:#007aff}
-.btn.primary{background:#fff;color:#007aff;border:2rpx solid #007aff}
-.btn.ghost{background:#fff;color:#007aff;border:2rpx solid #007aff}
-.popup-backdrop{position:absolute;left:0;right:0;top:0;bottom:0;z-index:0}
+/* ==================== 付费版样式 (Pixel-Perfect V2) ==================== */
 
-@media (prefers-color-scheme: dark) {
-  .page { background-color: #f8f8fb; }
-  .search-title { color: #000; }
+.pro-version-v2 {
+  min-height: 100vh;
+  background-color: #F5F7FA;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部 */
+.v2-header {
+  height: 420rpx;
+  top: -25rpx;
+  background: linear-gradient(180deg, #4FA1F7 0%, #367BE6 100%);
+  padding: 40rpx 50rpx;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  justify-content: flex-start;
+  border-bottom-left-radius: 40rpx;
+  border-bottom-right-radius: 40rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-top: 80rpx;
+}
+
+.v2-header-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.v2-logo {
+  position: relative;
+  left: auto; top: auto;
+  width: 200rpx;
+  height: 60rpx;
+  margin-bottom: 30rpx;
+  z-index: 2;
+}
+
+.v2-overlay-title {
+  position: relative;
+  left: auto; top: auto;
+  color: #fff;
+  font-size: 56rpx;
+  font-weight: 800;
+  letter-spacing: 4rpx;
+  z-index: 2;
+  text-shadow: 0 4rpx 8rpx rgba(0,0,0,0.15);
+  margin-bottom: 12rpx;
+  line-height: 1.2;
+}
+
+.v2-overlay-subtitle {
+  position: relative;
+  left: auto; top: auto;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  z-index: 2;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+  margin-bottom: 20rpx;
+}
+
+.v2-overlay-desc {
+  position: relative;
+  left: auto; top: auto;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 24rpx;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+  z-index: 2;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+.v2-title-group {
+  margin-top: 20rpx;
+  z-index: 1;
+}
+
+.v2-main-title {
+  color: #fff;
+  font-size: 48rpx;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 10rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+.v2-sub-title {
+  color: rgba(255,255,255,0.8);
+  font-size: 26rpx;
+  display: block;
+}
+
+/* 内容区域 */
+.v2-content {
+  margin-top: -60rpx;
+  padding: 0 30rpx 60rpx;
+  position: relative;
+  z-index: 10;
+}
+
+/* 通用卡片 */
+.v2-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+  margin-bottom: 30rpx;
+  padding: 40rpx 30rpx;
+}
+
+/* Tab 切换 */
+.v2-tabs {
+  display: flex;
+  background: #F5F7FA;
+  border-radius: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 40rpx;
+}
+
+.v2-tab-item {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  color: #666;
+  padding: 16rpx 0;
+  border-radius: 12rpx;
+  transition: all 0.2s;
+}
+
+.v2-tab-item.active {
+  background: #fff;
+  color: #367BE6;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+}
+
+/* 表单行 */
+.v2-input-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+  height: 100rpx;
+  background: #F7F8FA; /* 核心：整行浅灰背景 */
+  border-radius: 16rpx;
+  padding: 0 30rpx;
+}
+
+.v2-label {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+}
+
+.v2-unit {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: normal;
+  margin-left: 8rpx;
+}
+
+.v2-label-wrap {
+  display: flex;
+  align-items: center;
+  width: 200rpx; /* 与原来的 .v2-label 保持一致或适配 */
+}
+
+.v2-label-wrap .v2-label {
+  width: auto;
+  margin-right: 8rpx;
+}
+
+.v2-info-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.v2-input-box {
+  flex: 1;
+  height: 100%;
+  background: transparent; /* 移除独立背景 */
+  padding: 0;
+  font-size: 30rpx;
+  color: #333;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.picker-text {
+  flex: 1;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.picker-text.placeholder {
+  color: #C0C4CC;
+}
+
+.v2-picker-arrow {
+  margin-left: 10rpx;
+  color: #C0C4CC;
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.v2-add-row {
+  margin-bottom: 20rpx;
+}
+
+/* 复合公式输入框 */
+.v2-input-box.formula {
+  justify-content: flex-end;
+  gap: 10rpx;
+  background: transparent; 
+  padding: 0;
+}
+
+.formula-picker {
+  background: transparent; /* 移除独立背景 */
+  height: 100%;
+  padding: 0 10rpx;
+  display: flex;
+  align-items: center;
+  color: #C0C4CC;
+}
+
+.formula-picker .selected-val {
+  color: #333;
+}
+
+.op {
+  color: #999;
+  font-weight: bold;
+}
+
+.res {
+  background: transparent; /* 移除独立背景 */
+  height: 100%;
+  padding: 0 10rpx;
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  color: #333;
+  min-width: 60rpx;
+  justify-content: center;
+  font-size: 30rpx;
+}
+
+/* 灯具列表 */
+.v2-lamp-list {
+  margin-bottom: 30rpx;
+}
+
+.v2-lamp-item {
+  background: #F7F8FA;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid #eee;
+}
+
+.v2-lamp-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.v2-lamp-title-group {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.v2-btn-edit {
+  width: 32rpx;
+  height: 32rpx;
+  margin-left: 12rpx;
+  opacity: 0.6;
+}
+
+.v2-btn-edit:active {
+  opacity: 1;
+}
+
+.v2-lamp-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.v2-lamp-remove {
+  color: #000000ff;
+  font-size: 32rpx;
+  padding: 0 10rpx;
+}
+
+.v2-lamp-body {
+  display: flex;
+  gap: 16rpx;
+}
+
+.v2-input-mini {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 10rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.v2-input-mini input {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+}
+
+.v2-input-mini text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.v2-add-btn {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #367BE6;
+  color: #367BE6;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  background: rgba(54, 123, 230, 0.05);
+}
+
+/* 结果卡片 */
+.result-card {
+  min-height: 240rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.v2-result-title {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.v2-result-val {
+  font-size: 80rpx;
+  font-weight: bold;
+  color: #333; /* 计算出结果后为深色，或者用蓝色 */
+  line-height: 1;
+}
+
+.v2-result-unit {
+  font-size: 32rpx;
+  color: #999;
+  margin-left: 10rpx;
+}
+
+.v2-result-placeholder {
+  font-size: 48rpx;
+  color: #E0E0E0; /* 浅灰色占位 */
+  font-weight: bold;
+}
+
+/* 底部按钮 */
+.v2-btn-calculate {
+  background: #367BE6;
+  color: #fff;
+  border-radius: 44rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 20rpx rgba(54, 123, 230, 0.25);
+  margin-bottom: 40rpx;
+}
+
+.v2-btn-calculate:active {
+  opacity: 0.9;
+  transform: translateY(2rpx);
+}
+
+.v2-copyright {
+  text-align: center;
+  color: #D0D0D0;
+  font-size: 24rpx;
+  margin-top: 20rpx;
+}
+
+/* ==================== 计算结果页 (V3 - 图二风格) ==================== */
+
+.v3-result-container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: #F5F7FA;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 1. 绿色导航栏 (已移除，使用原生) */
+/* .v3-nav-bar { ... } */
+
+/* 滚动区域 */
+.v3-result-scroll {
+  flex: 1;
+  padding: 24rpx 30rpx 180rpx; /* 底部留出按钮空间 */
+  box-sizing: border-box;
+}
+
+/* 通用卡片样式 */
+.v3-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+}
+
+/* 2. 核心结果大卡片 */
+.main-card {
+  text-align: center;
+  padding-top: 30rpx;
+}
+
+.v3-card-header {
+  text-align: left; /* 左对齐 */
+  margin-bottom: 40rpx;
+}
+
+.v3-card-title {
+  font-size: 33rpx;
+  color: #000; /* 纯黑 */
+  font-weight: 500;
+  display: block;
+  margin-bottom: 30rpx;
+}
+
+.v3-card-header-line {
+  height: 1rpx;
+  background: #F0F0F0;
+  margin: 0 10rpx; /* 两侧留白，不撑满 */
+}
+
+.v3-main-val-area {
+  margin-bottom: 40rpx;
+}
+
+.v3-val-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.v3-val-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.v3-big-num {
+  font-size: 80rpx;
+  font-weight: bold;
+  color: #43A047; /* 绿色结果 */
+  line-height: 1;
+}
+
+.v3-big-unit {
+  font-size: 32rpx;
+  color: #999;
+  margin-left: 10rpx;
+}
+
+.v3-sub-val-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 40rpx;
+}
+
+.v3-sub-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.v3-sub-num {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.v3-sub-num.gold { color: #FBC02D; } /* 金色 */
+.v3-sub-num.blue { color: #2979FF; } /* 蓝色 */
+
+.v3-sub-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.v3-divider {
+  height: 1rpx;
+  background: #F0F0F0;
+  margin: 0 -30rpx 30rpx; /* 延伸到卡片边缘 */
+}
+
+/* 详情列表 (内嵌卡片风格) */
+.v3-detail-card-inner {
+  background: #fff; /* 改为白色背景 */
+  border-radius: 16rpx;
+  /* padding: 10rpx 30rpx;  移除内边距，让分割线容易控制 */
+  margin-top: 10rpx;
+  /* border: 1rpx solid #F0F0F0;  移除实线边框 */
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05); /* 增加柔和阴影 */
+}
+
+.v3-detail-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.v3-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 30rpx; /* 上下左右内边距 */
+  position: relative;
+}
+
+/* 自定义分割线 (伪元素实现，方便控制缩进) */
+.v3-detail-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20rpx; /* 左侧留白 */
+  right: 20rpx; /* 右侧留白 */
+  height: 1rpx;
+  background: #F5F5F5;
+}
+
+/* 最后一项去掉分割线 */
+.v3-detail-item:last-child::after {
+  display: none;
+}
+
+/* 移除旧的边框样式 */
+/* .v3-detail-item { border-bottom: ... } */
+
+.v3-detail-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.v3-detail-val {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 3. 数据控制栏 (已移除) */
+/* .v3-control-bar { ... } */
+
+/* 4. 数据表格 (已移除) */
+/* .table-card { ... } */
+
+/* 5. 底部操作栏 */
+.v3-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.96); /* 高透背景 */
+  backdrop-filter: blur(20px); /* 磨砂玻璃效果 */
+  padding: 20rpx 32rpx 20rpx; /* 移除 safe-area，紧贴 TabBar */
+  box-shadow: 0 -1rpx 0 rgba(0, 0, 0, 0.05); /* 极细分割线 */
+  display: flex;
+  gap: 24rpx;
+  z-index: 3001;
+}
+
+.v3-btn-white {
+  flex: 1;
+  height: 96rpx; /* 加高按钮 */
+  background: #F2F2F7; /* iOS 风格次级按钮浅灰 */
+  border: none; /* 移除边框 */
+  border-radius: 48rpx; /* 全圆角 */
+  color: #000;
+  font-size: 32rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.v3-btn-white::after { border: none; }
+
+.v3-btn-white:active {
+  background: #E5E5EA;
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+.v3-btn-green {
+  flex: 1.5;
+  height: 96rpx; /* 加高按钮 */
+  background: #007AFF; /* Apple Blue */
+  border-radius: 48rpx; /* 全圆角 */
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(0, 122, 255, 0.25); /* 柔和蓝色投影 */
+  transition: all 0.2s;
+}
+
+.v3-btn-green::after { border: none; }
+
+.v3-btn-green:active {
+  background: #0062CC;
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 10rpx rgba(0, 122, 255, 0.2);
+}
+
+.v3-btn-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+}
+
+/* ==================== 升级弹窗样式 ==================== */
+
+.upgrade-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+.upgrade-modal-content {
+  width: 100%;
+  max-width: 640rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  overflow: hidden;
+  position: relative;
+  animation: modalSlideUp 0.3s ease-out;
+}
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.modal-close-btn {
+  position: absolute;
+  top: 24rpx;
+  right: 28rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #c7c7cc;
+  z-index: 10;
+}
+
+/* 弹窗头部 */
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 48rpx 40rpx 40rpx;
+  text-align: center;
+}
+.modal-icon {
+  font-size: 72rpx;
+  margin-bottom: 16rpx;
+}
+.modal-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8rpx;
+}
+.modal-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 弹窗内容 */
+.modal-body {
+  padding: 32rpx 40rpx;
+}
+.feature-list {
+  margin-bottom: 32rpx;
+}
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f2f2f7;
+}
+.feature-item:last-child {
+  border-bottom: none;
+}
+.feature-icon-wrapper {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  background: #f5f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.feature-icon {
+  font-size: 32rpx;
+}
+.feature-content {
+  flex: 1;
+}
+.feature-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4rpx;
+}
+.feature-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #8e8e93;
+}
+
+/* 价格区域 */
+.price-section {
+  background: #f8f8fb;
+  border-radius: 20rpx;
+  padding: 24rpx;
+}
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.price-label {
+  font-size: 28rpx;
+  color: #1a1a1a;
+}
+.price-value-wrapper {
+  display: flex;
+  align-items: baseline;
+}
+.price-currency {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ff3b30;
+}
+.price-value {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #ff3b30;
+  line-height: 1;
+}
+.price-original {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8rpx;
+}
+.original-label {
+  font-size: 24rpx;
+  color: #c7c7cc;
+  margin-right: 8rpx;
+}
+.original-value {
+  font-size: 24rpx;
+  color: #c7c7cc;
+  text-decoration: line-through;
+}
+
+/* 弹窗操作按钮 */
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 24rpx 40rpx 40rpx;
+}
+.btn-cancel {
+  width: 100%;
+  height: 88rpx;
+  background: #f8f8fb;
+  border: none;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  color: #8e8e93;
+}
+.btn-cancel::after {
+  border: none;
+}
+.btn-confirm {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.4);
+}
+.btn-confirm::after {
+  border: none;
+}
+.btn-icon {
+  margin-right: 8rpx;
+}
+.placeholder-text {
+  color: #9c9c9c;
+  font-size: 26rpx;
+}
+.lamp-title-row {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.btn-rename {
+  width: 32rpx;
+  height: 32rpx;
+  margin-left: 12rpx;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.btn-rename:active {
+  opacity: 1;
+}
+.lamp-card.focused {
+  border-color: #4080FF;
+  background: rgba(64, 128, 255, 0.06);
+}
+
+/* ==================== 利用系数说明弹窗 (极简高级版) ==================== */
+
+.util-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4); /* 轻透遮罩 */
+  backdrop-filter: blur(8px); /* 毛玻璃背景 */
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.util-modal-content {
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 40rpx; /* 大圆角 */
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15); /* 柔和且深邃的投影 */
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); /* 仿 iOS 弹窗动画 */
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.util-modal-close {
+  position: absolute;
+  top: 32rpx;
+  right: 32rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #8E8E93;
+  z-index: 10;
+  background: #F2F2F7; /* 浅灰圆形背景 */
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.util-modal-close:active {
+  background: #E5E5EA;
+  color: #333;
+}
+
+.util-modal-header {
+  padding: 60rpx 40rpx 20rpx;
+  text-align: center;
+  background: #fff;
+}
+
+.util-modal-title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 12rpx;
+  letter-spacing: 0.5rpx;
+}
+
+.util-modal-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: #8E8E93;
+}
+
+.util-modal-body {
+  flex: 1;
+  padding: 20rpx 30rpx 40rpx;
+  overflow-y: scroll;
+}
+
+.util-section {
+  margin-bottom: 50rpx;
+}
+
+.util-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.util-section-title {
+  display: flex;
+  align-items: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  margin-bottom: 24rpx;
+}
+
+.util-icon {
+  display: none;
+}
+
+/* 极简表格风格 - 无边框设计 */
+.util-table {
+  border-radius: 16rpx;
+}
+
+.util-table-row {
+  display: flex;
+  border-bottom: 1rpx solid #E5E5EA; /* 极细分割线 */
+  padding: 24rpx 0;
+  align-items: center;
+}
+
+.util-table-row:last-child {
+  border-bottom: none;
+}
+
+.util-table-row.header {
+  padding-top: 0;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #E5E5EA; /* 表头分割线略粗 */
+}
+
+.util-cell {
+  padding: 0 8rpx;
+  font-size: 26rpx;
+  line-height: 1.4;
+  color: #333;
+}
+
+.util-table-row.header .util-cell {
+  font-weight: 600;
+  color: #8E8E93;
+  font-size: 24rpx;
+}
+
+/* 层高表格列宽 - 优化对齐 */
+.col-height {
+  flex: 0 0 140rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  text-align: center;
+}
+
+.col-rate {
+  flex: 0 0 160rpx;
+  text-align: center;
+  color: #007AFF; /* Apple Blue */
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.col-desc {
+  flex: 1;
+  min-width: 0;
+  color: #636366;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+/* 色彩表格列宽 */
+.col-material {
+  flex: 0 0 120rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  text-align: center;
+}
+
+.col-example {
+  flex: 0 0 300rpx;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #636366;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+/* 维护系数表格列宽 */
+.col-env {
+  flex: 0 0 120rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  text-align: center;
+}
+
+.col-place {
+  flex: 1;
+  min-width: 0;
+  color: #636366;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.col-clean {
+  flex: 0 0 90rpx;
+  text-align: center;
+  color: #333;
+}
+
+.col-val {
+  flex: 0 0 180rpx;
+  text-align: center;
+  color: #007AFF;
+  font-weight: 600;
+}
+
+/* 光源利用率表格列宽 */
+.col-mode {
+  flex: 0 0 120rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  text-align: center;
+  font-size: 24rpx;
+}
+
+.col-type {
+  flex: 0 0 300rpx;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #636366;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+/* 底部提示卡片 - 更加柔和 */
+.util-note {
+  display: flex;
+  align-items: flex-start;
+  background: #F2F2F7; /* iOS 次级背景色 */
+  padding: 24rpx;
+  border-radius: 20rpx;
+  margin-top: 40rpx;
+  border: none; /* 去除原本的黄色边框 */
+  box-sizing: border-box; /* 确保 padding 包含在宽度内 */
+  width: 92%; /* 撑满父容器 */
+}
+
+.util-note-text {
+  flex: 1;
+  width: 0; /* 关键：解决 flex 布局中文本不换行导致的溢出问题 */
+  font-size: 24rpx;
+  color: #636366;
+  line-height: 1.5;
+  white-space: normal; /* 确保文本换行 */
+  word-wrap: break-word;
+}
+
+.util-modal-footer {
+  padding: 24rpx 40rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: #fff;
+}
+
+.util-btn-confirm {
+  width: 100%;
+  height: 96rpx; /* 加高 */
+  background: #007AFF; /* Apple Blue */
+  border: none;
+  border-radius: 48rpx; /* 胶囊圆角 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(0, 122, 255, 0.25);
+  transition: all 0.2s;
+}
+
+.util-btn-confirm::after { border: none; }
+
+.util-btn-confirm:active {
+  background: #0062CC;
+  transform: scale(0.98);
 }

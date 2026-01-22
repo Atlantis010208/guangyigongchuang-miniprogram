@@ -47,7 +47,31 @@
         "type": "folder"
       },
       {
+        "value": "cloudfunctions",
+        "type": "folder"
+      },
+      {
+        "value": "specs",
+        "type": "folder"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
+      },
+      {
+        "value": "compressed-videos",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
         "value": "*.md",
+        "type": "suffix"
+      },
+      {
+        "value": "*.jpg",
         "type": "suffix"
       },
       {
@@ -56,6 +80,14 @@
       },
       {
         "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "cloudbaserc.json",
+        "type": "file"
+      },
+      {
+        "value": "nul",
         "type": "file"
       },
       {
@@ -81,6 +113,34 @@
       {
         "value": "pages/flows/control",
         "type": "folder"
+      },
+      {
+        "value": "pages/webview",
+        "type": "folder"
+      },
+      {
+        "value": "images/二维码.png",
+        "type": "file"
+      },
+      {
+        "value": "images/免费报价.png",
+        "type": "file"
+      },
+      {
+        "value": "images/_酒店.png",
+        "type": "file"
+      },
+      {
+        "value": "images/产品方案.png",
+        "type": "file"
+      },
+      {
+        "value": "images/避坑指南.png",
+        "type": "file"
+      },
+      {
+        "value": "images/光乙共创平台小程序二维码.png",
+        "type": "file"
       },
       {
         "value": "images/logo.txt",

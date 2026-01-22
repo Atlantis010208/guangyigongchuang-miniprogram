@@ -164,7 +164,7 @@
     <view class="cart-items mall-order-list">
       <view class="cart-item mall-order-card" wx:for="{{mallOrders}}" wx:key="id">
         <!-- 订单头部：标题和状态 -->
-        <view class="mall-order-header" bindtap="onMallOrderTap" data-id="{{item.id}}">
+        <view class="mall-order-header" bindtap="onMallOrderTap" data-id="{{item.id}}" data-category="{{item.category}}" data-courseid="{{item.courseId}}">
           <view class="mall-order-title-wrap">
             <text class="mall-order-title">{{item.title}}</text>
             <text class="mall-order-time">{{item.time}}</text>
@@ -177,7 +177,7 @@
         </view>
         
         <!-- 订单商品信息 -->
-        <view class="mall-order-content" bindtap="onMallOrderTap" data-id="{{item.id}}">
+        <view class="mall-order-content" bindtap="onMallOrderTap" data-id="{{item.id}}" data-category="{{item.category}}" data-courseid="{{item.courseId}}">
           <image class="item-image" src="{{item.items[0].image}}" mode="aspectFill"></image>
           <view class="item-info">
             <view>
@@ -205,7 +205,9 @@
             <button 
               class="mini-btn detail-btn" 
               size="mini"
-              data-id="{{item.id}}" 
+              data-id="{{item.id}}"
+              data-category="{{item.category}}"
+              data-courseid="{{item.courseId}}"
               catchtap="onMallOrderTap"
             >详情</button>
             

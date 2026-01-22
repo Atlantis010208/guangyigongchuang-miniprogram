@@ -14,34 +14,33 @@
   <!-- 已登录显示正常内容 -->
   <block wx:if="{{isLoggedIn}}">
     <view class="profile-card unified">
-      <view class="top" bindtap="editProfile">
+      <view class="top" bindtap="editProfile" hover-class="top-hover">
         <image class="avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
         <view class="info">
           <text class="name">{{user.name || '点击完善资料'}}</text>
-          <text class="phone" bindtap="callPhone">{{user.phone || '未绑定手机号'}}</text>
+          <text class="phone" bindtap="callPhone" catchtap="callPhone">{{user.phone || '未绑定手机号'}}</text>
         </view>
         <text class="edit-arrow">〉</text>
       </view>
 
       <view class="cells inline">
-        <view class="cell" bindtap="go" data-url="/pages/cart/cart"><text>订单</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/appointments/appointments"><text>我的预约</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart"><text>购物车</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit"><text>押金</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/services/services"><text>服务</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/addresses/addresses"><text>主要送货地址</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/favorites/favorites"><text>我的收藏</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/receipts/receipts"><text>自助结账收据</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/feedback/feedback"><text>提供反馈意见</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/settings/settings"><text>设置</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/cart/cart" hover-class="cell-hover"><text>订单</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/appointments/appointments" hover-class="cell-hover"><text>我的预约</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart" hover-class="cell-hover"><text>购物车</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit" hover-class="cell-hover"><text>押金</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/services/services" hover-class="cell-hover"><text>服务</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/addresses/addresses" hover-class="cell-hover"><text>主要送货地址</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/favorites/favorites" hover-class="cell-hover"><text>我的收藏</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/receipts/receipts" hover-class="cell-hover"><text>自助结账收据</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/feedback/feedback" hover-class="cell-hover"><text>提供反馈意见</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/settings/settings" hover-class="cell-hover"><text>设置</text><text class="arrow">〉</text></view>
       </view>
     </view>
   </block>
 </scroll-view>
 
 <!-- 悬浮联系客服按钮 -->
-<view class="floating-contact" bindtap="onContact">
+<view class="floating-contact" bindtap="onContact" hover-class="floating-contact-hover">
   <image class="float-icon" src="/images/客服.png" mode="aspectFit"></image>
   <text class="float-text">联系客服</text>
-  
 </view>

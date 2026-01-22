@@ -172,9 +172,47 @@
   margin-bottom: 10rpx;
 }
 
+/* 🆕 左右布局：当前播放 + 观看人数 */
+.section-subtitle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .section-subtitle {
   color: rgba(255, 255, 255, 0.5);
   font-size: 24rpx;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 🆕 观看人数样式 */
+.viewer-info {
+  display: flex;
+  align-items: center;
+  margin-left: 20rpx;
+}
+
+.viewer-icon {
+  width: 24rpx;
+  height: 24rpx;
+  margin-right: 8rpx;
+}
+
+.viewer-count {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 24rpx;
+  white-space: nowrap;
+}
+
+/* 已学习人数 */
+.learned-count {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 24rpx;
+  display: block;
+  margin-top: 16rpx;
 }
 
 .chapter-group {
@@ -239,12 +277,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding-right: 20rpx; /* 防止文字太长紧贴按钮 */
 }
 
 .lesson-title {
   color: rgba(255, 255, 255, 0.9);
   font-size: 30rpx;
   margin-bottom: 8rpx;
+  line-height: 1.4;
 }
 
 .lesson-title.active-text {
@@ -255,6 +295,58 @@
 .lesson-duration {
   color: rgba(255, 255, 255, 0.4);
   font-size: 24rpx;
+}
+
+/* 课程列表元数据容器 */
+.lesson-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* 课时学习进度状态 */
+.lesson-progress {
+  font-size: 24rpx;
+  margin-left: 8rpx;
+  font-weight: 500;
+}
+
+.lesson-progress.completed {
+  color: #34c759; /* Apple Green - 已完成 */
+}
+
+.lesson-progress.learning {
+  color: rgba(255, 255, 255, 0.4); /* Apple Orange - 学习中 */
+}
+
+.lesson-progress.not-started {
+  color: rgba(255, 255, 255, 0.4); /* Gray - 未开始 */
+}
+
+/* 课后作业按钮 - 苹果风格 */
+.homework-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 24rpx;
+  background-color: #1C1C1E; /* 深灰/黑色背景，比纯黑更有质感 */
+  border: 1rpx solid rgba(255, 255, 255, 0.15); /* 微弱的白色边框 */
+  border-radius: 28rpx;
+  flex-shrink: 0;
+  margin-left: 10rpx;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.homework-btn:active {
+  background-color: #2C2C2E; /* 点击时稍微变亮 */
+  transform: scale(0.96);
+}
+
+.homework-text {
+  font-size: 24rpx;
+  color: #FFFFFF; /* 白色文字 */
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
 }
 
 /* ===== 右上角更多按钮（三个点） ===== */
@@ -371,4 +463,38 @@
 .speed-item.active text {
   color: #FF3B30;
   font-weight: 600;
+}
+
+/* 🆕 清晰度选项样式 */
+.quality-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+
+.quality-item {
+  flex: 1;
+  min-width: 180rpx;
+  height: 72rpx; /* 稍微增加高度 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #1c1c1e; /* 黑色文字 */
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.quality-item.active {
+  background: #FFFFFF; /* 白色背景 */
+  color: #FF3B30;      /* 红色文字 */
+  font-weight: 600;
+  
+}
+
+.quality-item:active {
+  opacity: 0.7;
+  transform: scale(0.98);
 }

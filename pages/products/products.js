@@ -18,25 +18,14 @@ Page({
     assistantToolkitCover: '',
     assistantCourseCover: '',
     assistantCourseId: '', // 课程 ID，用于跳转详情页
-    assistantCourseTitle: '', // 课程标题
+    assistantCourseTitle: '' // 课程标题
     // features 已移除，改为电子商城入口
-    showIntro: false,
-    quizStep: 0,
-    quiz: { area: '', space: '', service: '', budget: '' },
-    estimate: 0,
-    pricePer: 0,
-    chargeArea: 0
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    const done = wx.getStorageSync('intro_quiz_done')
-    if (!done) {
-      this.setData({ showIntro: true })
-    }
-
     // 从数据库动态获取工具包和课程的封面图片
     this.loadAssistantCovers()
   },
@@ -663,72 +652,5 @@ Page({
     } else if (key === 'course') {
       this.setData({ assistantCourseCover: fallback })
     }
-  }
-  ,
-
-  // Quiz handlers
-  closeQuiz(){
-    // 仅关闭，不写入完成标记；下次登录仍显示
-    this.setData({ showIntro:false })
-  },
-  nextQuiz(){
-    let { quizStep, quiz } = this.data
-    if (quizStep === 0 && !quiz.area) return wx.showToast({ title:'请输入面积', icon:'none' })
-    if (quizStep === 1 && !quiz.space) return wx.showToast({ title:'请选择空间类型', icon:'none' })
-    if (quizStep === 2 && !quiz.service) return wx.showToast({ title:'请选择服务类型', icon:'none' })
-    this.setData({ quizStep: quizStep + 1 })
-  },
-  prevQuiz(){
-    const step = this.data.quizStep
-    if (step > 0) this.setData({ quizStep: step - 1 })
-  },
-  onQuizArea(e){ this.setData({ 'quiz.area': e.detail.value }) },
-  onQuickArea(e){
-    this.setData({ 'quiz.area': e.currentTarget.dataset.value, quizStep: 1 })
-  },
-  onQuizSpace(e){
-    this.setData({ 'quiz.space': e.detail.value })
-    if (this.data.quizStep === 1) this.setData({ quizStep: 2 })
-  },
-  onQuizService(e){
-    this.setData({ 'quiz.service': e.detail.value })
-    if (this.data.quizStep === 2) this.setData({ quizStep: 3 })
-  },
-  onQuizBudget(e){
-    this.setData({ 'quiz.budget': e.detail.value })
-    // 自动计算并进入结果页
-    this.calcQuiz()
-  },
-  calcQuiz(){
-    // 预算单价解析
-    const { area, service, budget } = this.data.quiz
-    let pricePer = 9
-    if (service === '选灯配灯服务') pricePer = 5
-    if (budget && /¥(\d+)/.test(budget)) {
-      const m = budget.match(/¥(\d+)/)
-      if (m) pricePer = Number(m[1])
-    } else if (budget.indexOf('及以上')>-1) {
-      pricePer = 50
-    }
-    let chargeArea = Number(area || 0)
-    if (isNaN(chargeArea) || chargeArea <= 0) chargeArea = 50
-    if (chargeArea < 50) chargeArea = 50
-    const estimate = pricePer * chargeArea
-    this.setData({ estimate, pricePer, chargeArea, quizStep: 4 })
-    wx.setStorageSync('intro_quiz_done', true)
-  },
-
-  finishAndPrefill(){
-    const { area, space, service, budget } = this.data.quiz
-    const payload = {
-      area: String(area || ''),
-      space: space || '',
-      service: service || '',
-      budget: budget || ''
-    }
-    // 存储预填数据，发布页读取
-    wx.setStorageSync('publish_prefill', payload)
-    this.setData({ showIntro:false })
-    wx.navigateTo({ url: '/pages/flows/publish/publish' })
   }
 })

@@ -32,35 +32,33 @@
     <!-- Hero Card (Featured Course) -->
     <view class="hero-card apple-card shadow-medium" wx:if="{{featuredCourse}}" bindtap="onCourseTap" data-id="{{featuredCourse.id}}">
       <view class="hero-image-wrapper">
-        <!-- 背景模糊层：铺满并模糊 -->
-        <image src="{{featuredCourse.coverUrl}}" mode="aspectFill" class="hero-image-bg"></image>
-        <!-- 前景内容层：完整显示 -->
-        <image src="{{featuredCourse.coverUrl}}" mode="aspectFit" class="hero-image"></image>
-        <view class="hero-overlay"></view>
-        <view class="hero-content">
-          <text class="hero-title">{{featuredCourse.title}}</text>
-          <text class="hero-subtitle">{{featuredCourse.subtitle}}</text>
-        </view>
+        <image src="{{featuredCourse.coverUrl}}" mode="aspectFill" class="hero-image"></image>
+        <!-- 移除之前的 Overlay 和 Content，文字移到下方 -->
       </view>
-      <view class="hero-footer padding-medium flex-row flex-between">
-        <view class="flex-column">
-          <text class="caption-text text-white" style="margin-bottom: 10rpx;">课程亮点</text>
-          <view class="flex-row">
-            <text class="tag-text" wx:for="{{featuredCourse.tags}}" wx:key="*this">{{item}}</text>
+      
+      <view class="hero-footer">
+        <view class="footer-content">
+          <!-- 1. 小标题/分类 -->
+          <text class="hero-tag">{{featuredCourse.subtitle || '短视频'}}</text>
+          
+          <!-- 2. 主标题 -->
+          <text class="hero-title">{{featuredCourse.title}}</text>
+          
+          <!-- 3. 底部操作栏 -->
+          <view class="hero-actions">
+            <!-- 已购买：显示立即观看 -->
+            <view class="play-pill" wx:if="{{featuredCourse.isPurchased && hasUserProfile}}">
+              <view class="icon-play-fill"></view>
+              <text class="play-text">立即观看</text>
+            </view>
+            
+            <!-- 未购买：显示价格 -->
+            <view class="price-pill" wx:else>
+              <text class="currency-symbol">¥</text>
+              <text class="price-amount">{{featuredCourse.price}}</text>
+            </view>
           </view>
         </view>
-        
-        <block wx:if="{{!isPurchased}}">
-          <view class="price-tag">
-            <text class="currency">¥</text>
-            <text class="amount">{{featuredCourse.price}}</text>
-          </view>
-        </block>
-        <block wx:else>
-          <view class="play-btn-circle shadow-medium" catchtap="onPlayTap" data-id="{{featuredCourse.id}}">
-            <view class="icon-play-fill"></view>
-          </view>
-        </block>
       </view>
     </view>
 
@@ -83,8 +81,14 @@
             <view class="tags-row">
               <text class="tag-text" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" wx:if="{{index < 2}}">{{tag}}</text>
             </view>
-            <view class="get-button">
+            <view class="get-button {{item.isPurchased ? 'progress-mode' : ''}}">
+              <block wx:if="{{item.isPurchased}}">
+                <view class="progress-bar" style="width: {{item.progress || 0}}%;"></view>
+                <text class="progress-text">{{item.progress || 0}}%</text>
+              </block>
+              <block wx:else>
               <text>¥{{item.price}}</text>
+              </block>
             </view>
           </view>
         </view>

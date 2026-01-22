@@ -16,13 +16,13 @@
 - **智能搜索**：支持搜索建议、历史记录和热门搜索
 - **购物体验**：完整的购物袋功能，支持商品管理（电子商城）
 - **内容探索**：精选照明内容、灯光设计课程、照明知识学习
+- **🆕 多分辨率视频播放**：支持 480p/720p/1080p 三种清晰度，智能记忆用户偏好
 
 ## 页面结构
 
 ### 📱 产品页面 (`/pages/products/`)
-- 页面头部：灯光方案标题与个人中心入口
-- 预算预估弹窗：首次进入时的5步预算预估流程（面积、空间类型、服务类型、设计预算、费用结果）
-- 灯光空间分类：横向滚动展示（住宅照明、商业照明、办公照明、酒店照明）
+- 页面头部：首页标题与个人中心入口
+- 灯光空间分类：横向滚动展示（避坑指南、设计流程、照度计算、酒店照明）
 - 我的灯光助手：横向滚动卡片（灯光工具包、十年经验二哥灯光设计课）
 - 发布灯光需求：横向滚动服务卡片（选灯配灯服务、优化灯光施工图、整套灯光设计）
 - 表达您的需求：横向滚动卡片（发布照明需求、个性需求定制）
@@ -243,9 +243,10 @@ approved → return_pending（待寄回）→ return_shipped（已寄回）→ r
 ### 课程相关云函数
 | 云函数名 | 功能 |
 |----------|------|
-| courses_list | 获取课程列表（公开） |
+| courses_list | 获取课程列表（公开，含购买状态和学习进度） |
 | course_purchase_check | 检查用户是否已购买课程 |
-| course_videos | 获取课程视频数据（需登录且已购买） |
+| course_videos | 获取课程视频数据（需登录且已购买）🆕 支持多分辨率 videoUrls |
+| course_progress_update | 更新用户的课程学习进度 |
 
 ### 课程相关页面
 | 页面路径 | 功能 |
@@ -265,8 +266,8 @@ approved → return_pending（待寄回）→ return_shipped（已寄回）→ r
 
 ### 访问控制逻辑
 ```
-用户访问课程 → courses_list(公开) → 获取列表（不含视频链接）
-         ↓
+用户访问课程 → courses_list(公开) → 获取列表（含购买状态和学习进度，不含视频链接）
+         ↓                          返回: isPurchased, progress
 用户查看详情 → course_purchase_check → isPurchased: true/false
          ↓
 已购买 → course_videos → 返回完整章节和视频链接
@@ -274,6 +275,52 @@ approved → return_pending（待寄回）→ return_shipped（已寄回）→ r
 ```
 
 详细技术设计文档见：`specs/course_backend/design.md`
+
+## 🎫 课程白名单授权
+
+### 功能说明
+为在其他平台已购买课程的用户提供小程序访问权限，无需重复购买。
+
+### 工作流程
+1. **管理员导入**：在管理后台上传白名单 Excel/CSV 文件（包含手机号列表）
+2. **用户激活**：用户在小程序中授权手机号时，系统自动匹配白名单
+3. **自动授权**：匹配成功后静默创建课程订单，用户立即获得观看权限
+
+### 白名单相关云函数
+| 云函数名 | 功能 |
+|----------|------|
+| admin_whitelist_import | 批量导入白名单（管理后台） |
+| admin_whitelist_list | 查询白名单列表（管理后台） |
+| getPhoneNumber | 获取手机号时自动激活白名单 |
+
+### 数据库集合
+- **course_whitelist**：白名单数据
+  - 字段：phone, courseId, status(pending/activated), activatedAt, activatedUserId, orderId
+  - 唯一索引：phone + courseId（防止重复导入）
+
+### 激活逻辑
+```
+用户授权手机号 → getPhoneNumber 云函数
+        ↓
+查询 course_whitelist（phone + status=pending）
+        ↓
+匹配成功 → 创建课程订单（source='whitelist', category='course'）
+        → 更新白名单状态为 activated
+        → 保存订单号到白名单记录（orderNo）
+        → 用户访问课程详情显示"已购买"
+```
+
+### 订单可见性
+- **小程序"我的订单"**：可查看白名单激活的课程订单（标记为"课程订单"）
+- **管理后台订单管理**：可查看所有课程订单（包括白名单来源）
+- **白名单管理页面**：关联订单号可点击跳转到订单管理页面
+
+### 管理后台入口
+- 白名单管理：`/business/whitelist`（业务管理 → 课程白名单）
+- 订单管理：`/business/orders`（业务管理 → 订单管理，支持按"课程"分类筛选）
+- 功能：导入白名单、查看列表、筛选状态、统计数据、订单关联
+
+详细技术设计文档见：`specs/course_whitelist/design.md`
 
 ---
 
@@ -335,9 +382,10 @@ miniprogram-4/
 │   ├── orders_create/        # 创建订单
 │   ├── orders_update/        # 更新订单
 │   ├── mall_orders_list/     # 查询订单列表
-│   ├── courses_list/         # 课程列表（供小程序端使用）
+│   ├── courses_list/         # 课程列表（含购买状态和学习进度）
 │   ├── course_purchase_check/ # 检查用户是否已购买课程
-│   └── course_videos/        # 获取课程视频数据（需登录且已购买）
+│   ├── course_videos/        # 获取课程视频数据（需登录且已购买）
+│   └── course_progress_update/ # 更新用户的课程学习进度
 ├── specs/                    # 技术文档
 │   ├── wechat_payment/       # 微信支付功能
 │   │   ├── requirements.md   # 需求文档
@@ -435,4 +483,93 @@ miniprogram-4/
 - 数据分析：项目成本/毛利、能耗与节能模拟、灯具品牌占比、区域热力图，支持导出
 - 系统设置：权限与角色、计费与开票、存储与文件安全、审计日志
 
-> 说明：以上为“灯光设计”方向的业务化文本替换与功能补充，不影响现有页面的排版与视觉，仅扩展字段、流程节点及接口数据结构。
+> 说明：以上为"灯光设计"方向的业务化文本替换与功能补充，不影响现有页面的排版与视觉，仅扩展字段、流程节点及接口数据结构。
+
+---
+
+## 📋 更新日志
+
+### v2.1.0 (2026-01-05)
+#### ✨ 新功能 - 课程白名单授权系统
+- **白名单授权机制** - 针对已在其他平台购买课程的用户，支持通过手机号在小程序中免购买观看
+  - 用户首次授权手机号时，系统自动检查白名单并激活课程
+  - 静默激活，无需额外提示，用户体验平滑
+  - 激活成功后自动生成虚拟订单，用户可在"我的订单"中查看
+  - 白名单激活的课程永久有效
+  - 管理员可通过后台导入白名单手机号列表
+
+#### 📦 订单可见性优化
+- **小程序端订单展示完整化**
+  - "我的订单"页面新增课程订单和工具包订单展示
+  - 购物袋页面支持查看课程订单和工具包订单
+  - 支持点击订单跳转到对应的课程详情页或工具包详情页
+- **后台管理订单筛选增强**
+  - 后台订单管理支持按 `category` 筛选课程订单
+  - 白名单管理页面的"关联订单"列可直接跳转到订单详情
+
+#### 🔄 云函数更新
+- `getPhoneNumber` - 新增白名单激活逻辑，支持新用户自动激活
+- `login` - 新增白名单激活逻辑，支持已有用户自动激活
+- `course_purchase_check` - 兼容白名单订单（status='completed'）
+- `mall_orders_list` - 支持 `category: 'course'` 和 `category: 'toolkit'` 筛选
+- `admin_orders_list` - 支持 `category` 参数，增强订单筛选能力
+
+#### 📊 数据库变更
+- **新增集合**: `course_whitelist` - 存储白名单数据（手机号、课程ID、激活状态等）
+- **orders 集合扩展**:
+  - 新增 `source` 字段 - 标识订单来源（如 'whitelist'）
+  - 新增 `whitelistId` 字段 - 关联白名单记录ID
+
+#### 🔧 Bug 修复
+- 修复订单号格式不统一问题（统一为 `时间戳_随机字母` 格式）
+- 修复购物袋过滤逻辑，确保课程订单正确显示
+- 修复"我的订单"页面缺少工具包订单的问题
+
+#### 📝 文档更新
+- 更新 README，新增"课程白名单授权功能"说明
+- 更新"订单可见性"说明，明确各端订单展示位置
+- 新增技术设计文档: `specs/course_whitelist/design.md`
+
+### v2.2.0 (2026-01-14)
+#### ✨ 新功能 - 照明计算器免费/付费版本
+- **双版本计算器系统**
+  - **免费版** (`pages/search-free`) - 基础照明计算功能，所有用户可用
+    - 根据灯具算照度 / 根据照度算灯具双模式
+    - 灯具参数弹窗编辑
+    - 升级引导弹窗，引导购买工具包
+  - **付费版** (`pages/search`) - 高级照明计算功能，需购买工具包
+    - 现代化卡片式 UI 设计
+    - 空间类型智能选择器
+    - 利用系数复合选择器（层高 × 色彩）
+    - 动态灯具添加/删除
+    - 独立结果页展示
+    - 历史记录（规划中）
+    - 结果导出为图片（规划中）
+
+- **权限控制系统**
+  - 新增 `toolkit_purchase_check` 云函数：检查用户工具包购买状态
+  - 权限缓存机制：5分钟本地缓存，减少云函数调用
+  - 登录状态检查：未登录用户默认显示免费版，无需云函数调用
+  - 自动跳转逻辑：
+    - 未登录用户 → 显示免费版，无权限检查
+    - 未购买用户访问付费版 → 重定向到免费版 + 显示升级弹窗
+    - 已购买用户访问免费版 → 自动跳转到付费版
+  - 错误处理：网络异常时降级到免费版，显示提示信息
+
+- **共享计算工具库** (`utils/calc-helper.js`)
+  - 统一计算逻辑，确保免费版和付费版结果一致
+  - 导出函数：`calcAvgLux`, `calcLampCount`, `calcTotalFlux`, `calcAvgPowerPerArea`, `calcTotalPrice`
+  - 工具函数：`getDefaultLampTypes`, `updateDownlightTitles`
+
+#### 🔄 云函数更新
+- 新增 `toolkit_purchase_check` - 检查用户是否已购买工具包
+  - 查询 `orders` 集合中 `category='toolkit'` 且 `status in ['paid', 'completed']` 的订单
+  - 返回 `isPurchased`, `purchasedAt`, `orderId`
+
+#### 📊 数据库建议索引
+- `orders` 集合建议添加联合索引：`userId + category + status`（提升查询性能）
+
+#### 📝 技术设计文档
+- 新增：`specs/lighting_calculator_freemium/requirements.md` - 需求文档
+- 新增：`specs/lighting_calculator_freemium/design.md` - 技术设计
+- 新增：`specs/lighting_calculator_freemium/tasks.md` - 任务拆分

@@ -1,0 +1,10 @@
+{
+  "name": "viewer_count",
+  "version": "1.0.0",
+  "description": "视频观看人数统计",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
+

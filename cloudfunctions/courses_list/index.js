@@ -9,6 +9,10 @@
  * - category: 按分类筛选
  * - level: 按难度筛选（beginner/intermediate/advanced）
  * - keyword: 关键词搜索（标题模糊匹配）
+ * 
+ * 返回数据包含：
+ * - isPurchased: 用户是否已购买该课程
+ * - progress: 用户学习进度（0-100）
  */
 const cloud = require('wx-server-sdk')
 
@@ -19,6 +23,9 @@ const _ = db.command
 
 exports.main = async (event) => {
   try {
+    const wxContext = cloud.getWXContext()
+    const OPENID = wxContext.OPENID || wxContext.openid
+    
     const {
       limit = 20,
       offset = 0,
@@ -71,6 +78,104 @@ exports.main = async (event) => {
     
     const courses = dataRes.data
     
+    // ============== 新增：获取用户购买状态和学习进度 ==============
+    let purchasedMap = {} // courseId -> { isPurchased: true, purchasedAt: Date }
+    let progressMap = {}  // courseId -> progress (0-100)
+    
+    if (OPENID) {
+      // 并行查询：购买订单 + 学习进度
+      const [ordersRes, progressRes] = await Promise.all([
+        // 查询用户已支付的课程订单
+        db.collection('orders').where({
+          userId: OPENID,
+          category: 'course',
+          status: _.in(['paid', 'completed']),
+          isDelete: _.neq(1)
+        }).field({
+          _id: true,
+          courseId: true,
+          items: true,
+          params: true,
+          paidAt: true,
+          createdAt: true,
+          orderNo: true
+        }).limit(100).get(),
+        
+        // 查询用户的学习进度
+        db.collection('course_progress').where({
+          userId: OPENID
+        }).field({
+          courseId: true,
+          progress: true,
+          completedLessons: true,
+          totalLessons: true
+        }).limit(100).get()
+      ])
+      
+      // 构建已购买课程的映射表
+      // 课程 ID 映射表（用于兼容不同时期的 ID 格式）
+      const courseIdAliases = {
+        'course01': 'CO_DEFAULT_001',
+        'CO_DEFAULT_001': 'CO_DEFAULT_001',
+        'c001': 'CO_DEFAULT_001'
+      }
+      
+      for (const order of ordersRes.data) {
+        // 获取订单商品列表（兼容不同数据结构）
+        const items = (order.params && order.params.items) || order.items || []
+        
+        for (const item of items) {
+          // 获取课程 ID（兼容不同字段名）
+          let itemCourseId = item.id || item.courseId || item.productId
+          
+          // 验证是课程类商品
+          if (item.category === 'course' || item.type === 'course' || order.category === 'course') {
+            if (itemCourseId) {
+              // 标准化课程 ID（将旧 ID 映射到新 ID）
+              const normalizedId = courseIdAliases[itemCourseId] || itemCourseId
+              
+              const purchaseInfo = {
+                isPurchased: true,
+                purchasedAt: order.paidAt || order.createdAt,
+                orderId: order.orderNo || order._id
+              }
+              
+              // 同时存储原始 ID 和标准化 ID
+              purchasedMap[itemCourseId] = purchaseInfo
+              if (normalizedId !== itemCourseId) {
+                purchasedMap[normalizedId] = purchaseInfo
+              }
+            }
+          }
+        }
+        
+        // 如果订单本身就是单个课程（没有 items）
+        if (items.length === 0 && order.courseId) {
+          const normalizedId = courseIdAliases[order.courseId] || order.courseId
+          const purchaseInfo = {
+            isPurchased: true,
+            purchasedAt: order.paidAt || order.createdAt,
+            orderId: order.orderNo || order._id
+          }
+          purchasedMap[order.courseId] = purchaseInfo
+          if (normalizedId !== order.courseId) {
+            purchasedMap[normalizedId] = purchaseInfo
+          }
+        }
+      }
+      
+      // 构建学习进度映射表
+      for (const record of progressRes.data) {
+        if (record.courseId) {
+          progressMap[record.courseId] = record.progress || 0
+        }
+      }
+      
+      console.log('[courses_list] User purchased courses:', Object.keys(purchasedMap))
+      console.log('[courses_list] User progress records:', Object.keys(progressMap))
+    }
+    // ============== 新增结束 ==============
+    
     // 收集所有需要转换的云存储图片
     const cloudFileIDs = []
     for (const course of courses) {
@@ -114,6 +219,52 @@ exports.main = async (event) => {
       }
     }
     
+    // 课程 ID 映射表（用于兼容不同时期的 ID 格式）
+    const courseIdAliases = {
+      'course01': 'CO_DEFAULT_001',
+      'CO_DEFAULT_001': 'CO_DEFAULT_001',
+      'c001': 'CO_DEFAULT_001'
+    }
+    
+    // 辅助函数：检查某个课程 ID 是否已购买
+    const checkPurchased = (courseId, course_id) => {
+      // 尝试多种 ID 格式匹配
+      const idsToCheck = [courseId, course_id].filter(Boolean)
+      
+      for (const id of idsToCheck) {
+        if (purchasedMap[id]) {
+          return purchasedMap[id]
+        }
+        // 尝试标准化 ID 匹配
+        const normalizedId = courseIdAliases[id]
+        if (normalizedId && purchasedMap[normalizedId]) {
+          return purchasedMap[normalizedId]
+        }
+      }
+      
+      // 如果用户购买了课程但 ID 格式不匹配（兼容旧数据）
+      // 仅当只有一个课程时的临时方案
+      const purchasedCourses = Object.keys(purchasedMap)
+      if (purchasedCourses.length > 0 && courses.length === 1) {
+        return purchasedMap[purchasedCourses[0]]
+      }
+      
+      return { isPurchased: false }
+    }
+    
+    // 辅助函数：获取学习进度
+    const getProgress = (courseId, course_id) => {
+      const idsToCheck = [courseId, course_id].filter(Boolean)
+      
+      for (const id of idsToCheck) {
+        if (progressMap[id] !== undefined) {
+          return progressMap[id]
+        }
+      }
+      
+      return 0
+    }
+    
     // 格式化返回数据（兼容前端 Mock 数据字段命名）
     const formattedCourses = courses.map(course => {
       // 处理封面图 - 优先使用 cover 字段
@@ -137,6 +288,10 @@ exports.main = async (event) => {
       if (urlMap[instructorAvatar]) {
         instructorAvatar = urlMap[instructorAvatar]
       }
+      
+      // 获取购买状态和学习进度
+      const purchaseInfo = checkPurchased(course.courseId, course._id)
+      const progress = purchaseInfo.isPurchased ? getProgress(course.courseId, course._id) : 0
       
       return {
         // 双字段兼容
@@ -183,6 +338,12 @@ exports.main = async (event) => {
         // 推荐标识
         isFeatured: course.isFeatured || false,
         
+        // ============== 新增：购买状态和学习进度 ==============
+        isPurchased: purchaseInfo.isPurchased,
+        progress: progress,
+        purchasedAt: purchaseInfo.purchasedAt,
+        // ============== 新增结束 ==============
+        
         // 时间
         createdAt: course.createdAt,
         updatedAt: course.updatedAt
@@ -211,4 +372,3 @@ exports.main = async (event) => {
     }
   }
 }
-

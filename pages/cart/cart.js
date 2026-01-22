@@ -480,9 +480,13 @@ Page({
       const docs = (res.success && res.data) ? res.data : []
       console.log('[fetchOrdersFromDB] 原始订单数:', docs.length)
       
-      // 过滤出商城订单，并打印待支付订单调试信息
+      // 过滤出商城订单和课程订单（包括白名单激活的课程）
       const mall = docs.filter(d => {
-        if (!d || d.type !== 'goods' || d.isDelete === 1) return false
+        if (!d || d.isDelete === 1) return false
+        // 支持 type='goods' 或 category 为 mall/goods/course/toolkit
+        const isGoods = d.type === 'goods'
+        const isMallCategory = ['mall', 'goods', 'course', 'toolkit'].includes(d.category)
+        if (!isGoods && !isMallCategory) return false
         // 打印待支付订单的调试信息
         if (d.status === 'pending_payment' || d.status === 'pending') {
           console.log('[fetchOrdersFromDB] 发现待支付订单:', {
@@ -684,8 +688,15 @@ Page({
 
     const fallbackImg = 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg'
     const mapped = docs.filter(d=> {
-      if (!d || d.isDelete === 1 || d.type !== 'goods') {
-        console.log('[reloadMallOrders] 订单被过滤(基础条件):', d?.orderNo, 'isDelete:', d?.isDelete, 'type:', d?.type)
+      if (!d || d.isDelete === 1) {
+        console.log('[reloadMallOrders] 订单被过滤(基础条件):', d?.orderNo, 'isDelete:', d?.isDelete)
+        return false
+      }
+      // 支持 type='goods' 或 category 为 mall/goods/course/toolkit
+      const isGoods = d.type === 'goods'
+      const isMallCategory = ['mall', 'goods', 'course', 'toolkit'].includes(d.category)
+      if (!isGoods && !isMallCategory) {
+        console.log('[reloadMallOrders] 订单被过滤(类型不匹配):', d?.orderNo, 'type:', d?.type, 'category:', d?.category)
         return false
       }
       // 支持两种数据结构：新版本使用 d.items，旧版本使用 d.params.items
@@ -705,16 +716,19 @@ Page({
         name: it.name,
         quantity: it.quantity,
         image: it.image || fallbackImg,
-        price: it.amount
+        price: it.amount || it.price
       }))
       
       // 使用 getOrderStatus 获取详细状态信息
       const { statusText, statusType, canPay, remainingTime } = this.getOrderStatus(doc)
       
-      // 获取商品名称
+      // 获取商品名称 - 根据订单类型显示不同标题
       const firstItem = items[0] || {}
       const itemCount = items.length
-      const title = `商城订单 · ${firstItem.name || '商品'}${itemCount > 1 ? ` 等${itemCount}件` : ''}`
+      const isCourse = doc.category === 'course'
+      const isToolkit = doc.category === 'toolkit'
+      const orderType = isCourse ? '课程订单' : (isToolkit ? '工具包订单' : '商城订单')
+      const title = `${orderType} · ${firstItem.name || '商品'}${itemCount > 1 ? ` 等${itemCount}件` : ''}`
       
       // 格式化时间
       let timeStr = ''
@@ -725,6 +739,9 @@ Page({
         const day = String(d.getDate()).padStart(2, '0')
         timeStr = `${y}-${m}-${day}`
       }
+      
+      // 获取课程ID（用于课程订单跳转）
+      const courseId = isCourse ? (sourceItems[0]?.courseId || sourceItems[0]?.id) : null
       
       return {
         id: String(doc.orderNo || doc._id || ''),
@@ -740,6 +757,11 @@ Page({
         items,
         // 支持两种数据结构：新版本使用 doc.totalAmount，旧版本使用 doc.params.totalAmount
         total: Number(doc.totalAmount || (doc.params && doc.params.totalAmount) || 0),
+        // 订单类型信息
+        category: doc.category,
+        isCourse: isCourse,
+        isToolkit: isToolkit,
+        courseId: courseId,
         _raw: doc
       }
     })
@@ -1053,7 +1075,18 @@ Page({
   },
   onMallOrderTap(e){
     const id = e.currentTarget.dataset.id
+    const category = e.currentTarget.dataset.category
+    const courseId = e.currentTarget.dataset.courseid
+    
     if(!id) return
+    
+    // 课程订单跳转到课程详情页
+    if (category === 'course' && courseId) {
+      wx.navigateTo({ url: `/pages/course/course-detail/course-detail?id=${courseId}` })
+      return
+    }
+    
+    // 其他订单跳转到订单详情页
     wx.navigateTo({ url: `/pages/order/detail/detail?id=${id}` })
   },
   // 跳转到设计师筛选页面，携带当前需求信息

@@ -35,6 +35,7 @@ exports.main = async (event) => {
       orderNo = '',
       status,
       type,
+      category,
       startDate,
       endDate,
       orderBy = 'createdAt',
@@ -54,9 +55,26 @@ exports.main = async (event) => {
       query.status = status
     }
     
-    // 类型筛选
-    if (type) {
+    // 类型筛选（兼容旧数据）
+    // 当 type='goods' 时，也包括 category 为 course/toolkit 的虚拟商品订单
+    if (type === 'goods') {
+      query = {
+        ...query,
+        $or: [
+          { type: 'goods' },
+          { category: _.in(['course', 'toolkit']) }
+        ]
+      }
+    } else if (type) {
       query.type = type
+    }
+    
+    // 分类筛选（支持新的 category 字段）
+    // 如果同时指定了 type='goods' 和 category，则 category 优先
+    if (category) {
+      // 移除前面设置的 $or 条件，使用精确的 category 筛选
+      delete query.$or
+      query.category = category
     }
     
     // 日期范围筛选

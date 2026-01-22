@@ -51,15 +51,30 @@ Page({
     this.setData({ loading: true })
 
     try {
-      // 从云端加载订单
-      const res = await util.callCf('mall_orders_list', { 
-        category: 'mall',
-        limit: 50 
-      })
+      // 并行加载商城订单、课程订单和工具包订单
+      const [mallRes, courseRes, toolkitRes] = await Promise.all([
+        util.callCf('mall_orders_list', { category: 'mall', limit: 50 }),
+        util.callCf('mall_orders_list', { category: 'course', limit: 50 }),
+        util.callCf('mall_orders_list', { category: 'toolkit', limit: 50 })
+      ])
 
       let cloudOrders = []
-      if (res && res.success && res.data) {
-        cloudOrders = res.data.map(o => this.formatOrder(o))
+      
+      // 处理商城订单
+      if (mallRes && mallRes.success && mallRes.data) {
+        cloudOrders = mallRes.data.map(o => this.formatOrder(o))
+      }
+      
+      // 处理课程订单
+      if (courseRes && courseRes.success && courseRes.data) {
+        const courseOrders = courseRes.data.map(o => this.formatCourseOrder(o))
+        cloudOrders = [...cloudOrders, ...courseOrders]
+      }
+      
+      // 处理工具包订单
+      if (toolkitRes && toolkitRes.success && toolkitRes.data) {
+        const toolkitOrders = toolkitRes.data.map(o => this.formatToolkitOrder(o))
+        cloudOrders = [...cloudOrders, ...toolkitOrders]
       }
 
       // 从本地加载订单（降级方案）
@@ -107,7 +122,7 @@ Page({
   },
 
   /**
-   * 格式化云端订单
+   * 格式化云端订单（商城）
    */
   formatOrder(o) {
     const items = (o.params && o.params.items) || []
@@ -131,6 +146,88 @@ Page({
       remainingTime: remainingTime,
       priority: o.priority || false,
       _type: 'mall',
+      _raw: o
+    }
+  },
+
+  /**
+   * 格式化课程订单
+   */
+  formatCourseOrder(o) {
+    const items = (o.params && o.params.items) || []
+    const firstItem = items[0] || {}
+    
+    // 课程订单通常只有一个课程
+    const courseName = firstItem.name || '课程'
+    
+    // 判断是否为白名单授权订单
+    const isWhitelist = o.source === 'whitelist'
+    
+    // 获取订单状态
+    let statusText = '已完成'
+    let statusType = 'completed'
+    
+    if (o.status === 'completed') {
+      statusText = '已完成'
+      statusType = 'completed'
+    } else if (o.status === 'paid') {
+      statusText = '已支付'
+      statusType = 'paid'
+    }
+
+    return {
+      id: o._id,
+      orderNo: o.orderNo,
+      title: `课程订单 · ${courseName}`,
+      status: statusText,
+      statusType: statusType,
+      afterSaleStatus: '无售后',
+      desc: isWhitelist ? '白名单授权' : `金额 ¥${o.paidPrice || o.totalPrice || 0}`,
+      time: this.formatTime(o.createdAt),
+      createdAtTs: new Date(o.createdAt).getTime(),
+      canPay: false,
+      remainingTime: 0,
+      priority: false,
+      _type: 'course',
+      _raw: o
+    }
+  },
+
+  /**
+   * 格式化工具包订单
+   */
+  formatToolkitOrder(o) {
+    const items = (o.params && o.params.items) || []
+    const firstItem = items[0] || {}
+    
+    const toolkitName = firstItem.name || '工具包'
+    
+    // 获取订单状态
+    let statusText = '已完成'
+    let statusType = 'completed'
+    
+    if (o.status === 'completed') {
+      statusText = '已完成'
+      statusType = 'completed'
+    } else if (o.status === 'paid') {
+      statusText = '已支付'
+      statusType = 'paid'
+    }
+
+    return {
+      id: o._id,
+      orderNo: o.orderNo,
+      title: `工具包订单 · ${toolkitName}`,
+      status: statusText,
+      statusType: statusType,
+      afterSaleStatus: '无售后',
+      desc: `金额 ¥${o.paidPrice || o.params?.totalAmount || o.totalPrice || 0}`,
+      time: this.formatTime(o.createdAt),
+      createdAtTs: new Date(o.createdAt).getTime(),
+      canPay: false,
+      remainingTime: 0,
+      priority: false,
+      _type: 'toolkit',
       _raw: o
     }
   },
@@ -276,6 +373,39 @@ Page({
 
     if (type === 'mall') {
       wx.navigateTo({ url: `/pages/order/detail/detail?id=${orderNo || id}` })
+      return
+    }
+    
+    // 课程订单跳转到课程详情页
+    if (type === 'course') {
+      // 找到对应订单获取课程ID
+      const order = this.data.orders.find(o => o.orderNo === orderNo || o.id === id)
+      if (order && order._raw && order._raw.params && order._raw.params.items) {
+        const firstItem = order._raw.params.items[0] || {}
+        const courseId = firstItem.courseId || firstItem.id
+        if (courseId) {
+          wx.navigateTo({ url: `/pages/course/course-detail/course-detail?id=${courseId}` })
+          return
+        }
+      }
+      // 如果找不到课程ID，跳转到课程列表
+      wx.navigateTo({ url: '/pages/course/index/index' })
+      return
+    }
+    
+    // 工具包订单跳转到工具包详情页
+    if (type === 'toolkit') {
+      const order = this.data.orders.find(o => o.orderNo === orderNo || o.id === id)
+      if (order && order._raw && order._raw.params && order._raw.params.items) {
+        const firstItem = order._raw.params.items[0] || {}
+        const toolkitId = firstItem.id || firstItem.productId
+        if (toolkitId) {
+          wx.navigateTo({ url: `/pages/toolkit/toolkit-detail/toolkit-detail?id=${toolkitId}` })
+          return
+        }
+      }
+      // 如果找不到工具包ID，跳转到产品页
+      wx.navigateTo({ url: '/pages/products/products' })
       return
     }
 

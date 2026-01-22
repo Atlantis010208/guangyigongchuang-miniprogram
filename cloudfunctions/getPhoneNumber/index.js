@@ -1,6 +1,7 @@
 /**
  * 云函数 getPhoneNumber
  * 功能：获取用户手机号并保存到数据库
+ *       新增：自动检查白名单并激活课程授权
  * 
  * 入参：
  *   - code: 手机号授权 code（必填）
@@ -11,10 +12,169 @@
  *   - code: 状态码
  *   - phoneInfo: 手机号信息（包含 phoneNumber, purePhoneNumber, countryCode）
  *   - user: 更新后的用户文档（如果 saveToDb 为 true）
+ *   - whitelistActivated: boolean 是否激活了白名单授权
  */
 const cloud = require('wx-server-sdk')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+
+/**
+ * 生成订单号
+ * 格式：时间戳_随机字母（与商城订单格式保持一致）
+ * 例如：1766027958353_qeuoze
+ */
+function generateOrderNo() {
+  const timestamp = Date.now()
+  // 生成 6 位随机字母数字
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let random = ''
+  for (let i = 0; i < 6; i++) {
+    random += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return `${timestamp}_${random}`
+}
+
+/**
+ * 检查并激活白名单授权
+ * 静默执行，不影响主流程
+ * 
+ * @param {string} phoneNumber 用户手机号
+ * @param {string} openid 用户 openid
+ * @param {string} userId 用户 _id
+ * @returns {object} { activated, whitelistId, orderId }
+ */
+async function checkAndActivateWhitelist(phoneNumber, openid, userId) {
+  const db = cloud.database()
+  const _ = db.command
+  
+  console.log('[白名单检查] 开始检查手机号:', phoneNumber.substring(0, 3) + '****' + phoneNumber.substring(7))
+  
+  try {
+    // 1. 查询白名单中是否有该手机号的待激活记录
+    const whitelistRes = await db.collection('course_whitelist')
+      .where({
+        phone: phoneNumber,
+        status: 'pending'
+      })
+      .limit(10) // 一个手机号可能对应多个课程
+      .get()
+    
+    if (!whitelistRes.data || whitelistRes.data.length === 0) {
+      console.log('[白名单检查] 未找到待激活的白名单记录')
+      return { activated: false }
+    }
+    
+    console.log('[白名单检查] 找到待激活记录:', whitelistRes.data.length, '条')
+    
+    const now = Date.now()
+    let activatedCount = 0
+    
+    // 2. 为每条白名单记录创建订单并更新状态
+    for (const whitelist of whitelistRes.data) {
+      try {
+        // 2.1 检查是否已经有该课程的订单（幂等性保证）
+        const existingOrderRes = await db.collection('orders')
+          .where({
+            userId: openid,
+            category: 'course',
+            status: _.in(['paid', 'completed']),
+            isDelete: _.neq(1),
+            'params.items': _.elemMatch({
+              id: whitelist.courseId
+            })
+          })
+          .limit(1)
+          .get()
+        
+        if (existingOrderRes.data && existingOrderRes.data.length > 0) {
+          console.log('[白名单激活] 用户已有该课程订单，跳过:', whitelist.courseId)
+          
+          // 更新白名单状态为已激活（关联到已有订单）
+          await db.collection('course_whitelist').doc(whitelist._id).update({
+            data: {
+              status: 'activated',
+              activatedAt: now,
+              activatedUserId: openid,
+              orderId: existingOrderRes.data[0]._id,
+              orderNo: existingOrderRes.data[0].orderNo,
+              updatedAt: now
+            }
+          })
+          activatedCount++
+          continue
+        }
+        
+        // 2.2 创建课程订单
+        const orderNo = generateOrderNo()
+        const orderDoc = {
+          orderNo,
+          userId: openid,
+          _openid: openid,
+          category: 'course',
+          status: 'completed', // 直接完成，无需支付
+          totalPrice: 0,
+          paidPrice: 0,
+          params: {
+            items: [{
+              id: whitelist.courseId,
+              courseId: whitelist.courseId,
+              name: whitelist.courseName || '灯光设计课',
+              category: 'course',
+              type: 'course',
+              price: 0,
+              quantity: 1
+            }]
+          },
+          // 白名单订单标记
+          source: 'whitelist',
+          whitelistId: whitelist._id,
+          whitelistPhone: phoneNumber,
+          // 时间戳
+          paidAt: now,
+          completedAt: now,
+          createdAt: now,
+          updatedAt: now,
+          isDelete: 0
+        }
+        
+        const orderAddRes = await db.collection('orders').add({ data: orderDoc })
+        const orderId = orderAddRes._id
+        
+        console.log('[白名单激活] 订单已创建:', orderNo, '课程:', whitelist.courseId)
+        
+        // 2.3 更新白名单状态
+        await db.collection('course_whitelist').doc(whitelist._id).update({
+          data: {
+            status: 'activated',
+            activatedAt: now,
+            activatedUserId: openid,
+            orderId,
+            orderNo,
+            updatedAt: now
+          }
+        })
+        
+        console.log('[白名单激活] 白名单记录已更新为激活状态')
+        activatedCount++
+        
+      } catch (itemErr) {
+        console.error('[白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)
+        // 继续处理下一条，不中断整个流程
+      }
+    }
+    
+    return {
+      activated: activatedCount > 0,
+      activatedCount,
+      totalFound: whitelistRes.data.length
+    }
+    
+  } catch (err) {
+    console.error('[白名单检查] 执行失败:', err.message)
+    // 白名单检查失败不影响主流程
+    return { activated: false, error: err.message }
+  }
+}
 
 exports.main = async (event) => {
   try {
@@ -52,6 +212,8 @@ exports.main = async (event) => {
 
     // 如果需要保存到数据库
     let user = null
+    let whitelistResult = null
+    
     if (saveToDb) {
       const ctx = cloud.getWXContext()
       const openid = ctx.OPENID || ctx.openid || ''
@@ -74,6 +236,35 @@ exports.main = async (event) => {
 
         try {
           let existingUser = null
+          const _ = db.command
+          const purePhone = phoneInfo.purePhoneNumber || phoneInfo.phoneNumber.replace(/^\+86/, '')
+
+          // ========== 新增：手机号去重检查 ==========
+          // 检查该手机号是否已被其他用户使用（排除已删除的用户）
+          const phoneCheckRes = await col.where({
+            purePhoneNumber: purePhone,
+            _openid: _.neq(openid),  // 排除当前用户
+            isDelete: _.neq(1)       // 排除已删除的用户
+          }).limit(1).get()
+
+          if (phoneCheckRes && phoneCheckRes.data && phoneCheckRes.data.length > 0) {
+            const otherUser = phoneCheckRes.data[0]
+            console.log('[手机号去重] 手机号已被其他用户使用:', {
+              phone: purePhone.substring(0, 3) + '****' + purePhone.substring(7),
+              otherUserId: otherUser._id,
+              currentOpenid: openid
+            })
+            
+            return {
+              success: false,
+              code: 'PHONE_ALREADY_USED',
+              errorMessage: '该手机号已被其他账号绑定，如有疑问请联系客服',
+              phoneInfo,
+              existingUserId: otherUser._id
+            }
+          }
+          console.log('[手机号去重] 检查通过，手机号可用')
+          // ==========================================
 
           // 方法1：通过 _openid 查询
           if (openid) {
@@ -98,6 +289,7 @@ exports.main = async (event) => {
           }
 
           // 方法3：如果都找不到，尝试创建一条新记录
+          // 注意：手机号去重检查已在上方完成
           if (!existingUser && openid) {
             console.log('用户记录不存在，尝试创建新记录')
             const addRes = await col.add({
@@ -106,7 +298,7 @@ exports.main = async (event) => {
                 nickname: '',
                 avatarUrl: '',
                 phoneNumber: phoneInfo.phoneNumber,
-                purePhoneNumber: phoneInfo.purePhoneNumber || '',
+                purePhoneNumber: purePhone,
                 countryCode: phoneInfo.countryCode || '',
                 roles: 1,
                 createdAt: now,
@@ -134,6 +326,23 @@ exports.main = async (event) => {
               userId: existingUser._id, 
               phone: phoneInfo.phoneNumber.substring(0, 3) + '****' + phoneInfo.phoneNumber.substring(7) 
             })
+            
+            // ========== 新增：白名单激活检查 ==========
+            // 保存手机号成功后，检查并激活白名单授权
+            // 重要：使用 purePhoneNumber（纯手机号，不带国家码）来匹配白名单
+            // 因为白名单中存储的是不带国家码的11位手机号
+            const phoneForWhitelist = phoneInfo.purePhoneNumber || phoneInfo.phoneNumber.replace(/^\+86/, '')
+            whitelistResult = await checkAndActivateWhitelist(
+              phoneForWhitelist, 
+              openid, 
+              existingUser._id
+            )
+            
+            if (whitelistResult.activated) {
+              console.log('[getPhoneNumber] 白名单激活成功:', whitelistResult)
+            }
+            // ========================================
+            
           } else {
             console.warn('无法保存手机号：未能找到或创建用户记录')
           }
@@ -147,7 +356,10 @@ exports.main = async (event) => {
       success: true, 
       code: 'OK', 
       phoneInfo,
-      user
+      user,
+      // 新增：白名单激活结果
+      whitelistActivated: whitelistResult ? whitelistResult.activated : false,
+      whitelistInfo: whitelistResult
     }
   } catch (err) {
     console.error('getPhoneNumber 云函数执行失败:', err)

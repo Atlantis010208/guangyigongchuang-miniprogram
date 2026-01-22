@@ -86,6 +86,139 @@ Page({
     wx.navigateTo({ url: '/pages/profile/addresses/edit' })
   },
 
+  /**
+   * 从微信获取收货地址
+   * 调用 wx.chooseAddress API 获取用户在微信中保存的收货地址
+   */
+  getWxAddress() {
+    const that = this
+    
+    // 先检查授权状态
+    wx.getSetting({
+      success(res) {
+        if (res.authSetting['scope.address'] === false) {
+          // 用户之前拒绝过授权，引导去设置页面开启
+          wx.showModal({
+            title: '授权提示',
+            content: '需要您授权获取收货地址，是否前往设置？',
+            confirmText: '去设置',
+            success(modalRes) {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success(settingRes) {
+                    if (settingRes.authSetting['scope.address']) {
+                      // 用户开启了授权，重新调用
+                      that.callChooseAddress()
+                    }
+                  }
+                })
+              }
+            }
+          })
+        } else {
+          // 未拒绝过授权或已授权，直接调用
+          that.callChooseAddress()
+        }
+      },
+      fail() {
+        // getSetting 失败，尝试直接调用
+        that.callChooseAddress()
+      }
+    })
+  },
+
+  /**
+   * 调用微信选择地址 API
+   */
+  callChooseAddress() {
+    const that = this
+    
+    wx.chooseAddress({
+      success(res) {
+        console.log('微信地址获取成功:', res)
+        
+        // 将微信地址格式转换为本地地址格式
+        const wxAddress = {
+          id: 'wx_' + Date.now(), // 生成唯一 ID
+          name: res.userName,
+          phone: res.telNumber,
+          region: [res.provinceName, res.cityName, res.countyName],
+          town: '', // 微信地址没有乡镇字段
+          detail: res.detailInfo,
+          postalCode: res.postalCode,
+          nationalCode: res.nationalCode,
+          isDefault: that.data.addresses.length === 0, // 如果是第一个地址则设为默认
+          source: 'wechat' // 标记来源为微信
+        }
+        
+        // 检查是否已存在相同地址（根据姓名+手机号+详细地址判断）
+        const existIndex = that.data.addresses.findIndex(addr => 
+          addr.name === wxAddress.name && 
+          addr.phone === wxAddress.phone &&
+          addr.detail === wxAddress.detail
+        )
+        
+        if (existIndex > -1) {
+          wx.showToast({
+            title: '该地址已存在',
+            icon: 'none'
+          })
+          return
+        }
+        
+        // 构建完整地址文本
+        const region = wxAddress.region.filter(Boolean).join(' ')
+        const full = [region, wxAddress.town, wxAddress.detail].filter(Boolean).join(' ')
+        wxAddress.full = full
+        
+        // 添加到地址列表
+        const addresses = [wxAddress, ...that.data.addresses]
+        
+        // 如果新地址是默认的，取消其他地址的默认状态
+        if (wxAddress.isDefault) {
+          addresses.forEach((addr, idx) => {
+            if (idx > 0) addr.isDefault = false
+          })
+        }
+        
+        that.setData({ addresses })
+        wx.setStorageSync('user_addresses', addresses)
+        that.syncToCloud(addresses)
+        
+        wx.showToast({
+          title: '地址添加成功',
+          icon: 'success'
+        })
+      },
+      fail(err) {
+        // 用户取消选择，不做任何处理
+        if (err.errMsg && err.errMsg.indexOf('cancel') > -1) {
+          console.log('用户取消了地址选择')
+          return
+        }
+        
+        console.error('获取微信地址失败:', err)
+        
+        if (err.errMsg && err.errMsg.indexOf('auth deny') > -1) {
+          wx.showModal({
+            title: '授权提示',
+            content: '您拒绝了获取收货地址的授权，无法获取微信地址',
+            showCancel: false,
+            confirmText: '我知道了'
+          })
+        } else {
+          // 可能是模拟器环境或其他原因
+          wx.showModal({
+            title: '获取失败',
+            content: '无法获取微信地址。如果您在模拟器中测试，请使用真机预览；或者点击「新增地址」手动添加。',
+            showCancel: false,
+            confirmText: '我知道了'
+          })
+        }
+      }
+    })
+  },
+
   editAddress(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/profile/addresses/edit?id=${id}` })

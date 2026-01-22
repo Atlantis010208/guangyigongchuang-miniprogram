@@ -1,0 +1,21 @@
+{
+  "name": "toolkit_purchase_check",
+  "version": "1.0.0",
+  "description": "检查用户是否已购买工具包",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "toolkit",
+    "purchase",
+    "check",
+    "permission"
+  ],
+  "author": "guangyi",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+

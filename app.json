@@ -2,27 +2,44 @@
   "pages": [
     "pages/products/products",
     "pages/course/index/index",
-    "pages/auth/login/login",
-    "pages/auth/agreement/agreement",
-    "pages/auth/profile-edit/profile-edit",
-     
     "pages/search/search",
     "pages/cart/cart",
-    "pages/mall/mall",
-    "pages/mall/product-detail/product-detail",
-    "pages/mall/cart/cart",
+    "pages/auth/login/login",
+    "pages/auth/profile-edit/profile-edit",
     "pages/course/course-detail/course-detail",
-    "pages/course/video-player/video-player",
-    "pages/toolkit/toolkit-detail/toolkit-detail",
-    "pages/order/detail/detail",
-    "pages/order/edit/edit"
-    ,
-    "pages/order/confirm/confirm",
-    "pages/order/result/result",
-    "pages/refund/apply/apply",
-    "pages/refund/detail/detail"
+    "pages/course/video-player/video-player"
   ],
   "subpackages": [
+    {
+      "root": "pages/mall/",
+      "pages": [
+        "mall",
+        "product-detail/product-detail",
+        "cart/cart"
+      ]
+    },
+    {
+      "root": "pages/order/",
+      "pages": [
+        "detail/detail",
+        "edit/edit",
+        "confirm/confirm",
+        "result/result"
+      ]
+    },
+    {
+      "root": "pages/refund/",
+      "pages": [
+        "apply/apply",
+        "detail/detail"
+      ]
+    },
+    {
+      "root": "pages/toolkit/",
+      "pages": [
+        "toolkit-detail/toolkit-detail"
+      ]
+    },
     {
       "root": "pages/flows/",
       "pages": [
@@ -57,7 +74,6 @@
         "detail/detail"
       ]
     },
-    
     {
       "root": "pages/request/",
       "pages": [
@@ -78,7 +94,6 @@
         "detail/detail"
       ]
     },
-    
     {
       "root": "pages/profile/",
       "pages": [
@@ -145,5 +160,8 @@
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
-  "cloud": true
+  "cloud": true,
+  "requiredPrivateInfos": [
+    "chooseAddress"
+  ]
 }

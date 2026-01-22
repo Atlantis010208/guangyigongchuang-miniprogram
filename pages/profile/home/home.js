@@ -20,9 +20,47 @@ Page({
     // 检查登录状态
     const app = getApp()
     const isLoggedIn = app.isLoggedIn()
+    console.log('个人中心 onShow - 登录状态:', isLoggedIn)
     this.setData({ isLoggedIn })
     
     if (isLoggedIn) {
+      this.loadUserData()
+    }
+    
+    // 延迟再次检查登录状态，以防云端验证后状态改变
+    setTimeout(() => {
+      const latestStatus = app.isLoggedIn()
+      if (latestStatus !== this.data.isLoggedIn) {
+        console.log('登录状态已变化，重新设置:', latestStatus)
+        this.setData({ isLoggedIn: latestStatus })
+        if (!latestStatus) {
+          // 状态变为未登录，清空用户数据
+          this.setData({
+            user: { name: '', phone: '', avatar: '' },
+            userAvatarDisplay: ''
+          })
+        }
+      }
+    }, 500)
+  },
+
+  /**
+   * 登录状态改变回调(由 app.js 的 verifyCloudLoginStatus 触发)
+   * @param {boolean} isLoggedIn 最新的登录状态
+   */
+  onLoginStatusChanged(isLoggedIn) {
+    console.log('登录状态改变回调:', isLoggedIn)
+    this.setData({ isLoggedIn })
+    if (!isLoggedIn) {
+      // 清空用户数据
+      this.setData({
+        user: { name: '', phone: '', avatar: '' },
+        userAvatarDisplay: '',
+        userId: '',
+        openid: ''
+      })
+    } else {
+      // 重新加载用户数据
       this.loadUserData()
     }
   },
@@ -155,22 +193,41 @@ Page({
   /**
    * 编辑资料
    */
-  editProfile() {
-    // 检查是否已登录
+  editProfile(e) {
+    console.log('editProfile 被触发', e)
+    
+    // 再次检查登录状态
+    const app = getApp()
+    const isLoggedIn = app.isLoggedIn()
     const openid = wx.getStorageSync('openid')
-    if (!openid) {
+    
+    console.log('editProfile - 登录状态:', isLoggedIn, ', openid:', openid)
+    
+    if (!isLoggedIn || !openid) {
+      // 更新页面状态
+      this.setData({ 
+        isLoggedIn: false,
+        user: { name: '', phone: '', avatar: '' },
+        userAvatarDisplay: ''
+      })
+      
       wx.showModal({
         title: '提示',
-        content: '请先登录',
+        content: '登录状态已失效，请重新登录',
         confirmText: '去登录',
+        cancelText: '取消',
         success: (res) => {
           if (res.confirm) {
-            wx.navigateTo({ url: '/pages/auth/login/login' })
+            wx.navigateTo({ 
+              url: '/pages/auth/login/login?redirect=' + encodeURIComponent('/pages/profile/home/home')
+            })
           }
         }
       })
       return
     }
+    
+    // 登录状态正常，跳转到编辑页面
     wx.navigateTo({ url: '/pages/auth/profile-edit/profile-edit' })
   },
   

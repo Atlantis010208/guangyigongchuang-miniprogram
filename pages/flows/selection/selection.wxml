@@ -24,7 +24,7 @@
       </view>
 
       <view class="cell" hover-class="cell-active" bindtap="onTapTrimless">
-        <text class="label fixed">无边预埋射灯</text>
+        <text class="label fixed">射灯款式</text>
         <view class="picker-text">{{trimlessOptions[trimlessIdx]}}</view>
       </view>
 

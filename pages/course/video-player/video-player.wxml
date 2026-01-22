@@ -42,10 +42,11 @@
         show-fullscreen-btn="{{true}}"
         show-progress="{{true}}"
         show-mute-btn="{{false}}"
-        show-playback-rate-btn="{{true}}"
+        show-playback-rate-btn="{{false}}"
         show-snapshot-button="{{false}}"
+        show-background-playback-button="{{false}}"
         playback-rate="{{playbackRate}}"
-        show-loading="{{true}}"
+        show-loading="{{false}}"
         enable-progress-gesture="{{false}}"
         enable-play-gesture="{{false}}"
         object-fit="contain"
@@ -89,6 +90,7 @@
         <text class="options-title">播放选项</text>
       </view>
       <view class="options-content">
+        <!-- 倍速选项 -->
         <view class="option-section">
           <text class="option-label">倍速</text>
           <view class="speed-options">
@@ -112,6 +114,22 @@
             </view>
           </view>
         </view>
+        
+        <!-- 🆕 清晰度选项 -->
+        <view class="option-section">
+          <text class="option-label">清晰度</text>
+          <view class="quality-options">
+            <block wx:for="{{availableQualities}}" wx:key="*this">
+              <view 
+                class="quality-item {{currentQuality === item ? 'active' : ''}}" 
+                bindtap="onSelectQuality" 
+                data-quality="{{item}}"
+              >
+                <text>{{qualityLabels[item]}}</text>
+              </view>
+            </block>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -119,7 +137,15 @@
     <scroll-view scroll-y class="playlist-section">
       <view class="section-header">
         <text class="section-title">课程列表</text>
-        <text class="section-subtitle">当前播放: {{currentLesson.title}}</text>
+        <view class="section-subtitle-row">
+          <text class="section-subtitle">当前播放: {{currentLesson.title}}</text>
+          <view class="viewer-info">
+            <image class="viewer-icon" src="/images/人数.png" mode="aspectFit"></image>
+            <text class="viewer-count">{{viewerCount}}人正在观看</text>
+          </view>
+        </view>
+        <!-- 已学习人数 -->
+        <text class="learned-count">{{learnedCount}}人已学习</text>
       </view>
 
       <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter">
@@ -136,7 +162,20 @@
               </view>
               <view class="lesson-info">
                 <text class="lesson-title {{lesson.id === currentLesson.id ? 'active-text' : ''}}">{{lesson.title}}</text>
-                <text class="lesson-duration">{{lesson.duration}}</text>
+                <view class="lesson-meta">
+                  <text class="lesson-duration">{{lesson.duration}}</text>
+                  <!-- 学习进度状态 -->
+                  <block wx:if="{{lesson.type === 'video'}}">
+                    <text class="lesson-progress completed" wx:if="{{lesson.isCompleted}}">· 已学习</text>
+                    <text class="lesson-progress learning" wx:elif="{{lesson.progress > 0}}">· 已学习 {{lesson.progress}}%</text>
+                    <text class="lesson-progress not-started" wx:else>· 未学习</text>
+                  </block>
+                </view>
+              </view>
+              
+              <!-- 课后作业按钮 - 垂直居中在右侧 -->
+              <view class="homework-btn" wx:if="{{lesson.id === 'l1-1'}}" catchtap="onHomeworkTap" data-lesson-id="{{lesson.id}}">
+                <text class="homework-text">课后作业</text>
               </view>
             </view>
           </block>

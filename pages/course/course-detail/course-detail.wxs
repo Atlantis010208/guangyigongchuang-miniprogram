@@ -1,0 +1,111 @@
+var startY = 0;
+var scrollTop = 0;
+var moveY = 0;
+var isPulling = false;
+
+function touchStart(e, ins) {
+  var touch = e.touches[0] || e.changedTouches[0];
+  startY = touch.pageY;
+}
+
+function touchMove(e, ins) {
+  var touch = e.touches[0] || e.changedTouches[0];
+  var pageY = touch.pageY;
+  var diff = pageY - startY;
+
+  // 如果在顶部且向下拉
+  if (scrollTop <= 0 && diff > 0) {
+    // 标记正在下拉，防止scroll-view默认行为干扰（虽然不能完全阻止橡皮筋，但可以叠加动画）
+    isPulling = true;
+    moveY = diff;
+    
+    // 阻尼系数，让下拉感觉更有质感
+    var damping = 0.6; 
+    var offset = moveY * damping;
+
+    // 1. 封面图放大
+    // 假设封面图高度约 750rpx (375px)
+    // scale 变化：1 -> 1.2
+    var scale = 1 + (offset / 800); 
+
+    // 2. 卡片下移
+    // 卡片随着手指移动，露出图片底部
+    var translateY = offset;
+
+    var coverImage = ins.selectComponent('.cover-image');
+    var infoCard = ins.selectComponent('.info-card');
+    var coverGradient = ins.selectComponent('.cover-gradient');
+
+    if (coverImage) {
+      coverImage.setStyle({
+        transform: 'scale(' + scale + ')',
+        'transform-origin': 'center top' // 从顶部放大
+      });
+    }
+    
+    if (infoCard) {
+      infoCard.setStyle({
+        transform: 'translateY(' + translateY + 'px)'
+      });
+    }
+
+    if (coverGradient) {
+      // 下拉时让遮罩层快速变透明，露出图片底部细节
+      var opacity = 1 - (offset / 100);
+      if (opacity < 0) opacity = 0;
+      
+      coverGradient.setStyle({
+        opacity: opacity
+      });
+    }
+    
+    // 返回 false 尝试阻止默认滚动（在某些场景有效，但 iOS 橡皮筋通常无法阻止）
+    // 这里我们主要依赖动画叠加
+  } else {
+    isPulling = false;
+  }
+}
+
+function touchEnd(e, ins) {
+  if (isPulling || moveY > 0) {
+    var coverImage = ins.selectComponent('.cover-image');
+    var infoCard = ins.selectComponent('.info-card');
+    var coverGradient = ins.selectComponent('.cover-gradient');
+    
+    // 恢复原状，添加过渡动画
+    if (coverImage) {
+      coverImage.setStyle({
+        transform: 'scale(1)',
+        transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+    }
+    
+    if (infoCard) {
+      infoCard.setStyle({
+        transform: 'translateY(0)',
+        transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+    }
+
+    if (coverGradient) {
+      coverGradient.setStyle({
+        opacity: 1,
+        transition: 'opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+    }
+    
+    moveY = 0;
+    isPulling = false;
+  }
+}
+
+function onScroll(e) {
+  scrollTop = e.detail.scrollTop;
+}
+
+module.exports = {
+  touchStart: touchStart,
+  touchMove: touchMove,
+  touchEnd: touchEnd,
+  onScroll: onScroll
+};

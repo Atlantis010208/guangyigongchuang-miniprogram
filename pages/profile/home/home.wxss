@@ -2,7 +2,8 @@
 .page-title{display:block;font-size:56rpx;font-weight:800;padding:30rpx}
 .profile-card{margin:0 30rpx 20rpx;background:#fff;border-radius:40rpx;padding:0;position:relative;overflow:hidden}
 .profile-card.unified .top{display:flex;align-items:center;padding:24rpx 28rpx}
-.profile-card:active{background:#f8f8f8}
+/* 移除全局点击效果，改为独立的 hover-class */
+.top-hover{background:#f8f8f8;transition:background 0.2s}
 .edit-arrow{position:absolute;right:28rpx;color:#c7c7cc;font-size:28rpx}
 .avatar{width:120rpx;height:120rpx;border-radius:50%;background:#e5e5ea}
 .info{margin-left:24rpx}
@@ -11,11 +12,13 @@
 .cells{margin:20rpx 30rpx;background:#fff;border-radius:40rpx;overflow:hidden}
 .profile-card.unified .cells.inline{margin:0;border-top:1rpx solid #eee;border-radius:0}
 .profile-card.unified .cells.inline .cell{padding:30rpx 28rpx}
-.cell{display:flex;justify-content:space-between;align-items:center;padding:34rpx 28rpx;border-bottom:1rpx solid #eee}
+.cell{display:flex;justify-content:space-between;align-items:center;padding:34rpx 28rpx;border-bottom:1rpx solid #eee;transition:background-color 0.2s}
 .cell:last-child{border-bottom:none}
+.cell-hover{background:#f8f8f8}
 .arrow{color:#c7c7cc}
 
-.floating-contact{ position: fixed; right: 24rpx; bottom: 160rpx; background: #ffffff; border-radius: 999rpx; box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); display: flex; align-items: center; padding: 12rpx 18rpx; z-index: 9 }
+.floating-contact{ position: fixed; right: 24rpx; bottom: 160rpx; background: #ffffff; border-radius: 999rpx; box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); display: flex; align-items: center; padding: 12rpx 18rpx; z-index: 9; transition: all 0.2s }
+.floating-contact-hover{ background: #f2f2f7; transform: scale(0.95) }
 .float-icon{ width: 36rpx; height: 36rpx; margin-right: 8rpx }
 .float-text{ font-size: 26rpx; color: #1c1c1e }
 

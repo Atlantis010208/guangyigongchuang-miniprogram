@@ -47,7 +47,7 @@
   }
   
   .section-title {
-    font-size: 48rpx;
+    font-size: 40rpx;
     font-weight: 600;
     color: #000;
     display: block;
@@ -215,19 +215,41 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 20rpx;
+    border-radius: 50%;
+    overflow: hidden;
   }
   
   .category-image {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    border-radius: 50%;
+  }
+
+  .category-full-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+    display: block;
   }
   
   .category-text {
-    font-size: 24rpx;
+    font-size: 20rpx;
     color: #000000;
     font-weight: bold;
     text-align: center;
+    line-height: 1.2;
+  }
+
+  .category-overlay-text {
+    position: absolute;
+    bottom: 50rpx;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 24rpx;
+    font-weight: 600;
+    color: #000000;
+    z-index: 10;
     line-height: 1.2;
   }
     
@@ -316,13 +338,19 @@
   }
   
   .service-pill-text {
-    font-size: 30rpx;
+    font-size: 26rpx;
     font-weight: bold;
     color: #000000;
     line-height: 1;
   }
   
   /* 删除旧的 assistant-card 相关样式 */
+  
+  .assistant-section .section-title,
+  .hero-section .section-title {
+    font-size: 40rpx;
+    font-weight: 600;
+  }
   
   /* Apple 内容标签 */
   .content-tags {
@@ -403,27 +431,6 @@
     margin-bottom: 5rpx;
   }
 
-  /* 预算小弹窗 */
-  .quiz-mask { position: fixed; left:0; right:0; top:0; bottom:0; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999; display:flex; align-items:center; justify-content:center; padding: 40rpx; }
-  .quiz-modal { width: 100%; max-width: 680rpx; background:#fff; border-radius: 40rpx; padding: 36rpx; }
-  .quiz-header { text-align:center; margin-bottom: 20rpx; }
-  .quiz-title { font-size: 36rpx; font-weight: 700; color:#000; display:block; }
-  .quiz-sub { font-size: 24rpx; color:#8e8e93; display:block; margin-top: 6rpx; }
-  .quiz-section { margin-top: 10rpx; }
-  .quiz-label { font-size: 28rpx; color:#000; font-weight:600; display:block; margin-bottom: 16rpx; }
-  .quiz-group { display:flex; flex-direction: column; gap: 16rpx; }
-  .quiz-option { background:#fff; border-radius: 24rpx; padding: 18rpx 20rpx; }
-  .quiz-input { background:#f7f7f9; border-radius: 24rpx; padding: 18rpx 20rpx; font-size: 28rpx; }
-  .area-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-bottom: 16rpx; }
-  .area-item { background:#fff; border-radius: 28rpx; padding: 26rpx 0; text-align:center; font-size: 28rpx; color:#000; box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.06); }
-  .quiz-actions { display:flex; gap: 16rpx; margin-top: 28rpx; }
-  .btn { flex:1; padding: 22rpx; border-radius: 30rpx; font-size: 28rpx; border:none; }
-  .btn.primary { background:#007aff; color:#fff; }
-  .btn.ghost { background:#fff; color:#007aff; border: 2rpx solid #007aff; }
-  .quiz-result { text-align:center; padding: 10rpx 0 0; }
-  .result-title { font-size: 28rpx; color:#8e8e93; display:block; }
-  .result-price { font-size: 56rpx; font-weight:800; color:#000; display:block; margin: 8rpx 0; }
-  .result-sub { font-size: 22rpx; color:#8e8e93; }
   /*抵折优惠*/
   .disclaimer-card {
       background-color: white;

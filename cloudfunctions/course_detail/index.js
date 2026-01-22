@@ -16,6 +16,9 @@ const _ = db.command
 
 exports.main = async (event) => {
   try {
+    const wxContext = cloud.getWXContext()
+    const OPENID = wxContext.OPENID || wxContext.openid
+    
     const { id, courseId } = event
     
     if (!id && !courseId) {
@@ -138,18 +141,42 @@ exports.main = async (event) => {
       }
     }
     
-    // 处理章节数据：返回大纲结构，但不返回视频链接
+    // 查询用户的学习进度
+    let userProgress = {}
+    if (OPENID) {
+      try {
+        const progressRes = await db.collection('course_progress').where({
+          userId: OPENID,
+          courseId: course.courseId || course._id
+        }).limit(1).get()
+        
+        if (progressRes.data && progressRes.data.length > 0) {
+          userProgress = progressRes.data[0].lessonProgress || {}
+        }
+      } catch (err) {
+        console.warn('[course_detail] 查询学习进度失败:', err)
+      }
+    }
+    
+    // 处理章节数据：返回大纲结构，并附加每个课时的学习进度
     const chapters = (course.chapters || []).map(chapter => ({
       title: chapter.title,
-      lessons: (chapter.lessons || []).map(lesson => ({
+      lessons: (chapter.lessons || []).map(lesson => {
+        const lessonProgressInfo = userProgress[lesson.id] || {}
+        return {
         id: lesson.id,
         title: lesson.title,
         type: lesson.type,
         duration: lesson.duration,
         format: lesson.format,
-        size: lesson.size
+          size: lesson.size,
+          // 附加学习进度信息
+          progress: lessonProgressInfo.progress || 0,
+          isCompleted: lessonProgressInfo.isCompleted || false,
+          lastWatchedAt: lessonProgressInfo.lastWatchedAt || null
+        }
         // 注意：不返回 videoUrl 和 fileUrl，这些需要通过 course_videos 获取（需购买验证）
-      }))
+      })
     }))
     
     // 格式化返回数据，兼容小程序端字段命名

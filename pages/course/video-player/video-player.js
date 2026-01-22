@@ -36,7 +36,22 @@ Page({
     
     // 倍速控制
     playbackRate: 1.0,
-    showOptionsPanel: false
+    showOptionsPanel: false,
+    
+    // 🆕 多分辨率控制
+    currentQuality: '1080p',           // 当前选择的分辨率
+    availableQualities: [],            // 可用的分辨率列表
+    qualityLabels: {                   // 分辨率显示名称
+      '480p': '480p 标清',
+      '720p': '720p 高清',
+      '1080p': '1080p 超清'
+    },
+    
+    // 🆕 观看人数（从云函数获取真实数据）
+    viewerCount: 0,
+    
+    // 已学习人数（从云函数获取真实数据）
+    learnedCount: 0
   },
 
   // 实例属性（不触发渲染）
@@ -51,6 +66,9 @@ Page({
     this._bufferingTimer = null;
     this._seekingTimer = null;  // 拖动进度条的定时器
     this._retryCount = 0;       // 视频重试计数器
+    this._currentTime = 0;      // 当前播放时间
+    this._duration = 0;         // 视频总时长
+    this._viewerCountTimer = null;  // 🆕 观看人数刷新定时器
     
     const { courseId, lessonId } = options;
     this.courseId = courseId;
@@ -72,10 +90,22 @@ Page({
   onReady() {
     this.videoContext = wx.createVideoContext('courseVideo');
     console.log('[video-player] onReady, videoContext created');
+    
+    // 🆕 开始定时刷新观看人数
+    this.startViewerCountRefresh();
   },
 
-  onUnload() {
+  async onUnload() {
     console.log('[video-player] onUnload');
+    
+    // 🆕 离开观看
+    await this.leaveViewing();
+    
+    // 🆕 停止定时刷新
+    this.stopViewerCountRefresh();
+    
+    // 保存当前观看进度
+    await this.saveCurrentProgress();
     
     // 清理所有定时器
     if (this._bufferingTimer) {
@@ -96,7 +126,20 @@ Page({
     }
   },
   
-  onHide() {
+  async onHide() {
+    console.log('[video-player] onHide');
+    
+    // 🆕 离开观看（无论播放还是暂停状态）
+    // 当用户切换到后台或返回上一页时，都应该标记为离开
+    // 如果用户回来（onShow），会自动重新加入
+    await this.leaveViewing();
+    
+    // 🆕 停止定时刷新
+    this.stopViewerCountRefresh();
+    
+    // 保存当前观看进度
+    await this.saveCurrentProgress();
+    
     // 页面隐藏时暂停视频，减少资源占用
     if (this.videoContext && this._isPlaying) {
       console.log('[video-player] onHide, pausing video');
@@ -108,6 +151,13 @@ Page({
     // 页面显示时不自动恢复播放，让用户手动点击
     // 这样可以避免一些奇怪的状态问题
     console.log('[video-player] onShow');
+    
+    // 🆕 重新加入观看（无论之前是播放还是暂停）
+    // 只要有当前课时，就标记为正在观看
+    if (this.data.currentLesson && this.data.currentLesson.id) {
+      this.joinViewing();
+      this.startViewerCountRefresh();
+    }
   },
 
   /**
@@ -135,6 +185,39 @@ Page({
       if (res.result && res.result.success) {
         const { courseId: id, title, chapters, currentLesson } = res.result.data;
 
+        // 🆕 解析可用分辨率
+        const availableQualities = this.parseAvailableQualities(currentLesson);
+        
+        // 🆕 恢复用户分辨率偏好
+        let currentQuality = '1080p';  // 默认 1080p
+        try {
+          const savedQuality = wx.getStorageSync('preferredQuality');
+          if (savedQuality) {
+            currentQuality = savedQuality;
+            console.log(`[video-player] 恢复用户偏好分辨率: ${currentQuality}`);
+          } else {
+            console.log('[video-player] 使用默认分辨率: 1080p');
+          }
+        } catch (e) {
+          console.warn('[video-player] 读取偏好失败:', e);
+        }
+        
+        // 🆕 如果偏好分辨率不可用，降级到最高可用分辨率
+        if (!availableQualities.includes(currentQuality)) {
+          const fallbackQuality = availableQualities[availableQualities.length - 1] || '720p';
+          console.log(`[video-player] 偏好分辨率 ${currentQuality} 不可用，降级到 ${fallbackQuality}`);
+          currentQuality = fallbackQuality;
+        }
+        
+        // 🆕 根据选定分辨率设置视频 URL
+        const videoUrl = this.getVideoUrlByQuality(currentLesson, currentQuality);
+        if (videoUrl) {
+          currentLesson.videoUrl = videoUrl;
+          console.log(`[video-player] 使用 ${currentQuality} 视频 URL`);
+        } else {
+          console.warn(`[video-player] 未找到 ${currentQuality} 视频 URL`);
+        }
+
         console.log('[video-player] Video URL:', currentLesson?.videoUrl?.substring(0, 100) + '...');
 
         // 检测是否是长视频（超过30分钟）
@@ -145,6 +228,8 @@ Page({
           course: { id, title },
           chapters: chapters || [],
           currentLesson: currentLesson,
+          currentQuality: currentQuality,        // 🆕 当前分辨率
+          availableQualities: availableQualities, // 🆕 可用分辨率列表
           loading: false,
           autoplay: true,
           isLongVideo: isLongVideo,
@@ -154,6 +239,13 @@ Page({
         wx.setNavigationBarTitle({
           title: currentLesson?.title || title || '视频播放'
         });
+
+        // 🆕 课程数据加载完成后，立即获取观看人数和已学习人数
+        // 延迟一小段时间确保 setData 完成
+        setTimeout(() => {
+          this.getViewerCount();
+          this.getLearnedCount();
+        }, 100);
 
       } else {
         const errorCode = res.result?.code || 'UNKNOWN_ERROR';
@@ -227,6 +319,10 @@ Page({
     if (now - this._lastTimeUpdate < 2000) return;
     this._lastTimeUpdate = now;
     
+    // 记录当前播放位置和总时长（用于保存进度）
+    this._currentTime = e.detail.currentTime || 0;
+    this._duration = e.detail.duration || 0;
+    
     // 如果正在缓冲但视频在播放，取消缓冲状态
     if (this.data.isBuffering && e.detail.currentTime > 0) {
       this._clearBuffering();
@@ -241,6 +337,9 @@ Page({
     // 只更新实例属性，不触发渲染
     this._isPlaying = true;
     this._switchingLesson = false;
+    
+    // 🆕 加入观看
+    this.joinViewing();
     
     // 清除缓冲定时器
     if (this._bufferingTimer) {
@@ -261,10 +360,15 @@ Page({
   /**
    * 视频暂停
    * 【关键优化】不调用 setData，完全避免重渲染
+   * 【观看统计】暂停时不离开观看，用户仍然算作"正在观看"
    */
   onVideoPause() {
     // 只更新实例属性，不触发渲染
     this._isPlaying = false;
+    
+    // ✅ 暂停时不调用 leaveViewing()，继续算作观看
+    // 用户需要真正离开页面（onUnload/onHide）才停止统计
+    
     // 不再调用 setData，因为 WXML 中没有使用 isPlaying
   },
 
@@ -293,11 +397,50 @@ Page({
    * 视频元数据加载完成
    */
   onVideoLoaded(e) {
+    const duration = e.detail?.duration || 0;
+    console.log('[video-player] onVideoLoaded, duration:', duration);
+    
+    // 更新视频总时长
+    this._duration = duration;
+    
     // 清除缓冲状态
     this._clearBuffering();
     
+    // 🔧 关键：检查是否是分辨率切换后的加载
+    if (this._qualityChangePending && this._seekAfterQualityChange > 0) {
+      const seekTime = this._seekAfterQualityChange;
+      console.log(`[video-player] 分辨率切换后恢复播放位置: ${seekTime} 秒`);
+      
+      // 清除标记
+      this._qualityChangePending = false;
+      this._seekAfterQualityChange = 0;
+      
+      // 延迟一小段时间确保视频组件准备好
+      setTimeout(() => {
+        if (this.videoContext) {
+          this.videoContext.seek(seekTime);
+          this.videoContext.play();
+          
+          wx.showToast({
+            title: `已切换到${this.data.qualityLabels[this.data.currentQuality]}`,
+            icon: 'none',
+            duration: 1500
+          });
+        }
+      }, 100);
+      
+      this.setData({ 
+        videoLoaded: true,
+        isBuffering: false 
+      });
+      return;
+    }
+    
     if (!this.data.videoLoaded) {
       this.setData({ videoLoaded: true });
+      
+      // 视频加载完成后，检查是否需要跳转到上次观看位置
+      this.resumeVideoProgress(duration);
     }
   },
   
@@ -352,10 +495,18 @@ Page({
 
   /**
    * 视频播放结束
+   * 【观看统计】播放完毕时不离开观看，用户仍然算作"正在观看"
    */
-  onVideoEnded() {
+  async onVideoEnded() {
     console.log('[video-player] onVideoEnded');
     this._isPlaying = false;
+    
+    // ✅ 播放结束时不调用 leaveViewing()，继续算作观看
+    // 用户需要真正离开页面或切换课程才停止统计
+    
+    // 记录课时完成状态
+    await this.updateCourseProgress('complete');
+    
     this.playNextLesson();
   },
 
@@ -528,8 +679,9 @@ Page({
       return;
     }
     
-    // 检查视频地址是否存在
-    if (!lesson.videoUrl) {
+    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
+    const hasVideoUrl = lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0);
+    if (!hasVideoUrl) {
       wx.showToast({ title: '视频地址无效', icon: 'none' });
       return;
     }
@@ -547,13 +699,48 @@ Page({
    * 切换课时（优化版 V3）
    * 直接切换视频源，不销毁组件，避免 videoContext 失效
    */
-  switchLesson(lesson) {
-    if (!lesson || !lesson.videoUrl) {
-      console.warn('[video-player] Invalid lesson:', lesson);
+  async switchLesson(lesson) {
+    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
+    const hasVideoUrl = lesson && (lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0));
+    if (!hasVideoUrl) {
+      console.warn('[video-player] Invalid lesson or no video URL:', lesson);
+      wx.showToast({ title: '视频地址无效', icon: 'none' });
       return;
     }
     
     console.log('[video-player] switchLesson start:', lesson.title);
+    
+    // 🆕 离开当前课时
+    if (this.data.currentLesson && this._isPlaying) {
+      await this.leaveViewing();
+    }
+    
+    // 🔧 修复：根据当前分辨率设置 videoUrl
+    if (lesson.videoUrls && !lesson.videoUrl) {
+      const currentQuality = this.data.currentQuality || '1080p';
+      const videoUrl = this.getVideoUrlByQuality(lesson, currentQuality);
+      if (videoUrl) {
+        lesson.videoUrl = videoUrl;
+        console.log(`[video-player] 为课时 ${lesson.id} 设置 ${currentQuality} URL`);
+      } else {
+        // 尝试其他分辨率
+        const availableQualities = this.parseAvailableQualities(lesson);
+        if (availableQualities.length > 0) {
+          const fallbackQuality = availableQualities[availableQualities.length - 1];
+          lesson.videoUrl = this.getVideoUrlByQuality(lesson, fallbackQuality);
+          console.log(`[video-player] 降级使用 ${fallbackQuality} URL`);
+        }
+      }
+    }
+    
+    if (!lesson.videoUrl) {
+      console.warn('[video-player] 无法获取视频 URL');
+      wx.showToast({ title: '视频地址无效', icon: 'none' });
+      return;
+    }
+    
+    // 先保存当前视频的观看进度
+    await this.saveCurrentProgress();
     
     // 设置切换标志
     this._switchingLesson = true;
@@ -601,6 +788,12 @@ Page({
           console.warn('[video-player] Play error:', e);
         }
       }
+      
+      // 🆕 刷新观看人数和已学习人数（延迟获取，确保课时已切换）
+      setTimeout(() => {
+        this.getViewerCount();
+        this.getLearnedCount();
+      }, 500);
     }, 300);
   },
   
@@ -682,5 +875,646 @@ Page({
       icon: 'none',
       duration: 1000
     });
+  },
+
+  /**
+   * 恢复视频播放进度
+   * @param {number} duration - 视频总时长（秒）
+   */
+  resumeVideoProgress(duration) {
+    const { currentLesson } = this.data;
+    
+    if (!currentLesson || !duration) {
+      return;
+    }
+    
+    const progress = currentLesson.progress || 0;
+    const isCompleted = currentLesson.isCompleted || false;
+    
+    // 只有进度在 5%-95% 之间才跳转到上次观看位置
+    // 未学习（<5%）或已完成（≥95%）从头开始播放
+    if (progress >= 5 && progress < 95 && !isCompleted) {
+      // 计算跳转时间点（秒）
+      const seekTime = Math.floor((progress / 100) * duration);
+      
+      console.log('[video-player] 恢复播放进度:', {
+        progress: progress + '%',
+        seekTime: seekTime + 's',
+        duration: duration + 's'
+      });
+      
+      // 延迟跳转，确保视频已准备好
+      setTimeout(() => {
+        if (this.videoContext) {
+          this.videoContext.seek(seekTime);
+          
+          // 显示提示
+          wx.showToast({
+            title: `继续播放 ${progress}%`,
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      }, 500);
+    } else {
+      console.log('[video-player] 从头开始播放:', {
+        progress: progress + '%',
+        isCompleted: isCompleted
+      });
+    }
+  },
+
+  /**
+   * 保存当前观看进度
+   */
+  async saveCurrentProgress() {
+    const { course, currentLesson } = this.data;
+    
+    if (!course || !course.id || !currentLesson || !currentLesson.id) {
+      return;
+    }
+    
+    // 【关键】如果该课时已经完成，不再更新进度，保持完成状态
+    if (currentLesson.isCompleted) {
+      console.log('[video-player] 该课时已完成，跳过进度保存');
+      return;
+    }
+    
+    // 只有观看时间超过5秒才保存进度
+    if (!this._currentTime || this._currentTime < 5) {
+      return;
+    }
+    
+    // 计算观看进度百分比
+    const progress = this._duration > 0 
+      ? Math.round((this._currentTime / this._duration) * 100) 
+      : 0;
+    
+    // 如果进度小于5%，不保存（可能是刚打开就退出了）
+    if (progress < 5) {
+      return;
+    }
+    
+    console.log('[video-player] 保存观看进度:', {
+      courseId: course.id,
+      lessonId: currentLesson.id,
+      currentTime: this._currentTime,
+      duration: this._duration,
+      progress: progress
+    });
+    
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'course_progress_update',
+        data: {
+          courseId: course.id,
+          lessonId: currentLesson.id,
+          lessonProgress: progress,
+          action: 'update'
+        }
+      });
+      
+      if (res.result && res.result.success) {
+        // 更新本地章节列表中的进度显示
+        this.updateLocalLessonProgress(currentLesson.id, progress, progress >= 95);
+      }
+    } catch (err) {
+      console.error('[video-player] 保存进度出错:', err);
+    }
+  },
+
+  /**
+   * 更新本地章节列表中的课时进度
+   * @param {string} lessonId - 课时ID
+   * @param {number} progress - 进度百分比
+   * @param {boolean} isCompleted - 是否完成
+   */
+  updateLocalLessonProgress(lessonId, progress, isCompleted) {
+    const { chapters } = this.data;
+    if (!chapters) return;
+    
+    // 深拷贝章节数据
+    const updatedChapters = JSON.parse(JSON.stringify(chapters));
+    
+    // 查找并更新对应的课时
+    for (const chapter of updatedChapters) {
+      for (const lesson of chapter.lessons || []) {
+        if (lesson.id === lessonId) {
+          lesson.progress = progress;
+          lesson.isCompleted = isCompleted;
+          console.log('[video-player] 本地更新课时进度:', {
+            lessonId,
+            progress,
+            isCompleted
+          });
+          break;
+        }
+      }
+    }
+    
+    // 更新页面数据
+    this.setData({ chapters: updatedChapters });
+  },
+
+  /**
+   * 更新课程学习进度
+   * @param {string} action - 'update' 或 'complete'
+   */
+  async updateCourseProgress(action = 'update') {
+    const { course, currentLesson } = this.data;
+    
+    if (!course || !course.id || !currentLesson || !currentLesson.id) {
+      console.warn('[video-player] 缺少课程或课时信息，无法更新进度');
+      return;
+    }
+    
+    try {
+      console.log('[video-player] 更新学习进度:', {
+        courseId: course.id,
+        lessonId: currentLesson.id,
+        action: action
+      });
+      
+      const res = await wx.cloud.callFunction({
+        name: 'course_progress_update',
+        data: {
+          courseId: course.id,
+          lessonId: currentLesson.id,
+          lessonProgress: 100, // 完成时进度为100
+          action: action
+        }
+      });
+      
+      if (res.result && res.result.success) {
+        console.log('[video-player] 学习进度更新成功:', res.result.data);
+        // 更新本地章节列表中的进度显示
+        this.updateLocalLessonProgress(currentLesson.id, 100, true);
+      } else {
+        console.error('[video-player] 学习进度更新失败:', res.result);
+      }
+    } catch (err) {
+      console.error('[video-player] 更新学习进度出错:', err);
+    }
+  },
+
+  // ==================== 多分辨率功能 ====================
+
+  /**
+   * 解析课时支持的分辨率
+   * @param {Object} lesson - 课时对象
+   * @returns {Array<string>} 分辨率列表，例如 ['480p', '720p', '1080p']
+   */
+  parseAvailableQualities(lesson) {
+    if (!lesson) {
+      console.log('[video-player] 课时数据为空，返回默认分辨率');
+      return ['720p'];
+    }
+    
+    // 新格式：多分辨率 videoUrls 对象
+    if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+      const qualities = Object.keys(lesson.videoUrls)
+        .filter(quality => lesson.videoUrls[quality]) // 过滤空值
+        .sort((a, b) => parseInt(a) - parseInt(b));   // 按分辨率从低到高排序
+      
+      console.log('[video-player] 解析到可用分辨率（新格式）:', qualities);
+      return qualities.length > 0 ? qualities : ['720p'];
+    }
+    
+    // 旧格式：单一 videoUrl，视为 720p
+    if (lesson.videoUrl) {
+      console.log('[video-player] 使用旧格式，默认 720p');
+      return ['720p'];
+    }
+    
+    console.warn('[video-player] 未找到视频 URL，返回默认分辨率');
+    return ['720p'];
+  },
+
+  /**
+   * 根据分辨率获取视频 URL
+   * @param {Object} lesson - 课时对象
+   * @param {string} quality - 分辨率，例如 '720p'
+   * @returns {string} 视频 URL 或空字符串
+   */
+  getVideoUrlByQuality(lesson, quality) {
+    if (!lesson) {
+      console.warn('[video-player] 课时数据为空');
+      return '';
+    }
+    
+    // 新格式：从 videoUrls 对象获取
+    if (lesson.videoUrls && lesson.videoUrls[quality]) {
+      console.log(`[video-player] 获取 ${quality} URL（新格式）`);
+      return lesson.videoUrls[quality];
+    }
+    
+    // 旧格式：如果请求 720p 且有 videoUrl，返回 videoUrl
+    if (quality === '720p' && lesson.videoUrl) {
+      console.log('[video-player] 获取 videoUrl（旧格式兼容）');
+      return lesson.videoUrl;
+    }
+    
+    console.warn(`[video-player] 未找到 ${quality} 的视频 URL`);
+    return '';
+  },
+
+  /**
+   * 用户手动选择分辨率
+   * @param {Event} e - 点击事件
+   */
+  async onSelectQuality(e) {
+    const quality = e.currentTarget.dataset.quality;
+    const oldQuality = this.data.currentQuality;
+    
+    if (quality === oldQuality) {
+      console.log('[video-player] 分辨率未变化，无需切换');
+      this.setData({ showOptionsPanel: false });
+      return;
+    }
+    
+    console.log(`[video-player] 用户选择切换分辨率: ${oldQuality} -> ${quality}`);
+    
+    // 🔧 关键：记录当前播放位置，用于视频加载完成后恢复
+    this._seekAfterQualityChange = this._currentTime || 0;
+    this._qualityChangePending = true;  // 标记正在切换分辨率
+    
+    console.log(`[video-player] 记录当前播放位置: ${this._seekAfterQualityChange} 秒`);
+    
+    // 获取新分辨率的视频 URL
+    const newVideoUrl = this.getVideoUrlByQuality(this.data.currentLesson, quality);
+    
+    if (!newVideoUrl) {
+      wx.showToast({
+        title: '该分辨率不可用',
+        icon: 'none',
+        duration: 2000
+      });
+      this._qualityChangePending = false;
+      return;
+    }
+    
+    // 暂停当前视频
+    if (this.videoContext) {
+      try {
+        this.videoContext.pause();
+      } catch (e) {
+        console.warn('[video-player] 暂停视频出错:', e);
+      }
+    }
+    
+    // 显示加载中提示
+    this.setData({
+      isBuffering: true,
+      bufferingText: '切换清晰度中...'
+    });
+    
+    // 更新分辨率和视频 URL
+    this.setData({
+      currentQuality: quality,
+      'currentLesson.videoUrl': newVideoUrl,
+      showOptionsPanel: false  // 关闭选项面板
+    });
+    
+    // 保存用户偏好到本地存储
+    try {
+      wx.setStorageSync('preferredQuality', quality);
+      console.log(`[video-player] 已保存用户分辨率偏好: ${quality}`);
+    } catch (e) {
+      console.warn('[video-player] 保存偏好失败:', e);
+    }
+    
+    // 注意：不在这里 seek，而是在 onVideoLoaded 中处理
+    // 这样可以确保视频加载完成后再跳转，实现真正的无缝续播
+  },
+
+  // ==================== 观看人数统计功能 ====================
+
+  /**
+   * 加入观看（用户开始播放视频）
+   */
+  async joinViewing() {
+    if (!this.data.currentLesson || !this.data.currentLesson.id) {
+      console.warn('[viewer] currentLesson 未初始化，跳过 join');
+      return;
+    }
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'viewer_count',
+        data: {
+          action: 'join',
+          courseId: this.courseId,
+          lessonId: this.data.currentLesson.id
+        }
+      });
+
+      if (res.result && res.result.success) {
+        this.setData({
+          viewerCount: res.result.viewerCount
+        });
+        console.log('[viewer] Join success, count:', res.result.viewerCount);
+      } else {
+        console.warn('[viewer] Join failed:', res.result);
+      }
+    } catch (err) {
+      console.error('[viewer] Join error:', err);
+      // 静默失败，不影响视频播放
+    }
+  },
+
+  /**
+   * 离开观看（用户暂停/离开页面）
+   */
+  async leaveViewing() {
+    if (!this.data.currentLesson || !this.data.currentLesson.id) {
+      console.warn('[viewer] currentLesson 未初始化，跳过 leave');
+      return;
+    }
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'viewer_count',
+        data: {
+          action: 'leave',
+          courseId: this.courseId,
+          lessonId: this.data.currentLesson.id
+        }
+      });
+
+      if (res.result && res.result.success) {
+        this.setData({
+          viewerCount: res.result.viewerCount
+        });
+        console.log('[viewer] Leave success, count:', res.result.viewerCount);
+      } else {
+        console.warn('[viewer] Leave failed:', res.result);
+      }
+    } catch (err) {
+      console.error('[viewer] Leave error:', err);
+      // 静默失败
+    }
+  },
+
+  /**
+   * 获取当前观看人数
+   */
+  async getViewerCount() {
+    if (!this.data.currentLesson || !this.data.currentLesson.id) {
+      console.warn('[viewer] currentLesson 未初始化，跳过 get');
+      return;
+    }
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'viewer_count',
+        data: {
+          action: 'get',
+          lessonId: this.data.currentLesson.id
+        }
+      });
+
+      if (res.result && res.result.success) {
+        this.setData({
+          viewerCount: res.result.viewerCount
+        });
+        console.log('[viewer] Get count success:', res.result.viewerCount);
+      } else {
+        console.warn('[viewer] Get count failed:', res.result);
+      }
+    } catch (err) {
+      console.error('[viewer] Get count error:', err);
+      // 静默失败
+    }
+  },
+
+  /**
+   * 获取已学习人数
+   */
+  async getLearnedCount() {
+    if (!this.courseId || !this.data.currentLesson || !this.data.currentLesson.id) {
+      console.warn('[learned] courseId 或 currentLesson 未初始化，跳过 getLearnedCount', {
+        courseId: this.courseId,
+        hasCurrentLesson: !!this.data.currentLesson,
+        lessonId: this.data.currentLesson?.id
+      });
+      return;
+    }
+    
+    console.log('[learned] 获取已学习人数，lessonId:', this.data.currentLesson.id);
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'viewer_count',
+        data: {
+          action: 'getLearned',
+          courseId: this.courseId,
+          lessonId: this.data.currentLesson.id
+        }
+      });
+
+      if (res.result && res.result.success) {
+        this.setData({
+          learnedCount: res.result.learnedCount
+        });
+        console.log('[learned] Get learned count success:', res.result.learnedCount);
+      } else {
+        console.warn('[learned] Get learned count failed:', res.result);
+      }
+    } catch (err) {
+      console.error('[learned] Get learned count error:', err);
+      // 静默失败
+    }
+  },
+
+  /**
+   * 更新活跃时间（防止被清理）
+   */
+  async updateActivity() {
+    if (!this.data.currentLesson || !this.data.currentLesson.id) {
+      return;
+    }
+
+    try {
+      await wx.cloud.callFunction({
+        name: 'viewer_count',
+        data: {
+          action: 'updateActivity',
+          courseId: this.courseId,
+          lessonId: this.data.currentLesson.id
+        }
+      });
+    } catch (err) {
+      console.error('[viewer] Update activity error:', err);
+      // 静默失败
+    }
+  },
+
+  /**
+   * 开始定时刷新观看人数和已学习人数（每 30 秒）
+   * 【观看统计】只要用户在页面上，就持续更新活跃时间（包括暂停状态）
+   */
+  startViewerCountRefresh() {
+    // 清除旧定时器（如果存在）
+    this.stopViewerCountRefresh();
+
+    // 首次立即获取数据
+    this.getViewerCount();
+    this.getLearnedCount();
+
+    // 设置新定时器
+    this._viewerCountTimer = setInterval(() => {
+      if (this.data.currentLesson && this.data.currentLesson.id) {
+        this.getViewerCount();
+        this.getLearnedCount();
+
+        // ✅ 只要在页面上就更新活跃时间，不论是否播放
+        // 这样暂停状态也会被统计为"正在观看"
+        this.updateActivity();
+      }
+    }, 30000); // 30 秒
+
+    console.log('[viewer] Started viewer count refresh timer');
+  },
+
+  /**
+   * 停止定时刷新
+   */
+  stopViewerCountRefresh() {
+    if (this._viewerCountTimer) {
+      clearInterval(this._viewerCountTimer);
+      this._viewerCountTimer = null;
+      console.log('[viewer] Stopped viewer count refresh timer');
+    }
+  },
+
+  /**
+   * 课后作业按钮点击事件
+   */
+  async onHomeworkTap(e) {
+    const lessonId = e.currentTarget.dataset.lessonId;
+    console.log('[homework] 点击课后作业按钮, lessonId:', lessonId);
+    
+    // 课后作业PDF的云存储地址映射
+    const homeworkFileMap = {
+      'l1-1': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课后作业/课后作业｜灯光设计基本原则.pdf'
+    };
+    
+    const fileID = homeworkFileMap[lessonId];
+    
+    if (!fileID) {
+      wx.showToast({
+        title: '暂无课后作业',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+    
+    // 显示加载提示
+    wx.showLoading({
+      title: '加载中...',
+      mask: true
+    });
+    
+    try {
+      // 1. 获取临时下载链接
+      console.log('[homework] 开始获取临时链接, fileID:', fileID);
+      const tempRes = await wx.cloud.getTempFileURL({
+        fileList: [fileID]
+      });
+      
+      console.log('[homework] getTempFileURL 响应:', tempRes);
+      
+      if (!tempRes.fileList || tempRes.fileList.length === 0) {
+        throw new Error('获取文件链接失败，请稍后重试');
+      }
+      
+      const fileInfo = tempRes.fileList[0];
+      
+      if (fileInfo.status !== 0) {
+        console.error('[homework] 获取临时链接失败:', fileInfo);
+        throw new Error('文件不存在或无法访问');
+      }
+      
+      const tempFileURL = fileInfo.tempFileURL;
+      
+      if (!tempFileURL) {
+        throw new Error('文件链接无效');
+      }
+      
+      console.log('[homework] 临时链接获取成功');
+      console.log('[homework] URL:', tempFileURL.substring(0, 100) + '...');
+      
+      // 更新提示
+      wx.showLoading({
+        title: '下载中...',
+        mask: true
+      });
+      
+      // 2. 使用云存储下载文件（避免域名限制）
+      console.log('[homework] 开始下载文件...');
+      const downloadRes = await wx.cloud.downloadFile({
+        fileID: fileID
+      });
+      
+      console.log('[homework] 下载响应:', downloadRes);
+      
+      if (!downloadRes.tempFilePath) {
+        throw new Error('文件下载失败，请检查网络连接');
+      }
+      
+      console.log('[homework] 文件下载成功, tempFilePath:', downloadRes.tempFilePath);
+      
+      wx.hideLoading();
+      
+      // 3. 打开PDF文档预览（用户可在右上角菜单转发）
+      console.log('[homework] 打开文档预览...');
+      await wx.openDocument({
+        filePath: downloadRes.tempFilePath,
+        fileType: 'pdf',
+        showMenu: true // 显示右上角"更多"菜单，用户可选择转发
+      });
+      
+      console.log('[homework] 文档打开成功');
+      
+      // 提示用户可以转发
+      setTimeout(() => {
+        wx.showToast({
+          title: '点击右上角可转发',
+          icon: 'none',
+          duration: 2000
+        });
+      }, 500);
+      
+    } catch (err) {
+      console.error('[homework] 操作失败:', err);
+      console.error('[homework] 错误详情:', JSON.stringify(err));
+      wx.hideLoading();
+      
+      let errorMsg = '操作失败，请重试';
+      
+      if (err.errMsg) {
+        if (err.errMsg.includes('downloadFile:fail')) {
+          errorMsg = '文件下载失败，请检查网络连接';
+        } else if (err.errMsg.includes('openDocument:fail cancel')) {
+          // 用户取消打开，不显示错误提示
+          console.log('[homework] 用户取消打开文档');
+          return;
+        } else if (err.errMsg.includes('openDocument:fail')) {
+          errorMsg = '文档打开失败，请确认文件格式正确';
+        } else if (err.errMsg.includes('getTempFileURL:fail')) {
+          errorMsg = '文件不存在或已过期';
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      wx.showModal({
+        title: '提示',
+        content: errorMsg,
+        showCancel: false,
+        confirmText: '知道了'
+      });
+    }
   }
 });

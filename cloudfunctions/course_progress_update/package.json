@@ -1,0 +1,16 @@
+{
+  "name": "course_progress_update",
+  "version": "1.0.0",
+  "description": "更新用户的课程学习进度",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+

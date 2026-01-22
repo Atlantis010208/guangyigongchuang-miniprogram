@@ -2,108 +2,34 @@
 <scroll-view class="page" scroll-y type="list">
   <!-- 页面头部 -->
   <view class="header">
-    <text class="header-title">灯光方案</text>
+    <text class="header-title">首页</text>
     <view class="user-avatar" bindtap="onUserTap">
       <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
-    </view>
-  </view>
-
-  <!-- 首次进入 · 预算小弹窗 -->
-  <view wx:if="{{showIntro}}" class="quiz-mask">
-    <view class="quiz-modal">
-      <view class="quiz-header">
-        <text class="quiz-title">为你预估预算</text>
-        <text class="quiz-sub">{{quizStep+1}}/5 步骤 · 约 10 秒</text>
-      </view>
-
-      <!-- 步骤 1：面积 -->
-      <view wx:if="{{quizStep===0}}" class="quiz-section">
-        <text class="quiz-label">房屋面积（㎡）</text>
-        <view class="area-grid">
-          <view class="area-item" data-value="55" bindtap="onQuickArea">60㎡以下</view>
-          <view class="area-item" data-value="75" bindtap="onQuickArea">61~90㎡</view>
-          <view class="area-item" data-value="110" bindtap="onQuickArea">91~130㎡</view>
-          <view class="area-item" data-value="130" bindtap="onQuickArea">130㎡以上</view>
-        </view>
-        <input class="quiz-input" type="number" placeholder="或直接输入面积，低于50㎡按50㎡" bindinput="onQuizArea" value="{{quiz.area}}"/>
-      </view>
-
-      <!-- 步骤 2：空间类型 -->
-      <view wx:if="{{quizStep===1}}" class="quiz-section">
-        <text class="quiz-label">空间类型</text>
-        <radio-group class="quiz-group" bindchange="onQuizSpace">
-          <label class="quiz-option"><radio value="住宅" checked="{{quiz.space==='住宅'}}"/> 住宅</label>
-          <label class="quiz-option"><radio value="商铺" checked="{{quiz.space==='商铺'}}"/> 商铺</label>
-          <label class="quiz-option"><radio value="办公室" checked="{{quiz.space==='办公室'}}"/> 办公室</label>
-          <label class="quiz-option"><radio value="其他" checked="{{quiz.space==='其他'}}"/> 其他</label>
-        </radio-group>
-      </view>
-
-      <!-- 步骤 3：服务类型 -->
-      <view wx:if="{{quizStep===2}}" class="quiz-section">
-        <text class="quiz-label">需要什么服务</text>
-        <radio-group class="quiz-group" bindchange="onQuizService">
-          <label class="quiz-option"><radio value="选灯配灯服务" checked="{{quiz.service==='选灯配灯服务'}}"/> 选灯配灯服务</label>
-          <label class="quiz-option"><radio value="只深化灯光施工图" checked="{{quiz.service==='只深化灯光施工图'}}"/> 只深化灯光施工图</label>
-          <label class="quiz-option"><radio value="整套灯光设计" checked="{{quiz.service==='整套灯光设计'}}"/> 整套灯光设计</label>
-        </radio-group>
-      </view>
-
-      <!-- 步骤 4：设计预算（单价） -->
-      <view wx:if="{{quizStep===3}}" class="quiz-section">
-        <text class="quiz-label">设计预算（单价）</text>
-        <radio-group class="quiz-group" bindchange="onQuizBudget">
-          <label class="quiz-option"><radio value="¥5/m²（只针对选灯配灯）" checked="{{quiz.budget==='¥5/m²（只针对选灯配灯）'}}"/> ¥5/m²（只针对选灯配灯）</label>
-          <label class="quiz-option"><radio value="¥9/m²" checked="{{quiz.budget==='¥9/m²'}}"/> ¥9/m²</label>
-          <label class="quiz-option"><radio value="¥16/m²" checked="{{quiz.budget==='¥16/m²'}}"/> ¥16/m²</label>
-          <label class="quiz-option"><radio value="¥19/m²" checked="{{quiz.budget==='¥19/m²'}}"/> ¥19/m²</label>
-          <label class="quiz-option"><radio value="¥29/m²" checked="{{quiz.budget==='¥29/m²'}}"/> ¥29/m²</label>
-          <label class="quiz-option"><radio value="¥39/m²" checked="{{quiz.budget==='¥39/m²'}}"/> ¥39/m²</label>
-          <label class="quiz-option"><radio value="¥50/m²及以上" checked="{{quiz.budget==='¥50/m²及以上'}}"/> ¥50/m²及以上</label>
-        </radio-group>
-      </view>
-
-      <!-- 结果 -->
-      <view wx:if="{{quizStep===4}}" class="quiz-result">
-        <text class="result-title">预计设计费用</text>
-        <text class="result-price">¥{{estimate}}</text>
-        <text class="result-sub">按 {{pricePer}} 元/㎡ × {{chargeArea}} ㎡ 计算</text>
-      </view>
-
-      <view class="quiz-actions">
-        <button class="btn ghost" bindtap="closeQuiz">稍后再说</button>
-        <button wx:if="{{quizStep>0 && quizStep<4}}" class="btn primary" bindtap="prevQuiz">上一步</button>
-        <button wx:if="{{quizStep===4}}" class="btn primary" bindtap="finishAndPrefill">去发布</button>
-      </view>
     </view>
   </view>
 
    <!-- 用户角度 · 需求入口（灯光空间分类） -->
    <view class="product-categories">
       <scroll-view class="categories-scroll" scroll-x="true">
-        <view class="category-card" bindtap="onCategoryTap" data-category="residential">
-          <view class="category-icon-wrapper">
-            <image class="category-image" src="/images/避坑指南.png" mode="aspectFit"></image>
-          </view>
-          <text class="category-text">避坑指南</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="residential" style="height: auto; min-height: 190rpx;">
+          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/避坑指南.png" mode="widthFix"></image>
+          <text class="category-overlay-text">避坑指南</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
-          <view class="category-icon-wrapper">
-            <image class="category-image" src="/images/产品方案.png" mode="aspectFit"></image>
-          </view>
-          <text class="category-text">设计流程</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="commercial" style="height: auto; min-height: 190rpx;">
+          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/设计流程.png" mode="widthFix"></image>
+          <text class="category-overlay-text">设计流程</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="office">
-          <view class="category-icon-wrapper">
-            <image class="category-image" src="/images/免费报价.png" mode="aspectFit"></image>
-          </view>
-          <text class="category-text">照度计算</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="office" style="height: auto; min-height: 190rpx;">
+          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/照度计算.png" mode="widthFix"></image>
+          <text class="category-overlay-text">照度计算</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="hotel">
-          <view class="category-icon-wrapper">
-            <image class="category-image" src="/images/_酒店.png" mode="aspectFit"></image>
-          </view>
-          <text class="category-text">酒店照明</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="hotel" style="height: auto; min-height: 190rpx;">
+          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/灯光测试.png" mode="widthFix"></image>
+          <text class="category-overlay-text">灯光测试</text>
+        </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="hotel" style="height: auto; min-height: 190rpx;">
+          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/Gemini_Generated_Image_royravroyravroyr.png" mode="widthFix"></image>
+          <text class="category-overlay-text">案例展示</text>
         </view>
       </scroll-view>
    </view>
@@ -136,11 +62,10 @@
     <view class="hero-list">
         <view class="hero-card" bindtap="onServiceTap" data-service="selection">
           <view class="hero-content">
-            <image class="hero-image" src="https://images.pexels.com/photos/331692/pexels-photo-331692.jpeg" mode="aspectFill"></image>
-            <view class="hero-text"><text class="hero-logo">选配</text></view>
+            <image class="hero-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/7C4F4BFF-2132-4807-B9BD-1DAC271E2B77.jpg" mode="aspectFill"></image>
           </view>
           <view class="hero-info">
-            <text class="hero-title">选灯配灯服务</text>
+            <text class="hero-title">二哥相关服务</text>
             <text class="hero-subtitle">为你的场景快速完成专业选型与搭配。</text>
             <view class="price-section">
               <text class="price-text">结合预算与风格给出清单</text>
@@ -148,10 +73,10 @@
             </view>
           </view>
         </view>
+        <!-- 优化灯光施工图(注释)
         <view class="hero-card" bindtap="onServiceTap" data-service="optimize">
           <view class="hero-content">
-            <image class="hero-image" src="https://images.pexels.com/photos/462123/pexels-photo-462123.jpeg" mode="aspectFill"></image>
-            <view class="hero-text"><text class="hero-logo">优化</text></view>
+            <image class="hero-image" src="https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg?auto=compress&cs=tinysrgb&w=800" mode="aspectFill"></image>
           </view>
           <view class="hero-info">
             <text class="hero-title">优化灯光施工图</text>
@@ -162,13 +87,13 @@
             </view>
           </view>
         </view>
+        -->
         <view class="hero-card" bindtap="onServiceTap" data-service="full">
           <view class="hero-content">
-            <image class="hero-image" src="https://images.pexels.com/photos/704590/pexels-photo-704590.jpeg" mode="aspectFill"></image>
-            <view class="hero-text"><text class="hero-logo">整套</text></view>
+            <image class="hero-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/87A1212C-B076-4955-89DF-7CEE7D78C4EB(1).jpg" mode="aspectFill"></image>
           </view>
           <view class="hero-info">
-            <text class="hero-title">整套灯光设计</text>
+            <text class="hero-title">发布共创设计需求</text>
             <text class="hero-subtitle">从勘测到验收，一站式灯光设计服务。</text>
             <view class="price-section">
               <text class="price-text">全流程沟通与交付</text>
@@ -250,7 +175,7 @@
     
     <!-- 二维码 -->
     <view class="qr-section">
-      <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
+      <image class="qr-code" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/二维码.png" mode="aspectFit"></image>
       <text class="qr-title">获得 光乙共创平台 的官方支持</text>
       <text class="qr-subtitle">添加官方客服，输入你想问的问题获得在线支持</text>
     </view>

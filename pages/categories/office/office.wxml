@@ -96,7 +96,7 @@
     
     <!-- 二维码 -->
     <view class="qr-section">
-      <image class="qr-code" src="/images/二维码.png" mode="aspectFit"></image>
+      <image class="qr-code" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/二维码.png" mode="aspectFit"></image>
       <text class="qr-title">获得 光乙 的官方支持</text>
       <text class="qr-subtitle">长按关注光乙官方客服，输入你想问的问题获得在线支持</text>
     </view>

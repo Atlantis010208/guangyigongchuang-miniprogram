@@ -77,6 +77,12 @@ Page({
         
         // 区分推荐课程和普通课程
         const featuredCourse = data.find(c => c.isFeatured) || data[0] || null;
+
+        // 临时修正：强制更新推荐课程标题以匹配 UI 设计要求
+        if (featuredCourse) {
+          featuredCourse.title = '二哥10年经验灯光课，不错过任何精彩瞬间。立即观看。';
+        }
+        
         const otherCourses = data.filter(c => c !== featuredCourse);
         
         console.log('[课程中心] 推荐课程:', featuredCourse);
@@ -85,6 +91,7 @@ Page({
         this.setData({
           courses: otherCourses,
           featuredCourse: featuredCourse,
+          isPurchased: featuredCourse ? featuredCourse.isPurchased : false,
           loading: false,
           pagination: {
             ...this.data.pagination,

@@ -334,6 +334,14 @@ App({
         this.clearLoginCache()
         this.globalData.isLoggedIn = false
         this.globalData.loginExpired = true
+        
+        // 触发页面刷新事件(通过自定义事件通知当前页面)
+        const pages = getCurrentPages()
+        const currentPage = pages[pages.length - 1]
+        if (currentPage && typeof currentPage.onLoginStatusChanged === 'function') {
+          currentPage.onLoginStatusChanged(false)
+        }
+        
         // 不再强制跳转登录页，让用户可以继续浏览
         // 需要登录的功能会在使用时引导用户登录
         return

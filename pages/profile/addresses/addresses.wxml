@@ -1,9 +1,14 @@
 <scroll-view class="page" scroll-y>
   <view class="header">
     <text class="title">送货地址</text>
-    <button class="add-btn" bindtap="addAddress">
-      <text style="margin-right: 4rpx; font-size: 32rpx; line-height: 1;">+</text> 新增地址
-    </button>
+    <view class="header-actions">
+      <button class="wx-addr-btn" bindtap="getWxAddress">
+        <image class="wx-icon-img" src="/images/微信.png" mode="aspectFit"></image> 微信地址
+      </button>
+      <button class="add-btn" bindtap="addAddress">
+        <text style="margin-right: 4rpx; font-size: 32rpx; line-height: 1;">+</text> 新增地址
+      </button>
+    </view>
   </view>
 
   <!-- 地址列表 -->

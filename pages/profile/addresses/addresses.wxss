@@ -19,6 +19,42 @@
   letter-spacing: -1rpx;
 }
 
+/* Header Actions Container */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+/* 从微信获取地址按钮 */
+.wx-addr-btn {
+  background:rgb(0, 0, 0); /* 微信绿色 */
+  color: #fff;
+  border: none;
+  border-radius: 36rpx;
+  padding: 0 24rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  margin: 0;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wx-addr-btn:active {
+  background:rgb(0, 0, 0);
+  transform: scale(0.98);
+}
+
+.wx-icon-img {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+}
+
 .add-btn {
   background: #000;
   color: #fff;
