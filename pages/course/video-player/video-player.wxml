@@ -29,12 +29,14 @@
       </view>
       
       <!-- 只在有视频URL时才渲染video组件，避免空URL导致错误 -->
+      <!-- 流量优化：添加 poster 封面图、custom-cache 缓存、延迟加载 -->
       <video
         wx:if="{{currentLesson && currentLesson.videoUrl}}"
         id="courseVideo"
         class="video-player"
         src="{{currentLesson.videoUrl}}"
         title="{{currentLesson.title || ''}}"
+        poster="{{currentLesson.poster || course.coverUrl || ''}}"
         autoplay="{{autoplay}}"
         controls="{{true}}"
         show-center-play-btn="{{true}}"
@@ -57,6 +59,7 @@
         vslide-gesture="{{false}}"
         vslide-gesture-in-fullscreen="{{false}}"
         enable-auto-rotation="{{false}}"
+        custom-cache="{{true}}"
         bindtimeupdate="onTimeUpdate"
         bindended="onVideoEnded"
         bindfullscreenchange="onFullscreenChange"

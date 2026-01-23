@@ -6,15 +6,21 @@
  * 参数：
  * - courseId: 课程 ID（必填）
  * - lessonId: 指定课时 ID（可选，用于播放页初始定位）
+ * - lazyLoad: 是否延迟加载（可选，默认 true）
+ *            - true: 只获取当前课时的视频链接，节省流量
+ *            - false: 获取所有课时的视频链接（兼容旧版）
+ * - getLessonUrl: 单独获取某个课时的视频链接（可选）
  * 
  * 安全策略：
  * - 未登录：返回 UNAUTHORIZED 错误
  * - 未购买：返回 NOT_PURCHASED 错误
  * - 已购买：返回完整章节和视频链接
  * 
- * 性能优化 V2：
+ * 性能优化 V3（流量优化版）：
  * - 并行查询课程和购买状态
- * - 只获取当前视频的临时链接（延迟加载其他视频）
+ * - 【重要】延迟加载：默认只获取当前课时的视频临时链接
+ * - 其他课时的视频链接在用户切换时按需获取
+ * - 支持单独获取某个课时的视频链接（getLessonUrl 模式）
  */
 const cloud = require('wx-server-sdk')
 
@@ -30,7 +36,12 @@ exports.main = async (event) => {
     const wxContext = cloud.getWXContext()
     const OPENID = wxContext.OPENID || wxContext.openid
     
-    const { courseId, lessonId } = event
+    const { 
+      courseId, 
+      lessonId, 
+      lazyLoad = true,           // 默认开启延迟加载
+      getLessonUrl = false       // 是否仅获取单个课时的视频链接
+    } = event
     
     // 参数验证
     if (!courseId) {
@@ -50,6 +61,56 @@ exports.main = async (event) => {
       }
     }
     
+    // ========== 模式1：单独获取某个课时的视频链接（流量优化核心） ==========
+    if (getLessonUrl && lessonId) {
+      console.log('[course_videos] 延迟加载模式：获取课时', lessonId, '的视频链接')
+      
+      // 先验证购买状态
+      const isPurchased = await checkPurchaseStatus(OPENID, courseId)
+      if (!isPurchased) {
+        return {
+          success: false,
+          code: 'NOT_PURCHASED',
+          errorMessage: '您尚未购买此课程'
+        }
+      }
+      
+      // 查询课程获取课时信息
+      const course = await queryCourse(courseId)
+      if (!course) {
+        return {
+          success: false,
+          code: 'NOT_FOUND',
+          errorMessage: '课程不存在'
+        }
+      }
+      
+      // 查找指定课时
+      const lesson = findLessonByIdFromCourse(course.chapters || [], lessonId)
+      if (!lesson) {
+        return {
+          success: false,
+          code: 'LESSON_NOT_FOUND',
+          errorMessage: '课时不存在'
+        }
+      }
+      
+      // 只获取这一个课时的视频链接
+      const processedLesson = await processingleLesson(lesson)
+      
+      console.log('[course_videos] 单课时加载耗时:', Date.now() - startTime, 'ms')
+      
+      return {
+        success: true,
+        code: 'OK',
+        data: {
+          lesson: processedLesson
+        },
+        message: '获取课时视频链接成功'
+      }
+    }
+    
+    // ========== 模式2：获取完整课程数据（首次加载） ==========
     // 【性能优化】并行查询课程数据和购买状态
     const [course, isPurchased] = await Promise.all([
       queryCourse(courseId),
@@ -89,8 +150,10 @@ exports.main = async (event) => {
       console.warn('[course_videos] 查询学习进度失败:', err)
     }
     
-    // 处理章节数据，转换云存储链接为临时链接，并附加学习进度
-    const chapters = await processChapters(course.chapters || [], lessonId, userProgress)
+    // 处理章节数据
+    // lazyLoad = true 时：只获取当前课时的视频链接，其他课时不获取（节省流量）
+    // lazyLoad = false 时：获取所有课时的视频链接（兼容旧版）
+    const chapters = await processChapters(course.chapters || [], lessonId, userProgress, lazyLoad)
     
     // 定位当前课时
     let currentLesson = null
@@ -103,15 +166,33 @@ exports.main = async (event) => {
       currentLesson = findFirstVideoLesson(chapters)
     }
     
+    // 获取课程封面作为视频 poster
+    let courseCoverUrl = course.cover || ''
+    if (courseCoverUrl && typeof courseCoverUrl === 'object') {
+      courseCoverUrl = courseCoverUrl.downloadUrl || courseCoverUrl.fileID || ''
+    }
+    if (courseCoverUrl && courseCoverUrl.startsWith('cloud://')) {
+      try {
+        const tempRes = await cloud.getTempFileURL({ fileList: [courseCoverUrl] })
+        if (tempRes.fileList && tempRes.fileList[0] && tempRes.fileList[0].tempFileURL) {
+          courseCoverUrl = tempRes.fileList[0].tempFileURL
+        }
+      } catch (e) {
+        console.warn('[course_videos] 获取封面临时链接失败:', e)
+      }
+    }
+    
     return {
       success: true,
       code: 'OK',
       data: {
         courseId: course.courseId || course._id,
         title: course.title,
+        coverUrl: courseCoverUrl,   // 新增：课程封面URL，用作视频 poster
         isPurchased: true,
         chapters: chapters,
-        currentLesson: currentLesson
+        currentLesson: currentLesson,
+        lazyLoadEnabled: lazyLoad   // 告知前端是否启用了延迟加载
       },
       message: '获取课程视频数据成功'
     }
@@ -240,55 +321,157 @@ async function checkPurchaseStatus(openid, courseId) {
 }
 
 /**
+ * 处理单个课时的视频链接（用于延迟加载）
+ * @param {Object} lesson - 原始课时数据
+ * @returns {Object} 处理后的课时数据（包含临时视频链接）
+ */
+async function processingleLesson(lesson) {
+  if (!lesson) return null
+  
+  const processedLesson = JSON.parse(JSON.stringify(lesson))
+  const cloudFileIDs = []
+  
+  // 收集需要转换的云存储链接
+  if (processedLesson.videoUrls && typeof processedLesson.videoUrls === 'object') {
+    for (const [quality, url] of Object.entries(processedLesson.videoUrls)) {
+      if (url && url.startsWith('cloud://')) {
+        cloudFileIDs.push(url)
+      }
+    }
+  } else if (processedLesson.videoUrl && processedLesson.videoUrl.startsWith('cloud://')) {
+    cloudFileIDs.push(processedLesson.videoUrl)
+  }
+  
+  // 获取临时链接
+  if (cloudFileIDs.length > 0) {
+    try {
+      const tempRes = await cloud.getTempFileURL({ fileList: [...new Set(cloudFileIDs)] })
+      const urlMap = {}
+      if (tempRes.fileList) {
+        tempRes.fileList.forEach(item => {
+          if (item.status === 0 && item.tempFileURL) {
+            urlMap[item.fileID] = item.tempFileURL
+          }
+        })
+      }
+      
+      // 替换链接
+      if (processedLesson.videoUrls && typeof processedLesson.videoUrls === 'object') {
+        for (const quality in processedLesson.videoUrls) {
+          const cloudUrl = processedLesson.videoUrls[quality]
+          if (cloudUrl && urlMap[cloudUrl]) {
+            processedLesson.videoUrls[quality] = urlMap[cloudUrl]
+          }
+        }
+      } else if (processedLesson.videoUrl && urlMap[processedLesson.videoUrl]) {
+        processedLesson.videoUrl = urlMap[processedLesson.videoUrl]
+      }
+    } catch (e) {
+      console.warn('[course_videos] 单课时获取临时链接失败:', e)
+    }
+  }
+  
+  return processedLesson
+}
+
+/**
+ * 从原始章节数据中查找课时（不含临时链接转换）
+ * @param {Array} chapters - 原始章节数据
+ * @param {string} lessonId - 课时 ID
+ * @returns {Object|null} 原始课时数据
+ */
+function findLessonByIdFromCourse(chapters, lessonId) {
+  for (const chapter of chapters) {
+    for (const lesson of chapter.lessons || []) {
+      if (lesson.id === lessonId) {
+        return lesson
+      }
+    }
+  }
+  return null
+}
+
+/**
  * 处理章节数据，转换云存储链接为临时链接
- * 【性能优化】优先处理当前课时的视频链接
+ * 【流量优化 V3】支持延迟加载模式
  * @param {Array} chapters - 原始章节数据
  * @param {string} currentLessonId - 当前课时 ID（可选）
  * @param {Object} userProgress - 用户学习进度映射
+ * @param {boolean} lazyLoad - 是否延迟加载（true: 只获取当前课时链接）
  * @returns {Array} 处理后的章节数据
  */
-async function processChapters(chapters, currentLessonId, userProgress = {}) {
+async function processChapters(chapters, currentLessonId, userProgress = {}, lazyLoad = true) {
   if (!chapters || !Array.isArray(chapters) || chapters.length === 0) {
     return []
   }
   
-  // 收集所有云存储链接，优先当前课时
+  // 收集需要转换的云存储链接
   const cloudFileIDs = []
-  let currentVideoUrl = null
+  let currentLessonFileIDs = []  // 当前课时的视频链接
   
   for (const chapter of chapters) {
     for (const lesson of chapter.lessons || []) {
+      const isCurrentLesson = currentLessonId && lesson.id === currentLessonId
+      
       // 【新增】支持多分辨率 videoUrls 对象
       if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
         for (const [quality, url] of Object.entries(lesson.videoUrls)) {
           if (url && url.startsWith('cloud://')) {
-            // 如果是当前课时，优先记录 1080p 或最高分辨率
-            if (currentLessonId && lesson.id === currentLessonId && !currentVideoUrl) {
-              currentVideoUrl = url
+            if (lazyLoad) {
+              // 延迟加载模式：只收集当前课时的视频链接
+              if (isCurrentLesson) {
+                currentLessonFileIDs.push(url)
+              }
+            } else {
+              // 全量加载模式：收集所有视频链接
+              cloudFileIDs.push(url)
             }
-            cloudFileIDs.push(url)
           }
         }
       }
       // 【兼容】旧格式单一 videoUrl
       else if (lesson.videoUrl && lesson.videoUrl.startsWith('cloud://')) {
-        // 如果是当前课时，记录下来优先处理
-        if (currentLessonId && lesson.id === currentLessonId) {
-          currentVideoUrl = lesson.videoUrl
+        if (lazyLoad) {
+          if (isCurrentLesson) {
+            currentLessonFileIDs.push(lesson.videoUrl)
+          }
+        } else {
+          cloudFileIDs.push(lesson.videoUrl)
         }
-        cloudFileIDs.push(lesson.videoUrl)
       }
       
-      // 处理文件类型课时
+      // 文件类型课时：始终获取链接（文件通常较小）
       if (lesson.fileUrl && lesson.fileUrl.startsWith('cloud://')) {
         cloudFileIDs.push(lesson.fileUrl)
       }
     }
   }
   
-  // 如果没有指定当前课时，默认第一个视频
-  if (!currentVideoUrl && cloudFileIDs.length > 0) {
-    currentVideoUrl = cloudFileIDs[0]
+  // 如果延迟加载模式，把当前课时的链接加入待处理列表
+  if (lazyLoad && currentLessonFileIDs.length > 0) {
+    cloudFileIDs.push(...currentLessonFileIDs)
+  }
+  
+  // 如果没有指定当前课时且是延迟加载模式，获取第一个视频的链接
+  if (lazyLoad && currentLessonFileIDs.length === 0 && !currentLessonId) {
+    // 找到第一个视频课时
+    for (const chapter of chapters) {
+      for (const lesson of chapter.lessons || []) {
+        if (lesson.type === 'video') {
+          if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+            for (const url of Object.values(lesson.videoUrls)) {
+              if (url && url.startsWith('cloud://')) {
+                cloudFileIDs.push(url)
+              }
+            }
+          } else if (lesson.videoUrl && lesson.videoUrl.startsWith('cloud://')) {
+            cloudFileIDs.push(lesson.videoUrl)
+          }
+          break
+        }
+      }
+      if (cloudFileIDs.length > 0) break
+    }
   }
   
   // 批量获取临时链接
@@ -297,6 +480,7 @@ async function processChapters(chapters, currentLessonId, userProgress = {}) {
   
   if (uniqueFileIDs.length > 0) {
     try {
+      console.log(`[course_videos] 获取 ${uniqueFileIDs.length} 个文件的临时链接 (lazyLoad=${lazyLoad})`)
       const tempRes = await cloud.getTempFileURL({ fileList: uniqueFileIDs })
       if (tempRes.fileList) {
         tempRes.fileList.forEach(item => {
@@ -315,6 +499,9 @@ async function processChapters(chapters, currentLessonId, userProgress = {}) {
   
   for (const chapter of processedChapters) {
     for (const lesson of chapter.lessons || []) {
+      const isCurrentLesson = currentLessonId && lesson.id === currentLessonId
+      const isFirstLesson = !currentLessonId && lesson === processedChapters[0]?.lessons?.[0]
+      
       // 【新增】处理多分辨率 videoUrls 对象
       if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
         for (const quality in lesson.videoUrls) {
@@ -322,13 +509,20 @@ async function processChapters(chapters, currentLessonId, userProgress = {}) {
           if (cloudUrl && urlMap[cloudUrl]) {
             lesson.videoUrls[quality] = urlMap[cloudUrl]
             console.log(`[course_videos] 替换 ${lesson.id} 的 ${quality} URL`)
+          } else if (lazyLoad && !isCurrentLesson && !isFirstLesson) {
+            // 延迟加载模式：非当前课时保留原始 cloud:// 链接（标记为待加载）
+            lesson._needsLazyLoad = true
           }
         }
       }
       // 【兼容】处理旧格式单一 videoUrl
-      else if (lesson.videoUrl && urlMap[lesson.videoUrl]) {
-        lesson.videoUrl = urlMap[lesson.videoUrl]
-        console.log(`[course_videos] 替换 ${lesson.id} 的 videoUrl (旧格式)`)
+      else if (lesson.videoUrl) {
+        if (urlMap[lesson.videoUrl]) {
+          lesson.videoUrl = urlMap[lesson.videoUrl]
+          console.log(`[course_videos] 替换 ${lesson.id} 的 videoUrl`)
+        } else if (lazyLoad && !isCurrentLesson && !isFirstLesson) {
+          lesson._needsLazyLoad = true
+        }
       }
       
       // 处理文件 URL
@@ -344,7 +538,7 @@ async function processChapters(chapters, currentLessonId, userProgress = {}) {
     }
   }
   
-  console.log(`[course_videos] 处理完成，共 ${processedChapters.length} 个章节`)
+  console.log(`[course_videos] 处理完成，共 ${processedChapters.length} 个章节，延迟加载=${lazyLoad}`)
   return processedChapters
 }
 

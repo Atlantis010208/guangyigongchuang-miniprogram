@@ -1,7 +1,7 @@
 /**
  * 视频播放页
  * 对接 course_videos 云函数获取视频数据
- * 性能优化版 V2 - 深度优化卡顿问题
+ * 性能优化版 V3 - 流量优化版
  * 
  * 优化点：
  * 1. 减少不必要的 setData 调用
@@ -11,6 +11,12 @@
  * 5. 添加视频预加载
  * 6. 简化控件减少渲染压力
  * 7. 启用视频缓存 (custom-cache)
+ * 
+ * 【流量优化 V3】：
+ * 8. 延迟加载视频链接：首次只获取当前课时的视频临时链接
+ * 9. 按需获取：切换课时时才获取对应的视频链接
+ * 10. 本地缓存：已获取的视频链接缓存到本地，避免重复请求
+ * 11. 智能预加载：播放进度达到 80% 时预加载下一课时的链接
  */
 Page({
   data: {
@@ -69,6 +75,10 @@ Page({
     this._currentTime = 0;      // 当前播放时间
     this._duration = 0;         // 视频总时长
     this._viewerCountTimer = null;  // 🆕 观看人数刷新定时器
+    
+    // 【流量优化】视频链接缓存（避免重复获取临时链接）
+    this._videoUrlCache = {};   // { lessonId: { videoUrl, videoUrls, expireAt } }
+    this._preloadingLesson = null;  // 正在预加载的课时ID
     
     const { courseId, lessonId } = options;
     this.courseId = courseId;
@@ -183,7 +193,11 @@ Page({
       console.log('[video-player] Cloud function took:', Date.now() - startTime, 'ms');
 
       if (res.result && res.result.success) {
-        const { courseId: id, title, chapters, currentLesson } = res.result.data;
+        const { courseId: id, title, chapters, currentLesson, coverUrl, lazyLoadEnabled } = res.result.data;
+
+        // 【流量优化】记录是否启用了延迟加载
+        this._lazyLoadEnabled = lazyLoadEnabled !== false;
+        console.log(`[video-player] 延迟加载模式: ${this._lazyLoadEnabled ? '已启用' : '已禁用'}`);
 
         // 🆕 解析可用分辨率
         const availableQualities = this.parseAvailableQualities(currentLesson);
@@ -217,6 +231,16 @@ Page({
         } else {
           console.warn(`[video-player] 未找到 ${currentQuality} 视频 URL`);
         }
+        
+        // 【流量优化】设置视频封面图 poster
+        if (currentLesson) {
+          currentLesson.poster = coverUrl || '';
+        }
+        
+        // 【流量优化】缓存当前课时的视频链接
+        if (currentLesson && currentLesson.id) {
+          this._cacheVideoUrl(currentLesson);
+        }
 
         console.log('[video-player] Video URL:', currentLesson?.videoUrl?.substring(0, 100) + '...');
 
@@ -225,7 +249,7 @@ Page({
 
         // 一次性更新所有状态，减少渲染次数
         this.setData({
-          course: { id, title },
+          course: { id, title, coverUrl: coverUrl || '' },  // 【流量优化】添加封面URL
           chapters: chapters || [],
           currentLesson: currentLesson,
           currentQuality: currentQuality,        // 🆕 当前分辨率
@@ -312,6 +336,7 @@ Page({
   /**
    * 时间更新 - 节流 2000ms（进一步减少调用频率）
    * 使用实例属性避免触发渲染
+   * 【流量优化】添加智能预加载逻辑
    */
   onTimeUpdate(e) {
     const now = Date.now();
@@ -326,6 +351,15 @@ Page({
     // 如果正在缓冲但视频在播放，取消缓冲状态
     if (this.data.isBuffering && e.detail.currentTime > 0) {
       this._clearBuffering();
+    }
+    
+    // 【流量优化】智能预加载：播放进度达到 80% 时预加载下一课时
+    if (this._lazyLoadEnabled && this._duration > 0) {
+      const progress = this._currentTime / this._duration;
+      if (progress >= 0.8 && !this._preloadTriggered) {
+        this._preloadTriggered = true;  // 防止重复触发
+        this._preloadNextLessonUrl();
+      }
     }
   },
 
@@ -696,15 +730,14 @@ Page({
   },
 
   /**
-   * 切换课时（优化版 V3）
+   * 切换课时（优化版 V4 - 流量优化版）
    * 直接切换视频源，不销毁组件，避免 videoContext 失效
+   * 【流量优化】支持延迟加载：切换时按需获取视频链接
    */
   async switchLesson(lesson) {
-    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
-    const hasVideoUrl = lesson && (lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0));
-    if (!hasVideoUrl) {
-      console.warn('[video-player] Invalid lesson or no video URL:', lesson);
-      wx.showToast({ title: '视频地址无效', icon: 'none' });
+    if (!lesson || !lesson.id) {
+      console.warn('[video-player] Invalid lesson:', lesson);
+      wx.showToast({ title: '课时数据无效', icon: 'none' });
       return;
     }
     
@@ -715,9 +748,49 @@ Page({
       await this.leaveViewing();
     }
     
+    // 【流量优化】检查是否需要延迟加载视频链接
+    const needsLazyLoad = lesson._needsLazyLoad || 
+                          (!lesson.videoUrl && (!lesson.videoUrls || !this._hasValidVideoUrl(lesson.videoUrls)));
+    
+    if (needsLazyLoad) {
+      console.log(`[video-player] 课时 ${lesson.id} 需要延迟加载视频链接`);
+      
+      // 检查本地缓存
+      const cachedData = this._getCachedVideoUrl(lesson.id);
+      if (cachedData) {
+        console.log(`[video-player] 使用缓存的视频链接`);
+        lesson.videoUrl = cachedData.videoUrl;
+        lesson.videoUrls = cachedData.videoUrls;
+        lesson._needsLazyLoad = false;
+      } else {
+        // 从云函数获取视频链接
+        const loadedLesson = await this._lazyLoadLessonUrl(lesson.id);
+        if (loadedLesson) {
+          lesson.videoUrl = loadedLesson.videoUrl;
+          lesson.videoUrls = loadedLesson.videoUrls;
+          lesson._needsLazyLoad = false;
+          
+          // 更新章节列表中的数据
+          this._updateLessonInChapters(lesson.id, loadedLesson);
+        } else {
+          console.warn('[video-player] 延迟加载视频链接失败');
+          wx.showToast({ title: '加载视频失败，请重试', icon: 'none' });
+          return;
+        }
+      }
+    }
+    
+    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
+    const hasVideoUrl = lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0);
+    if (!hasVideoUrl) {
+      console.warn('[video-player] Invalid lesson or no video URL:', lesson);
+      wx.showToast({ title: '视频地址无效', icon: 'none' });
+      return;
+    }
+    
     // 🔧 修复：根据当前分辨率设置 videoUrl
     if (lesson.videoUrls && !lesson.videoUrl) {
-      const currentQuality = this.data.currentQuality || '1080p';
+      const currentQuality = this.data.currentQuality || '720p';
       const videoUrl = this.getVideoUrlByQuality(lesson, currentQuality);
       if (videoUrl) {
         lesson.videoUrl = videoUrl;
@@ -738,6 +811,12 @@ Page({
       wx.showToast({ title: '视频地址无效', icon: 'none' });
       return;
     }
+    
+    // 【流量优化】缓存当前课时的视频链接
+    this._cacheVideoUrl(lesson);
+    
+    // 【流量优化】重置预加载标记
+    this._preloadTriggered = false;
     
     // 先保存当前视频的观看进度
     await this.saveCurrentProgress();
@@ -1515,6 +1594,192 @@ Page({
         showCancel: false,
         confirmText: '知道了'
       });
+    }
+  },
+
+  // ==================== 【流量优化】延迟加载相关方法 ====================
+
+  /**
+   * 缓存视频链接到本地（有效期 1.5 小时，临时链接有效期约 2 小时）
+   * @param {Object} lesson - 课时对象
+   */
+  _cacheVideoUrl(lesson) {
+    if (!lesson || !lesson.id) return;
+    
+    const cacheData = {
+      videoUrl: lesson.videoUrl,
+      videoUrls: lesson.videoUrls,
+      expireAt: Date.now() + 90 * 60 * 1000  // 1.5 小时后过期
+    };
+    
+    this._videoUrlCache[lesson.id] = cacheData;
+    console.log(`[video-player] 缓存课时 ${lesson.id} 的视频链接`);
+  },
+
+  /**
+   * 从缓存获取视频链接
+   * @param {string} lessonId - 课时ID
+   * @returns {Object|null} 缓存数据或 null
+   */
+  _getCachedVideoUrl(lessonId) {
+    const cached = this._videoUrlCache[lessonId];
+    if (!cached) return null;
+    
+    // 检查是否过期
+    if (Date.now() > cached.expireAt) {
+      delete this._videoUrlCache[lessonId];
+      console.log(`[video-player] 课时 ${lessonId} 缓存已过期`);
+      return null;
+    }
+    
+    return cached;
+  },
+
+  /**
+   * 检查 videoUrls 对象是否包含有效的视频链接
+   * @param {Object} videoUrls - 多分辨率视频链接对象
+   * @returns {boolean} 是否有效
+   */
+  _hasValidVideoUrl(videoUrls) {
+    if (!videoUrls || typeof videoUrls !== 'object') return false;
+    
+    for (const url of Object.values(videoUrls)) {
+      // 有效链接：非空且不是 cloud:// 开头（已转换为临时链接）
+      if (url && typeof url === 'string' && !url.startsWith('cloud://')) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * 延迟加载某个课时的视频链接
+   * @param {string} lessonId - 课时ID
+   * @returns {Object|null} 包含视频链接的课时数据
+   */
+  async _lazyLoadLessonUrl(lessonId) {
+    console.log(`[video-player] 延迟加载课时 ${lessonId} 的视频链接`);
+    
+    try {
+      wx.showLoading({ title: '加载视频中...', mask: false });
+      
+      const res = await wx.cloud.callFunction({
+        name: 'course_videos',
+        data: {
+          courseId: this.courseId,
+          lessonId: lessonId,
+          getLessonUrl: true  // 【流量优化】只获取单个课时的视频链接
+        }
+      });
+      
+      wx.hideLoading();
+      
+      if (res.result && res.result.success && res.result.data.lesson) {
+        const lesson = res.result.data.lesson;
+        
+        // 根据当前分辨率设置 videoUrl
+        if (lesson.videoUrls && !lesson.videoUrl) {
+          const currentQuality = this.data.currentQuality || '720p';
+          const videoUrl = this.getVideoUrlByQuality(lesson, currentQuality);
+          if (videoUrl) {
+            lesson.videoUrl = videoUrl;
+          }
+        }
+        
+        // 缓存到本地
+        this._cacheVideoUrl(lesson);
+        
+        console.log(`[video-player] 延迟加载成功`);
+        return lesson;
+      } else {
+        console.error('[video-player] 延迟加载失败:', res.result);
+        return null;
+      }
+    } catch (err) {
+      wx.hideLoading();
+      console.error('[video-player] 延迟加载出错:', err);
+      return null;
+    }
+  },
+
+  /**
+   * 更新章节列表中某个课时的数据
+   * @param {string} lessonId - 课时ID
+   * @param {Object} newData - 新的课时数据
+   */
+  _updateLessonInChapters(lessonId, newData) {
+    const { chapters } = this.data;
+    if (!chapters) return;
+    
+    // 深拷贝章节数据
+    const updatedChapters = JSON.parse(JSON.stringify(chapters));
+    
+    // 查找并更新对应的课时
+    for (const chapter of updatedChapters) {
+      for (const lesson of chapter.lessons || []) {
+        if (lesson.id === lessonId) {
+          // 更新视频链接
+          lesson.videoUrl = newData.videoUrl;
+          lesson.videoUrls = newData.videoUrls;
+          lesson._needsLazyLoad = false;
+          console.log(`[video-player] 更新章节列表中课时 ${lessonId} 的数据`);
+          break;
+        }
+      }
+    }
+    
+    // 更新页面数据
+    this.setData({ chapters: updatedChapters });
+  },
+
+  /**
+   * 智能预加载下一课时的视频链接
+   * 在当前视频播放进度达到 80% 时调用
+   */
+  async _preloadNextLessonUrl() {
+    if (this._preloadingLesson) {
+      console.log('[video-player] 已有预加载任务进行中');
+      return;
+    }
+    
+    const { chapters, currentLesson } = this.data;
+    if (!chapters || !currentLesson) return;
+    
+    // 找到下一个视频课时
+    let foundCurrent = false;
+    let nextLesson = null;
+    
+    for (const chapter of chapters) {
+      for (const lesson of chapter.lessons || []) {
+        if (foundCurrent && lesson.type === 'video') {
+          // 检查是否需要预加载
+          if (lesson._needsLazyLoad && !this._getCachedVideoUrl(lesson.id)) {
+            nextLesson = lesson;
+            break;
+          }
+        }
+        if (lesson.id === currentLesson.id) {
+          foundCurrent = true;
+        }
+      }
+      if (nextLesson) break;
+    }
+    
+    if (!nextLesson) {
+      console.log('[video-player] 没有需要预加载的下一课时');
+      return;
+    }
+    
+    console.log(`[video-player] 开始预加载下一课时: ${nextLesson.title}`);
+    this._preloadingLesson = nextLesson.id;
+    
+    try {
+      await this._lazyLoadLessonUrl(nextLesson.id);
+      console.log(`[video-player] 预加载完成: ${nextLesson.title}`);
+    } catch (err) {
+      console.warn('[video-player] 预加载失败:', err);
+    } finally {
+      this._preloadingLesson = null;
     }
   }
 });
