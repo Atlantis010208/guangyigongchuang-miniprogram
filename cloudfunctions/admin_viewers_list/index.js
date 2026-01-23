@@ -141,13 +141,28 @@ exports.main = async (event, context) => {
       }
 
       // 计算观看时长（秒）
-      // 兼容 createdAt 和 joinedAt 字段（joinedAt 可能是 Date 对象或 { $date: timestamp } 格式）
-      let startTimeValue = record.createdAt || record.joinedAt;
-      if (startTimeValue && typeof startTimeValue === 'object' && startTimeValue.$date) {
-        startTimeValue = startTimeValue.$date;
+      // 优先使用 joinedAt 字段（记录本次观看会话的开始时间）
+      // joinedAt 可能是 Date 对象或 { $date: timestamp } 格式
+      let startTimeValue = record.joinedAt || record.createdAt;
+      if (startTimeValue && typeof startTimeValue === 'object') {
+        if (startTimeValue.$date) {
+          // MongoDB 扩展 JSON 格式
+          startTimeValue = startTimeValue.$date;
+        } else if (startTimeValue instanceof Date) {
+          // Date 对象
+          startTimeValue = startTimeValue.getTime();
+        }
       }
-      const startTimeDate = startTimeValue ? new Date(startTimeValue) : new Date();
-      const duration = Math.floor((now - startTimeDate) / 1000);
+      const startTimeDate = startTimeValue ? new Date(startTimeValue) : now;
+      
+      // 防止异常数据导致 duration 为负数或过大
+      let duration = Math.floor((now - startTimeDate) / 1000);
+      if (duration < 0) duration = 0;
+      // 限制最大显示时长为 24 小时（86400 秒），超过视为异常数据
+      if (duration > 86400) {
+        console.warn(`[admin_viewers_list] 异常时长: ${duration}s, recordId: ${record._id}, joinedAt: ${startTimeValue}`);
+        duration = 0; // 重置为 0，表示数据异常
+      }
 
       // 处理 lastActiveAt（同样可能是对象格式）
       let lastActiveValue = record.lastActiveAt;

@@ -408,6 +408,14 @@ Page({
     }
   },
 
+  onOpenUtilFactorInfo() {
+    this.setData({ showUtilFactorModal: true })
+  },
+
+  closeUtilFactorModal() {
+    this.setData({ showUtilFactorModal: false })
+  },
+
   onOpenMntFactorInfo() {
     this.setData({ showMntFactorModal: true })
   },

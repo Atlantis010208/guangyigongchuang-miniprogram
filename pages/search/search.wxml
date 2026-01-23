@@ -81,7 +81,10 @@
       <!-- 蓝色渐变头部 -->
       <view class="v2-header">
         <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
-        <image class="v2-logo" src="/images/logo-white.png" mode="aspectFit" wx:if="{{false}}"></image> <!-- 预留Logo位 -->
+        <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo源文件(长版本-透明-白字).png" mode="aspectFit"></image>
+        <text class="v2-overlay-title">照度计算器</text>
+        <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
+        <text class="v2-overlay-desc">本计算器可估算灯具照明效果</text>
       </view>
 
       <!-- 悬浮内容区域 -->
@@ -552,42 +555,42 @@
           <view class="util-table-row">
             <text class="util-cell col-height">2.2-2.4</text>
             <text class="util-cell col-rate">0.90-0.95</text>
-            <text class="util-cell col-desc">极低层高，光传播距离短</text>
+            <text class="util-cell col-desc">极低层高，光传播距离短，反射损耗极小</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">2.5-2.7</text>
             <text class="util-cell col-rate">0.85-0.90</text>
-            <text class="util-cell col-desc">标准住宅层高</text>
+            <text class="util-cell col-desc">标准住宅层高，常规反射情况良好</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">2.8-3.0</text>
             <text class="util-cell col-rate">0.80-0.85</text>
-            <text class="util-cell col-desc">中高层高住宅、商业空间</text>
+            <text class="util-cell col-desc">中高层高住宅、商业空间，光稍有损耗</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">3.1-3.5</text>
             <text class="util-cell col-rate">0.75-0.80</text>
-            <text class="util-cell col-desc">常见餐饮、展厅空间</text>
+            <text class="util-cell col-desc">常见餐饮、展厅、开放式商业空间</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">3.6-4.0</text>
             <text class="util-cell col-rate">0.65-0.75</text>
-            <text class="util-cell col-desc">高挑空空间、LOFT</text>
+            <text class="util-cell col-desc">高挑空空间、局部LOFT、双眼皮吊顶下隐藏灯带</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">4.1-5.0</text>
             <text class="util-cell col-rate">0.50-0.65</text>
-            <text class="util-cell col-desc">挑空客厅、艺术空间</text>
+            <text class="util-cell col-desc">挑空客厅、艺术空间，需要补强照度或多层光源配合</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">5.1-6.0</text>
             <text class="util-cell col-rate">0.40-0.50</text>
-            <text class="util-cell col-desc">大挑空、剧场类空间</text>
+            <text class="util-cell col-desc">大挑空、剧场、礼堂类空间，需要专门光学设计</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-height">6.0以上</text>
             <text class="util-cell col-rate">≤0.40</text>
-            <text class="util-cell col-desc">需专门光学设计</text>
+            <text class="util-cell col-desc">建议结合聚光灯、下照轨道等高效配光灯具，靠间接照明几乎无效</text>
           </view>
         </view>
       </view>
@@ -605,22 +608,22 @@
           </view>
           <view class="util-table-row">
             <text class="util-cell col-material">浅色材质</text>
-            <text class="util-cell col-rate">0.70-0.85</text>
-            <text class="util-cell col-example">白色、肤肤白等浅色乳胶漆墙面</text>
+            <text class="util-cell col-rate">0.7-0.85</text>
+            <text class="util-cell col-example">白色、肌肤白等浅色乳胶漆墙面</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-material">木质类材质</text>
-            <text class="util-cell col-rate">0.50-0.70</text>
+            <text class="util-cell col-rate">0.5-0.7</text>
             <text class="util-cell col-example">原木色、木纹色家具/护墙板表面</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-material">细腻深色材质</text>
-            <text class="util-cell col-rate">0.20-0.40</text>
+            <text class="util-cell col-rate">0.2-0.4</text>
             <text class="util-cell col-example">黑灰色软包、金属表面</text>
           </view>
           <view class="util-table-row">
             <text class="util-cell col-material">粗糙深色材质</text>
-            <text class="util-cell col-rate">0.10-0.20</text>
+            <text class="util-cell col-rate">0.1-0.2</text>
             <text class="util-cell col-example">水泥漆、吸光材质</text>
           </view>
         </view>

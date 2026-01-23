@@ -82,12 +82,15 @@ async function handleJoin(db, openid, courseId, lessonId) {
 
     if (existingRecord.data.length > 0) {
       // 更新已有记录
+      // 🔧 修复：重新开始观看时，需要重置 joinedAt 为当前时间
+      // 这样观看时长才是本次会话的时长，而不是累计时长
       await collection
         .doc(existingRecord.data[0]._id)
         .update({
           data: {
             isPlaying: true,
-            lastActiveAt: now
+            lastActiveAt: now,
+            joinedAt: now  // 重置会话开始时间
           }
         });
       console.log('[join] Updated existing record:', existingRecord.data[0]._id);

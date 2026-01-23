@@ -38,8 +38,8 @@ Page({
     playbackRate: 1.0,
     showOptionsPanel: false,
     
-    // 🆕 多分辨率控制
-    currentQuality: '1080p',           // 当前选择的分辨率
+    // 🆕 多分辨率控制（默认720p以节省CDN流量）
+    currentQuality: '720p',            // 当前选择的分辨率
     availableQualities: [],            // 可用的分辨率列表
     qualityLabels: {                   // 分辨率显示名称
       '480p': '480p 标清',
@@ -188,15 +188,15 @@ Page({
         // 🆕 解析可用分辨率
         const availableQualities = this.parseAvailableQualities(currentLesson);
         
-        // 🆕 恢复用户分辨率偏好
-        let currentQuality = '1080p';  // 默认 1080p
+        // 🆕 恢复用户分辨率偏好（默认720p以节省CDN流量）
+        let currentQuality = '720p';  // 默认 720p
         try {
           const savedQuality = wx.getStorageSync('preferredQuality');
           if (savedQuality) {
             currentQuality = savedQuality;
             console.log(`[video-player] 恢复用户偏好分辨率: ${currentQuality}`);
           } else {
-            console.log('[video-player] 使用默认分辨率: 1080p');
+            console.log('[video-player] 使用默认分辨率: 720p');
           }
         } catch (e) {
           console.warn('[video-player] 读取偏好失败:', e);

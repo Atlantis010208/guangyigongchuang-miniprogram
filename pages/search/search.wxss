@@ -127,17 +127,18 @@ page {
 }
 
 .v2-logo {
-  position: relative;
-  left: auto; top: auto;
-  width: 200rpx;
-  height: 60rpx;
-  margin-bottom: 30rpx;
+  position: absolute;
+  left: 40rpx;
+  top: 40rpx;
+  width: 220rpx;
+  height: 100rpx;
   z-index: 2;
 }
 
 .v2-overlay-title {
-  position: relative;
-  left: auto; top: auto;
+  position: absolute;
+  left: 50rpx; 
+  top: 150rpx;
   color: #fff;
   font-size: 56rpx;
   font-weight: 800;
@@ -149,20 +150,21 @@ page {
 }
 
 .v2-overlay-subtitle {
-  position: relative;
-  left: auto; top: auto;
+  position: absolute;
+  left: 50rpx;
+  top: 230rpx;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 600;
   letter-spacing: 2rpx;
   z-index: 2;
   text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
-  margin-bottom: 20rpx;
 }
 
 .v2-overlay-desc {
-  position: relative;
-  left: auto; top: auto;
+  position: absolute;
+  left: 50rpx;
+  top: 310rpx;
   color: rgba(255, 255, 255, 0.75);
   font-size: 24rpx;
   font-weight: 400;
@@ -1130,7 +1132,7 @@ page {
 }
 
 .col-desc {
-  flex: 1;
+  flex: 0 0 270rpx;
   min-width: 0;
   color: #636366;
   font-size: 24rpx;

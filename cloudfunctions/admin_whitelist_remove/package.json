@@ -1,0 +1,10 @@
+{
+  "name": "admin_whitelist_remove",
+  "version": "1.0.0",
+  "description": "移除课程白名单记录，同时删除关联的订单记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
