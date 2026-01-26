@@ -22,7 +22,6 @@ import {
 // 权限缓存配置
 const CACHE_KEY = 'toolkit_purchase_cache'
 const CACHE_DURATION = 5 * 60 * 1000  // 5 分钟
-const NAV_STATE_KEY = 'search_show_result' // 记录是否显示结果页（用于Tab切换恢复）
 
 Page({
   data: {
@@ -52,6 +51,7 @@ Page({
     showUtilFactorModal: false,    // 利用系数说明弹窗
     showMntFactorModal: false,     // 维护系数说明弹窗
     showSourceUtilModal: false,    // 光源利用率说明弹窗
+    showLampFluxModal: false,      // 单灯光通量说明弹窗
 
     // ========== 付费版专用 ==========
     selectedLamps: [],             // 用户已选灯具列表（动态添加）
@@ -77,22 +77,26 @@ Page({
     ],
     roomTypeIndex: -1,
     
-    // 层高选择器
+    // 层高选择器（参考利用系数说明表）
     floorHeights: [
-      { name: '2米', height: 2 },
-      { name: '2.6米', height: 2.6 },
-      { name: '2.8米', height: 2.8 },
-      { name: '3米', height: 3 },
-      { name: '自定义', height: 0 }
+      { name: '2.3米', height: 2.3, factor: 0.925 },
+      { name: '2.6米', height: 2.6, factor: 0.875 },
+      { name: '2.9米', height: 2.9, factor: 0.825 },
+      { name: '3.3米', height: 3.3, factor: 0.775 },
+      { name: '3.8米', height: 3.8, factor: 0.70 },
+      { name: '4.5米', height: 4.5, factor: 0.575 },
+      { name: '5.5米', height: 5.5, factor: 0.45 },
+      { name: '6.0米', height: 6.5, factor: 0.35 }
     ],
     floorHeightIndex: -1,
     floorHeight: '',
     
-    // 色彩选择器
+    // 色彩选择器（参考利用系数说明表）
     colorOptions: [
-      { name: '浅色', utilFactor: 0.8 },
-      { name: '细腻深色', utilFactor: 0.6 },
-      { name: '粗糙深色', utilFactor: 0.4 }
+      { name: '浅色', factor: 0.8 },
+      { name: '木质类', factor: 0.6 },
+      { name: '细腻深色', factor: 0.3 },
+      { name: '粗糙深色', factor: 0.15 }
     ],
     colorIndex: -1,
 
@@ -109,7 +113,6 @@ Page({
   
   async onLoad(options) {
     console.log('[search] onLoad, options:', options)
-    try { wx.setStorageSync(NAV_STATE_KEY, false) } catch(e) {}
     
     // 1. 初始化灯具参数（免费版使用）
     const lampTypeRows = getDefaultLampTypes()
@@ -139,26 +142,20 @@ Page({
   },
 
   onShow() {
-    console.log('[search] onShow, showResult:', this.data.showResult)
+    console.log('[search] onShow')
     
-    // 🔧 修复：切换回来时应该恢复到输入状态，而不是保持结果页状态
-    // 只有当前页面内部的 showResult 为 true 时才保持结果页样式
-    // 如果是从其他页面切换回来，应该清除结果页状态
-    
-    if (this.data.showResult) {
-      // 当前在结果页，保持结果页样式
-      this.applyNavBarStyle(true)
-    } else {
-      // 不在结果页，恢复输入页样式
-      this.applyNavBarStyle(false)
-      // 清除本地存储的结果页状态标记
-      try { wx.setStorageSync(NAV_STATE_KEY, false) } catch(e) {}
-    }
+    // 设置导航栏样式
+    wx.setNavigationBarTitle({ title: '照明计算' })
+    wx.setNavigationBarColor({
+      frontColor: '#000000',
+      backgroundColor: '#f2f2f7'
+    })
 
     // 更新 TabBar 选中状态
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 })
     }
+    
     // 更新筒射灯标题（免费版）
     if (!this.data.isPro) {
       this.updateDownlightTitles()
@@ -166,32 +163,7 @@ Page({
   },
 
   onHide() {
-    console.log('[search] onHide, showResult:', this.data.showResult)
-    
-    // 🔧 关键修复：当用户离开页面时，如果在结果页，则重置为输入状态
-    // 这样切换回来时一定会显示输入页面，避免状态不一致
-    if (this.data.showResult) {
-      console.log('[search] 检测到在结果页，重置为输入状态')
-      this.setData({ showResult: false })
-      try { wx.setStorageSync(NAV_STATE_KEY, false) } catch(e) {}
-    }
-  },
-
-  applyNavBarStyle(showResult) {
-    if (showResult) {
-      wx.setNavigationBarTitle({ title: '计算结果' })
-      wx.setNavigationBarColor({
-        frontColor: '#000000',
-        backgroundColor: '#f2f2f7'
-      })
-      return
-    }
-
-    wx.setNavigationBarTitle({ title: '照明计算' })
-    wx.setNavigationBarColor({
-      frontColor: '#000000',
-      backgroundColor: '#f2f2f7'
-    })
+    console.log('[search] onHide')
   },
 
   validateCalculateInputs() {
@@ -432,6 +404,14 @@ Page({
     this.setData({ showSourceUtilModal: false })
   },
 
+  onOpenLampFluxInfo() {
+    this.setData({ showLampFluxModal: true })
+  },
+
+  closeLampFluxModal() {
+    this.setData({ showLampFluxModal: false })
+  },
+
   noop() {},
 
   // ========== 免费版方法 ==========
@@ -522,23 +502,36 @@ Page({
     const floorHeightOption = this.data.floorHeights[index]
     const updates = { floorHeightIndex: index }
     
-    if (floorHeightOption.name !== '自定义') {
-      updates.floorHeight = floorHeightOption.height.toString()
-    }
+    updates.floorHeight = floorHeightOption.height.toString()
     
-    this.setData(updates)
-    this.recalc()
+    // 计算利用系数 = 层高系数 × 色彩系数
+    this.setData(updates, () => {
+      this.calcUtilFactor()
+    })
   },
 
   // 色彩选择
   onColorChange(e) {
     const index = Number(e.detail.value)
-    const colorOption = this.data.colorOptions[index]
     
-    this.setData({ 
-      colorIndex: index,
-      utilFactor: colorOption.utilFactor
+    this.setData({ colorIndex: index }, () => {
+      this.calcUtilFactor()
     })
+  },
+
+  // 计算利用系数 = 层高系数 × 色彩系数
+  calcUtilFactor() {
+    const { floorHeightIndex, colorIndex, floorHeights, colorOptions } = this.data
+    
+    // 只有两者都选择了才计算
+    if (floorHeightIndex >= 0 && colorIndex >= 0) {
+      const floorFactor = floorHeights[floorHeightIndex].factor || 1
+      const colorFactor = colorOptions[colorIndex].factor || 1
+      const utilFactor = (floorFactor * colorFactor).toFixed(2)
+      
+      this.setData({ utilFactor })
+    }
+    
     this.recalc()
   },
 
@@ -917,36 +910,15 @@ Page({
         }
       }
 
-      this.setData({
-        showResult: true,
-        resultData
-      }, () => {
-        this.applyNavBarStyle(true)
-        try { wx.setStorageSync(NAV_STATE_KEY, true) } catch(e) {}
+      // 将结果数据保存到页面实例，供结果页读取
+      this.setData({ resultData })
+      
+      // 跳转到独立的结果页面
+      wx.navigateTo({
+        url: '/pages/search/calc-result/calc-result'
       })
 
     }, 300)
   },
 
-  onExportCSV() {
-    wx.showToast({ title: '功能开发中', icon: 'none' })
-  },
-
-  onRecalculate() {
-    this.onBackToSearch()
-  },
-
-  onBackToSearch() {
-    if (this._calcTimer) {
-      clearTimeout(this._calcTimer)
-      this._calcTimer = null
-    }
-
-    wx.hideLoading()
-
-    this.setData({ showResult: false }, () => {
-      this.applyNavBarStyle(false)
-      try { wx.setStorageSync(NAV_STATE_KEY, false) } catch(e) {}
-    })
-  }
 })

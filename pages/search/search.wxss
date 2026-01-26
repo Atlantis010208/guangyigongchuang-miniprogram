@@ -103,7 +103,7 @@ page {
 .v2-header {
   height: 420rpx;
   top: -25rpx;
-  background: linear-gradient(180deg, #4FA1F7 0%, #367BE6 100%);
+  /* background: linear-gradient(180deg, #4FA1F7 0%, #367BE6 100%); */
   padding: 40rpx 50rpx;
   display: flex;
   flex-direction: column;
@@ -164,7 +164,7 @@ page {
 .v2-overlay-desc {
   position: absolute;
   left: 50rpx;
-  top: 310rpx;
+  top: 300rpx;
   color: rgba(255, 255, 255, 0.75);
   font-size: 24rpx;
   font-weight: 400;
@@ -210,6 +210,14 @@ page {
   padding: 40rpx 30rpx;
 }
 
+.tab-card {
+    padding: 20rpx 20rpx;
+}
+
+.tab-card .v2-tabs {
+    margin-bottom: 0;
+}
+
 /* Tab 切换 */
 .v2-tabs {
   display: flex;
@@ -245,6 +253,10 @@ page {
   background: #F7F8FA; /* 核心：整行浅灰背景 */
   border-radius: 16rpx;
   padding: 0 30rpx;
+}
+
+.v2-input-row:last-child {
+    margin-bottom: 0;
 }
 
 .v2-label {
@@ -329,6 +341,12 @@ page {
   display: flex;
   align-items: center;
   color: #C0C4CC;
+  white-space: nowrap; /* 核心：强制不换行 */
+  flex-shrink: 0; /* 核心：防止被压缩 */
+}
+
+.formula-picker text {
+    white-space: nowrap; /* 核心：文本也不换行 */
 }
 
 .formula-picker .selected-val {
@@ -355,7 +373,7 @@ page {
 
 /* 灯具列表 */
 .v2-lamp-list {
-  margin-bottom: 30rpx;
+  margin-bottom: 0;
 }
 
 .v2-lamp-item {
@@ -364,6 +382,9 @@ page {
   padding: 24rpx;
   margin-bottom: 20rpx;
   border: 1rpx solid #eee;
+}
+.v2-lamp-item:last-child {
+    margin-bottom: 0;
 }
 
 .v2-lamp-header {
@@ -496,252 +517,6 @@ page {
   color: #D0D0D0;
   font-size: 24rpx;
   margin-top: 20rpx;
-}
-
-/* ==================== 计算结果页 (V3 - 图二风格) ==================== */
-
-.v3-result-container {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: #F5F7FA;
-  z-index: 3000;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 1. 绿色导航栏 (已移除，使用原生) */
-/* .v3-nav-bar { ... } */
-
-/* 滚动区域 */
-.v3-result-scroll {
-  flex: 1;
-  padding: 24rpx 30rpx 180rpx; /* 底部留出按钮空间 */
-  box-sizing: border-box;
-}
-
-/* 通用卡片样式 */
-.v3-card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
-}
-
-/* 2. 核心结果大卡片 */
-.main-card {
-  text-align: center;
-  padding-top: 30rpx;
-}
-
-.v3-card-header {
-  text-align: left; /* 左对齐 */
-  margin-bottom: 40rpx;
-}
-
-.v3-card-title {
-  font-size: 33rpx;
-  color: #000; /* 纯黑 */
-  font-weight: 500;
-  display: block;
-  margin-bottom: 30rpx;
-}
-
-.v3-card-header-line {
-  height: 1rpx;
-  background: #F0F0F0;
-  margin: 0 10rpx; /* 两侧留白，不撑满 */
-}
-
-.v3-main-val-area {
-  margin-bottom: 40rpx;
-}
-
-.v3-val-label {
-  font-size: 24rpx;
-  color: #999;
-  display: block;
-  margin-bottom: 10rpx;
-}
-
-.v3-val-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-}
-
-.v3-big-num {
-  font-size: 80rpx;
-  font-weight: bold;
-  color: #43A047; /* 绿色结果 */
-  line-height: 1;
-}
-
-.v3-big-unit {
-  font-size: 32rpx;
-  color: #999;
-  margin-left: 10rpx;
-}
-
-.v3-sub-val-row {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 40rpx;
-}
-
-.v3-sub-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.v3-sub-num {
-  font-size: 36rpx;
-  font-weight: bold;
-  margin-bottom: 8rpx;
-}
-
-.v3-sub-num.gold { color: #FBC02D; } /* 金色 */
-.v3-sub-num.blue { color: #2979FF; } /* 蓝色 */
-
-.v3-sub-label {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.v3-divider {
-  height: 1rpx;
-  background: #F0F0F0;
-  margin: 0 -30rpx 30rpx; /* 延伸到卡片边缘 */
-}
-
-/* 详情列表 (内嵌卡片风格) */
-.v3-detail-card-inner {
-  background: #fff; /* 改为白色背景 */
-  border-radius: 16rpx;
-  /* padding: 10rpx 30rpx;  移除内边距，让分割线容易控制 */
-  margin-top: 10rpx;
-  /* border: 1rpx solid #F0F0F0;  移除实线边框 */
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05); /* 增加柔和阴影 */
-}
-
-.v3-detail-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.v3-detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 30rpx; /* 上下左右内边距 */
-  position: relative;
-}
-
-/* 自定义分割线 (伪元素实现，方便控制缩进) */
-.v3-detail-item::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20rpx; /* 左侧留白 */
-  right: 20rpx; /* 右侧留白 */
-  height: 1rpx;
-  background: #F5F5F5;
-}
-
-/* 最后一项去掉分割线 */
-.v3-detail-item:last-child::after {
-  display: none;
-}
-
-/* 移除旧的边框样式 */
-/* .v3-detail-item { border-bottom: ... } */
-
-.v3-detail-label {
-  font-size: 28rpx;
-  color: #666;
-}
-
-.v3-detail-val {
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
-}
-
-/* 3. 数据控制栏 (已移除) */
-/* .v3-control-bar { ... } */
-
-/* 4. 数据表格 (已移除) */
-/* .table-card { ... } */
-
-/* 5. 底部操作栏 */
-.v3-bottom-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.96); /* 高透背景 */
-  backdrop-filter: blur(20px); /* 磨砂玻璃效果 */
-  padding: 20rpx 32rpx 20rpx; /* 移除 safe-area，紧贴 TabBar */
-  box-shadow: 0 -1rpx 0 rgba(0, 0, 0, 0.05); /* 极细分割线 */
-  display: flex;
-  gap: 24rpx;
-  z-index: 3001;
-}
-
-.v3-btn-white {
-  flex: 1;
-  height: 96rpx; /* 加高按钮 */
-  background: #F2F2F7; /* iOS 风格次级按钮浅灰 */
-  border: none; /* 移除边框 */
-  border-radius: 48rpx; /* 全圆角 */
-  color: #000;
-  font-size: 32rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.v3-btn-white::after { border: none; }
-
-.v3-btn-white:active {
-  background: #E5E5EA;
-  opacity: 0.8;
-  transform: scale(0.98);
-}
-
-.v3-btn-green {
-  flex: 1.5;
-  height: 96rpx; /* 加高按钮 */
-  background: #007AFF; /* Apple Blue */
-  border-radius: 48rpx; /* 全圆角 */
-  color: #fff;
-  font-size: 32rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 20rpx rgba(0, 122, 255, 0.25); /* 柔和蓝色投影 */
-  transition: all 0.2s;
-}
-
-.v3-btn-green::after { border: none; }
-
-.v3-btn-green:active {
-  background: #0062CC;
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 10rpx rgba(0, 122, 255, 0.2);
-}
-
-.v3-btn-icon {
-  width: 36rpx;
-  height: 36rpx;
-  margin-right: 12rpx;
 }
 
 /* ==================== 升级弹窗样式 ==================== */

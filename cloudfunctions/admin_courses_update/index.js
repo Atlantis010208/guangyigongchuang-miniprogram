@@ -54,6 +54,8 @@ exports.main = async (event) => {
       'driveLinkIntl', 'drivePasswordIntl',
       // 新增字段
       'subtitle', 'isFeatured', 'detailImages', 'chapters',
+      // 轮播图（用于课程详情页顶部轮播展示）
+      'swiperImages',
       // 小程序详情页扩展字段（images 已废弃，保留兼容）
       'images', 'detailImage', 'benefits', 'highlights', 'targetAudience'
     ]

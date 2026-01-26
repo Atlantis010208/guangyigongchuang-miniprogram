@@ -1,0 +1,65 @@
+<!-- 计算结果页面 -->
+<view class="result-page">
+  <wxs module="tools">
+    module.exports.getModeName = function(tab) {
+      if (tab === 'count') return '按照度算灯具';
+      if (tab === 'quantity') return '按数量算灯具';
+      if (tab === 'lux') return '按灯具算照度';
+      return '计算结果';
+    }
+  </wxs>
+
+  <scroll-view scroll-y class="result-scroll">
+    <!-- 核心结果大卡片 -->
+    <view class="result-card main-card">
+      <view class="card-header">
+        <text class="card-title">{{tools.getModeName(mode)}} 计算结果</text>
+        <view class="card-header-line"></view>
+      </view>
+      
+      <view class="main-val-area">
+        <text class="val-label">{{mainLabel}}</text>
+        <view class="val-row">
+          <text class="big-num">{{mainValue}}</text>
+          <text class="big-unit">{{mainUnit}}</text>
+        </view>
+      </view>
+
+      <view class="sub-val-row">
+        <view class="sub-item">
+          <text class="sub-num gold">{{headerLeft.value}}</text>
+          <text class="sub-label">{{headerLeft.label}}</text>
+        </view>
+        <view class="sub-item">
+          <text class="sub-num blue">{{headerRight.value}}</text>
+          <text class="sub-label">{{headerRight.label}}</text>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <!-- 嵌套的详细参数卡片 -->
+      <view class="detail-card-inner">
+        <view class="detail-list">
+          <view class="detail-item" wx:for="{{details}}" wx:key="label">
+            <text class="detail-label">{{item.label}}</text>
+            <text class="detail-val">{{item.value}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <button class="btn-white" bindtap="onExportCSV">
+      <image class="btn-icon" src="/images/导出.png"></image>
+      <text>导出CSV</text> 
+    </button>
+    <button class="btn-green" bindtap="onRecalculate">
+      <image class="btn-icon" src="/images/重新计算.png"></image>
+      <text>重新计算</text>
+    </button>
+  </view>
+</view>

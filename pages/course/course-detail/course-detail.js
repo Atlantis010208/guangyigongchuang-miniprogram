@@ -84,11 +84,19 @@ Page({
         const course = res.result.data;
 
         // 确保 detailImages 是数组
-        // 注意：不再用 images 回退填充，因为 images 可能包含封面图（旧数据兼容逻辑）
-        // 详情图片和封面图应该是分开的
         if (!Array.isArray(course.detailImages)) {
           course.detailImages = [];
         }
+
+        // 处理轮播图数据
+        // 优先级：course.swiperImages > [course.coverUrl]
+        let swiperImages = [];
+        if (course.swiperImages && Array.isArray(course.swiperImages) && course.swiperImages.length > 0) {
+          swiperImages = course.swiperImages;
+        } else if (course.coverUrl) {
+          swiperImages = [course.coverUrl];
+        }
+        course.swiperImages = swiperImages;
 
         this.setData({
           course,
@@ -593,6 +601,20 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 预览封面图
+   */
+  onPreviewCover(e) {
+    const current = e.currentTarget.dataset.current;
+    const { course } = this.data;
+    if (course && course.swiperImages && course.swiperImages.length > 0) {
+      wx.previewImage({
+        current: current,
+        urls: course.swiperImages
+      });
+    }
   },
 
   /**

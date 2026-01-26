@@ -12,7 +12,22 @@
 >
   <!-- Cover Image Header -->
   <view class="cover-wrapper">
-    <image src="{{course.coverUrl}}" mode="aspectFill" class="cover-image"></image>
+    <swiper 
+      class="cover-swiper" 
+      indicator-dots="{{course.swiperImages.length > 1}}" 
+      autoplay="{{true}}" 
+      circular="{{true}}" 
+      interval="5000" 
+      duration="500"
+      indicator-color="rgba(255, 255, 255, 0.4)"
+      indicator-active-color="#ffffff"
+    >
+      <block wx:for="{{course.swiperImages}}" wx:key="*this">
+        <swiper-item>
+          <image src="{{item}}" mode="aspectFill" class="cover-image" bindtap="onPreviewCover" data-current="{{item}}"></image>
+        </swiper-item>
+      </block>
+    </swiper>
     <view class="cover-gradient"></view>
   </view>
 

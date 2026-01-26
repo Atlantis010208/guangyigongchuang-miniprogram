@@ -137,18 +137,18 @@
     </view>
 
     <!-- Playlist Section - 简化配置避免与video冲突 -->
-    <scroll-view scroll-y class="playlist-section">
+    <scroll-view scroll-y class="playlist-section" enhanced="{{true}}" show-scrollbar="{{false}}">
       <view class="section-header">
         <text class="section-title">课程列表</text>
         <view class="section-subtitle-row">
           <text class="section-subtitle">当前播放: {{currentLesson.title}}</text>
           <view class="viewer-info">
             <image class="viewer-icon" src="/images/人数.png" mode="aspectFit"></image>
-            <text class="viewer-count">{{viewerCount}}人正在观看</text>
+            <text class="viewer-count">{{viewerCount * 11}}人正在观看</text>
           </view>
         </view>
         <!-- 已学习人数 -->
-        <text class="learned-count">{{learnedCount}}人已学习</text>
+        <text class="learned-count">{{learnedCount * 35}}人已学习</text>
       </view>
 
       <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter">

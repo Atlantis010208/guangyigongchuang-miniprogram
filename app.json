@@ -3,6 +3,7 @@
     "pages/products/products",
     "pages/course/index/index",
     "pages/search/search",
+    "pages/search/calc-result/calc-result",
     "pages/cart/cart",
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",

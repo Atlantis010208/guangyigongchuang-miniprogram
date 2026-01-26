@@ -76,6 +76,9 @@ exports.main = async (event) => {
       /** 课程详情图片 */
       detailImages: data.detailImages || [],
       
+      /** 轮播图列表（用于课程详情页顶部轮播展示） */
+      swiperImages: data.swiperImages || [],
+      
       /** 课程章节列表 */
       chapters: data.chapters || [],
       

@@ -90,9 +90,18 @@ exports.main = async (event) => {
     // 注意：images 字段已废弃，仅作为旧数据兼容
     let images = (course.images || []).map(extractUrl).filter(Boolean)
     
+    // 处理轮播图 - 用于课程详情页顶部轮播展示
+    // 优先使用 swiperImages，其次回退到 cover（兼容旧数据）
+    let swiperImages = (course.swiperImages || []).map(extractUrl).filter(Boolean)
+    
     // 处理封面图 - 兼容 cover 是字符串或对象的情况
     // 重要：封面图应单独处理，不要加入 images 或 detailImages 数组
     let coverUrl = extractUrl(course.cover)
+    
+    // 如果没有轮播图但有封面图，则用封面图作为轮播图（兼容旧数据）
+    if (swiperImages.length === 0 && coverUrl) {
+      swiperImages = [coverUrl]
+    }
     
     // 处理详情图片 - 这是独立于封面的课程详情展示图
     let detailImages = (course.detailImages || []).map(extractUrl).filter(Boolean)
@@ -101,10 +110,10 @@ exports.main = async (event) => {
     let instructorAvatar = extractUrl(course.instructorAvatar)
     
     // 收集所有需要转换的云存储 fileID
-    const allUrls = [...images, ...detailImages]
+    const allUrls = [...images, ...detailImages, ...swiperImages]
     if (detailImage) allUrls.push(detailImage)
     if (instructorAvatar) allUrls.push(instructorAvatar)
-    if (coverUrl && !images.includes(coverUrl)) allUrls.push(coverUrl)
+    if (coverUrl && !allUrls.includes(coverUrl)) allUrls.push(coverUrl)
     
     const cloudFileIDs = allUrls.filter(url => typeof url === 'string' && url.startsWith('cloud://'))
     
@@ -124,6 +133,8 @@ exports.main = async (event) => {
         images = images.map(url => urlMap[url] || url)
         // 替换 detailImages 中的 fileID 为临时链接
         detailImages = detailImages.map(url => urlMap[url] || url)
+        // 替换 swiperImages 中的 fileID 为临时链接
+        swiperImages = swiperImages.map(url => urlMap[url] || url)
         // 替换 coverUrl
         if (coverUrl && urlMap[coverUrl]) {
           coverUrl = urlMap[coverUrl]
@@ -192,10 +203,11 @@ exports.main = async (event) => {
       price: course.price || 0,
       originalPrice: course.originalPrice,
       images: images,
-      cover: coverUrl || images[0] || '',
-      coverUrl: coverUrl || images[0] || '',
+      cover: coverUrl || swiperImages[0] || images[0] || '',
+      coverUrl: coverUrl || swiperImages[0] || images[0] || '',
+      swiperImages: swiperImages, // 轮播图列表（用于课程详情页顶部轮播）
       detailImage: detailImage,
-      detailImages: detailImages, // 新增：课程详情图片列表
+      detailImages: detailImages, // 课程详情图片列表
       benefits: course.benefits || [],
       highlights: course.highlights || [],
       targetAudience: course.targetAudience || '',

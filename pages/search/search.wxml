@@ -7,6 +7,12 @@
     if (tab === 'lux') return '按灯具算照度';
     return '计算结果';
   }
+  module.exports.getModeDesc = function(tab) {
+    if (tab === 'count') return '已知单一空间灯具数量，反推单盏灯所需亮度参数\n*仅限单一灯具类型';
+    if (tab === 'quantity') return '已知单一空间目标照度/亮度，反推所需灯具数量\n*仅限单一灯具类型';
+    if (tab === 'lux') return '已知灯具参数和数量，计算整体照度/亮度是否符合国家标准\n*适合复杂灯具组合';
+    return '本计算器可估算灯具照明效果';
+  }
 </wxs>
   <!-- Loading 状态 -->
   <view wx:if="{{checkingPermission}}" class="loading-mask">
@@ -84,315 +90,234 @@
         <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo源文件(长版本-透明-白字).png" mode="aspectFit"></image>
         <text class="v2-overlay-title">照度计算器</text>
         <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
-        <text class="v2-overlay-desc">本计算器可估算灯具照明效果</text>
+        <text class="v2-overlay-desc">{{tools.getModeDesc(activeTab)}}</text>
       </view>
 
       <!-- 悬浮内容区域 -->
       <view class="v2-content">
-        <!-- 输入卡片 -->
-        <view class="v2-card input-card">
-          <!-- 顶部 Tab 切换 -->
-          <view class="v2-tabs">
-            <view class="v2-tab-item {{activeTab==='count' ? 'active' : ''}}" bindtap="switchTab" data-tab="count">按照度算灯具</view>
-            <view class="v2-tab-item {{activeTab==='quantity' ? 'active' : ''}}" bindtap="switchTab" data-tab="quantity">按数量算灯具</view>
+        
+        <!-- 大卡片：包含 Tab 切换 + 通用输入 -->
+        <view class="v2-card group-card">
+          <!-- 1. Tab 切换 -->
+          <view class="v2-tabs" style="margin-bottom: 30rpx;">
+            <view class="v2-tab-item {{activeTab==='count' ? 'active' : ''}}" bindtap="switchTab" data-tab="count">按照度算参数</view>
+            <view class="v2-tab-item {{activeTab==='quantity' ? 'active' : ''}}" bindtap="switchTab" data-tab="quantity">按照度算数量</view>
             <view class="v2-tab-item {{activeTab==='lux' ? 'active' : ''}}" bindtap="switchTab" data-tab="lux">按灯具算照度</view>
           </view>
 
-          <!-- 表单内容 -->
-          <view class="v2-form">
-            
-            <!-- 场景 1: 按照度算灯具 -->
-            <block wx:if="{{activeTab==='count'}}">
-              <view class="v2-input-row">
-                <text class="v2-label">空间类型</text>
-                <picker class="v2-input-box picker" mode="selector" range="{{roomTypes}}" range-key="name" value="{{roomTypeIndex < 0 ? 0 : roomTypeIndex}}" bindchange="onRoomTypeChange">
-                  <view class="picker-text {{roomTypeIndex >= 0 ? '' : 'placeholder'}}">
-                    {{roomTypeIndex >= 0 ? roomTypes[roomTypeIndex].name : '请选择空间'}}
-                  </view>
-                </picker>
+          <!-- 2. 通用输入：空间类型、目标照度、房间面积 -->
+          <view class="v2-input-row">
+            <text class="v2-label">空间类型</text>
+            <picker class="v2-input-box picker" mode="selector" range="{{roomTypes}}" range-key="name" value="{{roomTypeIndex < 0 ? 0 : roomTypeIndex}}" bindchange="onRoomTypeChange">
+              <view class="picker-text {{roomTypeIndex >= 0 ? '' : 'placeholder'}}">
+                {{roomTypeIndex >= 0 ? roomTypes[roomTypeIndex].name : '请选择空间'}}
               </view>
+            </picker>
+          </view>
 
-              <view class="v2-input-row">
-                <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
-                <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
-              </view>
+          <view class="v2-input-row">
+            <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
+            <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
+          </view>
 
-              <view class="v2-input-row">
-                <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
-                <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
-                  <text class="v2-label">利用系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                      <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                   </picker>
-                   <text class="op">×</text>
-                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
-                      <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
-                   </picker>
-                   <text class="op">=</text>
-                   <text class="res">{{utilFactor || '0.8'}}</text>
-                </view>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
-                  <text class="v2-label">维护系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
-                      <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
-                   </picker>
-                   <text class="op">=</text>
-                   <text class="res">{{maintenanceFactor || '0.8'}}</text>
-                </view>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">单灯光通量 <text class="v2-unit">(Lm)</text></text>
-                <input class="v2-input-box" type="number" value="{{lampFlux}}" data-field="lampFlux" bindinput="onFieldInput" placeholder="请输入光通量" placeholder-style="color:#C0C4CC"/>
-              </view>
-            </block>
-
-            <!-- 场景 2: 按数量算灯具 -->
-            <block wx:if="{{activeTab==='quantity'}}">
-              <view class="v2-input-row">
-                <text class="v2-label">空间类型</text>
-                <picker class="v2-input-box picker" mode="selector" range="{{roomTypes}}" range-key="name" value="{{roomTypeIndex < 0 ? 0 : roomTypeIndex}}" bindchange="onRoomTypeChange">
-                  <view class="picker-text {{roomTypeIndex >= 0 ? '' : 'placeholder'}}">
-                    {{roomTypeIndex >= 0 ? roomTypes[roomTypeIndex].name : '请选择空间'}}
-                  </view>
-                </picker>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
-                <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">灯具数量 <text class="v2-unit">(盏)</text></text>
-                <input class="v2-input-box" type="number" value="{{lampCount}}" data-field="lampCount" bindinput="onFieldInput" placeholder="请输入数量" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
-                <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
-                  <text class="v2-label">利用系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                      <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                   </picker>
-                   <text class="op">×</text>
-                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
-                      <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
-                   </picker>
-                   <text class="op">=</text>
-                   <text class="res">{{utilFactor || '0.8'}}</text>
-                </view>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
-                  <text class="v2-label">维护系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
-                      <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
-                   </picker>
-                   <text class="op">=</text>
-                   <text class="res">{{maintenanceFactor || '0.8'}}</text>
-                </view>
-              </view>
-            </block>
-
-            <!-- 场景 3: 按灯具算照度 -->
-            <block wx:if="{{activeTab==='lux'}}">
-               <view class="v2-lamp-list">
-                  <view class="v2-input-row v2-add-row">
-                    <view class="v2-label-wrap" bindtap="onOpenSourceUtilInfo">
-                      <text class="v2-label">添加灯具</text>
-                      <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                    </view>
-                    <picker class="v2-input-box picker" mode="selector" range="{{lampAddOptions}}" value="{{lampAddValue}}" bindchange="onAddLampChange">
-                      <view class="picker-text {{lampAddValue===0 ? 'placeholder' : ''}}">
-                        {{lampAddOptions[lampAddValue]}}
-                        <text class="v2-picker-arrow">▼</text>
-                      </view>
-                    </picker>
-                  </view>
-                  <view class="v2-lamp-item" wx:for="{{selectedLamps}}" wx:key="lampId">
-                     <view class="v2-lamp-header">
-                        <view class="v2-lamp-title-group">
-                          <text class="v2-lamp-name">{{item.displayName || item.name}}</text>
-                          <image class="v2-btn-edit" src="/images/编辑.png" data-lampid="{{item.lampId}}" bindtap="onRenameLamp"></image>
-                        </view>
-                        <view class="v2-lamp-remove" data-lampid="{{item.lampId}}" bindtap="onRemoveLamp">×</view>
-                     </view>
-                     <view class="v2-lamp-body">
-                        <view class="v2-input-mini">
-                           <text>功率</text>
-                           <input type="number" value="{{item.powerW}}" data-lampid="{{item.lampId}}" bindinput="onSelectedLampPowerInput" placeholder="0"/>
-                           <text>W</text>
-                        </view>
-                        <view class="v2-input-mini">
-                           <text>利用率</text>
-                           <input type="digit" value="{{item.sourceUtil}}" data-lampid="{{item.lampId}}" data-field="sourceUtil" bindinput="onSelectedLampInput" placeholder="1.0"/>
-                        </view>
-                        <view class="v2-input-mini">
-                           <text>数量</text>
-                           <input type="number" value="{{item.lengthQty}}" data-lampid="{{item.lampId}}" bindinput="onSelectedLampInput" placeholder="0"/>
-                           <wxs module="unitTools">
-                             module.exports.getUnit = function(name) {
-                               if (!name) return '个';
-                               if (name.indexOf('灯带') > -1 || name.indexOf('线性灯') > -1) {
-                                 return '米';
-                               }
-                               return '个';
-                             }
-                           </wxs>
-                           <text>{{unitTools.getUnit(item.displayName || item.name)}}</text>
-                        </view>
-                     </view>
-                  </view>
-               </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">空间类型</text>
-                <picker class="v2-input-box picker" mode="selector" range="{{roomTypes}}" range-key="name" value="{{roomTypeIndex < 0 ? 0 : roomTypeIndex}}" bindchange="onRoomTypeChange">
-                  <view class="picker-text {{roomTypeIndex >= 0 ? '' : 'placeholder'}}">
-                    {{roomTypeIndex >= 0 ? roomTypes[roomTypeIndex].name : '请选择空间'}}
-                  </view>
-                </picker>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
-                <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
-                <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
-                  <text class="v2-label">利用系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                      <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                   </picker>
-                   <text class="op">×</text>
-                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
-                      <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
-                   </picker>
-                   <text class="op">=</text>
-                   <text class="res">{{utilFactor || '0.8'}}</text>
-                </view>
-              </view>
-
-              <view class="v2-input-row">
-                <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
-                  <text class="v2-label">维护系数</text>
-                  <image class="v2-info-icon" src="/images/使用说明.png"></image>
-                </view>
-                <view class="v2-input-box formula">
-                   <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
-                      <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
-                   </picker>
-            <wxs module="tools">
-              module.exports.getModeName = function(tab) {
-                if (tab === 'count') return '按照度算灯具';
-                if (tab === 'quantity') return '按数量算灯具';
-                if (tab === 'lux') return '按灯具算照度';
-                return '计算结果';
-              }
-            </wxs>
-                   <text class="op">=</text>
-                   <text class="res">{{maintenanceFactor || '0.8'}}</text>
-                </view>
-              </view>
-            </block>
-
+          <view class="v2-input-row">
+            <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
+            <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
           </view>
         </view>
+
+        <!-- 表单内容 - 剩余差异部分 -->
+        
+        <!-- 场景 1: 按照度算灯具 -->
+        <block wx:if="{{activeTab==='count'}}">
+          <!-- 卡片 3: 系数信息 -->
+          <view class="v2-card group-card">
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
+                <text class="v2-label">利用系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
+                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
+                  </picker>
+                  <text class="op">×</text>
+                  <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
+                    <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{utilFactor || '0.8'}}</text>
+              </view>
+            </view>
+
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
+                <text class="v2-label">维护系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
+                    <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{maintenanceFactor || '0.8'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 卡片 2: 灯具信息 (光通量) -->
+          <view class="v2-card group-card">
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenLampFluxInfo" style="width: auto; padding-right: 20rpx;">
+                <text class="v2-label">单灯光通量 <text class="v2-unit">(Lm)</text></text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <input class="v2-input-box" type="number" value="{{lampFlux}}" data-field="lampFlux" bindinput="onFieldInput" placeholder="请输入光通量" placeholder-style="color:#C0C4CC"/>
+            </view>
+          </view>
+
+        </block>
+
+        <!-- 场景 2: 按数量算灯具 -->
+        <block wx:if="{{activeTab==='quantity'}}">
+          <!-- 卡片 3: 系数信息 -->
+          <view class="v2-card group-card">
+             <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
+                <text class="v2-label">利用系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
+                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
+                  </picker>
+                  <text class="op">×</text>
+                  <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
+                    <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{utilFactor || '0.8'}}</text>
+              </view>
+            </view>
+
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
+                <text class="v2-label">维护系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
+                    <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{maintenanceFactor || '0.8'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 卡片 2: 灯具信息 (数量) -->
+          <view class="v2-card group-card">
+            <view class="v2-input-row">
+              <text class="v2-label">灯具数量 <text class="v2-unit">(盏)</text></text>
+              <input class="v2-input-box" type="number" value="{{lampCount}}" data-field="lampCount" bindinput="onFieldInput" placeholder="请输入数量" placeholder-style="color:#C0C4CC"/>
+            </view>
+          </view>
+
+        </block>
+
+        <!-- 场景 3: 按灯具算照度 -->
+        <block wx:if="{{activeTab==='lux'}}">
+          <!-- 卡片 3: 系数信息 -->
+          <view class="v2-card group-card">
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenUtilFactorInfo">
+                <text class="v2-label">利用系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
+                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
+                  </picker>
+                  <text class="op">×</text>
+                  <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
+                    <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{utilFactor || '0.8'}}</text>
+              </view>
+            </view>
+
+            <view class="v2-input-row">
+              <view class="v2-label-wrap" bindtap="onOpenMntFactorInfo">
+                <text class="v2-label">维护系数</text>
+                <image class="v2-info-icon" src="/images/使用说明.png"></image>
+              </view>
+              <view class="v2-input-box formula">
+                  <picker class="formula-picker" mode="selector" range="{{maintenanceOptions}}" range-key="name" value="{{maintenanceIndex}}" bindchange="onMaintenanceChange">
+                    <text class="{{maintenanceIndex >= 0 ? 'selected-val' : ''}}">{{maintenanceIndex >= 0 ? maintenanceOptions[maintenanceIndex].name : '请选择环境特征'}}</text>
+                  </picker>
+                  <text class="op">=</text>
+                  <text class="res">{{maintenanceFactor || '0.8'}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 卡片 2: 灯具列表 -->
+          <view class="v2-card group-card">
+            <view class="v2-lamp-list">
+                <view class="v2-input-row v2-add-row">
+                  <view class="v2-label-wrap" bindtap="onOpenSourceUtilInfo">
+                    <text class="v2-label">添加灯具</text>
+                    <image class="v2-info-icon" src="/images/使用说明.png"></image>
+                  </view>
+                  <picker class="v2-input-box picker" mode="selector" range="{{lampAddOptions}}" value="{{lampAddValue}}" bindchange="onAddLampChange">
+                    <view class="picker-text {{lampAddValue===0 ? 'placeholder' : ''}}">
+                      {{lampAddOptions[lampAddValue]}}
+                      <text class="v2-picker-arrow">▼</text>
+                    </view>
+                  </picker>
+                </view>
+                <view class="v2-lamp-item" wx:for="{{selectedLamps}}" wx:key="lampId">
+                   <view class="v2-lamp-header">
+                      <view class="v2-lamp-title-group">
+                        <text class="v2-lamp-name">{{item.displayName || item.name}}</text>
+                        <image class="v2-btn-edit" src="/images/编辑.png" data-lampid="{{item.lampId}}" bindtap="onRenameLamp"></image>
+                      </view>
+                      <view class="v2-lamp-remove" data-lampid="{{item.lampId}}" bindtap="onRemoveLamp">×</view>
+                   </view>
+                   <view class="v2-lamp-body">
+                      <view class="v2-input-mini">
+                         <text>功率</text>
+                         <input type="number" value="{{item.powerW}}" data-lampid="{{item.lampId}}" bindinput="onSelectedLampPowerInput" placeholder="0"/>
+                         <text>W</text>
+                      </view>
+                      <view class="v2-input-mini">
+                         <text>利用率</text>
+                         <input type="digit" value="{{item.sourceUtil}}" data-lampid="{{item.lampId}}" data-field="sourceUtil" bindinput="onSelectedLampInput" placeholder="1.0"/>
+                      </view>
+                      <view class="v2-input-mini">
+                         <text>数量</text>
+                         <input type="number" value="{{item.lengthQty}}" data-lampid="{{item.lampId}}" bindinput="onSelectedLampInput" placeholder="0"/>
+                         <wxs module="unitTools">
+                           module.exports.getUnit = function(name) {
+                             if (!name) return '个';
+                             if (name.indexOf('灯带') > -1 || name.indexOf('线性灯') > -1) {
+                               return '米';
+                             }
+                             return '个';
+                           }
+                         </wxs>
+                         <text>{{unitTools.getUnit(item.displayName || item.name)}}</text>
+                      </view>
+                   </view>
+                </view>
+             </view>
+          </view>
+        </block>
 
         <!-- 即刻计算按钮 -->
         <button class="v2-btn-calculate" bindtap="onCalculate">即刻计算</button>
         
-      </view>
-    </view>
-
-    <view wx:if="{{isPro && showResult}}" class="v3-result-container">
-      
-      <scroll-view scroll-y class="v3-result-scroll">
-        <!-- 2. 核心结果大卡片 -->
-        <view class="v3-card main-card">
-          <view class="v3-card-header">
-            <text class="v3-card-title">{{tools.getModeName(activeTab)}}   计算结果</text>
-            <view class="v3-card-header-line"></view>
-          </view>
-          
-          <view class="v3-main-val-area">
-            <text class="v3-val-label">{{resultData.mainLabel}}</text>
-            <view class="v3-val-row">
-              <text class="v3-big-num">{{resultData.mainValue}}</text>
-              <text class="v3-big-unit">{{resultData.mainUnit}}</text>
-            </view>
-          </view>
-
-          <view class="v3-sub-val-row">
-            <view class="v3-sub-item">
-              <text class="v3-sub-num gold">{{resultData.headerLeft.value}}</text>
-              <text class="v3-sub-label">{{resultData.headerLeft.label}}</text>
-            </view>
-            <view class="v3-sub-item">
-              <text class="v3-sub-num blue">{{resultData.headerRight.value}}</text>
-              <text class="v3-sub-label">{{resultData.headerRight.label}}</text>
-            </view>
-          </view>
-
-          <view class="v3-divider"></view>
-
-          <!-- 嵌套的详细参数卡片 -->
-          <view class="v3-detail-card-inner">
-            <view class="v3-detail-list">
-              <view class="v3-detail-item" wx:for="{{resultData.details}}" wx:key="label">
-                <text class="v3-detail-label">{{item.label}}</text>
-                <text class="v3-detail-val">{{item.value}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-      </scroll-view>
-
-      <!-- 5. 底部操作栏 -->
-      <view class="v3-bottom-bar">
-        <button class="v3-btn-white" bindtap="onExportCSV">
-          <image class="v3-btn-icon" src="/images/导出.png"></image>
-          <text>导出CSV</text> 
-        </button>
-        <button class="v3-btn-green" bindtap="onRecalculate">
-          <image class="v3-btn-icon" src="/images/重新计算.png"></image>
-          <text>重新计算</text>
-        </button>
       </view>
     </view>
 
@@ -784,6 +709,27 @@
     
     <view class="util-modal-footer">
       <button class="util-btn-confirm" bindtap="closeSourceUtilModal">我知道了</button>
+    </view>
+  </view>
+</view>
+
+<!-- 单灯光通量说明弹窗 -->
+<view wx:if="{{showLampFluxModal}}" class="util-modal-mask" bindtap="closeLampFluxModal">
+  <view class="util-modal-content" catchtap="stopPropagation">
+    <view class="util-modal-close" bindtap="closeLampFluxModal">×</view>
+    
+    <view class="util-modal-header">
+      <text class="util-modal-title">单灯光通量说明</text>
+    </view>
+    
+    <scroll-view scroll-y class="util-modal-body">
+      <view class="util-note" style="margin-top: 0;">
+        <text class="util-note-text">单灯光通量：根据你要采购的灯具，获取该灯具的光通量，一般每款灯都有一个固定的光通量值，如果没有可以跟商家获取，实在没有可以按照80lm/w去估算灯具的光通量（比如：灯具是12w的，那么估算光通量就是12*80=960lm）</text>
+      </view>
+    </scroll-view>
+    
+    <view class="util-modal-footer">
+      <button class="util-btn-confirm" bindtap="closeLampFluxModal">我知道了</button>
     </view>
   </view>
 </view>

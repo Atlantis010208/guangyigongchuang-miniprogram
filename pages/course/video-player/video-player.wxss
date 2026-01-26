@@ -24,7 +24,7 @@
   width: 60rpx;
   height: 60rpx;
   border: 4rpx solid rgba(255, 255, 255, 0.3);
-  border-top-color: #FF5500;
+  border-top-color: #007aff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -72,7 +72,7 @@
 }
 
 .retry-btn {
-  background-color: #FF5500;
+  background-color: #007aff;
   color: #FFFFFF;
   font-size: 28rpx;
   padding: 16rpx 60rpx;
@@ -116,7 +116,7 @@
   width: 50rpx;
   height: 50rpx;
   border: 4rpx solid rgba(255, 255, 255, 0.3);
-  border-top-color: #FF5500;
+  border-top-color: #007aff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -240,10 +240,10 @@
 }
 
 .lesson-item.active {
-  background-color: rgba(255, 85, 0, 0.1);
-  margin: 0 -30rpx;
-  padding: 24rpx 30rpx;
-  border-radius: 12rpx;
+  background-color: rgba(0, 122, 255, 0.1);
+  margin: 0 0rpx;
+  padding: 24rpx 20rpx;
+  border-radius: 80rpx;
 }
 
 .lesson-status {
@@ -263,8 +263,8 @@
 }
 
 .status-icon.playing {
-  background-color: #FF5500;
-  box-shadow: 0 0 10rpx rgba(255, 85, 0, 0.5);
+  background-color: #007aff;
+  box-shadow: 0 0 10rpx rgba(0, 122, 255, 0.5);
   animation: pulse 1.5s infinite;
 }
 
@@ -288,7 +288,7 @@
 }
 
 .lesson-title.active-text {
-  color: #FF5500;
+  color: #007aff;
   font-weight: 500;
 }
 
@@ -461,7 +461,7 @@
 }
 
 .speed-item.active text {
-  color: #FF3B30;
+  color: #007aff;
   font-weight: 600;
 }
 
@@ -489,7 +489,7 @@
 
 .quality-item.active {
   background: #FFFFFF; /* 白色背景 */
-  color: #FF3B30;      /* 红色文字 */
+  color: #007aff;      /* 蓝色文字 */
   font-weight: 600;
   
 }
