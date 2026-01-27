@@ -1,6 +1,12 @@
 /**
  * 云函数：toolkit_purchase_check
- * 功能：检查用户是否已购买工具包
+ * 功能：检查用户是否有权限使用工具包
+ * 权限来源：
+ *   1. 直接购买工具包
+ *   2. 购买课程（课程用户自动获得工具包使用权限）
+ *   3. 通过工具包白名单激活
+ *   4. 通过课程白名单激活（自动获得工具包权限）
+ * 
  * 权限：公开（未登录返回 isPurchased: false）
  * 
  * 参数：
@@ -9,7 +15,12 @@
  * 返回：
  * - success: true/false
  * - code: 'OK' | 'INVALID_PARAMS' | 'SERVER_ERROR'
- * - data: { isPurchased: boolean, purchasedAt?: Date, orderId?: string }
+ * - data: { isPurchased: boolean, purchasedAt?: Date, orderId?: string, source?: string }
+ *   source 值说明：
+ *   - 'toolkit_order': 直接购买工具包
+ *   - 'course_order': 通过购买课程获得权限
+ *   - 'toolkit_whitelist': 通过工具包白名单激活
+ *   - 'course_whitelist': 通过课程白名单激活
  */
 const cloud = require('wx-server-sdk')
 
@@ -59,7 +70,8 @@ exports.main = async (event) => {
         createdAt: true,
         params: true,
         items: true,
-        category: true
+        category: true,
+        source: true // 用于识别是否来自白名单
       })
       .limit(20)  // 限制查询数量，优化性能
       .get()
@@ -87,9 +99,13 @@ exports.main = async (event) => {
           const purchasedAt = order.paidAt || order.createdAt
           const orderId = order.orderNo || order._id
           
+          // 判断权限来源：工具包订单还是工具包白名单
+          const source = order.source === 'whitelist' ? 'toolkit_whitelist' : 'toolkit_order'
+          
           console.log('[toolkit_purchase_check] 找到已购买订单:', {
             orderId,
             purchasedAt,
+            source,
             耗时: Date.now() - startTime + 'ms'
           })
           
@@ -99,9 +115,12 @@ exports.main = async (event) => {
             data: {
               isPurchased: true,
               purchasedAt,
-              orderId
+              orderId,
+              source
             },
-            message: '用户已购买工具包'
+            message: source === 'toolkit_whitelist' 
+              ? '用户通过工具包白名单获得使用权限' 
+              : '用户已购买工具包'
           }
         }
       }
@@ -111,9 +130,13 @@ exports.main = async (event) => {
         const purchasedAt = order.paidAt || order.createdAt
         const orderId = order.orderNo || order._id
         
+        // 判断权限来源
+        const source = order.source === 'whitelist' ? 'toolkit_whitelist' : 'toolkit_order'
+        
         console.log('[toolkit_purchase_check] 找到工具包订单（无items）:', {
           orderId,
           purchasedAt,
+          source,
           耗时: Date.now() - startTime + 'ms'
         })
         
@@ -123,14 +146,70 @@ exports.main = async (event) => {
           data: {
             isPurchased: true,
             purchasedAt,
-            orderId
+            orderId,
+            source
           },
-          message: '用户已购买工具包'
+          message: source === 'toolkit_whitelist' 
+            ? '用户通过工具包白名单获得使用权限' 
+            : '用户已购买工具包'
         }
       }
     }
     
-    // 4. 未找到匹配的订单，返回未购买
+    // 4. 检查用户是否购买了课程（课程用户自动获得工具包使用权限）
+    // 根据业务规则：购买课程可以使用工具包
+    console.log('[toolkit_purchase_check] 开始检查课程订单...')
+    
+    const courseOrdersRes = await db.collection('orders')
+      .where({
+        _openid: OPENID,
+        category: 'course',
+        status: _.in(['paid', 'completed']),
+        isDelete: _.neq(1)
+      })
+      .field({
+        _id: true,
+        orderNo: true,
+        paidAt: true,
+        createdAt: true,
+        source: true // 用于识别是否来自白名单
+      })
+      .limit(1)  // 只需要检查是否存在，查一条即可
+      .get()
+    
+    console.log('[toolkit_purchase_check] 查询课程订单数量:', courseOrdersRes.data.length)
+    
+    if (courseOrdersRes.data.length > 0) {
+      const courseOrder = courseOrdersRes.data[0]
+      const purchasedAt = courseOrder.paidAt || courseOrder.createdAt
+      const orderId = courseOrder.orderNo || courseOrder._id
+      
+      // 判断权限来源：课程订单还是课程白名单
+      const source = courseOrder.source === 'whitelist' ? 'course_whitelist' : 'course_order'
+      
+      console.log('[toolkit_purchase_check] 用户有课程权限，自动获得工具包使用权:', {
+        orderId,
+        purchasedAt,
+        source,
+        耗时: Date.now() - startTime + 'ms'
+      })
+      
+      return {
+        success: true,
+        code: 'OK',
+        data: {
+          isPurchased: true,
+          purchasedAt,
+          orderId,
+          source
+        },
+        message: source === 'course_whitelist' 
+          ? '用户通过课程白名单获得工具包使用权限' 
+          : '用户通过购买课程获得工具包使用权限'
+      }
+    }
+    
+    // 5. 未找到任何匹配的订单，返回未购买
     console.log('[toolkit_purchase_check] 未找到购买记录，返回未购买, 耗时:', Date.now() - startTime + 'ms')
     
     return {

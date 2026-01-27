@@ -1,7 +1,7 @@
 /**
  * 云函数 getPhoneNumber
  * 功能：获取用户手机号并保存到数据库
- *       新增：自动检查白名单并激活课程授权
+ *       新增：自动检查白名单并激活课程授权和工具包授权
  * 
  * 入参：
  *   - code: 手机号授权 code（必填）
@@ -12,7 +12,8 @@
  *   - code: 状态码
  *   - phoneInfo: 手机号信息（包含 phoneNumber, purePhoneNumber, countryCode）
  *   - user: 更新后的用户文档（如果 saveToDb 为 true）
- *   - whitelistActivated: boolean 是否激活了白名单授权
+ *   - whitelistActivated: boolean 是否激活了课程白名单授权
+ *   - toolkitWhitelistActivated: boolean 是否激活了工具包白名单授权
  */
 const cloud = require('wx-server-sdk')
 
@@ -176,6 +177,149 @@ async function checkAndActivateWhitelist(phoneNumber, openid, userId) {
   }
 }
 
+/**
+ * 检查并激活工具包白名单授权
+ * 静默执行，不影响主流程
+ * 
+ * @param {string} phoneNumber 用户手机号
+ * @param {string} openid 用户 openid
+ * @param {string} userId 用户 _id
+ * @returns {object} { activated, whitelistId, orderId }
+ */
+async function checkAndActivateToolkitWhitelist(phoneNumber, openid, userId) {
+  const db = cloud.database()
+  const _ = db.command
+  
+  console.log('[工具包白名单检查] 开始检查手机号:', phoneNumber.substring(0, 3) + '****' + phoneNumber.substring(7))
+  
+  try {
+    // 1. 查询白名单中是否有该手机号的待激活记录
+    const whitelistRes = await db.collection('toolkit_whitelist')
+      .where({
+        phone: phoneNumber,
+        status: 'pending'
+      })
+      .limit(10) // 一个手机号可能对应多个工具包
+      .get()
+    
+    if (!whitelistRes.data || whitelistRes.data.length === 0) {
+      console.log('[工具包白名单检查] 未找到待激活的白名单记录')
+      return { activated: false }
+    }
+    
+    console.log('[工具包白名单检查] 找到待激活记录:', whitelistRes.data.length, '条')
+    
+    const now = Date.now()
+    let activatedCount = 0
+    
+    // 2. 为每条白名单记录创建订单并更新状态
+    for (const whitelist of whitelistRes.data) {
+      try {
+        // 2.1 检查是否已经有该工具包的订单（幂等性保证）
+        const existingOrderRes = await db.collection('orders')
+          .where({
+            userId: openid,
+            category: 'toolkit',
+            status: _.in(['paid', 'completed']),
+            isDelete: _.neq(1),
+            'params.items': _.elemMatch({
+              id: whitelist.toolkitId
+            })
+          })
+          .limit(1)
+          .get()
+        
+        if (existingOrderRes.data && existingOrderRes.data.length > 0) {
+          console.log('[工具包白名单激活] 用户已有该工具包订单，跳过:', whitelist.toolkitId)
+          
+          // 更新白名单状态为已激活（关联到已有订单）
+          await db.collection('toolkit_whitelist').doc(whitelist._id).update({
+            data: {
+              status: 'activated',
+              activatedAt: now,
+              activatedUserId: openid,
+              orderId: existingOrderRes.data[0]._id,
+              orderNo: existingOrderRes.data[0].orderNo,
+              updatedAt: now
+            }
+          })
+          activatedCount++
+          continue
+        }
+        
+        // 2.2 创建工具包订单
+        const orderNo = generateOrderNo()
+        const orderDoc = {
+          orderNo,
+          userId: openid,
+          _openid: openid,
+          category: 'toolkit',
+          status: 'completed', // 直接完成，无需支付
+          totalPrice: 0,
+          paidPrice: 0,
+          params: {
+            items: [{
+              id: whitelist.toolkitId,
+              toolkitId: whitelist.toolkitId,
+              name: whitelist.toolkitName || '灯光设计工具包',
+              category: 'toolkit',
+              type: 'toolkit',
+              price: 0,
+              quantity: 1
+            }]
+          },
+          // 白名单订单标记
+          source: 'whitelist',
+          whitelistType: 'toolkit', // 区分课程白名单和工具包白名单
+          whitelistId: whitelist._id,
+          whitelistPhone: phoneNumber,
+          // 时间戳
+          paidAt: now,
+          completedAt: now,
+          createdAt: now,
+          updatedAt: now,
+          isDelete: 0
+        }
+        
+        const orderAddRes = await db.collection('orders').add({ data: orderDoc })
+        const orderId = orderAddRes._id
+        
+        console.log('[工具包白名单激活] 订单已创建:', orderNo, '工具包:', whitelist.toolkitId)
+        
+        // 2.3 更新白名单状态
+        await db.collection('toolkit_whitelist').doc(whitelist._id).update({
+          data: {
+            status: 'activated',
+            activatedAt: now,
+            activatedUserId: openid,
+            orderId,
+            orderNo,
+            updatedAt: now
+          }
+        })
+        
+        console.log('[工具包白名单激活] 白名单记录已更新为激活状态')
+        activatedCount++
+        
+      } catch (itemErr) {
+        console.error('[工具包白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)
+        // 继续处理下一条，不中断整个流程
+      }
+    }
+    
+    return {
+      activated: activatedCount > 0,
+      activatedCount,
+      totalFound: whitelistRes.data.length
+    }
+    
+  } catch (err) {
+    console.error('[工具包白名单检查] 执行失败:', err.message)
+    // 白名单检查失败不影响主流程
+    return { activated: false, error: err.message }
+  }
+}
+
 exports.main = async (event) => {
   try {
     const { code, saveToDb = true } = event || {}
@@ -213,6 +357,7 @@ exports.main = async (event) => {
     // 如果需要保存到数据库
     let user = null
     let whitelistResult = null
+    let toolkitWhitelistResult = null
     
     if (saveToDb) {
       const ctx = cloud.getWXContext()
@@ -332,6 +477,8 @@ exports.main = async (event) => {
             // 重要：使用 purePhoneNumber（纯手机号，不带国家码）来匹配白名单
             // 因为白名单中存储的是不带国家码的11位手机号
             const phoneForWhitelist = phoneInfo.purePhoneNumber || phoneInfo.phoneNumber.replace(/^\+86/, '')
+            
+            // 1. 课程白名单激活
             whitelistResult = await checkAndActivateWhitelist(
               phoneForWhitelist, 
               openid, 
@@ -339,7 +486,18 @@ exports.main = async (event) => {
             )
             
             if (whitelistResult.activated) {
-              console.log('[getPhoneNumber] 白名单激活成功:', whitelistResult)
+              console.log('[getPhoneNumber] 课程白名单激活成功:', whitelistResult)
+            }
+            
+            // 2. 工具包白名单激活
+            toolkitWhitelistResult = await checkAndActivateToolkitWhitelist(
+              phoneForWhitelist, 
+              openid, 
+              existingUser._id
+            )
+            
+            if (toolkitWhitelistResult.activated) {
+              console.log('[getPhoneNumber] 工具包白名单激活成功:', toolkitWhitelistResult)
             }
             // ========================================
             
@@ -359,7 +517,10 @@ exports.main = async (event) => {
       user,
       // 新增：白名单激活结果
       whitelistActivated: whitelistResult ? whitelistResult.activated : false,
-      whitelistInfo: whitelistResult
+      whitelistInfo: whitelistResult,
+      // 新增：工具包白名单激活结果
+      toolkitWhitelistActivated: toolkitWhitelistResult ? toolkitWhitelistResult.activated : false,
+      toolkitWhitelistInfo: toolkitWhitelistResult
     }
   } catch (err) {
     console.error('getPhoneNumber 云函数执行失败:', err)
