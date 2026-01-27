@@ -47,7 +47,7 @@
           <!-- 3. 底部操作栏 -->
           <view class="hero-actions">
             <!-- 已购买：显示立即观看 -->
-            <view class="play-pill" wx:if="{{featuredCourse.isPurchased && hasUserProfile}}">
+            <view class="play-pill" wx:if="{{featuredCourse.isPurchased}}">
               <view class="icon-play-fill"></view>
               <text class="play-text">立即观看</text>
             </view>
@@ -81,10 +81,10 @@
             <view class="tags-row">
               <text class="tag-text" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" wx:if="{{index < 2}}">{{tag}}</text>
             </view>
-            <view class="get-button {{item.isPurchased ? 'progress-mode' : ''}}">
+            <view class="get-button {{item.isPurchased ? 'play-mode' : ''}}">
               <block wx:if="{{item.isPurchased}}">
-                <view class="progress-bar" style="width: {{item.progress || 0}}%;"></view>
-                <text class="progress-text">{{item.progress || 0}}%</text>
+                <view class="icon-play-small"></view>
+                <text class="play-text-small">立即观看</text>
               </block>
               <block wx:else>
               <text>¥{{item.price}}</text>

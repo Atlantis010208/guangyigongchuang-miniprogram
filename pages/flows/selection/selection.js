@@ -1,6 +1,31 @@
-const api = require('../../../utils/api')
-const util = require('../../../utils/util')
+// const api = require('../../../utils/api')
+// const util = require('../../../utils/util')
 
+Page({
+  data: {
+    isCopied: false,
+    link: 'https://xakrvq3l0nw.feishu.cn/docx/KIVgdUR1XoFUHSxy4qPcRDjGnqb' // 默认 Apple Store 链接
+  },
+  
+  onLoad() {
+    wx.setNavigationBarTitle({
+      title: '前往浏览器继续访问'
+    })
+  },
+
+  copyLink() {
+    wx.setClipboardData({
+      data: this.data.link,
+      success: () => {
+        wx.showToast({ title: '', duration: 0, icon: 'none' });
+        wx.hideLoading();
+        this.setData({ isCopied: true });
+      }
+    });
+  }
+})
+
+/*
 Page({
   data:{
     // 表单字段
@@ -229,3 +254,4 @@ Page({
     this.setData({ submitting:false })
   }
 })
+*/

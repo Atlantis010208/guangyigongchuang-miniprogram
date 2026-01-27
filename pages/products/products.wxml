@@ -10,26 +10,36 @@
 
    <!-- 用户角度 · 需求入口（灯光空间分类） -->
    <view class="product-categories">
-      <scroll-view class="categories-scroll" scroll-x="true">
-        <view class="category-card" bindtap="onCategoryTap" data-category="residential" style="height: auto; min-height: 190rpx;">
-          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/避坑指南.png" mode="widthFix"></image>
-          <text class="category-overlay-text">避坑指南</text>
+      <scroll-view class="categories-scroll" scroll-x="true" show-scrollbar="false">
+        <view class="category-card" bindtap="onCategoryTap" data-category="residential">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/避坑指南.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">避坑指南</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="commercial" style="height: auto; min-height: 190rpx;">
-          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/设计流程.png" mode="widthFix"></image>
-          <text class="category-overlay-text">设计流程</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/设计流程.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">设计流程</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="office" style="height: auto; min-height: 190rpx;">
-          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/照度计算.png" mode="widthFix"></image>
-          <text class="category-overlay-text">照度计算</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="office">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/照明计算.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">照度计算</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="hotel" style="height: auto; min-height: 190rpx;">
-          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/灯光测试.png" mode="widthFix"></image>
-          <text class="category-overlay-text">灯光测试</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="hotel">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/灯光测试_最新.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">灯光测试</text>
         </view>
-        <view class="category-card" bindtap="onCategoryTap" data-category="hotel" style="height: auto; min-height: 190rpx;">
-          <image class="category-full-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/Gemini_Generated_Image_royravroyravroyr.png" mode="widthFix"></image>
-          <text class="category-overlay-text">案例展示</text>
+        <view class="category-card" bindtap="onCategoryTap" data-category="case">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/案例展示.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">案例展示</text>
         </view>
       </scroll-view>
    </view>

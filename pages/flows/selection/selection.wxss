@@ -1,4 +1,4 @@
-.page{min-height:100vh;background:#f2f2f7}
+/* .page{min-height:100vh;background:#f2f2f7}
 .header{padding:30rpx}.title{font-size:44rpx;font-weight:700;text-align:center}
 .section{padding:0 30rpx 30rpx}
 .cells{background:#fff;border-radius:30rpx;overflow:hidden}
@@ -11,5 +11,70 @@
 .textarea{width:100%;min-height:160rpx;background:#f8f8fb;border-radius:20rpx;padding:20rpx;box-sizing:border-box}
 .cell-active{background:#f7f7f9}
 .actions{padding:20rpx 0}
-.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0}
+.primary{margin:30rpx;background:#000;color:#fff;border-radius:50rpx;padding:28rpx 0} */
 
+.container {
+  min-height: 100vh;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 200rpx; /* 顶部留白 */
+}
+
+.content {
+  width: 100%;
+  padding: 0 60rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 40rpx;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.title {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 40rpx;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.desc {
+  font-size: 30rpx;
+  color: #86868b; /* Apple 风格的灰色 */
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 80rpx;
+  max-width: 600rpx;
+}
+
+.action-btn {
+  background-color: #0071e3; /* Apple 蓝色 */
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 500;
+  border-radius: 999rpx; /* 圆角胶囊 */
+  padding: 24rpx 0;
+  width: 320rpx !important; /* 强制覆盖可能的小程序默认样式 */
+  text-align: center;
+  line-height: 1.4;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.copied {
+  background-color: #86868b; /* 灰色 */
+  color: #fff;
+}

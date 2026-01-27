@@ -1,4 +1,4 @@
-<scroll-view class="page" scroll-y>
+<!-- <scroll-view class="page" scroll-y>
   <view class="header"><text class="title">灯具清单选型</text></view>
 
   <view class="section">
@@ -43,4 +43,22 @@
       <button class="primary" bindtap="onSubmitSelection" loading="{{submitting}}" disabled="{{submitting}}">提交选型需求</button>
     </view>
   </view>
-</scroll-view>
+</scroll-view> -->
+
+<view class="container">
+  <view class="content">
+    <image class="logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo(正-透明-黑字).png"></image>
+    
+    <view class="title">
+      <text>复制。粘贴。访问。</text>
+    </view>
+    
+    <view class="desc">
+      <text>要继续下一步，你需要访问 飞书 官网上的 灯光设计服务说明书 文档。轻点下方按钮复制链接，前往你的默认浏览器粘贴链接，继续访问。</text>
+    </view>
+    
+    <button class="action-btn {{isCopied ? 'copied' : ''}}" bindtap="copyLink">
+      {{isCopied ? '已复制' : '复制链接'}}
+    </button>
+  </view>
+</view>

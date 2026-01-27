@@ -638,6 +638,13 @@
 }
 
 /* ========== 商城订单卡片样式 ========== */
+/* 覆盖默认的 .cart-items 样式，移除容器背景，使卡片间距透出页面背景 */
+.mall-order-list {
+  background-color: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+
 .mall-order-card {
   flex-direction: column;
   align-items: stretch; /* 覆盖 .cart-item 的 flex-start，让子元素撑满宽度 */
