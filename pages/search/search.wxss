@@ -1035,3 +1035,14 @@ page {
   background: #0062CC;
   transform: scale(0.98);
 }
+
+.v2-more-info {
+  text-align: center;
+  margin-top: 20rpx;
+  margin-bottom: 40rpx;
+}
+.v2-more-info text {
+  font-size: 26rpx;
+  color: #007AFF;
+  text-decoration: underline;
+}

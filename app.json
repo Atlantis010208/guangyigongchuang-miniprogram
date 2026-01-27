@@ -4,6 +4,7 @@
     "pages/course/index/index",
     "pages/search/search",
     "pages/search/calc-result/calc-result",
+    "pages/search/help/help",
     "pages/cart/cart",
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",

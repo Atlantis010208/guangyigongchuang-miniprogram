@@ -412,6 +412,12 @@ Page({
     this.setData({ showLampFluxModal: false })
   },
 
+  onOpenRules() {
+    wx.navigateTo({
+      url: '/pages/search/help/help'
+    })
+  },
+
   noop() {},
 
   // ========== 免费版方法 ==========

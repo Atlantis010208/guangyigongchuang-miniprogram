@@ -1,0 +1,510 @@
+<view class="container">
+  <!-- 总结卡片 -->
+  <view class="card">
+    <view class="page-header">
+      <text class="page-title">按照度算参数 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="text-paragraph">
+        本工具基于 <text class="bold">《建筑照明设计标准》</text> 的照度要求，用于辅助判断空间照明是否达标，以及在设计前期进行灯具数量与参数的快速推算。
+      </view>
+      <view class="text-paragraph">
+        工具并非替代完整照明设计，而是用于<text class="bold">设计判断、方案校验与参数决策</text>。
+      </view>
+    </view>
+  </view>
+
+
+  <!-- 第一部分：按灯具算照度 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title-num">一、</text>
+      <text class="section-title-text" bindtap="scrollToSection" data-target="detail-lamp-to-lux">按灯具算照度 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="sub-section">
+        <text class="subtitle">简介：</text>
+        <view class="text-block">
+          <text>已知灯具参数和数量，计算整体照度/亮度是否符合国家标准</text>
+          <text class="text-gray">*适合复杂灯具组合</text>
+        </view>
+      </view>
+      
+      <view class="sub-section">
+        <text class="subtitle">说明：</text>
+        <view class="text-block">
+          <text>做好设计 已知灯具，用来“验算亮度”。</text>
+          <text>输入灯具的数量、类型和参数，依据国家建筑照明设计标准，计算当前灯光方案的整体照度，判断是否达标、是否够亮。</text>
+        </view>
+      </view>
+
+      <view class="highlight-box">
+        <text>👉 适用于多种灯具组合、复杂灯光方案。</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 第二部分：按照度算数量 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title-num">二、</text>
+      <text class="section-title-text" bindtap="scrollToSection" data-target="detail-lux-to-count">按照度算数量 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="sub-section">
+        <text class="subtitle">简介：</text>
+        <view class="text-block">
+          <text>已知单一空间目标照度/亮度，反推所需灯具数量</text>
+          <text class="text-gray">*仅限单一灯具类型</text>
+        </view>
+      </view>
+      
+      <view class="sub-section">
+        <text class="subtitle">说明：</text>
+        <view class="text-block">
+          <text>已知目标亮度，用来“反推灯具数量”。</text>
+          <text>根据建筑照明标准要求的照度值，计算这个空间需要配置多少盏灯具。</text>
+        </view>
+      </view>
+
+      <view class="highlight-box">
+        <text>👉 仅适用于单一类型灯具，不适合复杂灯具组合。</text>
+      </view>
+    </view>
+  </view>
+
+
+  <!-- 第三部分：按照度算参数 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title-num">三、</text>
+      <text class="section-title-text" bindtap="scrollToSection" data-target="detail-lux-to-params">按照度算参数 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="sub-section">
+        <text class="subtitle">简介：</text>
+        <view class="text-block">
+          <text>已知单一空间灯具数量，反推单盏灯所需亮度参数</text>
+          <text class="text-gray">*仅限单一灯具类型</text>
+        </view>
+      </view>
+      
+      <view class="sub-section">
+        <text class="subtitle">说明：</text>
+        <view class="text-block">
+          <text>已知灯具数量，用来“确定单盏亮度”。</text>
+          <text>在明确灯具数量的前提下，根据建筑照明标准要求的照度值，计算每盏灯需要达到的亮度参数。</text>
+        </view>
+      </view>
+
+      <view class="highlight-box">
+        <text>👉 仅适用于单一类型灯具，不适合复杂灯具组合。</text>
+      </view>
+    </view>
+  </view>
+
+
+  <!-- 第四部分：使用原则与重要说明 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">四、 使用原则与重要说明</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="list-container">
+        <view class="list-item-ordered">
+          <text class="order-num">1.</text>
+          <text>本工具计算结果为<text class="bold">理论照度值</text>，用于设计判断与方案决策</text>
+        </view>
+        <view class="list-item-ordered">
+          <text class="order-num">2.</text>
+          <text>实际效果仍会受到安装高度、配光曲线、反射率等因素影响</text>
+        </view>
+        <view class="list-item-ordered">
+          <text class="order-num">3.</text>
+          <text>工具不替代完整灯光设计，但可有效避免明显的照度错误</text>
+        </view>
+        <view class="list-item-ordered">
+          <text class="order-num">4.</text>
+          <text>当灯具类型复杂或照明层级较多时，应优先使用「<text class="bold">按灯具算照度</text>」进行整体校验</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 第五部分：推荐使用顺序 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">五、 推荐使用顺序（设计思路）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="list-container">
+        <view class="list-item-bullet">
+          <text class="bullet-point">●</text>
+          <text><text class="bold">前期估算</text>：按照度算数量 / 按照度算参数</text>
+        </view>
+        <view class="list-item-bullet">
+          <text class="bullet-point">●</text>
+          <text><text class="bold">方案成型后校验</text>：按灯具算照度</text>
+        </view>
+      </view>
+      
+      <view class="text-paragraph extra-margin">
+        这套顺序，能最大程度减少“经验判断失误”和“后期返工”。
+      </view>
+    </view>
+  </view>
+
+  <!-- 按灯具算照度 (详细说明卡片 - 子卡片样式) -->
+  <view class="card" id="detail-lamp-to-lux">
+    <view class="section-header">
+      <text class="section-title-text" style="color: #333333;">按灯具算照度 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：验证已有灯光方案照度（亮度）是否达标
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已经完成灯光设计、已确定或已选定灯具型号</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已明确灯具数量、功率、<text style="border-bottom: 1px dashed #999;">光通量</text>等参数</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要判断当前方案的整体照度是否符合标准要求</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          输入灯具类型、灯具数量、相关参数，工具会依据国家建筑照明设计标准，结合空间面积，计算该空间的<text class="bold">理论平均照度值（lx）</text>，并用于对比标准要求。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>当前灯光设计是否<text class="bold">亮度不足或过亮</text></text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量是否合理</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>多种灯具组合下，整体照度是否符合规范</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用建议 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用建议</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>推荐作为<text class="bold">最终校验亮度工具</text>使用</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>适合射灯、筒灯、灯带、装饰灯等多种灯具组合的照度验算</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>在复杂灯光设计场景中，优先使用本计算方式</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考“利用系数”旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考“维护系数”旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型：选择你需要的灯具类型，比如：灯带、射灯、筒灯等。并且输入对应的瓦数、光源利用率、数量。<text class="bold">光源利用率参考“灯具类型”旁边的参数说明。</text> 可选择多种灯具类型，也可以对指定的灯具进行备注。</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 按照度算数量 (详细说明卡片 - 子卡片样式) -->
+  <view class="card" id="detail-lux-to-count">
+    <view class="section-header">
+      <text class="section-title-text" style="color: #333333;">按照度算数量 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：在设计初期/简单的空间快速确定灯具数量
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已知空间类型与照度标准要求</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型单一（如全部为同型号射灯或筒灯）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要快速估算该空间需要配置多少盏灯具</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          以建筑照明设计标准规定的目标照度值为依据，结合空间面积与单盏灯具的亮度参数，反向计算达到该照度所需的灯具数量。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>一个空间大致需要多少盏灯</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>初步点位规划是否合理</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>避免凭“经验”拍数量导致明显翻车</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用限制 (重要) (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用限制（重要）</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text class="bold">仅适用于单一类型灯具</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>不适合多种灯具混合、分层照明或复杂灯光方案</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>若存在多种灯具，请使用「按灯具算照度」进行校验</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考“利用系数”旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考“维护系数”旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量：输入该空间需要多少个灯具（<text style="background-color: #ffcccc; padding: 0 4rpx;">仅适用于单种灯具类型</text>）</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 按照度算参数 (详细说明卡片 - 子卡片样式) -->
+  <view class="card" id="detail-lux-to-params">
+    <view class="section-header">
+      <text class="section-title-text" style="color: #333333;">按照度算参数 · 使用说明（详细版）</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：在灯具数量已定的情况下，确定单盏灯亮度（功率）
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量已明确（如受吊顶、结构或美观限制，或已经预留具体的电位，不可更改的情况下）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型单一（如全部为同型号射灯或筒灯）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要确定单盏灯具应选择多大亮度参数（多大功率）</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          在满足建筑照明设计标准目标照度的前提下，结合空间面积和已确定的灯具数量，反向计算每一盏灯具所需达到的亮度参数（如光通量/功率）。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具应该选“亮一点还是暗一点”</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>同样数量的灯，参数选错导致整体过暗或刺眼</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>在无法增加灯具数量时，通过参数调整保证照度达标</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用限制 (重要) (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用限制（重要）</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text class="bold">仅适用于单一类型灯具</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>不适合用于复杂灯具组合或多层照明结构</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>复杂方案请使用「按灯具算照度」进行整体验算</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考“利用系数”旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考“维护系数”旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>单灯光通量：根据你要采购的灯具，获取该灯具的光通量，一般每款灯都有一个固定的光通量值，如果没有可以跟商家获取，实在没有可以按照80lm/w去估算灯具的光通量（比如：灯具是12w的，那么估算光通量就是12*80=960lm）</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 悬浮按钮 -->
+  <view class="fab {{showFab ? 'visible' : ''}}" bindtap="scrollToTop">
+    <image class="fab-icon-img" src="/images/回到顶部.png"></image>
+    <text class="fab-text">顶部</text>
+  </view>
+</view>

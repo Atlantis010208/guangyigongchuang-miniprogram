@@ -294,10 +294,35 @@
   overflow: hidden;
 }
 
+/* 课时卡片容器圆角，与课程包卡片一致 */
+.chapter-group .apple-card {
+  border-radius: 20rpx;
+  background-color: white;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
 .lesson-item {
-  width: 100%;
+  width: 110%;
   background-color: white;
   transition: background-color 0.2s;
+  padding: 20rpx 32rpx; /* 调整卡片内边距来控制高度 */
+  min-height: 100rpx; /* 设置最小高度，确保卡片有统一的基础高度 */
+  box-sizing: border-box;
+}
+
+/* 确保第一个课时项顶部圆角 */
+.lesson-item:first-child {
+  border-radius: 20rpx 20rpx 0 0;
+}
+
+/* 确保最后一个课时项底部圆角 */
+.lesson-item:last-of-type {
+  border-radius: 0 0 20rpx 20rpx;
+}
+
+/* 如果只有一个课时项，四个角都是圆角 */
+.lesson-item:first-child:last-of-type {
+  border-radius: 20rpx;
 }
 
 .hover-bg {
@@ -305,8 +330,8 @@
 }
 
 .icon-box {
-  width: 84rpx; /* 稍微增加尺寸以容纳圆形 */
-  height: 84rpx;
+  width: 74rpx; /* 稍微增加尺寸以容纳圆形 */
+  height: 74rpx;
   border-radius: 50%; /* 完美圆形 */
   display: flex;
   align-items: center;
@@ -342,6 +367,11 @@
 .action-icon {
   font-size: 24rpx;
   color: #c7c7cc;
+}
+
+/* 课时卡片内的标题和时长间距 */
+.lesson-item .flex-column .flex-row:last-child {
+  margin-top: 4rpx; /* 调整课时名称和时长之间的间距 */
 }
 
 /* Locked State */

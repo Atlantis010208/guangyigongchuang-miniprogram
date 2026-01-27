@@ -318,6 +318,10 @@
         <!-- 即刻计算按钮 -->
         <button class="v2-btn-calculate" bindtap="onCalculate">即刻计算</button>
         
+        <view class="v2-more-info" bindtap="onOpenRules">
+          <text>了解更多详细说明</text>
+        </view>
+        
       </view>
     </view>
 
