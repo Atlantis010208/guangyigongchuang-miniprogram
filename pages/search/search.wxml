@@ -1,10 +1,10 @@
-<!-- 照度计算器（统一版）：根据 isPro 动态渲染免费版/付费版 UI -->
+<!-- 照度计算器（统一版）：所有用户统一使用现代卡片式 UI -->
 <view class="page">
 <wxs module="tools">
   module.exports.getModeName = function(tab) {
     if (tab === 'count') return '按照度算灯具';
     if (tab === 'quantity') return '按数量算灯具';
-    if (tab === 'lux') return '按灯具算照度';
+    if (tab === 'lux') return '按灯具算照度(Pro版)';
     return '计算结果';
   }
   module.exports.getModeDesc = function(tab) {
@@ -25,9 +25,9 @@
   <!-- 主内容区域 -->
   <view wx:else>
     
-    <!-- ==================== 免费版 UI ==================== -->
+    <!-- ==================== 免费版 UI (已注释，统一使用付费版UI) ==================== -->
+    <!-- 
     <view wx:if="{{!isPro}}" class="free-version">
-      <!-- 顶部标签 -->
       <view class="tabs">
         <view class="tab {{activeTab==='lux' ? 'active' : ''}}" bindtap="switchTab" data-tab="lux">
           <text class="tab-text">根据灯具算照度</text>
@@ -39,7 +39,6 @@
         </view>
       </view>
 
-      <!-- Tab 1: 根据灯具算照度 -->
       <view wx:if="{{activeTab==='lux'}}">
         <view class="card">
           <view class="card-heading">
@@ -65,7 +64,6 @@
         </view>
       </view>
 
-      <!-- Tab 2: 根据照度算灯具 -->
       <view wx:if="{{activeTab==='count'}}">
         <view class="card">
           <view class="cell" hover-class="cell-active"><text class="label fixed">照度值</text><input class="input" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="勒克斯" placeholder-style="color:#9c9c9c"/></view>
@@ -78,18 +76,21 @@
         </view>
       </view>
 
-      <!-- 计算规则说明 -->
       <view class="note" bindtap="onOpenRules"><text class="note-text">注：《照度计算器规则》</text></view>
     </view>
+    -->
 
-    <!-- ==================== 付费版 UI (Pixel-Perfect) ==================== -->
-    <view wx:if="{{isPro && !showResult}}" class="pro-version-v2">
+    <!-- ==================== 统一版 UI (原付费版，现在所有用户都使用) ==================== -->
+    <view wx:if="{{!showResult}}" class="pro-version-v2">
       <!-- 蓝色渐变头部 -->
       <view class="v2-header">
         <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
         <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo源文件(长版本-透明-白字).png" mode="aspectFit"></image>
         <text class="v2-overlay-title">照度计算器</text>
-        <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
+        <view class="v2-overlay-subtitle-wrap">
+          <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
+          <image class="v2-help-icon" src="/images/使用说明.png" bindtap="onOpenRules"></image>
+        </view>
         <text class="v2-overlay-desc">{{tools.getModeDesc(activeTab)}}</text>
       </view>
 
@@ -330,7 +331,8 @@
 
 <!-- ==================== 弹窗层 ==================== -->
 
-<!-- 免费版：灯具参数弹窗 -->
+<!-- 免费版：灯具参数弹窗 (已注释，统一使用付费版弹窗) -->
+<!--
 <view wx:if="{{showLampParams && !isPro}}" class="popup-mask" catchtouchmove="noop">
   <view class="popup-panel" catchtap="noop">
     <view class="popup-header">
@@ -360,9 +362,10 @@
   </view>
   <view class="popup-backdrop" bindtap="closeLampParams"></view>
 </view>
+-->
 
-<!-- 付费版：灯具参数弹窗 -->
-<view wx:if="{{showLampParams && isPro}}" class="popup-mask" catchtouchmove="noop">
+<!-- 灯具参数弹窗 (统一版) -->
+<view wx:if="{{showLampParams}}" class="popup-mask" catchtouchmove="noop">
   <view class="popup-panel" catchtap="noop">
     <view class="popup-header">
       <text class="popup-title">灯具参数</text>

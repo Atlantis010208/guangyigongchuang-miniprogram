@@ -97,6 +97,17 @@
   opacity: 0.6;
 }
 
+/* 箭头图标 */
+.section-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  margin-left: auto;
+  border-top: 4rpx solid #C0C4CC;
+  border-right: 4rpx solid #C0C4CC;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
 /* 通用文本段落 */
 .text-paragraph {
   font-size: 30rpx;

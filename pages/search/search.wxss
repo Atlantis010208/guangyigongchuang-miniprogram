@@ -149,16 +149,32 @@ page {
   line-height: 1.2;
 }
 
-.v2-overlay-subtitle {
+.v2-overlay-subtitle-wrap {
   position: absolute;
   left: 50rpx;
   top: 230rpx;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+}
+
+.v2-overlay-subtitle {
   color: rgba(255, 255, 255, 0.95);
   font-size: 36rpx;
   font-weight: 600;
   letter-spacing: 2rpx;
-  z-index: 2;
   text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+}
+
+.v2-help-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-left: 15rpx;
+  opacity: 0.9;
+}
+
+.v2-help-icon:active {
+  opacity: 0.6;
 }
 
 .v2-overlay-desc {

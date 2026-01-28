@@ -1,0 +1,121 @@
+<view class="container">
+  <!-- 按灯具算照度 详细说明 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">按灯具算照度 · 详细使用说明</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：验证已有灯光方案照度（亮度）是否达标
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已经完成灯光设计、已确定或已选定灯具型号</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已明确灯具数量、功率、<text style="border-bottom: 1px dashed #999;">光通量</text>等参数</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要判断当前方案的整体照度是否符合标准要求</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          输入灯具类型、灯具数量、相关参数，工具会依据国家建筑照明设计标准，结合空间面积，计算该空间的<text class="bold">理论平均照度值（lx）</text>，并用于对比标准要求。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>当前灯光设计是否<text class="bold">亮度不足或过亮</text></text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量是否合理</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>多种灯具组合下，整体照度是否符合规范</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用建议 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用建议</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>推荐作为<text class="bold">最终校验亮度工具</text>使用</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>适合射灯、筒灯、灯带、装饰灯等多种灯具组合的照度验算</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>在复杂灯光设计场景中，优先使用本计算方式</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考"利用系数"旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考"维护系数"旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型：选择你需要的灯具类型，比如：灯带、射灯、筒灯等。并且输入对应的瓦数、光源利用率、数量。<text class="bold">光源利用率参考"灯具类型"旁边的参数说明。</text> 可选择多种灯具类型，也可以对指定的灯具进行备注。</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 悬浮按钮 -->
+  <view class="fab {{showFab ? 'visible' : ''}}" bindtap="scrollToTop">
+    <image class="fab-icon-img" src="/images/回到顶部.png"></image>
+    <text class="fab-text">顶部</text>
+  </view>
+</view>

@@ -1,0 +1,121 @@
+<view class="container">
+  <!-- 按照度算数量 详细说明 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">按照度算数量 · 详细使用说明</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：在设计初期/简单的空间快速确定灯具数量
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>已知空间类型与照度标准要求</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型单一（如全部为同型号射灯或筒灯）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要快速估算该空间需要配置多少盏灯具</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          以建筑照明设计标准规定的目标照度值为依据，结合空间面积与单盏灯具的亮度参数，反向计算达到该照度所需的灯具数量。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>一个空间大致需要多少盏灯</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>初步点位规划是否合理</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>避免凭"经验"拍数量导致明显翻车</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用限制 (重要) (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用限制（重要）</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text class="bold">仅适用于单一类型灯具</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>不适合多种灯具混合、分层照明或复杂灯光方案</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>若存在多种灯具，请使用「按灯具算照度」进行校验</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考"利用系数"旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考"维护系数"旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量：输入该空间需要多少个灯具（<text style="background-color: #ffcccc; padding: 0 4rpx;">仅适用于单种灯具类型</text>）</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 悬浮按钮 -->
+  <view class="fab {{showFab ? 'visible' : ''}}" bindtap="scrollToTop">
+    <image class="fab-icon-img" src="/images/回到顶部.png"></image>
+    <text class="fab-text">顶部</text>
+  </view>
+</view>

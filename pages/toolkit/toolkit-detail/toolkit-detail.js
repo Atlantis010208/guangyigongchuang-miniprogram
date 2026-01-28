@@ -3,9 +3,9 @@ const util = require('../../../utils/util')
 
 // 默认数据（兜底方案，当数据库无数据时使用）
 const DEFAULT_TOOLKIT_DATA = {
-    id: 'toolkit',
+    id: 'TK_DEFAULT_001',
     name: '灯光设计工具包',
-    price: 0.01,
+    price: 69,
   desc: '十年灯光设计知识沉淀、方法技巧、核心工具、灯光资源、避坑经验全都在这里！告别盲目设计灯光的烦恼，科学专业的灯光设计方法让你对设计决策更加笃定。',
     cloudFileIDs: [
       'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg',
@@ -41,9 +41,9 @@ const DEFAULT_TOOLKIT_DATA = {
 
 Page({
   data: {
-    id: 'toolkit',
+    id: 'TK_DEFAULT_001',
     name: '灯光设计工具包',
-    price: 0.01,
+    price: 69,
     current: 0,
     bannerHeight: 560,
     images: [],

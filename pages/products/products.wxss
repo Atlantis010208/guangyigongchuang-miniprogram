@@ -9,7 +9,7 @@
   .header {
       display: flex;
       align-items: center; /* 垂直居中对齐所有元素 */
-      padding: 20rpx 30rpx 0;
+      padding: 20rpx 30rpx 50rpx;
     }
     
     /* 标题样式 - 向左对齐 */
@@ -42,7 +42,7 @@
   
   /* 章节容器 */
   .section {
-    margin-top: 50rpx;
+    margin-top: 40rpx;
     padding: 0 30rpx;
   }
   
@@ -51,7 +51,7 @@
     font-weight: 600;
     color: #000;
     display: block;
-    margin-bottom: 25rpx;
+    margin-bottom: 40rpx;
   }
   
   .section-title.center {
@@ -61,7 +61,7 @@
 
   /* 主打服务竖向列表 */
   .hero-section { padding-left: 0; padding-right: 0; }
-  .hero-section .section-title { margin-left: 30rpx; margin-bottom: 30rpx; }
+  .hero-section .section-title { margin-left: 30rpx; margin-bottom: 40rpx; }
   
   .hero-list {
     display: flex;
@@ -167,7 +167,7 @@
     }
   /* 产品分类卡片 - Apple 风格复刻 */
 .product-categories {
-  padding: 20rpx 0 40rpx 0; /* 增加上下间距 */
+  padding: 10rpx 0 40rpx 0; /* 增加上下间距 */
   background-color: #f2f2f7;
   overflow-x: hidden; /* 隐藏外层滚动条 */
 }
@@ -183,7 +183,7 @@
   align-items: center;
   justify-content: center; /* 垂直居中，图片和文字整体居中 */
   margin-right: 24rpx; /* 卡片间距 */
-  width: 210rpx;      /* 调整宽度，约等于屏幕宽度的1/3.5 */
+  width: 187rpx;      /* 调整宽度，约等于屏幕宽度的1/3.5 */
   height: 240rpx;     /* 调整高度，略高于宽度 */
   background-color: #ffffff;
   border-radius: 36rpx; /* 大圆角 */
@@ -210,9 +210,9 @@
 
 /* 图片容器 */
 .category-image-container {
-  width: 100rpx; /* 图标尺寸 */
-  height: 100rpx;
-  margin-bottom: 20rpx; /* 图片与文字间距 */
+  width: 80rpx; /* 图标尺寸 */
+  height: 80rpx;
+  margin-bottom: 30rpx; /* 图片与文字间距 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +227,7 @@
 
 /* 标题文字 */
 .category-title {
-  font-size: 26rpx;
+  font-size: 20rpx;
   color: #1d1d1f; /* Apple 深灰黑色 */
   font-weight: 500; /* 中等字重 */
   text-align: center;
@@ -324,13 +324,13 @@
   .assistant-section { padding-left:0; padding-right:0; }
   .assistant-section .section-title { margin-left:30rpx; margin-right:30rpx; }
   /* 独立的助手滚动与卡片样式 - 改为胶囊按钮风格 */
-  .assistant-scroller { width:100%; margin-top:20rpx; padding:0; box-sizing:border-box; overflow-x:auto; -webkit-overflow-scrolling:touch; border:none; }
-  .assistant-track { display:inline-flex; padding: 0 30rpx 20rpx; gap: 24rpx; }
+  .assistant-scroller { width:100%; margin-top:0; padding:0; box-sizing:border-box; overflow-x:auto; -webkit-overflow-scrolling:touch; border:none; }
+  .assistant-track { display:inline-flex; padding: 0 30rpx 40rpx; gap: 24rpx; }
   
   .service-pill {
     flex: none;
     background-color: #ffffff;
-    padding: 24rpx 48rpx;
+    padding: 30rpx 48rpx;
     border-radius: 999rpx; /* 胶囊圆角 */
     box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
     display: flex;
@@ -383,7 +383,7 @@
     width: 200rpx;
     height: 200rpx;
     margin-bottom: 40rpx;
-    border-radius: 50rpx;
+    border-radius: 20rpx;
     border: 1rpx solid #e5e5ea;
   }
   

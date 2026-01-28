@@ -1,0 +1,121 @@
+<view class="container">
+  <!-- 按照度算参数 详细说明 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">按照度算参数 · 详细使用说明</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="card-body">
+      
+      <!-- 用途 (子卡片) -->
+      <view class="sub-card">
+        <view class="text-paragraph bold">
+          用途：在灯具数量已定的情况下，确定单盏灯亮度（功率）
+        </view>
+      </view>
+
+      <!-- 适用场景 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">适用场景</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具数量已明确（如受吊顶、结构或美观限制，或已经预留具体的电位，不可更改的情况下）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具类型单一（如全部为同型号射灯或筒灯）</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>需要确定单盏灯具应选择多大亮度参数（多大功率）</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 计算逻辑 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">计算逻辑</text>
+        <view class="text-paragraph">
+          在满足建筑照明设计标准目标照度的前提下，结合空间面积和已确定的灯具数量，反向计算每一盏灯具所需达到的亮度参数（如光通量/功率）。
+        </view>
+      </view>
+
+      <!-- 能解决的问题 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">能解决的问题</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>灯具应该选"亮一点还是暗一点"</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>同样数量的灯，参数选错导致整体过暗或刺眼</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>在无法增加灯具数量时，通过参数调整保证照度达标</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用限制 (重要) (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">使用限制（重要）</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text class="bold">仅适用于单一类型灯具</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>不适合用于复杂灯具组合或多层照明结构</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>复杂方案请使用「按灯具算照度」进行整体验算</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 实用方法 (子卡片) -->
+      <view class="sub-card">
+        <text class="subtitle">实用方法</text>
+        <view class="list-container">
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>空间类型：选择某一空间的类型，比如：客厅、餐厅、卫生间等。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>目标照度：根据上面选择的空间类型会自动识别，也可以自行修改。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>房间面积：输入你所选择空间的具体面积。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>利用系数：参考"利用系数"旁边的参数说明，选择对应空间的层高和材质。会自动计算利用系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>维护系数：参考"维护系数"旁边的参数说明，选择对应的环境特征。会自动计算维护系数具体的值。</text>
+          </view>
+          <view class="list-item-bullet">
+            <text class="bullet-point">●</text>
+            <text>单灯光通量：根据你要采购的灯具，获取该灯具的光通量，一般每款灯都有一个固定的光通量值，如果没有可以跟商家获取，实在没有可以按照80lm/w去估算灯具的光通量（比如：灯具是12w的，那么估算光通量就是12*80=960lm）</text>
+          </view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+  <!-- 悬浮按钮 -->
+  <view class="fab {{showFab ? 'visible' : ''}}" bindtap="scrollToTop">
+    <image class="fab-icon-img" src="/images/回到顶部.png"></image>
+    <text class="fab-text">顶部</text>
+  </view>
+</view>

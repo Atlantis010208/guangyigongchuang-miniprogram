@@ -70,6 +70,19 @@
   <view class="section hero-section">
     <text class="section-title">发布灯光需求</text>
     <view class="hero-list">
+        <view class="hero-card" bindtap="onServiceTap" data-service="full">
+          <view class="hero-content">
+            <image class="hero-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/87A1212C-B076-4955-89DF-7CEE7D78C4EB(1).jpg" mode="aspectFill"></image>
+          </view>
+          <view class="hero-info">
+            <text class="hero-title">发布共创设计需求</text>
+            <text class="hero-subtitle">从勘测到验收，一站式灯光设计服务。</text>
+            <view class="price-section">
+              <text class="price-text">全流程沟通与交付</text>
+              <view class="buy-button"><text class="buy-text">了解</text></view>
+            </view>
+          </view>
+        </view>
         <view class="hero-card" bindtap="onServiceTap" data-service="selection">
           <view class="hero-content">
             <image class="hero-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/7C4F4BFF-2132-4807-B9BD-1DAC271E2B77.jpg" mode="aspectFill"></image>
@@ -98,19 +111,7 @@
           </view>
         </view>
         -->
-        <view class="hero-card" bindtap="onServiceTap" data-service="full">
-          <view class="hero-content">
-            <image class="hero-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/87A1212C-B076-4955-89DF-7CEE7D78C4EB(1).jpg" mode="aspectFill"></image>
-          </view>
-          <view class="hero-info">
-            <text class="hero-title">发布共创设计需求</text>
-            <text class="hero-subtitle">从勘测到验收，一站式灯光设计服务。</text>
-            <view class="price-section">
-              <text class="price-text">全流程沟通与交付</text>
-              <view class="buy-button"><text class="buy-text">了解</text></view>
-            </view>
-          </view>
-        </view>
+        
     </view>
   </view>
 

@@ -58,7 +58,7 @@ Page({
     focusedLampId: '',
     lampAddOptions: ['请选择灯具'],
     lampAddValue: 0,
-    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/Gemini_Generated_Image_fwputofwputofwpu.png',
+    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png',
     editingLamp: null,             // 正在编辑的灯具
     showResult: false,             // 是否显示结果页
     resultData: null,              // 结果页数据
@@ -355,7 +355,7 @@ Page({
   onUpgradeConfirm() {
     this.setData({ showUpgradeModal: false })
     wx.navigateTo({ 
-      url: '/pages/toolkit/toolkit-detail/toolkit-detail?id=toolkit' 
+      url: '/pages/toolkit/toolkit-detail/toolkit-detail?id=TK_DEFAULT_001' 
     })
   },
 
@@ -731,7 +731,7 @@ Page({
       return Number.isFinite(n) ? n : 0
     }
 
-    const { isPro, activeTab, lampTypeRows, selectedLamps } = this.data
+    const { activeTab, selectedLamps } = this.data
     const lampFlux = toNum(this.data.lampFlux)
     const area = toNum(this.data.area)
     const util = toNum(this.data.utilFactor) || 0
@@ -739,18 +739,11 @@ Page({
     const targetLux = toNum(this.data.targetLux)
     const lampCountInput = toNum(this.data.lampCount)
 
-    let totalFlux = 0
-    
-    if (isPro) {
-      // 付费版：汇总已选灯具的光通量
-      totalFlux = (selectedLamps || []).reduce((sum, it) => {
-        const phi = toNum(it.powerW) * toNum(it.efficacy) * toNum(it.lengthQty) * toNum(it.sourceUtil)
-        return sum + phi
-      }, 0)
-    } else {
-      // 免费版：使用共享工具计算
-      totalFlux = calcTotalFlux(lampTypeRows)
-    }
+    // 统一使用 selectedLamps 计算总光通量（现在所有用户都使用付费版UI）
+    let totalFlux = (selectedLamps || []).reduce((sum, it) => {
+      const phi = toNum(it.powerW) * toNum(it.efficacy) * toNum(it.lengthQty) * toNum(it.sourceUtil)
+      return sum + phi
+    }, 0)
 
     // 平均照度
     const avgLux = calcAvgLux(totalFlux, area, util, mnt)
@@ -761,30 +754,36 @@ Page({
     // 单位面积平均功率
     const avgPowerPerArea = calcAvgPowerPerArea(calcLampCountResult, 7, area)
 
-    // 总价
-
-    // 免费版：更新每行灯具的单项光通量
-    let updatedLampTypeRows = lampTypeRows
-    if (!isPro) {
-      updatedLampTypeRows = (lampTypeRows || []).map(it => ({
-        ...it,
-        flux: Math.round(toNum(it.powerW) * toNum(it.efficacy) * toNum(it.lengthQty) * toNum(it.sourceUtil))
-      }))
-    }
-
     this.setData({ 
       avgLux, 
       calcLampCount: calcLampCountResult, 
       avgPowerPerArea, 
-      totalFluxCalc: Math.round(totalFlux),
-      lampTypeRows: updatedLampTypeRows
+      totalFluxCalc: Math.round(totalFlux)
     })
   },
 
   // ========== 付费版结果页 ==========
   
   onCalculate() {
-    const { activeTab, area, utilFactor, maintenanceFactor } = this.data
+    const { activeTab, area, utilFactor, maintenanceFactor, isPro } = this.data
+    
+    // 权限检查：未付费用户不能使用"按灯具算照度"功能
+    if (activeTab === 'lux' && !isPro) {
+      wx.showModal({
+        title: '提示',
+        content: '请购买工具包后使用此功能',
+        confirmText: '去购买',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({
+              url: '/pages/toolkit/toolkit-detail/toolkit-detail?id=TK_DEFAULT_001'
+            })
+          }
+        }
+      })
+      return
+    }
     
     if (!this.validateCalculateInputs()) return
 

@@ -28,31 +28,29 @@ Page({
   },
 
   /**
-   * 滚动到指定章节
+   * 跳转到按灯具算照度详情页
    */
-  scrollToSection(e) {
-    const target = e.currentTarget.dataset.target
-    if (!target) return
-    
-    console.log('[help] 点击跳转到:', target)
-    
-    const query = wx.createSelectorQuery()
-    query.select('#' + target).boundingClientRect()
-    query.selectViewport().scrollOffset()
-    query.exec((res) => {
-      console.log('[help] 查询结果:', res)
-      if (res && res[0] && res[1]) {
-        const rect = res[0]
-        const scrollOffset = res[1]
-        const targetScrollTop = scrollOffset.scrollTop + rect.top - 20
-        
-        console.log('[help] 目标滚动位置:', targetScrollTop)
-        
-        wx.pageScrollTo({
-          scrollTop: targetScrollTop,
-          duration: 300
-        })
-      }
+  goToLampToLux() {
+    wx.navigateTo({
+      url: '/pages/search/help/help-lamp-to-lux/help-lamp-to-lux'
+    })
+  },
+
+  /**
+   * 跳转到按照度算数量详情页
+   */
+  goToLuxToCount() {
+    wx.navigateTo({
+      url: '/pages/search/help/help-lux-to-count/help-lux-to-count'
+    })
+  },
+
+  /**
+   * 跳转到按照度算参数详情页
+   */
+  goToLuxToParams() {
+    wx.navigateTo({
+      url: '/pages/search/help/help-lux-to-params/help-lux-to-params'
     })
   },
 
