@@ -11,6 +11,7 @@
     "pages/cart/cart",
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",
+    "pages/auth/agreement/agreement",
     "pages/course/course-detail/course-detail",
     "pages/course/video-player/video-player"
   ],
@@ -165,8 +166,5 @@
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
-  "cloud": true,
-  "requiredPrivateInfos": [
-    "chooseAddress"
-  ]
+  "cloud": true
 }

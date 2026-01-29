@@ -52,6 +52,7 @@ Page({
     showMntFactorModal: false,     // 维护系数说明弹窗
     showSourceUtilModal: false,    // 光源利用率说明弹窗
     showLampFluxModal: false,      // 单灯光通量说明弹窗
+    showTargetLuxModal: false,     // 目标照度说明弹窗
 
     // ========== 付费版专用 ==========
     selectedLamps: [],             // 用户已选灯具列表（动态添加）
@@ -77,18 +78,7 @@ Page({
     ],
     roomTypeIndex: -1,
     
-    // 层高选择器（参考利用系数说明表）
-    floorHeights: [
-      { name: '2.3米', height: 2.3, factor: 0.925 },
-      { name: '2.6米', height: 2.6, factor: 0.875 },
-      { name: '2.9米', height: 2.9, factor: 0.825 },
-      { name: '3.3米', height: 3.3, factor: 0.775 },
-      { name: '3.8米', height: 3.8, factor: 0.70 },
-      { name: '4.5米', height: 4.5, factor: 0.575 },
-      { name: '5.5米', height: 5.5, factor: 0.45 },
-      { name: '6.0米', height: 6.5, factor: 0.35 }
-    ],
-    floorHeightIndex: -1,
+    // 层高输入（用户自行输入，根据范围计算系数）
     floorHeight: '',
     
     // 色彩选择器（参考利用系数说明表）
@@ -182,7 +172,7 @@ Page({
     if (this.data.roomTypeIndex < 0) return need('请选择空间类型')
     if (toNum(this.data.targetLux) <= 0) return need('请输入目标照度')
     if (toNum(this.data.area) <= 0) return need('请输入房间面积')
-    if (this.data.floorHeightIndex < 0) return need('请选择层高')
+    if (toNum(this.data.floorHeight) <= 0) return need('请输入层高')
     if (this.data.colorIndex < 0) return need('请选择色彩')
     if (toNum(this.data.maintenanceFactor) <= 0) return need('请输入维护系数')
 
@@ -239,8 +229,7 @@ Page({
       showResult: false,
       resultData: null,
 
-    roomTypeIndex: -1,
-      floorHeightIndex: -1,
+      roomTypeIndex: -1,
       floorHeight: '',
       colorIndex: -1
     })
@@ -373,11 +362,6 @@ Page({
     const field = e.currentTarget.dataset.field
     const value = e.detail.value
     this.setData({ [field]: value })
-    
-    // 付费版：层高输入时切换到自定义模式
-    if (this.data.isPro && field === 'floorHeight') {
-      this.setData({ floorHeightIndex: 4 })
-    }
   },
 
   onOpenUtilFactorInfo() {
@@ -410,6 +394,14 @@ Page({
 
   closeLampFluxModal() {
     this.setData({ showLampFluxModal: false })
+  },
+
+  onOpenTargetLuxInfo() {
+    this.setData({ showTargetLuxModal: true })
+  },
+
+  closeTargetLuxInfo() {
+    this.setData({ showTargetLuxModal: false })
   },
 
   onOpenRules() {
@@ -502,16 +494,10 @@ Page({
     this.recalc()
   },
 
-  // 层高选择
-  onFloorHeightChange(e) {
-    const index = Number(e.detail.value)
-    const floorHeightOption = this.data.floorHeights[index]
-    const updates = { floorHeightIndex: index }
-    
-    updates.floorHeight = floorHeightOption.height.toString()
-    
-    // 计算利用系数 = 层高系数 × 色彩系数
-    this.setData(updates, () => {
+  // 层高输入
+  onFloorHeightInput(e) {
+    const value = e.detail.value
+    this.setData({ floorHeight: value }, () => {
       this.calcUtilFactor()
     })
   },
@@ -525,13 +511,44 @@ Page({
     })
   },
 
+  // 根据层高计算对应的系数(线性插值)
+  calcFloorHeightFactor(height) {
+    if (!height || height <= 0) return 0
+    
+    // 层高范围与系数对照表(根据利用系数说明)
+    const ranges = [
+      { min: 0, max: 2.4, minFactor: 0.90, maxFactor: 0.95 },
+      { min: 2.4, max: 2.7, minFactor: 0.85, maxFactor: 0.90 },
+      { min: 2.7, max: 3.0, minFactor: 0.80, maxFactor: 0.85 },
+      { min: 3.0, max: 3.5, minFactor: 0.75, maxFactor: 0.80 },
+      { min: 3.5, max: 4.0, minFactor: 0.65, maxFactor: 0.75 },
+      { min: 4.0, max: 5.0, minFactor: 0.50, maxFactor: 0.65 },
+      { min: 5.0, max: 6.0, minFactor: 0.40, maxFactor: 0.50 },
+      { min: 6.0, max: 999, minFactor: 0.30, maxFactor: 0.40 }
+    ]
+    
+    // 找到层高所在的区间
+    for (let range of ranges) {
+      if (height >= range.min && height <= range.max) {
+        // 线性插值计算系数
+        const ratio = (height - range.min) / (range.max - range.min)
+        const factor = range.minFactor + (range.maxFactor - range.minFactor) * ratio
+        return factor
+      }
+    }
+    
+    // 如果层高超出范围,返回最小值
+    return 0.30
+  },
+
   // 计算利用系数 = 层高系数 × 色彩系数
   calcUtilFactor() {
-    const { floorHeightIndex, colorIndex, floorHeights, colorOptions } = this.data
+    const { floorHeight, colorIndex, colorOptions } = this.data
+    const height = parseFloat(floorHeight)
     
-    // 只有两者都选择了才计算
-    if (floorHeightIndex >= 0 && colorIndex >= 0) {
-      const floorFactor = floorHeights[floorHeightIndex].factor || 1
+    // 只有层高和色彩都有值才计算
+    if (height > 0 && colorIndex >= 0) {
+      const floorFactor = this.calcFloorHeightFactor(height)
       const colorFactor = colorOptions[colorIndex].factor || 1
       const utilFactor = (floorFactor * colorFactor).toFixed(2)
       
@@ -771,7 +788,7 @@ Page({
     if (activeTab === 'lux' && !isPro) {
       wx.showModal({
         title: '提示',
-        content: '请购买工具包后使用此功能',
+        content: '这是 Pro 版照度计算工具，仅对已购买「二哥灯光工具包」的用户开放。\n\n未购买请先购买工具包，已购买用户可联系客服开通。',
         confirmText: '去购买',
         cancelText: '取消',
         success: (res) => {

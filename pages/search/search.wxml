@@ -85,7 +85,7 @@
       <!-- 蓝色渐变头部 -->
       <view class="v2-header">
         <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
-        <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo源文件(长版本-透明-白字).png" mode="aspectFit"></image>
+        <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
         <text class="v2-overlay-title">照度计算器</text>
         <view class="v2-overlay-subtitle-wrap">
           <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
@@ -117,7 +117,10 @@
           </view>
 
           <view class="v2-input-row">
-            <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
+            <view class="v2-label-wrap" bindtap="onOpenTargetLuxInfo" style="width: auto; padding-right: 20rpx;">
+              <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
+              <image class="v2-info-icon" src="/images/使用说明.png"></image>
+            </view>
             <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
           </view>
 
@@ -139,9 +142,10 @@
                 <image class="v2-info-icon" src="/images/使用说明.png"></image>
               </view>
               <view class="v2-input-box formula">
-                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                  </picker>
+                  <view class="floor-height-wrapper">
+                    <input class="formula-input" type="digit" value="{{floorHeight}}" data-field="floorHeight" bindinput="onFloorHeightInput" placeholder="层高" placeholder-style="color:#C0C4CC;"/>
+                    <text class="unit-m">m</text>
+                  </view>
                   <text class="op">×</text>
                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
                     <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
@@ -189,9 +193,10 @@
                 <image class="v2-info-icon" src="/images/使用说明.png"></image>
               </view>
               <view class="v2-input-box formula">
-                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                  </picker>
+                  <view class="floor-height-wrapper">
+                    <input class="formula-input" type="digit" value="{{floorHeight}}" data-field="floorHeight" bindinput="onFloorHeightInput" placeholder="层高" placeholder-style="color:#C0C4CC;"/>
+                    <text class="unit-m">m</text>
+                  </view>
                   <text class="op">×</text>
                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
                     <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
@@ -236,9 +241,10 @@
                 <image class="v2-info-icon" src="/images/使用说明.png"></image>
               </view>
               <view class="v2-input-box formula">
-                  <picker class="formula-picker" mode="selector" range="{{floorHeights}}" range-key="name" value="{{floorHeightIndex}}" bindchange="onFloorHeightChange">
-                    <text class="{{floorHeightIndex >= 0 ? 'selected-val' : ''}}">{{floorHeightIndex >= 0 ? floorHeights[floorHeightIndex].name : '选层高'}}</text>
-                  </picker>
+                  <view class="floor-height-wrapper">
+                    <input class="formula-input" type="digit" value="{{floorHeight}}" data-field="floorHeight" bindinput="onFloorHeightInput" placeholder="层高" placeholder-style="color:#C0C4CC;"/>
+                    <text class="unit-m">m</text>
+                  </view>
                   <text class="op">×</text>
                   <picker class="formula-picker" mode="selector" range="{{colorOptions}}" range-key="name" value="{{colorIndex}}" bindchange="onColorChange">
                     <text class="{{colorIndex >= 0 ? 'selected-val' : ''}}">{{colorIndex >= 0 ? colorOptions[colorIndex].name : '选色彩'}}</text>
@@ -737,6 +743,183 @@
     
     <view class="util-modal-footer">
       <button class="util-btn-confirm" bindtap="closeLampFluxModal">我知道了</button>
+    </view>
+  </view>
+</view>
+
+<!-- 目标照度说明弹窗 -->
+<view wx:if="{{showTargetLuxModal}}" class="util-modal-mask" bindtap="closeTargetLuxInfo">
+  <view class="util-modal-content" catchtap="stopPropagation">
+    <view class="util-modal-close" bindtap="closeTargetLuxInfo">×</view>
+    
+    <view class="util-modal-header">
+      <text class="util-modal-title">住宅照明照度标准</text>
+      <text class="util-modal-subtitle">GB 50034-2013 建筑照明设计标准</text>
+    </view>
+
+    <scroll-view scroll-y class="util-modal-body">
+      <view class="util-note">
+        <text class="util-note-text">提示：目标照度是空间的亮度标准。实测照度 高于 目标值说明空间足够亮，低于则空间不够亮。</text>
+      </view>
+
+      <view class="util-section">
+        <!-- 高级表格结构 (复刻图片样式) -->
+        <view class="advanced-table">
+            <!-- 表头：只显示“房间或场所”和“照度标准值” -->
+            <view class="table-header">
+                <view class="th col-room">房间或场所</view>
+                <view class="th col-activity"></view>
+                <view class="th col-val">照度标准值</view>
+            </view>
+
+            <!-- 起居室 (有子项) -->
+            <view class="table-row-group group-has-children">
+                <view class="td col-room group-name">起居室</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity">一般活动</view>
+                        <view class="td col-val">100</view>
+                    </view>
+                    <view class="td-row border-top">
+                        <view class="td col-activity">书写、阅读</view>
+                        <view class="td col-val highlight">300*</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 卧室 (有子项) -->
+            <view class="table-row-group group-has-children">
+                <view class="td col-room group-name">卧室</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity">一般活动</view>
+                        <view class="td col-val">75</view>
+                    </view>
+                    <view class="td-row border-top">
+                        <view class="td col-activity">床头、阅读</view>
+                        <view class="td col-val highlight">150*</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 餐厅 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">餐厅</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">150</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 厨房 (有子项) -->
+            <view class="table-row-group group-has-children">
+                <view class="td col-room group-name">厨房</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity">一般活动</view>
+                        <view class="td col-val">100</view>
+                    </view>
+                    <view class="td-row border-top">
+                        <view class="td col-activity">操作台</view>
+                        <view class="td col-val highlight">150*</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 卫生间 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">卫生间</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">100</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 电梯前厅 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">电梯前厅</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">75</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 走道、楼梯间 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">走道、楼梯间</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">50</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 车库 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">车库</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">30</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 老年人卧室 (有子项) -->
+            <view class="table-row-group group-has-children">
+                <view class="td col-room group-name">老年人卧室</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity">一般活动</view>
+                        <view class="td col-val">150</view>
+                    </view>
+                    <view class="td-row border-top">
+                        <view class="td col-activity">床头、阅读</view>
+                        <view class="td col-val highlight">300*</view>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 老年人起居室 (有子项) -->
+            <view class="table-row-group group-has-children">
+                <view class="td col-room group-name">老年人起居室</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity">一般活动</view>
+                        <view class="td col-val">200</view>
+                    </view>
+                    <view class="td-row border-top">
+                        <view class="td col-activity">书写、阅读</view>
+                        <view class="td col-val highlight">500*</view>
+                    </view>
+                </view>
+            </view>
+
+             <!-- 酒店式公寓 (无子项，单行) -->
+            <view class="table-row-group single-row-item">
+                <view class="td col-room group-name">酒店式公寓</view>
+                <view class="td-group-right">
+                    <view class="td-row">
+                        <view class="td col-activity"></view>
+                        <view class="td col-val">150</view>
+                    </view>
+                </view>
+            </view>
+        </view>
+      </view>
+
+      
+    </scroll-view>
+    
+    <view class="util-modal-footer">
+      <button class="util-btn-confirm" bindtap="closeTargetLuxInfo">我知道了</button>
     </view>
   </view>
 </view>

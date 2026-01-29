@@ -130,7 +130,7 @@ page {
   position: absolute;
   left: 40rpx;
   top: 40rpx;
-  width: 220rpx;
+  width: 240rpx;
   height: 100rpx;
   z-index: 2;
 }
@@ -348,6 +348,29 @@ page {
   gap: 10rpx;
   background: transparent; 
   padding: 0;
+}
+
+.floor-height-wrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 4rpx;
+}
+
+.formula-input {
+  width: 100rpx;
+  height: 100%;
+  background: transparent;
+  text-align: right;
+  font-size: 30rpx;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.unit-m {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 4rpx;
+  flex-shrink: 0;
 }
 
 .formula-picker {
@@ -1008,9 +1031,10 @@ page {
   padding: 24rpx;
   border-radius: 20rpx;
   margin-top: 40rpx;
+  margin-bottom: 30rpx; /* 增加底部间距 */
   border: none; /* 去除原本的黄色边框 */
   box-sizing: border-box; /* 确保 padding 包含在宽度内 */
-  width: 92%; /* 撑满父容器 */
+  width: 90%; /* 撑满父容器 */
 }
 
 .util-note-text {
@@ -1061,4 +1085,146 @@ page {
   font-size: 26rpx;
   color: #007AFF;
   text-decoration: underline;
+}
+
+/* ==================== Advanced Table Styles (Replica of Image) ==================== */
+.advanced-table {
+  border: 2rpx solid #333; /* 黑色细边框 */
+  border-radius: 0; /* 直角 */
+  overflow: hidden;
+  font-size: 26rpx;
+  background-color: #fff;
+  width: 90%;
+  box-sizing: border-box; /* 关键：防止宽度溢出 */
+}
+
+.table-header {
+  display: flex;
+  background-color: #fff;
+  border-bottom: 2rpx solid #333;
+  padding: 20rpx 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.th {
+  font-weight: 700;
+  color: #000; /* 黑色 */
+  text-align: left; /* 左对齐 */
+  padding-left: 20rpx;
+  font-size: 28rpx; /* 加大字号 */
+  box-sizing: border-box;
+}
+
+.th.col-room {
+  flex: 1; /* 撑开 */
+  text-align: left;
+}
+
+/* 隐藏表头右侧的其他文字，模仿图片 */
+.th.col-activity {
+  display: none;
+}
+
+.th.col-val {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 左对齐 */
+  text-align: left;
+  width: 150rpx; /* 稍微加宽以适应更大字号 */
+  padding: 0 20rpx;
+  border-left: 2rpx solid #333; /* 表头分割线 */
+  /* 继承 .th 的 font-size: 32rpx 和 color: #000，保持统一 */
+}
+
+.table-row-group {
+  display: flex;
+  border-bottom: 2rpx solid #333;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-row-group:last-child {
+  border-bottom: none;
+}
+
+.col-room {
+  width: 30%; /* 稍微减小宽度，留更多空间给右边 */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 左对齐 */
+  background-color: #fff;
+  padding: 20rpx;
+  font-weight: 500;
+  color: #000;
+  box-sizing: border-box; /* 关键 */
+}
+
+/* 针对有子项的组，左侧列加右边框 */
+.group-has-children .col-room {
+  border-right: 2rpx solid #333;
+}
+
+.td-group-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0; /* 关键：防止 flex 子项溢出 */
+}
+
+.td-row {
+  display: flex;
+  align-items: center;
+  flex: 1; 
+  min-height: 80rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.border-top {
+  border-top: 2rpx solid #333;
+}
+
+.col-activity {
+  flex: 1;
+  padding: 10rpx 20rpx;
+  color: #000;
+  text-align: left; /* 左对齐 */
+  font-weight: 500;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止文字过长撑开 */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.col-val {
+  width: 150rpx; /* 与表头宽度保持一致 */
+  flex-shrink: 0;
+  text-align: center;
+  color: #000;
+  font-weight: 500;
+  border-left: 2rpx solid #333; /* 照度值左边框 */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 特殊处理：如果是单行且无 activity，隐藏 activity 列的显示 */
+.single-row-item .col-activity {
+  display: none; 
+}
+
+.single-row-item .col-val {
+  /* border-left: none;  恢复左边框，保持对齐 */
+  /* width: 100%;  不再占满右侧区域 */
+  /* justify-content: center; 保持居中 */
+  margin-left: auto; /* 让该列自动靠到最右边 */
+  border-left: 2rpx solid #333; /* 确保有边框 */
+}
+
+.highlight {
+  color: #000; 
 }

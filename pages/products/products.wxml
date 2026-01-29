@@ -76,10 +76,10 @@
           </view>
           <view class="hero-info">
             <text class="hero-title">发布共创设计需求</text>
-            <text class="hero-subtitle">从勘测到验收，一站式灯光设计服务。</text>
+            <text class="hero-subtitle">根据你的预算匹配专业设计师。</text>
             <view class="price-section">
               <text class="price-text">全流程沟通与交付</text>
-              <view class="buy-button"><text class="buy-text">了解</text></view>
+              <view class="buy-button"><text class="buy-text">发布</text></view>
             </view>
           </view>
         </view>
@@ -89,9 +89,9 @@
           </view>
           <view class="hero-info">
             <text class="hero-title">二哥相关服务</text>
-            <text class="hero-subtitle">为你的场景快速完成专业选型与搭配。</text>
+            <text class="hero-subtitle">从“做灯光”，到“定义长期居住的光”。</text>
             <view class="price-section">
-              <text class="price-text">结合预算与风格给出清单</text>
+              <text class="price-text">高端的灯光全流程沟通与落地服务</text>
               <view class="buy-button"><text class="buy-text">了解</text></view>
             </view>
           </view>
@@ -106,7 +106,7 @@
             <text class="hero-subtitle">校对回路与灯位，优化眩光与照度。</text>
             <view class="price-section">
               <text class="price-text">提升落地质量，减少返工</text>
-              <view class="buy-button"><text class="buy-text">了解</text></view>
+              <view class="buy-button"><text class="buy-text">发布</text></view>
             </view>
           </view>
         </view>
@@ -175,32 +175,38 @@
   
 
   <!-- Apple 内容 -->
-  <view class="section">
-    <text class="section-title center">你关心的照明内容</text>
+  <view class="section apple-support-section">
+    <text class="section-title center">你关心的 照明 内容</text>
     <view class="content-tags">
-      <text class="content-tag">新方案</text>
-      <text class="content-tag">光学知识</text>
-      <text class="content-tag">调光技巧</text>
-      <text class="content-tag">选型指南</text>
+      <text class="content-tag">算亮度</text>
+      <text class="tag-separator">|</text>
+      <text class="content-tag">涨知识</text>
+      <text class="tag-separator">|</text>
+      <text class="content-tag">学灯光</text>
+      <text class="tag-separator">|</text>
+      <text class="content-tag">找服务</text>
     </view>
     
     <!-- 二维码 -->
     <view class="qr-section">
-      <image 
-        class="qr-code" 
-        src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/二维码.png" 
-        mode="aspectFit"
-        show-menu-by-longpress="{{true}}"
-      ></image>
-      <text class="qr-title">获得 光乙共创平台 的官方支持</text>
-      <text class="qr-subtitle">添加官方客服，输入你想问的问题获得在线支持</text>
+      <view class="qr-image-container">
+        <image 
+          class="qr-code" 
+          src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/二维码.png" 
+          mode="aspectFit"
+          show-menu-by-longpress="{{true}}"
+        ></image>
+      </view>
+      <text class="qr-title">获得 光乙 的官方支持</text>
+      <text class="qr-subtitle">长按关注 光乙 官方客服，输入你想问的问题
+获得在线支持</text>
     </view>
   </view>
 
   <!-- 折抵换购说明 -->
   <view class="disclaimer">
     <text class="disclaimer-text">* 折抵换购服务由 光乙 的折抵服务合作伙伴提供。折抵金额报价仅为预估价，实际折抵金额可能低于预估价值。</text>
-    <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
+    <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步发布</text>
   </view>
 
   <!-- 法律信息 -->
