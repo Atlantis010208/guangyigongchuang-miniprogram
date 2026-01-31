@@ -1,0 +1,10 @@
+{
+  "name": "admin_calc_config",
+  "version": "1.0.0",
+  "description": "照度计算页面配置管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

@@ -60,6 +60,7 @@ Page({
     lampAddOptions: ['请选择灯具'],
     lampAddValue: 0,
     headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png',
+    pageConfig: null,             // 云端页面配置
     editingLamp: null,             // 正在编辑的灯具
     showResult: false,             // 是否显示结果页
     resultData: null,              // 结果页数据
@@ -104,8 +105,16 @@ Page({
   async onLoad(options) {
     console.log('[search] onLoad, options:', options)
     
-    // 1. 初始化灯具参数（免费版使用）
-    const lampTypeRows = getDefaultLampTypes()
+    // 0. 加载云端页面配置
+    const pageConfig = await this.loadPageConfig()
+    
+    // 1. 初始化灯具参数（优先使用云端配置，否则使用默认值）
+    const lampTypeRows = (pageConfig && pageConfig.lampTypes) 
+      ? this.convertLampTypesFromConfig(pageConfig.lampTypes)
+      : getDefaultLampTypes()
+    
+    console.log('[search] 灯具类型已加载:', lampTypeRows.map(l => l.name))
+    
     this.setData({
       lampTypeRows,
       lampAddOptions: this.buildLampAddOptions(lampTypeRows),
@@ -201,10 +210,28 @@ Page({
     return true
   },
 
-  resetFormData() {
-    const lampTypeRows = getDefaultLampTypes()
+  resetFormData(keepTab = false) {
+    // 优先使用云端配置，否则使用默认值
+    const { pageConfig, activeTab: currentTab } = this.data
+    const lampTypeRows = (pageConfig && pageConfig.lampTypes) 
+      ? this.convertLampTypesFromConfig(pageConfig.lampTypes)
+      : getDefaultLampTypes()
+    
+    // 决定使用哪个 Tab
+    const activeTab = keepTab ? currentTab : 'count'
+    
+    // 获取对应 Tab 的背景图
+    let headerBgFileId = this.data.headerBgFileId
+    if (pageConfig && pageConfig.modes && pageConfig.modes[activeTab]) {
+      const modeBg = pageConfig.modes[activeTab].bgImage
+      if (modeBg) {
+        headerBgFileId = modeBg
+      }
+    }
+    
     this.setData({
-      activeTab: 'count',
+      activeTab,
+      headerBgFileId,
       lampFlux: '',
       area: '',
       utilFactor: '',
@@ -255,12 +282,16 @@ Page({
       // 2. 显示加载状态
       this.setData({ checkingPermission: true })
       
-      // 3. 重新检查权限
+      // 3. 重新加载云端配置
+      await this.loadPageConfig()
+      console.log('[search] 云端配置已刷新')
+      
+      // 4. 重新检查权限
       const isPurchased = await this.checkPurchaseStatus()
       console.log('[search] 刷新后权限状态:', isPurchased)
       
-      // 4. 重置数据并更新权限
-      this.resetFormData()
+      // 5. 重置数据并更新权限（保持当前 Tab，使用最新的云端配置）
+      this.resetFormData(true)  // keepTab = true，保持当前选中的 Tab
       this.setData({ 
         isPro: isPurchased,
         checkingPermission: false
@@ -350,11 +381,111 @@ Page({
 
   stopPropagation() {},
 
+  // ========== 配置加载 ==========
+
+  /**
+   * 从云端加载页面配置
+   * @returns {object|null} 配置对象，失败时返回 null
+   */
+  async loadPageConfig() {
+    try {
+      console.log('[search] 开始加载云端配置')
+      const res = await wx.cloud.callFunction({
+        name: 'get_calc_config'
+      })
+      
+      if (res.result && res.result.success && res.result.data) {
+        const config = res.result.data
+        console.log('[search] 云端配置加载成功:', config)
+        
+        // 保存配置（同步方式，确保后续代码能立即使用）
+        this.data.pageConfig = config
+        this.setData({ pageConfig: config })
+        
+        // 应用配置（背景图、空间类型等）
+        this.applyPageConfig(config)
+        
+        return config
+      } else {
+        console.warn('[search] 云端配置加载失败，使用默认配置')
+        return null
+      }
+    } catch (err) {
+      console.warn('[search] 获取配置失败，使用默认配置:', err)
+      return null
+    }
+  },
+
+  /**
+   * 应用页面配置
+   */
+  applyPageConfig(config) {
+    if (!config) return
+    
+    const { activeTab } = this.data
+    const updates = {}
+    
+    // 应用当前 Tab 的背景图
+    if (config.modes && config.modes[activeTab] && config.modes[activeTab].bgImage) {
+      updates.headerBgFileId = config.modes[activeTab].bgImage
+    }
+    
+    // 应用空间类型
+    if (config.roomTypes && config.roomTypes.length > 0) {
+      updates.roomTypes = config.roomTypes
+    }
+    
+    // 应用利用系数选项
+    if (config.colorOptions && config.colorOptions.length > 0) {
+      updates.colorOptions = config.colorOptions
+    }
+    
+    // 应用维护系数选项
+    if (config.maintenanceOptions && config.maintenanceOptions.length > 0) {
+      updates.maintenanceOptions = config.maintenanceOptions
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      this.setData(updates)
+      console.log('[search] 配置已应用:', Object.keys(updates))
+    }
+  },
+
+  /**
+   * 将云端灯具配置转换为页面使用的格式
+   */
+  convertLampTypesFromConfig(lampTypes) {
+    if (!Array.isArray(lampTypes)) return getDefaultLampTypes()
+    
+    return lampTypes
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(item => ({
+        name: item.name,
+        displayName: item.displayName || item.name,
+        powerW: item.powerW || 10,
+        efficacy: item.efficacy || 80,
+        lengthQty: '',
+        sourceUtil: item.sourceUtil || 0.8,
+        flux: 0
+      }))
+  },
+
   // ========== 通用方法 ==========
   
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
-    this.setData({ activeTab: tab })
+    const { pageConfig } = this.data
+    
+    // 根据配置更新背景图
+    let headerBgFileId = this.data.headerBgFileId
+    if (pageConfig && pageConfig.modes && pageConfig.modes[tab]) {
+      const modeBg = pageConfig.modes[tab].bgImage
+      if (modeBg) {
+        headerBgFileId = modeBg
+      }
+    }
+    
+    this.setData({ activeTab: tab, headerBgFileId })
     this.recalc()
   },
 
