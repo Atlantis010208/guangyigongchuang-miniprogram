@@ -10,6 +10,12 @@
     <text class="loading-text">正在加载商品...</text>
   </view>
 
+  <!-- Empty State -->
+  <view class="empty-state" wx:if="{{!loading && products.length === 0}}">
+    <text class="empty-title">暂无商品</text>
+    <text class="empty-desc">商品即将上架，敬请期待</text>
+  </view>
+
   <view class="product-grid" wx:if="{{products.length > 0}}">
     <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
       <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>

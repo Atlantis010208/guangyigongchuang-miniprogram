@@ -439,8 +439,7 @@ Page({
       return
     }
     // 兜底：保留原产品详情逻辑（暂不使用）
-    const query = encodeURIComponent(JSON.stringify({ id: 'default', title: '旗舰光环境方案', price: 7999 }))
-    wx.navigateTo({ url: `/pages/product-detail/product-detail?data=${query}` })
+    wx.showToast({ title: '请选择具体商品', icon: 'none' })
   },
 
   // 主打服务卡片点击
@@ -643,14 +642,14 @@ Page({
     await this.refreshAvatarFromCloud()
   },
 
-  // 助手封面图兜底：若 cloud:// 无法显示则替换为 https 或占位图
+  // 助手封面图兜底：若 cloud:// 无法显示则显示空图
   onAssistantImageError(e){
     const key = e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.key
-    const fallback = 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg'
+    // 不再使用测试图片作为兜底
     if (key === 'toolkit') {
-      this.setData({ assistantToolkitCover: fallback })
+      this.setData({ assistantToolkitCover: '' })
     } else if (key === 'course') {
-      this.setData({ assistantCourseCover: fallback })
+      this.setData({ assistantCourseCover: '' })
     }
   }
 })

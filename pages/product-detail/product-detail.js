@@ -1,13 +1,13 @@
 Page({
-  data:{ title:'iPhone 16 Pro', price:7999, image:'' },
+  data:{ title:'', price:0, image:'' },
   onLoad(options){
     try{
       if(options && options.data){
         const parsed = JSON.parse(decodeURIComponent(options.data))
         this.setData({
-          title: parsed.title || this.data.title,
-          price: parsed.price || this.data.price,
-          image: parsed.image || this.data.image
+          title: parsed.title || '',
+          price: parsed.price || 0,
+          image: parsed.image || ''
         })
       }
     }catch(err){}
