@@ -25,10 +25,14 @@
         </view>
       </view>
 
-      <view class="sub-val-row">
+      <view class="sub-val-row {{headerMiddle ? 'three-cols' : ''}}">
         <view class="sub-item">
           <text class="sub-num gold">{{headerLeft.value}}</text>
           <text class="sub-label">{{headerLeft.label}}</text>
+        </view>
+        <view class="sub-item" wx:if="{{headerMiddle}}">
+          <text class="sub-num green">{{headerMiddle.value}}</text>
+          <text class="sub-label">{{headerMiddle.label}}</text>
         </view>
         <view class="sub-item">
           <text class="sub-num blue">{{headerRight.value}}</text>

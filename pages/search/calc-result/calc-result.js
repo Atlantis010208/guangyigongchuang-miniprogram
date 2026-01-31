@@ -13,8 +13,9 @@ Page({
     mainUnit: '',
     mainLabel: '',
     
-    // 头部两个次要结果
+    // 头部次要结果（最多三个）
     headerLeft: { label: '', value: '' },
+    headerMiddle: null, // 中间项（可选，仅部分模式有）
     headerRight: { label: '', value: '' },
     
     // 详细参数列表
@@ -36,6 +37,7 @@ Page({
         mainUnit: resultData.mainUnit || '',
         mainLabel: resultData.mainLabel || '',
         headerLeft: resultData.headerLeft || { label: '', value: '' },
+        headerMiddle: resultData.headerMiddle || null,
         headerRight: resultData.headerRight || { label: '', value: '' },
         details: resultData.details || []
       })

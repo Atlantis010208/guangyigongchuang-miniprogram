@@ -83,10 +83,10 @@ Page({
     
     // 色彩选择器（参考利用系数说明表）
     colorOptions: [
-      { name: '浅色', factor: 0.8 },
-      { name: '木质类', factor: 0.6 },
-      { name: '细腻深色', factor: 0.3 },
-      { name: '粗糙深色', factor: 0.15 }
+      { name: '浅色', factor: 0.9 },
+      { name: '木质类', factor: 0.8 },
+      { name: '细腻深色', factor: 0.5 },
+      { name: '粗糙深色', factor: 0.2 }
     ],
     colorIndex: -1,
 
@@ -405,9 +405,15 @@ Page({
   },
 
   onOpenRules() {
-    wx.navigateTo({
-      url: '/pages/search/help/help'
-    })
+    // 根据当前 Tab 动态跳转到对应的帮助页面
+    const { activeTab } = this.data
+    const helpPageMap = {
+      'count': '/pages/search/help/help-lux-to-params/help-lux-to-params',
+      'quantity': '/pages/search/help/help-lux-to-count/help-lux-to-count',
+      'lux': '/pages/search/help/help-lamp-to-lux/help-lamp-to-lux'
+    }
+    const url = helpPageMap[activeTab] || '/pages/search/help/help'
+    wx.navigateTo({ url })
   },
 
   noop() {},
@@ -872,12 +878,16 @@ Page({
           const powerDensity = (parseFloat(lampCount) * 7) / parseFloat(area)
           const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
           
+          // 计算需购买瓦数：建议单灯光通量 / 80
+          const requiredWattage = Math.round(singleFlux / 80)
+          
           resultData = {
             mode: 'quantity',
             mainValue: Math.round(singleFlux),
             mainUnit: 'Lm',
             mainLabel: '建议单灯光通量',
             headerLeft: { label: '灯具数量', value: lampCount + '盏' },
+            headerMiddle: { label: '需购买瓦数', value: requiredWattage + 'W' },
             headerRight: { label: '目标照度', value: targetLux + 'Lx' },
             details: [
               { label: '房间面积', value: area + ' ㎡' },

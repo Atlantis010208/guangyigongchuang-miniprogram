@@ -101,8 +101,8 @@
         <view class="v2-card group-card">
           <!-- 1. Tab 切换 -->
           <view class="v2-tabs" style="margin-bottom: 30rpx;">
-            <view class="v2-tab-item {{activeTab==='count' ? 'active' : ''}}" bindtap="switchTab" data-tab="count">按照度算参数</view>
-            <view class="v2-tab-item {{activeTab==='quantity' ? 'active' : ''}}" bindtap="switchTab" data-tab="quantity">按照度算数量</view>
+            <view class="v2-tab-item {{activeTab==='count' ? 'active' : ''}}" bindtap="switchTab" data-tab="count">按照度算数量</view>
+            <view class="v2-tab-item {{activeTab==='quantity' ? 'active' : ''}}" bindtap="switchTab" data-tab="quantity">按数量算照度</view>
             <view class="v2-tab-item {{activeTab==='lux' ? 'active' : ''}}" bindtap="switchTab" data-tab="lux">按灯具算照度</view>
           </view>
 

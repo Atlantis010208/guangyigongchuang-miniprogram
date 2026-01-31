@@ -77,7 +77,7 @@ page {
 .big-num {
   font-size: 80rpx;
   font-weight: bold;
-  color: #43A047;
+  color: #2979FF;
   line-height: 1;
 }
 
@@ -110,7 +110,17 @@ page {
 }
 
 .sub-num.blue { 
-  color: #2979FF; 
+  color: #43A047; 
+}
+
+.sub-num.green { 
+  color: #E53935; 
+}
+
+/* 三列布局时的样式调整 */
+.sub-val-row.three-cols {
+  justify-content: space-between;
+  padding: 0 20rpx;
 }
 
 .sub-label {

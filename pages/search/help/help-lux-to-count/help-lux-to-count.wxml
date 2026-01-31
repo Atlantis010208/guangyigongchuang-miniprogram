@@ -2,7 +2,7 @@
   <!-- 按照度算数量 详细说明 -->
   <view class="card">
     <view class="section-header">
-      <text class="section-title">按照度算数量 · 详细使用说明</text>
+      <text class="section-title">按数量算照度 · 详细使用说明</text>
     </view>
     <view class="card-divider-green"></view>
     <view class="card-body">
