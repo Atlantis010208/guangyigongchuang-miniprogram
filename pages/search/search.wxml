@@ -86,6 +86,7 @@
       <view class="v2-header">
         <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
         <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
+        <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
         <text class="v2-overlay-title">照度计算器</text>
         <view class="v2-overlay-subtitle-wrap">
           <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
@@ -325,8 +326,10 @@
         <!-- 即刻计算按钮 -->
         <button class="v2-btn-calculate" bindtap="onCalculate">即刻计算</button>
         
-        <view class="v2-more-info" bindtap="onOpenRules">
-          <text>了解更多详细说明</text>
+        <!-- 详细说明 -->
+        <view class="disclaimer">
+        <text class="disclaimer-text">* 本工具基于 《建筑照明设计标准》 的照度要求，用于辅助判断空间照明是否达标，以及在设计前期进行灯具数量与参数的快速推算。</text>
+        <text class="disclaimer-link" bindtap="onDisclaimerTap">进一步了解</text>
         </view>
         
       </view>

@@ -30,14 +30,14 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 100rpx;
+  height: 0rpx;
   background: linear-gradient(to bottom, transparent, #f2f2f7);
   pointer-events: none; /* 确保不阻挡点击 */
 }
 
 /* Info Card */
 .info-card {
-  margin-top: -30rpx; /* Overlap effect */
+  margin-top: -40rpx; /* Overlap effect */
   position: relative;
   z-index: 10;
   margin-left: 30rpx;

@@ -23,26 +23,143 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const TOOLKIT_ID = 'TK_DEFAULT_001'
 const TOOLKIT_NAME = '灯光设计工具包'
 
+// 支持的国家/地区及其手机号规则
+const PHONE_RULES = {
+  // 中国大陆：11位，1开头
+  '86': { pattern: /^1[3-9]\d{9}$/, name: '中国大陆' },
+  // 中国香港：8位，以5/6/9开头
+  '852': { pattern: /^[569]\d{7}$/, name: '中国香港' },
+  // 中国澳门：8位，以6开头
+  '853': { pattern: /^6\d{7}$/, name: '中国澳门' },
+  // 中国台湾：9位，以9开头
+  '886': { pattern: /^9\d{8}$/, name: '中国台湾' },
+  // 日本：10-11位
+  '81': { pattern: /^[789]0\d{8,9}$/, name: '日本' },
+  // 韩国：10-11位
+  '82': { pattern: /^1[0-9]\d{7,8}$/, name: '韩国' },
+  // 新加坡：8位
+  '65': { pattern: /^[89]\d{7}$/, name: '新加坡' },
+  // 马来西亚：9-10位
+  '60': { pattern: /^1\d{8,9}$/, name: '马来西亚' },
+  // 泰国：9位
+  '66': { pattern: /^[689]\d{8}$/, name: '泰国' },
+  // 越南：9-10位
+  '84': { pattern: /^\d{9,10}$/, name: '越南' },
+  // 印度尼西亚：9-12位
+  '62': { pattern: /^8\d{8,11}$/, name: '印度尼西亚' },
+  // 菲律宾：10位
+  '63': { pattern: /^9\d{9}$/, name: '菲律宾' },
+  // 澳大利亚：9位
+  '61': { pattern: /^4\d{8}$/, name: '澳大利亚' },
+  // 新西兰：8-9位
+  '64': { pattern: /^2\d{7,8}$/, name: '新西兰' },
+  // 阿联酋：9位
+  '971': { pattern: /^5\d{8}$/, name: '阿联酋' },
+}
+
 /**
- * 校验手机号格式
+ * 解析手机号，提取国家码和纯手机号
+ * 支持格式：+8613800138000, 8613800138000, 13800138000
+ * @param {string} phone 原始手机号
+ * @returns {{ countryCode: string, purePhone: string, fullPhone: string }}
+ */
+function parsePhoneNumber(phone) {
+  if (!phone) return { countryCode: '', purePhone: '', fullPhone: '' }
+  
+  let phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
+  
+  // 移除开头的 + 号
+  if (phoneStr.startsWith('+')) {
+    phoneStr = phoneStr.substring(1)
+  }
+  
+  // 尝试匹配国家码（从长到短匹配）
+  const countryCodes = Object.keys(PHONE_RULES).sort((a, b) => b.length - a.length)
+  
+  for (const code of countryCodes) {
+    if (phoneStr.startsWith(code)) {
+      const purePhone = phoneStr.substring(code.length)
+      return {
+        countryCode: code,
+        purePhone: purePhone,
+        fullPhone: `+${code}${purePhone}`
+      }
+    }
+  }
+  
+  // 如果没有国家码，默认视为中国大陆手机号
+  if (/^1[3-9]\d{9}$/.test(phoneStr)) {
+    return {
+      countryCode: '86',
+      purePhone: phoneStr,
+      fullPhone: `+86${phoneStr}`
+    }
+  }
+  
+  // 无法识别，返回原始值
+  return {
+    countryCode: '',
+    purePhone: phoneStr,
+    fullPhone: phoneStr
+  }
+}
+
+/**
+ * 校验手机号格式（支持境外手机号）
+ * @param {string} phone 手机号
+ * @returns {{ valid: boolean, countryCode: string, purePhone: string, fullPhone: string, region: string }}
+ */
+function validatePhone(phone) {
+  const parsed = parsePhoneNumber(phone)
+  
+  if (!parsed.countryCode || !parsed.purePhone) {
+    return { valid: false, ...parsed, region: '' }
+  }
+  
+  const rule = PHONE_RULES[parsed.countryCode]
+  if (!rule) {
+    return { valid: false, ...parsed, region: '未知地区' }
+  }
+  
+  const valid = rule.pattern.test(parsed.purePhone)
+  return {
+    valid,
+    countryCode: parsed.countryCode,
+    purePhone: parsed.purePhone,
+    fullPhone: parsed.fullPhone,
+    region: rule.name
+  }
+}
+
+/**
+ * 校验手机号格式（兼容旧接口）
  * @param {string} phone 手机号
  * @returns {boolean} 是否有效
  */
 function isValidPhone(phone) {
-  if (!phone) return false
-  // 转换为字符串并去除空格
-  const phoneStr = String(phone).trim()
-  // 中国大陆手机号：11位数字，1开头
-  return /^1[3-9]\d{9}$/.test(phoneStr)
+  return validatePhone(phone).valid
 }
 
 /**
- * 标准化手机号
+ * 标准化手机号（返回纯手机号，用于白名单存储和匹配）
+ * 注意：为了向后兼容，中国大陆手机号保持11位格式，境外手机号带国家码前缀
  * @param {string|number} phone 手机号
  * @returns {string} 标准化后的手机号
  */
 function normalizePhone(phone) {
   if (!phone) return ''
+  const parsed = parsePhoneNumber(phone)
+  
+  // 中国大陆手机号返回11位纯号码（兼容现有数据）
+  if (parsed.countryCode === '86') {
+    return parsed.purePhone
+  }
+  
+  // 境外手机号返回带国家码的格式（不带+号，便于匹配）
+  if (parsed.countryCode) {
+    return `${parsed.countryCode}${parsed.purePhone}`
+  }
+  
   return String(phone).trim().replace(/\s+/g, '')
 }
 
@@ -173,13 +290,20 @@ exports.main = async (event) => {
     
     console.log('[admin_toolkit_whitelist_import] 解析到手机号数量:', phones.length)
     
-    // 4. 校验手机号格式
-    const validPhones = []
+    // 4. 校验手机号格式（支持境外手机号）
+    const validPhones = []  // { phone, countryCode, purePhone, region }
     const invalidPhones = []
     
     for (const phone of phones) {
-      if (isValidPhone(phone)) {
-        validPhones.push(phone)
+      const result = validatePhone(phone)
+      if (result.valid) {
+        validPhones.push({
+          phone: normalizePhone(phone),  // 标准化后的手机号（用于存储和匹配）
+          countryCode: result.countryCode,
+          purePhone: result.purePhone,
+          fullPhone: result.fullPhone,
+          region: result.region
+        })
       } else if (phone) {
         invalidPhones.push(phone)
       }
@@ -187,13 +311,22 @@ exports.main = async (event) => {
     
     console.log('[admin_toolkit_whitelist_import] 有效手机号:', validPhones.length, '无效手机号:', invalidPhones.length)
     
+    // 统计各地区手机号数量
+    const regionStats = {}
+    for (const p of validPhones) {
+      regionStats[p.region] = (regionStats[p.region] || 0) + 1
+    }
+    console.log('[admin_toolkit_whitelist_import] 地区分布:', regionStats)
+    
     // 5. 查询已存在的手机号（去重）
     const existingPhones = new Set()
     
     // 分批查询（每次最多 100 个）
     const batchSize = 100
-    for (let i = 0; i < validPhones.length; i += batchSize) {
-      const batch = validPhones.slice(i, i + batchSize)
+    const phoneList = validPhones.map(p => p.phone)  // 提取标准化后的手机号
+    
+    for (let i = 0; i < phoneList.length; i += batchSize) {
+      const batch = phoneList.slice(i, i + batchSize)
       const existRes = await db.collection('toolkit_whitelist')
         .where({
           phone: _.in(batch),
@@ -210,8 +343,8 @@ exports.main = async (event) => {
     console.log('[admin_toolkit_whitelist_import] 已存在记录数:', existingPhones.size)
     
     // 6. 过滤出需要新增的手机号
-    const newPhones = validPhones.filter(p => !existingPhones.has(p))
-    const duplicatePhones = validPhones.filter(p => existingPhones.has(p))
+    const newPhones = validPhones.filter(p => !existingPhones.has(p.phone))
+    const duplicatePhones = validPhones.filter(p => existingPhones.has(p.phone))
     
     console.log('[admin_toolkit_whitelist_import] 需要新增:', newPhones.length, '重复跳过:', duplicatePhones.length)
     
@@ -223,8 +356,12 @@ exports.main = async (event) => {
     // 分批插入（每次最多 100 条）
     for (let i = 0; i < newPhones.length; i += batchSize) {
       const batch = newPhones.slice(i, i + batchSize)
-      const docs = batch.map(phone => ({
-        phone,
+      const docs = batch.map(phoneData => ({
+        phone: phoneData.phone,           // 标准化后的手机号（用于匹配）
+        purePhoneNumber: phoneData.purePhone,  // 纯手机号（不含国家码）
+        countryCode: phoneData.countryCode,    // 国家码
+        fullPhoneNumber: phoneData.fullPhone,  // 完整手机号（带+号）
+        region: phoneData.region,              // 地区名称
         toolkitId: TOOLKIT_ID,
         toolkitName: TOOLKIT_NAME,
         status: 'pending',
@@ -270,8 +407,9 @@ exports.main = async (event) => {
         successCount,
         duplicateCount: duplicatePhones.length,
         invalidCount: invalidPhones.length,
+        regionStats,  // 新增：各地区手机号分布
         details: {
-          duplicates: duplicatePhones.slice(0, 10), // 只返回前10个
+          duplicates: duplicatePhones.slice(0, 10).map(p => p.phone), // 只返回前10个
           invalids: invalidPhones.slice(0, 10)
         }
       },

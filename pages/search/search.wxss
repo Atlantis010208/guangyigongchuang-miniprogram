@@ -135,6 +135,21 @@ page {
   z-index: 2;
 }
 
+.v2-history-btn {
+  position: absolute;
+  right: 20rpx;
+  top: 50rpx;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 28rpx;
+  z-index: 10;
+  padding: 10rpx;
+  font-weight: 500;
+}
+
+.v2-history-btn:active {
+  opacity: 0.7;
+}
+
 .v2-overlay-title {
   position: absolute;
   left: 50rpx; 
@@ -1235,6 +1250,23 @@ page {
   text-overflow: ellipsis;
 }
 
+/* 免责声明 */
+.disclaimer {
+  padding: 0rpx;
+  margin-top: 40rpx;
+}
+
+.disclaimer-text {
+  font-size: 20rpx;
+  color: #8e8e93;
+  line-height: 1.6;
+  margin-bottom: 10rpx;
+}
+
+.disclaimer-link {
+  font-size: 20rpx;
+  color: #007aff;
+}
 
 /* 特殊处理：如果是单行且无 activity，隐藏 activity 列的显示 */
 .single-row-item .col-activity {

@@ -143,6 +143,41 @@ Page({
   onShow() {
     console.log('[search] onShow')
     
+    // 检查是否有历史记录回填
+    const selectedHistory = wx.getStorageSync('calc_history_selected')
+    if (selectedHistory) {
+      wx.removeStorageSync('calc_history_selected')
+      const params = selectedHistory.params
+      if (params) {
+        console.log('[search] 回填历史记录:', params)
+        // 恢复参数
+        this.setData({
+           activeTab: params.activeTab || 'count',
+           area: params.area,
+           roomTypeIndex: params.roomTypeIndex,
+           targetLux: params.targetLux,
+           floorHeight: params.floorHeight,
+           colorIndex: params.colorIndex,
+           maintenanceIndex: params.maintenanceIndex,
+           maintenanceFactor: params.maintenanceFactor,
+           utilFactor: params.utilFactor,
+           lampFlux: params.lampFlux,
+           lampCount: params.lampCount,
+           selectedLamps: params.selectedLamps || []
+        }, () => {
+          // 根据 activeTab 重新获取背景图（如果有配置）
+          const { pageConfig } = this.data
+          if (pageConfig && pageConfig.modes && pageConfig.modes[params.activeTab]) {
+            const modeBg = pageConfig.modes[params.activeTab].bgImage
+            if (modeBg) {
+               this.setData({ headerBgFileId: modeBg })
+            }
+          }
+          this.recalc()
+        })
+      }
+    }
+    
     // 设置导航栏样式
     wx.setNavigationBarTitle({ title: '照明计算' })
     wx.setNavigationBarColor({
@@ -1073,15 +1108,105 @@ Page({
         }
       }
 
+      // 保存历史记录
+      this.saveHistory(resultData)
+
       // 将结果数据保存到页面实例，供结果页读取
-      this.setData({ resultData })
-      
-      // 跳转到独立的结果页面
-      wx.navigateTo({
-        url: '/pages/search/calc-result/calc-result'
+      this.setData({ resultData }, () => {
+        // 确保数据设置完成后再跳转到结果页面
+        wx.navigateTo({
+          url: '/pages/search/calc-result/calc-result'
+        })
       })
 
     }, 300)
+  },
+
+  /**
+   * 保存计算历史
+   */
+  saveHistory(resultData) {
+    try {
+      const { activeTab, area, roomTypes, roomTypeIndex, targetLux } = this.data
+      const roomName = roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义'
+      
+      let summary = `${roomName} · ${area}㎡`
+      let resultStr = ''
+      let defaultTitle = '计算记录'
+      
+      if (activeTab === 'count') {
+        defaultTitle = '按照度算数量'
+        summary += ` · 目标${targetLux}Lx`
+        resultStr = `${resultData.mainValue}盏灯具`
+      } else if (activeTab === 'quantity') {
+        defaultTitle = '按数量算照度'
+        summary += ` · ${this.data.lampCount}盏灯`
+        resultStr = `建议单灯${resultData.mainValue}Lm`
+      } else if (activeTab === 'lux') {
+        defaultTitle = '按灯具算照度'
+        const lampCount = this.data.selectedLamps.reduce((sum, l) => sum + Number(l.lengthQty || 0), 0)
+        summary += ` · ${lampCount}盏灯`
+        resultStr = `平均照度${resultData.mainValue}Lx`
+      }
+
+      const historyItem = {
+        id: Date.now(),
+        customName: defaultTitle,
+        timestamp: Date.now(),
+        mode: activeTab,
+        summary,
+        resultStr,
+        params: {
+           activeTab,
+           area: this.data.area,
+           roomTypeIndex: this.data.roomTypeIndex,
+           targetLux: this.data.targetLux,
+           floorHeight: this.data.floorHeight,
+           colorIndex: this.data.colorIndex,
+           maintenanceIndex: this.data.maintenanceIndex,
+           maintenanceFactor: this.data.maintenanceFactor,
+           utilFactor: this.data.utilFactor,
+           
+           // count mode
+           lampFlux: this.data.lampFlux,
+           
+           // quantity mode
+           lampCount: this.data.lampCount,
+           
+           // lux mode
+           selectedLamps: this.data.selectedLamps
+        },
+        result: resultData
+      }
+
+      let history = wx.getStorageSync('calc_history') || []
+      history.unshift(historyItem)
+      if (history.length > 20) {
+        history = history.slice(0, 20)
+      }
+      wx.setStorageSync('calc_history', history)
+      
+    } catch (e) {
+      console.error('保存历史记录失败', e)
+    }
+  },
+
+  /**
+   * 点击"进一步了解"跳转到帮助中心
+   */
+  onDisclaimerTap() {
+    wx.navigateTo({
+      url: '/pages/search/help/help'
+    })
+  },
+
+  /**
+   * 点击历史记录
+   */
+  onHistoryTap() {
+    wx.navigateTo({
+      url: '/pages/search/history/history'
+    })
   },
 
 })

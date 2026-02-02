@@ -8,6 +8,7 @@
     "pages/search/help/help-lamp-to-lux/help-lamp-to-lux",
     "pages/search/help/help-lux-to-count/help-lux-to-count",
     "pages/search/help/help-lux-to-params/help-lux-to-params",
+    "pages/search/history/history",
     "pages/cart/cart",
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",

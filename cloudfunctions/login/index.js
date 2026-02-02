@@ -42,25 +42,68 @@ function generateOrderNo() {
 }
 
 /**
+ * 生成手机号匹配列表
+ * 支持多种格式：纯号码、带国家码（不带+）、带国家码（带+）
+ * @param {string} phoneNumber 完整手机号（如 +8613800138000）
+ * @param {string} purePhoneNumber 纯手机号（如 13800138000）
+ * @param {string} countryCode 国家码（如 86）
+ * @returns {string[]} 可能的匹配格式列表
+ */
+function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
+  const matchList = []
+  
+  // 纯手机号（不带国家码）
+  if (purePhoneNumber) {
+    matchList.push(purePhoneNumber)
+  }
+  
+  // 带国家码（不带+号）- 境外手机号白名单存储格式
+  if (countryCode && purePhoneNumber) {
+    matchList.push(`${countryCode}${purePhoneNumber}`)
+  }
+  
+  // 完整格式（带+号）
+  if (phoneNumber && phoneNumber.startsWith('+')) {
+    matchList.push(phoneNumber)
+    // 也尝试不带+号的版本
+    matchList.push(phoneNumber.substring(1))
+  }
+  
+  // 如果只有纯手机号（没有国家码信息），也生成 86 前缀版本
+  if (purePhoneNumber && !countryCode) {
+    matchList.push(`86${purePhoneNumber}`)
+  }
+  
+  // 去重
+  return [...new Set(matchList)]
+}
+
+/**
  * 检查并激活白名单授权
  * 静默执行，不影响主流程
+ * 支持境外手机号匹配
  * 
- * @param {string} phoneNumber 用户手机号
+ * @param {string} phoneNumber 完整手机号
+ * @param {string} purePhoneNumber 纯手机号（不带国家码）
+ * @param {string} countryCode 国家码（如 86、852）
  * @param {string} openid 用户 openid
  * @param {string} userId 用户 _id
  * @returns {object} { activated, whitelistId, orderId }
  */
-async function checkAndActivateWhitelist(phoneNumber, openid, userId) {
+async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCode, openid, userId) {
   const db = cloud.database()
   const _ = db.command
   
-  console.log('[白名单检查] 开始检查手机号:', phoneNumber.substring(0, 3) + '****' + phoneNumber.substring(7))
+  // 生成所有可能的匹配格式
+  const phoneMatchList = generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+  
+  console.log('[白名单检查] 开始检查手机号，匹配列表:', phoneMatchList.map(p => p.substring(0, 3) + '****'))
   
   try {
-    // 1. 查询白名单中是否有该手机号的待激活记录
+    // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
     const whitelistRes = await db.collection('course_whitelist')
       .where({
-        phone: phoneNumber,
+        phone: _.in(phoneMatchList),
         status: 'pending'
       })
       .limit(10) // 一个手机号可能对应多个课程
@@ -186,23 +229,29 @@ async function checkAndActivateWhitelist(phoneNumber, openid, userId) {
 /**
  * 检查并激活工具包白名单授权
  * 静默执行，不影响主流程
+ * 支持境外手机号匹配
  * 
- * @param {string} phoneNumber 用户手机号
+ * @param {string} phoneNumber 完整手机号
+ * @param {string} purePhoneNumber 纯手机号（不带国家码）
+ * @param {string} countryCode 国家码（如 86、852）
  * @param {string} openid 用户 openid
  * @param {string} userId 用户 _id
  * @returns {object} { activated, whitelistId, orderId }
  */
-async function checkAndActivateToolkitWhitelist(phoneNumber, openid, userId) {
+async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, countryCode, openid, userId) {
   const db = cloud.database()
   const _ = db.command
   
-  console.log('[工具包白名单检查] 开始检查手机号:', phoneNumber.substring(0, 3) + '****' + phoneNumber.substring(7))
+  // 生成所有可能的匹配格式
+  const phoneMatchList = generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+  
+  console.log('[工具包白名单检查] 开始检查手机号，匹配列表:', phoneMatchList.map(p => p.substring(0, 3) + '****'))
   
   try {
-    // 1. 查询白名单中是否有该手机号的待激活记录
+    // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
     const whitelistRes = await db.collection('toolkit_whitelist')
       .where({
-        phone: phoneNumber,
+        phone: _.in(phoneMatchList),
         status: 'pending'
       })
       .limit(10) // 一个手机号可能对应多个工具包
@@ -412,26 +461,29 @@ exports.main = async (event) => {
           
           // ========== 新增：白名单激活检查 ==========
           // 如果用户已有手机号，检查白名单
-          // 重要：优先使用 purePhoneNumber（纯手机号），如果没有则从 phoneNumber 中移除国家码
+          // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
           let toolkitWhitelistResult = null
           if (existingUser.phoneNumber || existingUser.purePhoneNumber) {
-            let phoneToCheck = existingUser.purePhoneNumber || existingUser.phoneNumber
-            // 如果手机号带国家码，移除 +86 前缀
-            if (phoneToCheck && phoneToCheck.startsWith('+86')) {
-              phoneToCheck = phoneToCheck.replace(/^\+86/, '')
-            }
-            // 课程白名单检查
+            const fullPhone = existingUser.phoneNumber || ''
+            const purePhone = existingUser.purePhoneNumber || existingUser.phoneNumber.replace(/^\+\d+/, '')
+            const countryCode = existingUser.countryCode || '86'
+            
+            // 课程白名单检查（支持多格式匹配）
             whitelistResult = await checkAndActivateWhitelist(
-              phoneToCheck,
+              fullPhone,
+              purePhone,
+              countryCode,
               openid,
               existingUser._id
             )
             if (whitelistResult.activated) {
               console.log('[login] 课程白名单激活成功:', whitelistResult)
             }
-            // 工具包白名单检查
+            // 工具包白名单检查（支持多格式匹配）
             toolkitWhitelistResult = await checkAndActivateToolkitWhitelist(
-              phoneToCheck,
+              fullPhone,
+              purePhone,
+              countryCode,
               openid,
               existingUser._id
             )
@@ -548,26 +600,29 @@ exports.main = async (event) => {
       console.log('登录验证成功:', { openid, userId: user._id })
       
       // ========== 新增：白名单激活检查（验证模式也检查）==========
-      // 重要：优先使用 purePhoneNumber（纯手机号），如果没有则从 phoneNumber 中移除国家码
+      // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       let toolkitWhitelistResult = null
       if (user.phoneNumber || user.purePhoneNumber) {
-        let phoneToCheck = user.purePhoneNumber || user.phoneNumber
-        // 如果手机号带国家码，移除 +86 前缀
-        if (phoneToCheck && phoneToCheck.startsWith('+86')) {
-          phoneToCheck = phoneToCheck.replace(/^\+86/, '')
-        }
-        // 课程白名单检查
+        const fullPhone = user.phoneNumber || ''
+        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
+        const countryCode = user.countryCode || '86'
+        
+        // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(
-          phoneToCheck,
+          fullPhone,
+          purePhone,
+          countryCode,
           openid,
           user._id
         )
         if (whitelistResult.activated) {
           console.log('[login-verify] 课程白名单激活成功:', whitelistResult)
         }
-        // 工具包白名单检查
+        // 工具包白名单检查（支持多格式匹配）
         toolkitWhitelistResult = await checkAndActivateToolkitWhitelist(
-          phoneToCheck,
+          fullPhone,
+          purePhone,
+          countryCode,
           openid,
           user._id
         )
@@ -628,25 +683,28 @@ exports.main = async (event) => {
       }
       
       // ========== 新增：白名单激活检查 ==========
-      // 重要：优先使用 purePhoneNumber（纯手机号），如果没有则从 phoneNumber 中移除国家码
+      // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       if (user.phoneNumber || user.purePhoneNumber) {
-        let phoneToCheck = user.purePhoneNumber || user.phoneNumber
-        // 如果手机号带国家码，移除 +86 前缀
-        if (phoneToCheck && phoneToCheck.startsWith('+86')) {
-          phoneToCheck = phoneToCheck.replace(/^\+86/, '')
-        }
-        // 课程白名单检查
+        const fullPhone = user.phoneNumber || ''
+        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
+        const countryCode = user.countryCode || '86'
+        
+        // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(
-          phoneToCheck,
+          fullPhone,
+          purePhone,
+          countryCode,
           openid,
           user._id
         )
         if (whitelistResult.activated) {
           console.log('[login] 课程白名单激活成功:', whitelistResult)
         }
-        // 工具包白名单检查
+        // 工具包白名单检查（支持多格式匹配）
         toolkitWhitelistResult = await checkAndActivateToolkitWhitelist(
-          phoneToCheck,
+          fullPhone,
+          purePhone,
+          countryCode,
           openid,
           user._id
         )
