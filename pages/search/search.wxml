@@ -590,7 +590,7 @@
     
     <scroll-view scroll-y class="util-modal-body">
       <view class="util-section">
-        <view class="util-table">
+        <view class="util-table mnt-table">
           <view class="util-table-row header">
             <text class="util-cell col-env">环境特征</text>
             <text class="util-cell col-place">房间或场所举例</text>
@@ -683,7 +683,7 @@
               <view>2次反射</view>
             </view>
             <text class="util-cell col-rate">0.15</text>
-            <text class="util-cell col-type">反灯槽灯带（10W/80lm/W/0.15）：反光灯槽、窗帘灯带、护墙板灯带、柜体灯带</text>
+            <text class="util-cell col-type">反灯槽灯带：反光灯槽、窗帘灯带、护墙板灯带、柜体灯带</text>
           </view>
 
           <view class="util-table-row">
@@ -692,7 +692,7 @@
               <view>1次反射</view>
             </view>
             <text class="util-cell col-rate">0.30</text>
-            <text class="util-cell col-type">正灯槽灯带（10W/80lm/W/0.30）：回型天花灯槽、边吊正灯槽</text>
+            <text class="util-cell col-type">正灯槽灯带：回型天花灯槽、边吊正灯槽</text>
           </view>
 
           <view class="util-table-row">
@@ -701,7 +701,7 @@
               <view>带灯罩类</view>
             </view>
             <text class="util-cell col-rate">0.8-0.9</text>
-            <text class="util-cell col-type">线性灯（10W/80lm/W/0.8）、吊灯（25W/80lm/W/0.9）、装饰灯（10W/80lm/W/0.9）</text>
+            <text class="util-cell col-type">线性灯、吊灯、装饰灯</text>
           </view>
 
           <view class="util-table-row">
@@ -710,7 +710,7 @@
               <view>无灯罩类</view>
             </view>
             <text class="util-cell col-rate">0.95</text>
-            <text class="util-cell col-type">筒灯（7W/65lm/W）、射灯（3W/65lm/W）、吸顶灯、灯泡</text>
+            <text class="util-cell col-type">筒灯、射灯、吸顶灯、灯泡</text>
           </view>
         </view>
       </view>
@@ -763,155 +763,119 @@
       </view>
 
       <view class="util-section">
-        <!-- 高级表格结构 (复刻图片样式) -->
-        <view class="advanced-table">
-            <!-- 表头：只显示“房间或场所”和“照度标准值” -->
-            <view class="table-header">
-                <view class="th col-room">房间或场所</view>
-                <view class="th col-activity"></view>
-                <view class="th col-val">照度标准值</view>
+        <view class="util-table">
+          <view class="util-table-row header">
+            <text class="util-cell col-lux-room">房间或场所</text>
+            <text class="util-cell col-lux-action">活动类型</text>
+            <text class="util-cell col-lux-val">照度标准值</text>
+          </view>
+          
+          <!-- 起居室 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">起居室</text>
+            <view class="util-cell col-lux-action">
+              <view>一般活动</view>
+              <view style="margin-top: 8rpx;">书写、阅读</view>
             </view>
+            <view class="util-cell col-lux-val">
+              <view>100</view>
+              <view style="margin-top: 8rpx;">300*</view>
+            </view>
+          </view>
 
-            <!-- 起居室 (有子项) -->
-            <view class="table-row-group group-has-children">
-                <view class="td col-room group-name">起居室</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity">一般活动</view>
-                        <view class="td col-val">100</view>
-                    </view>
-                    <view class="td-row border-top">
-                        <view class="td col-activity">书写、阅读</view>
-                        <view class="td col-val highlight">300*</view>
-                    </view>
-                </view>
+          <!-- 卧室 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">卧室</text>
+            <view class="util-cell col-lux-action">
+              <view>一般活动</view>
+              <view style="margin-top: 8rpx;">床头、阅读</view>
             </view>
+            <view class="util-cell col-lux-val">
+              <view>75</view>
+              <view style="margin-top: 8rpx;">150*</view>
+            </view>
+          </view>
 
-            <!-- 卧室 (有子项) -->
-            <view class="table-row-group group-has-children">
-                <view class="td col-room group-name">卧室</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity">一般活动</view>
-                        <view class="td col-val">75</view>
-                    </view>
-                    <view class="td-row border-top">
-                        <view class="td col-activity">床头、阅读</view>
-                        <view class="td col-val highlight">150*</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 餐厅 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">餐厅</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">150</text>
+          </view>
 
-            <!-- 餐厅 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">餐厅</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">150</view>
-                    </view>
-                </view>
+          <!-- 厨房 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">厨房</text>
+            <view class="util-cell col-lux-action">
+              <view>一般活动</view>
+              <view style="margin-top: 8rpx;">操作台</view>
             </view>
+            <view class="util-cell col-lux-val">
+              <view>100</view>
+              <view style="margin-top: 8rpx;">150*</view>
+            </view>
+          </view>
 
-            <!-- 厨房 (有子项) -->
-            <view class="table-row-group group-has-children">
-                <view class="td col-room group-name">厨房</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity">一般活动</view>
-                        <view class="td col-val">100</view>
-                    </view>
-                    <view class="td-row border-top">
-                        <view class="td col-activity">操作台</view>
-                        <view class="td col-val highlight">150*</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 卫生间 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">卫生间</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">100</text>
+          </view>
 
-            <!-- 卫生间 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">卫生间</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">100</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 电梯前厅 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">电梯前厅</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">75</text>
+          </view>
 
-            <!-- 电梯前厅 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">电梯前厅</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">75</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 走道、楼梯间 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">走道、楼梯间</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">50</text>
+          </view>
 
-            <!-- 走道、楼梯间 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">走道、楼梯间</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">50</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 车库 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">车库</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">30</text>
+          </view>
 
-            <!-- 车库 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">车库</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">30</view>
-                    </view>
-                </view>
+          <!-- 老年人卧室 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">老年人卧室</text>
+            <view class="util-cell col-lux-action">
+              <view>一般活动</view>
+              <view style="margin-top: 8rpx;">床头、阅读</view>
             </view>
+            <view class="util-cell col-lux-val">
+              <view>150</view>
+              <view style="margin-top: 8rpx;">300*</view>
+            </view>
+          </view>
 
-            <!-- 老年人卧室 (有子项) -->
-            <view class="table-row-group group-has-children">
-                <view class="td col-room group-name">老年人卧室</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity">一般活动</view>
-                        <view class="td col-val">150</view>
-                    </view>
-                    <view class="td-row border-top">
-                        <view class="td col-activity">床头、阅读</view>
-                        <view class="td col-val highlight">300*</view>
-                    </view>
-                </view>
+          <!-- 老年人起居室 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">老年人起居室</text>
+            <view class="util-cell col-lux-action">
+              <view>一般活动</view>
+              <view style="margin-top: 8rpx;">书写、阅读</view>
             </view>
+            <view class="util-cell col-lux-val">
+              <view>200</view>
+              <view style="margin-top: 8rpx;">500*</view>
+            </view>
+          </view>
 
-            <!-- 老年人起居室 (有子项) -->
-            <view class="table-row-group group-has-children">
-                <view class="td col-room group-name">老年人起居室</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity">一般活动</view>
-                        <view class="td col-val">200</view>
-                    </view>
-                    <view class="td-row border-top">
-                        <view class="td col-activity">书写、阅读</view>
-                        <view class="td col-val highlight">500*</view>
-                    </view>
-                </view>
-            </view>
-
-             <!-- 酒店式公寓 (无子项，单行) -->
-            <view class="table-row-group single-row-item">
-                <view class="td col-room group-name">酒店式公寓</view>
-                <view class="td-group-right">
-                    <view class="td-row">
-                        <view class="td col-activity"></view>
-                        <view class="td col-val">150</view>
-                    </view>
-                </view>
-            </view>
+          <!-- 酒店式公寓 -->
+          <view class="util-table-row">
+            <text class="util-cell col-lux-room">酒店式公寓</text>
+            <text class="util-cell col-lux-action">-</text>
+            <text class="util-cell col-lux-val">150</text>
+          </view>
         </view>
       </view>
 

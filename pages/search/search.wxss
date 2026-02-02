@@ -975,10 +975,14 @@ page {
 
 /* 维护系数表格列宽 */
 .col-env {
-  flex: 0 0 120rpx;
+  flex: 0 0 130rpx;
   font-weight: 600;
   color: #1C1C1E;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .col-place {
@@ -987,19 +991,28 @@ page {
   color: #636366;
   font-size: 24rpx;
   text-align: center;
+  padding: 0 10rpx;
 }
 
 .col-clean {
-  flex: 0 0 90rpx;
+  flex: 0 0 100rpx;
   text-align: center;
   color: #333;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.col-val {
-  flex: 0 0 180rpx;
+.util-table .col-val {
+  flex: 0 0 150rpx;
   text-align: center;
   color: #007AFF;
   font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 光源利用率表格列宽 */
@@ -1021,6 +1034,29 @@ page {
   word-break: break-all;
   overflow-wrap: break-word;
   text-align: center;
+}
+
+/* 目标照度表格列宽 (新增) */
+.col-lux-room {
+  flex: 0 0 230rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  padding-left: 10rpx;
+}
+
+.col-lux-action {
+  flex: 0 0 160rpx;
+  min-width: 0;
+  color: #636366;
+  font-size: 24rpx;
+}
+
+.col-lux-val {
+  flex: 0 0 250rpx;
+  text-align: center;
+  color: #007AFF;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 /* 底部提示卡片 - 更加柔和 */
@@ -1199,18 +1235,6 @@ page {
   text-overflow: ellipsis;
 }
 
-.col-val {
-  width: 150rpx; /* 与表头宽度保持一致 */
-  flex-shrink: 0;
-  text-align: center;
-  color: #000;
-  font-weight: 500;
-  border-left: 2rpx solid #333; /* 照度值左边框 */
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* 特殊处理：如果是单行且无 activity，隐藏 activity 列的显示 */
 .single-row-item .col-activity {
