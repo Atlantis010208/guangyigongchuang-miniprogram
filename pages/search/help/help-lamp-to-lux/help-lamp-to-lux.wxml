@@ -1,10 +1,22 @@
 <view class="container">
-  <!-- 按灯具算照度 详细说明 -->
+  <!-- 顶部说明卡片 -->
   <view class="card">
     <view class="section-header">
       <text class="section-title">按灯具算照度 · 详细使用说明</text>
     </view>
     <view class="card-divider-green"></view>
+    <view class="card-body">
+      <view class="text-paragraph">
+        本工具基于 <text class="bold">《建筑照明设计标准》</text> 的照度要求，用于辅助判断空间照明是否达标，以及在设计前期进行灯具数量与参数的快速推算。
+      </view>
+      <view class="text-paragraph">
+        工具并非替代完整照明设计，而是用于<text class="bold">设计判断、方案校验与参数决策</text>。
+      </view>
+    </view>
+  </view>
+
+  <!-- 按灯具算照度 详细说明 -->
+  <view class="card">
     <view class="card-body">
       
       <!-- 用途 (子卡片) -->
