@@ -15,6 +15,23 @@
     </view>
   </view>
 
+  <!-- 视频说明卡片 -->
+  <view class="card" wx:if="{{!videoLoading && videoUrl}}">
+    <view class="section-header">
+      <text class="section-title">视频说明</text>
+    </view>
+    <view class="card-divider-green"></view>
+    <view class="video-wrapper">
+      <video 
+        src="{{videoUrl}}" 
+        style="width: 100%; height: 100%;"
+        object-fit="contain"
+        show-center-play-btn="{{true}}" 
+        controls
+      ></video>
+    </view>
+  </view>
+
   <!-- 按照度算数量 详细说明 -->
   <view class="card">
     <view class="card-body">

@@ -10,6 +10,8 @@
 
 /* 卡片容器 */
 .card {
+  width: 100%;
+  box-sizing: border-box;
   background-color: #FFFFFF;
   border-radius: 24rpx; /* 大圆角 */
   padding: 40rpx;
@@ -322,4 +324,19 @@
   background-color: #EEEEEE;
   margin: 40rpx 0;
   width: 100%;
+}
+
+/* 视频说明卡片样式 */
+.video-wrapper {
+  width: 100%;
+  height: 400rpx;
+  background-color: #000000;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.video-wrapper video {
+  width: 100% !important;
+  height: 100% !important;
 }

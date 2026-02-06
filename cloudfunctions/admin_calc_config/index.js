@@ -217,6 +217,24 @@ exports.main = async (event) => {
   try {
     const { action = 'get', data, mode, config } = event
     
+    // 公开接口：获取帮助视频配置（不需要管理员权限）
+    if (action === 'get_help_video') {
+      const configData = await getConfig()
+      // 只返回视频相关配置
+      const helpVideos = {
+        count: configData.modes?.count?.helpVideo || '',
+        quantity: configData.modes?.quantity?.helpVideo || '',
+        lux: configData.modes?.lux?.helpVideo || ''
+      }
+      return {
+        success: true,
+        code: 'OK',
+        data: helpVideos,
+        message: '获取帮助视频配置成功'
+      }
+    }
+    
+    // 以下操作需要管理员权限
     // 权限验证
     const authResult = await requireAdmin(db, _)
     
