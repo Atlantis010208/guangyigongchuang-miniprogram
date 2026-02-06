@@ -174,8 +174,11 @@ Page({
    */
   onCourseTap(e) {
     const id = e.currentTarget.dataset.id;
+    const purchased = e.currentTarget.dataset.purchased === true;
     wx.navigateTo({
-      url: `/pages/course/course-detail/course-detail?id=${id}`,
+      url: purchased
+        ? `/pages/course/course-detail/course-detail?id=${id}&tab=1`
+        : `/pages/course/course-detail/course-detail?id=${id}`,
     });
   },
 

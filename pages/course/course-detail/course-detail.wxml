@@ -32,7 +32,7 @@
   </view>
 
   <!-- Info Section -->
-  <view class="info-card apple-card padding-medium shadow-medium slide-up">
+  <view class="info-card apple-card padding-medium shadow-medium slide-up" wx:if="{{!isPurchased}}">
     <text class="title-large">{{course.title}}</text>
     <text class="subtitle-text">{{course.subtitle}}</text>
     

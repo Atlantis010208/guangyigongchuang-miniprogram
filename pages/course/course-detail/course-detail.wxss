@@ -37,7 +37,7 @@
 
 /* Info Card */
 .info-card {
-  margin-top: 10rpx; /* Overlap effect */
+  margin-top: 40rpx; /* Overlap effect */
   position: relative;
   z-index: 10;
   margin-left: 30rpx;

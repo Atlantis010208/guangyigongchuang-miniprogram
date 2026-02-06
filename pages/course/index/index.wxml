@@ -30,7 +30,7 @@
   <!-- Content (only show when not loading/error) -->
   <block wx:else>
     <!-- Hero Card (Featured Course) -->
-    <view class="hero-card apple-card shadow-medium" wx:if="{{featuredCourse}}" bindtap="onCourseTap" data-id="{{featuredCourse.id}}">
+    <view class="hero-card apple-card shadow-medium" wx:if="{{featuredCourse}}" bindtap="onCourseTap" data-id="{{featuredCourse.id}}" data-purchased="{{featuredCourse.isPurchased}}">
       <view class="hero-image-wrapper">
         <image src="{{featuredCourse.coverUrl}}" mode="aspectFill" class="hero-image"></image>
         <!-- 移除之前的 Overlay 和 Content，文字移到下方 -->
@@ -70,7 +70,7 @@
 
     <block wx:if="{{courses && courses.length > 0}}">
     <block wx:for="{{courses}}" wx:key="id">
-      <view class="course-item apple-card flex-row" bindtap="onCourseTap" data-id="{{item.id}}">
+      <view class="course-item apple-card flex-row" bindtap="onCourseTap" data-id="{{item.id}}" data-purchased="{{item.isPurchased}}">
         <image src="{{item.coverUrl}}" mode="aspectFill" class="course-thumb"></image>
         <view class="course-info flex-column flex-1">
           <view class="info-top">

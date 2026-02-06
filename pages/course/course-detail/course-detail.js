@@ -25,13 +25,17 @@ Page({
     const { id, autoPlay } = options;
     this.courseId = id;
     this.autoPlay = autoPlay === '1';
+
+    const tab = parseInt(options.tab, 10);
+    const initialTab = tab === 1 ? 1 : 0;
     
     // 重置状态，确保数据干净
     this.setData({
       isPurchased: false,
       progress: 0,
       course: null,
-      chapters: []
+      chapters: [],
+      activeTab: initialTab
     });
     
     if (id) {
