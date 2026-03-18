@@ -1,0 +1,52 @@
+<!--pages/identity/identity.wxml-->
+<view class="container">
+  <!-- 标题区 -->
+  <view class="header">
+    <!-- <text class="brand-name">光乙</text> -->
+  </view>
+
+  <!-- 内容区 -->
+  <view class="main">
+    <view class="title-section">
+      <text class="title">开启灯光之旅</text>
+      <text class="subtitle">请选择您的身份</text>
+    </view>
+
+    <view class="role-list">
+      <!-- 业主选项 -->
+      <view class="role-item {{selectedRole === 'owner' ? 'selected' : ''}}" bindtap="selectRole" data-role="owner">
+        <view class="icon-wrap">
+          <image class="role-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjOTk5OTk5Ij48cGF0aCBkPSJNMTYwLTEyMHYtNDgwbDMyMC0yNDAgMzIwIDI0MHY0ODBINTYwdi0yODBINDAwdjI4MEgxNjBaIi8+PC9zdmc+" mode="aspectFit" wx:if="{{selectedRole !== 'owner'}}"></image>
+          <image class="role-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjMDAwMDAwIj48cGF0aCBkPSJNMTYwLTEyMHYtNDgwbDMyMC0yNDAgMzIwIDI0MHY0ODBINTYwdi0yODBINDAwdjI4MEgxNjBaIi8+PC9zdmc+" mode="aspectFit" wx:if="{{selectedRole === 'owner'}}"></image>
+        </view>
+        <view class="role-info">
+          <text class="role-name">我是业主</text>
+          <text class="role-desc">寻找专业设计师，为您定制高品质光影空间</text>
+        </view>
+        <view class="radio-wrap">
+          <view class="radio-circle"></view>
+        </view>
+      </view>
+
+      <!-- 设计师选项 -->
+      <view class="role-item {{selectedRole === 'designer' ? 'selected' : ''}}" bindtap="selectRole" data-role="designer">
+        <view class="icon-wrap">
+          <image class="role-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjOTk5OTk5Ij48cGF0aCBkPSJNNDgwLTI4MHEtODMgMC0xNDEuNS01OC41VDI4MC00ODBxMC04MyA1OC41LTE0MS41VDQ4MC02ODBxODMgMCAxNDEuNSA1OC41VDY4MC00ODBxMCA4My01OC41IDE0MS41VDQ4MC0yODBaTTIwMC00NDBIMDB2LTgwaDE2MHY4MFptNzIwIDBINzYwdi04MGgxNjB2ODBaTTQ0MC03NjB2LTE2MGg4MHYxNjBoLTgwWm0wIDcyMHYtMTYwaDgwdjE2MGgtODBaTTI1Ni02NTBsLTEwMS05NyA1Ny01OSA5NiAxMDAtNTIgNTZabTQ5MiA0OTYtOTctMTAxIDUzLTU1IDEwMSA5Ny01NyA1OVptLTk4LTU1MCA5Ny0xMDEgNTkgNTctMTAwIDk2LTU2LTUyWk0xNTQtMjEybDEwMS05NyA1NSA1My05NyAxMDEtNTktNTdaIi8+PC9zdmc+" mode="aspectFit" wx:if="{{selectedRole !== 'designer'}}"></image>
+          <image class="role-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjMDAwMDAwIj48cGF0aCBkPSJNNDgwLTI4MHEtODMgMC0xNDEuNS01OC41VDI4MC00ODBxMC04MyA1OC41LTE0MS41VDQ4MC02ODBxODMgMCAxNDEuNSA1OC41VDY4MC00ODBxMCA4My01OC41IDE0MS41VDQ4MC0yODBaTTIwMC00NDBIMDB2LTgwaDE2MHY4MFptNzIwIDBINzYwdi04MGgxNjB2ODBaTTQ0MC03NjB2LTE2MGg4MHYxNjBoLTgwWm0wIDcyMHYtMTYwaDgwdjE2MGgtODBaTTI1Ni02NTBsLTEwMS05NyA1Ny01OSA5NiAxMDAtNTIgNTZabTQ5MiA0OTYtOTctMTAxIDUzLTU1IDEwMSA5Ny01NyA1OVptLTk4LTU1MCA5Ny0xMDEgNTkgNTctMTAwIDk2LTU2LTUyWk0xNTQtMjEybDEwMS05NyA1NSA1My05NyAxMDEtNTktNTdaIi8+PC9zdmc+" mode="aspectFit" wx:if="{{selectedRole === 'designer'}}"></image>
+        </view>
+        <view class="role-info">
+          <text class="role-name">我是设计师</text>
+          <text class="role-desc">展示优秀作品，入驻平台接单，与业主共创价值</text>
+        </view>
+        <view class="radio-wrap">
+          <view class="radio-circle"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="footer">
+    <button class="confirm-btn {{selectedRole ? 'active' : ''}}" bindtap="onConfirm" loading="{{loading}}" disabled="{{!selectedRole || loading}}">确认选择</button>
+  </view>
+</view>

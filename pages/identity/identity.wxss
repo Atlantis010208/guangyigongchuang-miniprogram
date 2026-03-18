@@ -1,0 +1,186 @@
+/* pages/identity/identity.wxss */
+page {
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, "Segoe UI", Arial, Roboto, "PingFang SC", "miui", "Hiragino Sans GB", "Microsoft Yahei", sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* 顶部标题区 */
+.header {
+  padding-top: 120rpx; /* 根据实际导航栏高度调整 */
+  padding-bottom: 32rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brand-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.05em;
+}
+
+/* 主内容区 */
+.main {
+  flex: 1;
+  padding: 48rpx 48rpx 200rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.title-section {
+  text-align: center;
+  margin-bottom: 96rpx;
+}
+
+.title {
+  display: block;
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 16rpx;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 300;
+  color: #999999;
+  letter-spacing: 0.05em;
+}
+
+/* 角色选项列表 */
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 48rpx;
+}
+
+.role-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 48rpx;
+  border-radius: 32rpx;
+  border: 2rpx solid #eeeeee;
+  background-color: #ffffff;
+  transition: all 0.3s ease-out;
+  position: relative;
+}
+
+.role-item.selected {
+  border-color: #000000;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
+}
+
+.icon-wrap {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background-color: #f8f8f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 32rpx;
+  flex-shrink: 0;
+}
+
+.role-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.role-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 4rpx;
+}
+
+.role-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 16rpx;
+}
+
+.role-desc {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* 自定义单选框 */
+.radio-wrap {
+  padding-top: 16rpx;
+  padding-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.radio-circle {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid #dddddd;
+  transition: all 0.3s ease-in-out;
+  box-sizing: border-box;
+}
+
+.role-item.selected .radio-circle {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+/* 底部按钮区 */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 64rpx 64rpx 100rpx; /* 适配底部安全区 */
+  background: linear-gradient(to top, rgba(255,255,255,1) 70%, rgba(255,255,255,0));
+  z-index: 20;
+}
+
+.confirm-btn {
+  width: 100% !important;
+  height: 112rpx;
+  background-color: #e0e0e0;
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  border-radius: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.confirm-btn::after {
+  border: none;
+}
+
+.confirm-btn.active {
+  background-color: #000000;
+}
+
+.confirm-btn.active:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
