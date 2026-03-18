@@ -1,0 +1,10 @@
+{
+  "name": "admin_designer_whitelist_list",
+  "version": "1.0.0",
+  "description": "查询设计师白名单列表",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

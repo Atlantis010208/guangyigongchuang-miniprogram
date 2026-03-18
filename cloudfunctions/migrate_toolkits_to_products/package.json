@@ -1,0 +1,9 @@
+{
+  "name": "migrate_toolkits_to_products",
+  "version": "1.0.0",
+  "description": "一次性迁移：将 toolkits 集合数据迁移到 products 集合",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

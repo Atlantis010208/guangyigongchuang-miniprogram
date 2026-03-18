@@ -1,0 +1,9 @@
+{
+  "name": "toolkit_whitelist_sync",
+  "version": "1.0.0",
+  "description": "小红书订单同步工具包白名单（供爬虫调用）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

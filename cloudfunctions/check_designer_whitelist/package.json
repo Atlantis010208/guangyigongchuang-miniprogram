@@ -1,0 +1,9 @@
+{
+  "name": "check_designer_whitelist",
+  "version": "1.0.0",
+  "description": "验证手机号是否在设计师白名单中",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
