@@ -34,6 +34,8 @@ Page({
   onLoad(options) {
     // 保存来源页面（用于登录成功后返回）
     this.redirectUrl = options.redirect ? decodeURIComponent(options.redirect) : ''
+    // 保存来源标识（如 designer 表示从身份选择页选择设计师进入）
+    this.fromSource = options.from || ''
     
     // 检查是否已登录且未过期
     this.checkLoginStatus()
@@ -51,7 +53,7 @@ Page({
 
       if (userDoc && userDoc._id && openid && expireTime && now < expireTime) {
         console.log('登录状态有效，返回上一页或跳转首页')
-        this.navigateAfterLogin()
+        this.navigateAfterLogin(userDoc)
         return
       }
 
@@ -67,8 +69,30 @@ Page({
   /**
    * 登录成功后的跳转逻辑
    * 优先返回来源页面，否则返回上一页，最后才跳转首页
+   * @param {object} userDoc 用户文档（可选，用于设计师角色验证）
    */
-  navigateAfterLogin() {
+  navigateAfterLogin(userDoc) {
+    // 如果来自设计师身份验证，需要通过手机号白名单校验
+    if (this.fromSource === 'designer') {
+      const doc = userDoc || wx.getStorageSync('userDoc') || {}
+      const phone = doc.phoneNumber || ''
+
+      if (!phone) {
+        // 没有手机号，无法验证白名单
+        wx.showModal({
+          title: '验证失败',
+          content: '未获取到手机号，无法验证设计师身份，请先授权手机号',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+        return
+      }
+
+      // 调用云函数验证手机号白名单
+      this.checkDesignerWhitelist(phone, doc)
+      return
+    }
+
     // 如果有指定的重定向页面
     if (this.redirectUrl) {
       wx.redirectTo({ 
@@ -93,6 +117,49 @@ Page({
 
     // 没有上一页，跳转到首页
     wx.reLaunch({ url: '/pages/products/products' })
+  },
+
+  /**
+   * 调用云函数验证设计师白名单
+   * @param {string} phone 手机号
+   * @param {object} userDoc 用户文档
+   */
+  async checkDesignerWhitelist(phone, userDoc) {
+    try {
+      wx.showLoading({ title: '验证设计师身份...', mask: true })
+
+      const res = await wx.cloud.callFunction({
+        name: 'check_designer_whitelist',
+        data: { phone }
+      })
+
+      wx.hideLoading()
+
+      if (res.result && res.result.success && res.result.isDesigner) {
+        // 白名单验证通过
+        const app = getApp()
+        if (app) {
+          app.globalData.userDoc = { ...userDoc, roles: 2, identitySelected: true }
+          app.globalData.isFirstLaunch = false
+        }
+        wx.setStorageSync('userDoc', { ...userDoc, roles: 2, identitySelected: true })
+        wx.showToast({ title: '验证通过', icon: 'success', duration: 2000 })
+      } else {
+        // 白名单验证失败，跳转到权限受限提示页
+        wx.redirectTo({
+          url: '/pages/auth/designer-denied/designer-denied'
+        })
+      }
+    } catch (err) {
+      wx.hideLoading()
+      console.error('设计师白名单验证失败:', err)
+      wx.showModal({
+        title: '验证失败',
+        content: '网络异常，请稍后重试',
+        showCancel: false,
+        confirmText: '知道了'
+      })
+    }
   },
 
   /**
@@ -193,7 +260,7 @@ Page({
         if (user.nickname && user.avatarUrl && user.phoneNumber) {
           this.setData({ step: 4 })
           wx.showToast({ title: '登录成功', icon: 'success' })
-          setTimeout(() => this.navigateAfterLogin(), 1000)
+          setTimeout(() => this.navigateAfterLogin(user), 1000)
           return
         }
 
@@ -481,7 +548,7 @@ Page({
       if (newDoc && newDoc.phoneNumber) {
         this.setData({ step: 4 })
         wx.showToast({ title: '登录成功', icon: 'success' })
-        setTimeout(() => this.navigateAfterLogin(), 1000)
+        setTimeout(() => this.navigateAfterLogin(newDoc), 1000)
         return
       }
 
@@ -579,7 +646,7 @@ Page({
       wx.hideLoading()
       wx.showToast({ title: '授权成功', icon: 'success' })
 
-      setTimeout(() => this.navigateAfterLogin(), 1200)
+      setTimeout(() => this.navigateAfterLogin(this.data.userDoc), 1200)
     } catch (err) {
       wx.hideLoading()
       console.error('获取手机号失败', err)
@@ -602,7 +669,8 @@ Page({
         if (res.confirm) {
           this.setData({ step: 4 })
           wx.showToast({ title: '登录成功', icon: 'success' })
-          setTimeout(() => this.navigateAfterLogin(), 1000)
+          const userDoc = this.data.userDoc || wx.getStorageSync('userDoc')
+          setTimeout(() => this.navigateAfterLogin(userDoc), 1000)
         }
       }
     })

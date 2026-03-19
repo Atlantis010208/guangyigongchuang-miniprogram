@@ -13,8 +13,10 @@
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",
     "pages/auth/agreement/agreement",
+    "pages/auth/designer-denied/designer-denied",
     "pages/course/course-detail/course-detail",
-    "pages/course/video-player/video-player"
+    "pages/course/video-player/video-player",
+    "pages/identity/identity"
   ],
   "subpackages": [
     {
