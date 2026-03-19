@@ -87,82 +87,82 @@ Page({
   },
 
   // ========== TODO: chooseAddress 接口暂未开通，后续开放时取消注释 ==========
-  // getWxAddress() {
-  //   const that = this
-  //   wx.getSetting({
-  //     success(res) {
-  //       if (res.authSetting['scope.address'] === false) {
-  //         wx.showModal({
-  //           title: '授权提示',
-  //           content: '需要您授权获取收货地址，是否前往设置？',
-  //           confirmText: '去设置',
-  //           success(modalRes) {
-  //             if (modalRes.confirm) {
-  //               wx.openSetting({
-  //                 success(settingRes) {
-  //                   if (settingRes.authSetting['scope.address']) {
-  //                     that.callChooseAddress()
-  //                   }
-  //                 }
-  //               })
-  //             }
-  //           }
-  //         })
-  //       } else {
-  //         that.callChooseAddress()
-  //       }
-  //     },
-  //     fail() {
-  //       that.callChooseAddress()
-  //     }
-  //   })
-  // },
-  // callChooseAddress() {
-  //   const that = this
-  //   wx.chooseAddress({
-  //     success(res) {
-  //       const wxAddress = {
-  //         id: 'wx_' + Date.now(),
-  //         name: res.userName,
-  //         phone: res.telNumber,
-  //         region: [res.provinceName, res.cityName, res.countyName],
-  //         town: '',
-  //         detail: res.detailInfo,
-  //         postalCode: res.postalCode,
-  //         nationalCode: res.nationalCode,
-  //         isDefault: that.data.addresses.length === 0,
-  //         source: 'wechat'
-  //       }
-  //       const existIndex = that.data.addresses.findIndex(addr =>
-  //         addr.name === wxAddress.name &&
-  //         addr.phone === wxAddress.phone &&
-  //         addr.detail === wxAddress.detail
-  //       )
-  //       if (existIndex > -1) {
-  //         wx.showToast({ title: '该地址已存在', icon: 'none' })
-  //         return
-  //       }
-  //       const region = wxAddress.region.filter(Boolean).join(' ')
-  //       wxAddress.full = [region, wxAddress.town, wxAddress.detail].filter(Boolean).join(' ')
-  //       const addresses = [wxAddress, ...that.data.addresses]
-  //       if (wxAddress.isDefault) {
-  //         addresses.forEach((addr, idx) => { if (idx > 0) addr.isDefault = false })
-  //       }
-  //       that.setData({ addresses })
-  //       wx.setStorageSync('user_addresses', addresses)
-  //       that.syncToCloud(addresses)
-  //       wx.showToast({ title: '地址添加成功', icon: 'success' })
-  //     },
-  //     fail(err) {
-  //       if (err.errMsg && err.errMsg.indexOf('cancel') > -1) return
-  //       if (err.errMsg && err.errMsg.indexOf('auth deny') > -1) {
-  //         wx.showModal({ title: '授权提示', content: '您拒绝了获取收货地址的授权', showCancel: false })
-  //       } else {
-  //         wx.showModal({ title: '获取失败', content: '无法获取微信地址，请手动添加', showCancel: false })
-  //       }
-  //     }
-  //   })
-  // },
+  getWxAddress() {
+    const that = this
+    wx.getSetting({
+      success(res) {
+        if (res.authSetting['scope.address'] === false) {
+          wx.showModal({
+            title: '授权提示',
+            content: '需要您授权获取收货地址，是否前往设置？',
+            confirmText: '去设置',
+            success(modalRes) {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success(settingRes) {
+                    if (settingRes.authSetting['scope.address']) {
+                      that.callChooseAddress()
+                    }
+                  }
+                })
+              }
+            }
+          })
+        } else {
+          that.callChooseAddress()
+        }
+      },
+      fail() {
+        that.callChooseAddress()
+      }
+    })
+  },
+  callChooseAddress() {
+    const that = this
+    wx.chooseAddress({
+      success(res) {
+        const wxAddress = {
+          id: 'wx_' + Date.now(),
+          name: res.userName,
+          phone: res.telNumber,
+          region: [res.provinceName, res.cityName, res.countyName],
+          town: '',
+          detail: res.detailInfo,
+          postalCode: res.postalCode,
+          nationalCode: res.nationalCode,
+          isDefault: that.data.addresses.length === 0,
+          source: 'wechat'
+        }
+        const existIndex = that.data.addresses.findIndex(addr =>
+          addr.name === wxAddress.name &&
+          addr.phone === wxAddress.phone &&
+          addr.detail === wxAddress.detail
+        )
+        if (existIndex > -1) {
+          wx.showToast({ title: '该地址已存在', icon: 'none' })
+          return
+        }
+        const region = wxAddress.region.filter(Boolean).join(' ')
+        wxAddress.full = [region, wxAddress.town, wxAddress.detail].filter(Boolean).join(' ')
+        const addresses = [wxAddress, ...that.data.addresses]
+        if (wxAddress.isDefault) {
+          addresses.forEach((addr, idx) => { if (idx > 0) addr.isDefault = false })
+        }
+        that.setData({ addresses })
+        wx.setStorageSync('user_addresses', addresses)
+        that.syncToCloud(addresses)
+        wx.showToast({ title: '地址添加成功', icon: 'success' })
+      },
+      fail(err) {
+        if (err.errMsg && err.errMsg.indexOf('cancel') > -1) return
+        if (err.errMsg && err.errMsg.indexOf('auth deny') > -1) {
+          wx.showModal({ title: '授权提示', content: '您拒绝了获取收货地址的授权', showCancel: false })
+        } else {
+          wx.showModal({ title: '获取失败', content: '无法获取微信地址，请手动添加', showCancel: false })
+        }
+      }
+    })
+  },
   // ========== 微信地址功能 - 结束 ==========
 
   editAddress(e) {
