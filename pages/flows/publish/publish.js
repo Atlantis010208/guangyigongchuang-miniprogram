@@ -12,10 +12,63 @@ Page({
     share:'愿意',
     coCreate:'愿意',
     submitting:false,
-    // 级联选择配置
-    formFieldOrder: ['space', 'service', 'budget', 'area', 'stage', 'share', 'coCreate'],
-    // 滚动位置（用于自动滚动）
-    scrollIntoView: ''
+    
+    // 分步表单状态
+    keyboardHeight: 0,
+    currentStep: 0,
+    isNextValid: false,
+    steps: [
+      {
+        id: 'space',
+        title: '01 空间类型',
+        subtitle: '',
+        type: 'choice',
+        options: ['住宅', '商铺', '办公室', '其他'],
+      },
+      {
+        id: 'service',
+        title: '02 需要什么服务？',
+        subtitle: '根据个人需求选择',
+        type: 'choice',
+        options: ['选灯配灯服务', '只深化灯光施工图', '整套灯光设计'],
+      },
+      {
+        id: 'budget',
+        title: '03 设计预算',
+        subtitle: '整套灯光根据你的预算匹配对应的设计师，最低价格不低于9元/平，预算越高将匹配到更有经验的共创设计师',
+        type: 'choice',
+        options: ['¥5/m²（只针对选灯配灯）', '¥9/m²', '¥16/m²', '¥19/m²', '¥29/m²', '¥39/m²', '¥50/m²及以上', '其他'],
+      },
+      {
+        id: 'area',
+        title: '04 设计面积',
+        subtitle: '根据你家大概面积进行填写，只填写需要设计的面积。面积低于50平按50平收费！',
+        type: 'input',
+        inputLabel: '面积(m²)',
+        inputPlaceholder: '请输入数字',
+      },
+      {
+        id: 'stage',
+        title: '05 项目进度',
+        subtitle: '',
+        type: 'choice',
+        options: ['未开始', '正在设计', '装修中', '已完成装修'],
+      },
+      {
+        id: 'share',
+        title: '06 愿意分享你家的装修故事换取折扣吗？',
+        subtitle: '',
+        type: 'choice',
+        options: ['愿意', '不愿意'],
+      },
+      {
+        id: 'coCreate',
+        title: '07 愿意跟设计师共创你的设计吗？',
+        subtitle: '',
+        type: 'choice',
+        options: ['愿意', '不愿意'],
+      }
+    ]
   },
 
   onLoad(){
@@ -30,63 +83,91 @@ Page({
       this.setData(data)
       wx.removeStorageSync('publish_prefill')
     }
+    this.checkNextValid()
   },
 
-  // ========== 级联选择核心方法 ==========
-  triggerNextField(currentField) {
-    const order = this.data.formFieldOrder
-    const currentIndex = order.indexOf(currentField)
-    if (currentIndex === -1 || currentIndex >= order.length - 1) return
-    
-    const nextField = order[currentIndex + 1]
-    
-    // 延迟滚动到下一项
-    setTimeout(() => {
-      this.setData({ scrollIntoView: `section-${nextField}` })
-    }, 200)
+  // ========== 键盘高度监听 ==========
+  onKeyboardHeightChange(e) {
+    this.setData({ keyboardHeight: e.detail.height || 0 })
   },
 
-  // 交互事件（添加级联触发）
-  onSpaceChange(e){ 
-    this.setData({ space:e.detail.value }, () => {
-      this.triggerNextField('space')
-    }) 
+  // ========== 分步交互逻辑 ==========
+  checkNextValid() {
+    const step = this.data.steps[this.data.currentStep]
+    let valid = false
+    if (step.type === 'choice') {
+      const val = this.data[step.id]
+      if (val) {
+        if (val === '其他') {
+          valid = !!(this.data[step.id + 'Other'] && this.data[step.id + 'Other'].trim())
+        } else {
+          valid = true
+        }
+      }
+    } else if (step.type === 'input') {
+      valid = !!(this.data[step.id] && String(this.data[step.id]).trim())
+    }
+    this.setData({ isNextValid: valid })
   },
-  onSpaceOther(e){ this.setData({ spaceOther:e.detail.value }) },
-  onServiceChange(e){ 
-    this.setData({ service:e.detail.value }, () => {
-      this.triggerNextField('service')
-    }) 
+
+  handleOptionSelect(e) {
+    const { id, option } = e.currentTarget.dataset
+    this.setData({ [id]: option }, () => {
+      this.checkNextValid()
+      
+      // 如果不是选择了"其他"，且不是最后一题，直接自动下一步
+      if (option !== '其他' && this.data.currentStep < this.data.steps.length - 1) {
+        if (this._nextTimer) clearTimeout(this._nextTimer)
+        this._nextTimer = setTimeout(() => {
+          this.handleNext()
+        }, 300)
+      }
+    })
   },
-  onBudgetChange(e){ 
-    this.setData({ budget:e.detail.value }, () => {
-      this.triggerNextField('budget')
-    }) 
+
+  handleOtherInput(e) {
+    const { id } = e.currentTarget.dataset
+    this.setData({ [id + 'Other']: e.detail.value }, () => {
+      this.checkNextValid()
+    })
   },
-  onBudgetOther(e){ this.setData({ budgetOther:e.detail.value }) },
-  onArea(e){ 
-    this.setData({ area:e.detail.value })
-    // 面积填写后不自动触发（因为是输入框，用户可能还在输入）
-  },
-  onAreaBlur(e){
-    // 面积输入框失焦后触发下一项
-    if(this.data.area){
-      this.triggerNextField('area')
+
+  handleOtherConfirm(e) {
+    this.setData({ keyboardHeight: 0 })
+    if (this.data.isNextValid) {
+      this.handleNext()
     }
   },
-  onStageChange(e){ 
-    this.setData({ stage:e.detail.value }, () => {
-      this.triggerNextField('stage')
-    }) 
+
+  handleNumberInput(e) {
+    const { id } = e.currentTarget.dataset
+    this.setData({ [id]: e.detail.value }, () => {
+      this.checkNextValid()
+    })
   },
-  onShareChange(e){ 
-    this.setData({ share:e.detail.value }, () => {
-      this.triggerNextField('share')
-    }) 
+
+  handleNumberConfirm(e) {
+    this.setData({ keyboardHeight: 0 })
+    if (this.data.isNextValid) {
+      this.handleNext()
+    }
   },
-  onCoCreateChange(e){ 
-    this.setData({ coCreate:e.detail.value })
-    // 最后一项，不再触发
+
+  handlePrev() {
+    if (this.data.currentStep > 0) {
+      this.setData({ currentStep: this.data.currentStep - 1 }, () => {
+        this.checkNextValid()
+      })
+    }
+  },
+
+  handleNext() {
+    if (!this.data.isNextValid) return
+    if (this.data.currentStep < this.data.steps.length - 1) {
+      this.setData({ currentStep: this.data.currentStep + 1 }, () => {
+        this.checkNextValid()
+      })
+    }
   },
 
   async onSubmit(){
