@@ -26,6 +26,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 检查是否需要选择身份
+    this.checkIdentitySelection()
     // 从数据库动态获取工具包和课程的封面图片
     this.loadAssistantCovers()
   },
@@ -127,11 +129,44 @@ Page({
    * 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
    */
   onShow() {
+    // 每次显示时也检查身份选择状态
+    this.checkIdentitySelection()
     this.loadUserAvatar()
     // 预加载避坑指南 PDF（后台静默下载）
     this.preloadPdfFile(PDF_BIKENG_GUIDE)
     // 预加载灯光设计服务说明书 PDF（后台静默下载）
     this.preloadPdfFile(PDF_DESIGN_SERVICE)
+  },
+
+  /**
+   * 检查用户是否已选择身份
+   * 首次启动或未选择身份时，跳转到身份选择页
+   */
+  checkIdentitySelection() {
+    const app = getApp()
+    if (!app) return
+
+    // 管理员(roles=0)不需要选择身份，直接放行
+    const userDoc = wx.getStorageSync('userDoc') || {}
+    if (userDoc.roles === 0) return
+
+    // 已选择身份的用户不再跳转
+    if (userDoc.identitySelected === true) return
+
+    // 首次启动 或 用户未选择身份 -> 跳转身份选择页
+    if (app.globalData.isFirstLaunch || !userDoc.identitySelected) {
+      // 检查云端用户记录
+      const openid = wx.getStorageSync('openid')
+      if (openid && userDoc._id) {
+        // 已登录用户，检查云端 identitySelected 状态
+        if (userDoc.identitySelected !== true) {
+          wx.navigateTo({ url: '/pages/identity/identity' })
+        }
+      } else {
+        // 未登录用户，首次启动跳转身份选择页
+        wx.navigateTo({ url: '/pages/identity/identity' })
+      }
+    }
   },
 
   /**

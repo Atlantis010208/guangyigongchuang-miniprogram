@@ -6,6 +6,14 @@ cloud.init({
 })
 
 const db = cloud.database()
+const _ = db.command
+
+// 小程序侧边栏中文分类名 → 数据库查询条件映射
+const CATEGORY_MAP = {
+  '设计服务': { type: 'virtual', virtualCategory: 'design_service' },
+  '资料工具': { type: 'virtual', virtualCategory: 'data_tool' },
+  '灯具':     { type: _.neq('virtual') }
+}
 
 // 云函数入口函数
 exports.main = async (event, context) => {
@@ -30,9 +38,14 @@ exports.main = async (event, context) => {
       status: 'active'
     }
 
-    // 分类筛选
+    // 分类筛选（支持小程序中文分类名映射）
     if (category) {
-      query.category = category
+      const mapped = CATEGORY_MAP[category]
+      if (mapped) {
+        Object.assign(query, mapped)
+      } else {
+        query.categoryId = category
+      }
     }
 
     // 价格区间筛选
@@ -79,42 +92,35 @@ exports.main = async (event, context) => {
     for (let product of products) {
       if (product.images && product.images.length > 0) {
         try {
-          // 分类处理不同格式的图片
-          const cloudFileIds = [] // cloud:// 格式的文件ID
-          const cloudFileIndexes = [] // 对应的索引位置
-          const processedImages = [...product.images] // 复制原始数组
+          const cloudFileIds = []
+          const cloudFileIndexes = []
+          const processedImages = [...product.images]
 
           product.images.forEach((image, index) => {
             if (typeof image === 'string') {
               if (image.startsWith('cloud://')) {
-                // 云文件ID，需要转换为临时URL
                 cloudFileIds.push(image)
                 cloudFileIndexes.push(index)
               }
-              // 其他格式（https://、data:image/ 等）保持原样
             }
           })
 
-          // 只对 cloud:// 格式的文件ID调用 getTempFileURL
           if (cloudFileIds.length > 0) {
             const tempFileResult = await cloud.getTempFileURL({
               fileList: cloudFileIds
             })
             
-            // 将转换后的临时URL填回对应位置
             tempFileResult.fileList.forEach((file, i) => {
               const originalIndex = cloudFileIndexes[i]
               if (file.tempFileURL) {
                 processedImages[originalIndex] = file.tempFileURL
               }
-              // 如果转换失败，保持原始的 cloud:// URL
             })
           }
 
           product.images = processedImages
         } catch (error) {
           console.warn('获取商品图片URL失败:', error)
-          // 保持原始图片数据
         }
       }
     }

@@ -57,7 +57,7 @@
             <text class="service-pill-text">设计课程</text>
         </view>
         <view class="service-pill" bindtap="onMallTap">
-            <text class="service-pill-text">灯具</text>
+            <text class="service-pill-text">商城</text>
         </view>
         <view class="service-pill" bindtap="onServiceTap" data-service="full">
             <text class="service-pill-text">设计服务</text>

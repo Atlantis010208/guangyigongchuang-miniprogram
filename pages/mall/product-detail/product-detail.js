@@ -18,7 +18,18 @@ Page({
     cartCount: 0,  // 购物车商品数量，用于 Vant 商品导航 info 徽标显示
     product: null,  // 完整商品数据 (用于 product-specs 组件)
     showSkuPopup: false,  // 规格选择弹窗显示状态
-    skuAction: ''  // 当前操作类型：'cart' | 'buy' | 'preview'
+    skuAction: '',  // 当前操作类型：'cart' | 'buy' | 'preview'
+    // 虚拟商品相关
+    isVirtual: false,           // 是否为虚拟商品
+    deliveryType: '',           // 交付方式：download / service
+    deliveryLabel: '',          // 交付方式标签
+    hasPurchased: false,        // 是否已购买
+    purchaseInfo: null,         // 购买信息（已购时包含联系方式/下载信息）
+    // toolkit 风格字段（虚拟商品复用）
+    current: 0,                 // 轮播图当前索引
+    bannerHeight: 560,          // 轮播图自适应高度
+    detailImages: [],           // 商品详情图
+    totalPrice: 0,              // 合计价格
   },
 
   onLoad(query) {
@@ -48,24 +59,67 @@ Page({
       
       if (res.result && res.result.success && res.result.data) {
         const product = res.result.data.product
+        const purchaseInfo = res.result.data.purchaseInfo || null
         
         // 设置商品基本信息
         const images = product.images && product.images.length > 0 
           ? product.images 
           : (product.coverImage ? [product.coverImage] : this.data.images)
         
+        // 判断是否为虚拟商品
+        const isVirtual = product.type === 'virtual'
+        const deliveryType = product.deliveryType || ''
+        const deliveryLabelMap = { download: '网盘下载', service: '服务交付' }
+        
         this.setData({
           name: product.name || '商品名称',
           price: product.price || 0,
           images: images,
           desc: product.description || '暂无描述',
-          // 保存原始商品数据，用于加入购物车等操作
           _cloudProduct: product,
-          // 完整商品数据 (用于 product-specs 组件展示灯具参数)
-          product: product
+          product: product,
+          // 虚拟商品相关
+          isVirtual: isVirtual,
+          deliveryType: deliveryType,
+          deliveryLabel: isVirtual ? (deliveryLabelMap[deliveryType] || '') : '',
+          hasPurchased: purchaseInfo ? !!purchaseInfo.hasPurchased : false,
+          purchaseInfo: purchaseInfo,
         })
         
-        // 处理 SKU 规格
+        // ====== 虚拟商品：走 toolkit 风格的数据处理 ======
+        if (isVirtual) {
+          this.setData({ detailImages: product.detailImages || [], _skuPricing: product.skuPricing || [] })
+          
+          const vGroups = product.variantGroups || []
+          if (vGroups.length > 0) {
+            const defaults = {}
+            vGroups.forEach(g => {
+              if (g.options && g.options.length > 0) {
+                defaults[g.key] = g.options[0]
+              }
+            })
+            const enriched = this.enrichVariantGroups(vGroups, defaults)
+            this.setData({
+              variantGroups: enriched,
+              selectedVariants: defaults,
+              _hasCloudSku: false
+            })
+          } else {
+            this.setData({ variantGroups: [], _hasCloudSku: false })
+          }
+          
+          const virtualParams = []
+          if (product.fixedSpecs && product.fixedSpecs.length > 0) {
+            product.fixedSpecs.forEach(spec => {
+              virtualParams.push({ key: spec.label || spec.key, value: spec.value || '' })
+            })
+          }
+          this.setData({ params: virtualParams })
+          this.recalcVirtualPrices()
+          return
+        }
+        
+        // ====== 实物商品：走原有 SKU 弹窗处理 ======
         if (product.skuConfig && product.skuConfig.variantGroups && product.skuConfig.variantGroups.length > 0) {
           const variantGroups = product.skuConfig.variantGroups
           const defaults = {}
@@ -85,7 +139,6 @@ Page({
             this.updateSelectedSpecsText()
           })
         } else {
-          // 没有 SKU 配置，使用商品基础规格
           const params = this.buildParamsFromProduct(product)
           this.setData({ 
             params,
@@ -166,6 +219,111 @@ Page({
     const unit = product.price || 0
     const qty = Math.max(1, Number(this.data.quantity || 1))
     this.setData({ price: unit, totalPrice: unit * qty })
+  },
+
+  /**
+   * 虚拟商品价格计算
+   * 根据选中规格匹配 skuPricing 中的价格，找不到则用基础价格
+   */
+  recalcVirtualPrices() {
+    const skuPricing = this.data._skuPricing || []
+    const selected = this.data.selectedVariants || {}
+    const qty = Math.max(1, Number(this.data.quantity || 1))
+    let unitPrice = this.data._cloudProduct ? this.data._cloudProduct.price : (this.data.price || 0)
+
+    // 根据选中规格查找匹配的 skuPricing 条目
+    if (skuPricing.length > 0 && Object.keys(selected).length > 0) {
+      const matched = skuPricing.find(sku => {
+        if (!sku.specs) return false
+        return Object.keys(sku.specs).every(key => sku.specs[key] === selected[key])
+      })
+      if (matched && matched.price !== undefined) {
+        unitPrice = matched.price
+      }
+    }
+
+    this.setData({ price: unitPrice, totalPrice: unitPrice * qty })
+  },
+
+  /**
+   * 轮播图自适应高度（虚拟商品 toolkit 风格）
+   */
+  onBannerLoad(e) {
+    const { width, height } = e.detail || {}
+    if (!width || !height) return
+    const sys = wx.getSystemInfoSync()
+    const screenWidthPx = sys && sys.windowWidth ? sys.windowWidth : 375
+    const ratio = height / width
+    const bannerHeightPx = screenWidthPx * ratio
+    const bannerHeightRpx = Math.round(bannerHeightPx * 750 / screenWidthPx)
+    const clamped = Math.max(360, Math.min(bannerHeightRpx, 1200))
+    if (clamped !== this.data.bannerHeight) this.setData({ bannerHeight: clamped })
+  },
+
+  /**
+   * 轮播图切换（虚拟商品 toolkit 风格）
+   */
+  onSwiperChange(e) {
+    const idx = e && e.detail ? e.detail.current : 0
+    this.setData({ current: idx })
+  },
+
+  /**
+   * 点击预览轮播图（虚拟商品 toolkit 风格）
+   */
+  onPreviewImage(e) {
+    const current = e.currentTarget.dataset.src
+    const urls = this.data.images && this.data.images.length ? this.data.images : [current]
+    try { wx.previewImage({ current, urls }) } catch (err) {
+      if (urls && urls[0]) wx.previewImage({ urls: [urls[0]] })
+    }
+  },
+
+  /**
+   * 预览详情图（虚拟商品 toolkit 风格）
+   */
+  onPreviewDetailImage(e) {
+    const current = e.currentTarget.dataset.src
+    const urls = this.data.detailImages && this.data.detailImages.length ? this.data.detailImages : [current]
+    try { wx.previewImage({ current, urls }) } catch (err) {
+      console.error('预览详情图失败:', err)
+    }
+  },
+
+  /**
+   * 查看已购虚拟商品信息
+   */
+  onViewPurchaseInfo() {
+    const { deliveryType, purchaseInfo } = this.data
+    if (!purchaseInfo) {
+      wx.showToast({ title: '暂无购买信息', icon: 'none' })
+      return
+    }
+    if (deliveryType === 'service' && purchaseInfo.contactInfo) {
+      const wechat = purchaseInfo.contactInfo.contactWechat || ''
+      wx.showModal({
+        title: '联系方式',
+        content: `微信号：${wechat}\n${purchaseInfo.contactInfo.serviceDescription || ''}`,
+        confirmText: '复制微信号',
+        success: (res) => {
+          if (res.confirm && wechat) {
+            wx.setClipboardData({ data: wechat })
+          }
+        }
+      })
+    } else if (deliveryType === 'download' && purchaseInfo.downloadInfo) {
+      const url = purchaseInfo.downloadInfo.downloadUrl || ''
+      wx.showModal({
+        title: '下载信息',
+        content: url || '下载链接获取中...',
+        confirmText: '复制链接',
+        success: (res) => {
+          if (res.confirm && url) {
+            wx.setClipboardData({ data: url })
+          }
+        }
+      })
+    }
   },
 
   /**
@@ -362,11 +520,14 @@ Page({
     const group = e.currentTarget.dataset.group
     const value = e.currentTarget.dataset.value
     this.setData({ [`selectedVariants.${group}`]: value }, () => {
-      // 判断是演示商品还是云端商品
-      if (this.data._hasCloudSku) {
+      if (this.data.isVirtual) {
+        // 虚拟商品：toolkit 风格
+        this.recalcVirtualPrices()
+        const enriched = this.enrichVariantGroups(this.data.variantGroups, this.data.selectedVariants)
+        this.setData({ variantGroups: enriched })
+      } else if (this.data._hasCloudSku) {
         this.recalcCloudPrices()
         this.recalcCloudParams()
-        // 同步选中态到渲染用的 variantGroups
         const product = this.data._cloudProduct
         if (product && product.skuConfig) {
           const enriched = this.enrichVariantGroups(product.skuConfig.variantGroups || [], this.data.selectedVariants)
@@ -375,19 +536,19 @@ Page({
       } else {
         this.recalcPrices()
         this.recalcParams()
-        // 同步选中态到渲染用的 variantGroups
         const cfg = this.getSkuConfigByProductId(this.data.id)
         const enriched = this.enrichVariantGroups(cfg.variantGroups || [], this.data.selectedVariants)
         this.setData({ variantGroups: enriched })
       }
-      // 更新已选规格文字
       this.updateSelectedSpecsText()
     })
   },
   onInc() {
     const q = Math.max(1, (this.data.quantity || 1) + 1)
     this.setData({ quantity: q }, () => {
-      if (this.data._hasCloudSku || this.data._cloudProduct) {
+      if (this.data.isVirtual) {
+        this.recalcVirtualPrices()
+      } else if (this.data._hasCloudSku || this.data._cloudProduct) {
         this.recalcCloudPrices()
       } else {
         this.recalcPrices()
@@ -402,7 +563,9 @@ Page({
   onDec() {
     const q = Math.max(1, (this.data.quantity || 1) - 1)
     this.setData({ quantity: q }, () => {
-      if (this.data._hasCloudSku || this.data._cloudProduct) {
+      if (this.data.isVirtual) {
+        this.recalcVirtualPrices()
+      } else if (this.data._hasCloudSku || this.data._cloudProduct) {
         this.recalcCloudPrices()
       } else {
         this.recalcPrices()

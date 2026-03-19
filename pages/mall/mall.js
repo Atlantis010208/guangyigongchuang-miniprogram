@@ -14,7 +14,7 @@ Page({
     pageSize: 20,           // 每页数量
     total: 0,               // 总数量
     keyword: '',            // 搜索关键词
-    category: '',           // 当前分类
+    category: '灯具',       // 当前分类（默认灯具，与侧边栏高亮一致）
     sortBy: 'createdAt',    // 排序字段
     sortOrder: 'desc',      // 排序方向
     isFromCloud: false      // 数据来源标识（云端/本地）
@@ -158,12 +158,18 @@ Page({
       id: item._id || item.id,
       name: item.name || '',
       price: item.price || 0,
-      // 优先使用 images 数组的第一张图片，否则使用 image 字段（不再使用测试图片作为默认值）
       image: (item.images && item.images[0]) || item.image || '',
       category: item.category || '',
       description: item.description || '',
       stock: item.stock || 0,
-      sales: item.sales || 0
+      sales: item.sales || 0,
+      type: item.type || '',
+      virtualCategory: item.virtualCategory || '',
+      deliveryType: item.deliveryType || '',
+      isVirtual: item.type === 'virtual',
+      deliveryLabel: item.type === 'virtual'
+        ? (item.deliveryType === 'service' ? '服务交付' : '网盘下载')
+        : ''
     }))
   },
 

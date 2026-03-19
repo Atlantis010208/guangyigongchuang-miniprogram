@@ -1,27 +1,54 @@
 <view class="mall-page">
-  <view class="mall-header">
-    <text class="mall-title">电子商城</text>
-    <text class="mall-sub">精选灯具与配件</text>
+  <!-- 左侧分类导航 -->
+  <view class="sidebar">
+    <view class="sidebar-item {{category === '灯具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="灯具">
+      <view class="active-indicator" wx:if="{{category === '灯具'}}"></view>
+      <text>灯具</text>
+    </view>
+    <view class="sidebar-item {{category === '设计服务' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="设计服务">
+      <view class="active-indicator" wx:if="{{category === '设计服务'}}"></view>
+      <text>设计服务</text>
+    </view>
+    <view class="sidebar-item {{category === '资料工具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="资料工具">
+      <view class="active-indicator" wx:if="{{category === '资料工具'}}"></view>
+      <text>资料工具</text>
+    </view>
   </view>
 
-  <!-- Loading State -->
-  <view class="loading-state" wx:if="{{loading && products.length === 0}}">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">正在加载商品...</text>
-  </view>
+  <!-- 右侧商品列表 -->
+  <view class="main-content">
+    <!-- Loading State -->
+    <view class="loading-state" wx:if="{{loading && products.length === 0}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">正在加载商品...</text>
+    </view>
 
-  <!-- Empty State -->
-  <view class="empty-state" wx:if="{{!loading && products.length === 0}}">
-    <text class="empty-title">暂无商品</text>
-    <text class="empty-desc">商品即将上架，敬请期待</text>
-  </view>
+    <!-- Empty State -->
+    <view class="empty-state" wx:if="{{!loading && products.length === 0}}">
+      <text class="empty-title">暂无商品</text>
+      <text class="empty-desc">商品即将上架，敬请期待</text>
+    </view>
 
-  <view class="product-grid" wx:if="{{products.length > 0}}">
-    <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
-      <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
-      <view class="product-info">
-        <text class="product-name">{{item.name}}</text>
-        <text class="product-price">¥{{item.price}}</text>
+    <view class="product-grid" wx:if="{{products.length > 0}}">
+      <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
+        <view class="product-image-wrap">
+          <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
+          <!-- 虚拟商品交付方式标签 -->
+          <view class="delivery-tag" wx:if="{{item.isVirtual && item.deliveryLabel}}">{{item.deliveryLabel}}</view>
+        </view>
+        <view class="product-info">
+          <text class="product-name">{{item.name}}</text>
+          <view class="product-bottom">
+            <text class="product-price">¥{{item.price}}</text>
+            <!-- 实物商品显示加购按钮，虚拟商品显示箭头 -->
+            <view class="product-action-arrow" wx:if="{{item.isVirtual}}">
+              <text class="arrow-icon">›</text>
+            </view>
+            <view class="product-action-btn" wx:else catchtap="onQuickAdd" data-id="{{item.id}}">
+              <text class="plus-icon">+</text>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
   </view>

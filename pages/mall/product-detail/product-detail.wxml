@@ -12,46 +12,164 @@ module.exports = {
 </wxs>
 
 <view class="detail-page">
-  <swiper class="banner" indicator-dots autoplay circular>
-    <block wx:for="{{images}}" wx:key="*this">
-      <swiper-item>
-        <image class="banner-image" src="{{item}}" mode="aspectFill"></image>
-      </swiper-item>
+
+  <!-- ==================== 虚拟商品（复用 toolkit 风格） ==================== -->
+  <block wx:if="{{isVirtual}}">
+    <!-- 轮播图（自适应高度 + 点击预览） -->
+    <block wx:if="{{images && images.length}}">
+      <swiper class="banner" indicator-dots autoplay circular style="height: {{bannerHeight}}rpx" current="{{current}}" bindchange="onSwiperChange">
+        <block wx:for="{{images}}" wx:key="*this">
+          <swiper-item>
+            <image class="banner-image virtual-banner-image" src="{{item}}" mode="aspectFit" bindtap="onPreviewImage" data-src="{{item}}" bindload="onBannerLoad" data-idx="{{index}}"></image>
+          </swiper-item>
+        </block>
+      </swiper>
     </block>
-  </swiper>
+    <block wx:else>
+      <view class="banner" style="height: {{bannerHeight}}rpx"></view>
+    </block>
 
-  <view class="info">
-    <text class="name">{{name}}</text>
-    <text class="price">¥{{price}}</text>
-  </view>
-
-  <!-- 规格预览入口 (点击弹出选择弹窗) -->
-  <view class="card spec-entry" bindtap="onShowSkuPopup" data-action="preview" wx:if="{{variantGroups && variantGroups.length > 0}}">
-    <view class="spec-entry-left">
-      <text class="spec-entry-label">选择</text>
-      <text class="spec-entry-value">{{selectedSpecsText || '请选择规格'}}</text>
+    <view class="info">
+      <text class="name">{{name}}</text>
+      <text class="price">¥{{price}}</text>
     </view>
-    <van-icon name="arrow" size="16px" color="#999" />
-  </view>
 
-  <!-- 商品简介 -->
-  <view class="card">
-    <text class="section-title">简介</text>
-    <text class="desc">{{desc}}</text>
-  </view>
+    <!-- 虚拟商品已购提示 -->
+    <view class="card purchased-card" wx:if="{{hasPurchased}}">
+      <view class="purchased-header">
+        <text class="purchased-title">您已购买此商品</text>
+      </view>
+      <block wx:if="{{deliveryType === 'service' && purchaseInfo.contactInfo}}">
+        <view class="purchased-item">
+          <text class="purchased-label">联系微信</text>
+          <text class="purchased-value" selectable>{{purchaseInfo.contactInfo.contactWechat}}</text>
+        </view>
+        <view class="purchased-item" wx:if="{{purchaseInfo.contactInfo.serviceDescription}}">
+          <text class="purchased-label">服务说明</text>
+          <text class="purchased-value">{{purchaseInfo.contactInfo.serviceDescription}}</text>
+        </view>
+      </block>
+      <block wx:if="{{deliveryType === 'download' && purchaseInfo.downloadInfo}}">
+        <view class="purchased-item">
+          <text class="purchased-label">下载链接</text>
+          <text class="purchased-value link" selectable>{{purchaseInfo.downloadInfo.downloadUrl || '获取中...'}}</text>
+        </view>
+      </block>
+    </view>
 
-  <!-- 产品参数 -->
-  <product-specs 
-    product="{{product}}" 
-    groupedSpecs="{{product.groupedFixedSpecs}}"
-    params="{{params}}"
-  />
+    <!-- 规格选择（内嵌式，复用 toolkit 风格） -->
+    <view class="card" wx:if="{{variantGroups && variantGroups.length > 0}}">
+      <text class="section-title">选择版本</text>
+      <view wx:for="{{variantGroups}}" wx:key="name" class="variant-group">
+        <text class="variant-name">{{item.name}}</text>
+        <view class="variant-options">
+          <view wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt" class="variant-chip {{item.selected===opt ? 'selected' : ''}}" data-group="{{item.key}}" data-value="{{opt}}" bindtap="onSelectVariant">{{opt}}</view>
+        </view>
+      </view>
+      <view class="quantity">
+        <text class="q-label">数量</text>
+        <view class="stepper">
+          <view class="step-btn" bindtap="onDec">-</view>
+          <text class="step-val">{{quantity}}</text>
+          <view class="step-btn" bindtap="onInc">+</view>
+        </view>
+      </view>
+      <view class="total-line"><text class="total-label">合计</text><text class="total-val">¥{{totalPrice || (price * quantity)}}</text></view>
+    </view>
 
-  <!-- 底部占位 -->
-  <view class="bottom-spacer"></view>
+    <!-- 无规格时仅显示数量 + 合计 -->
+    <view class="card" wx:if="{{!variantGroups || variantGroups.length === 0}}">
+      <view class="quantity">
+        <text class="q-label">数量</text>
+        <view class="stepper">
+          <view class="step-btn" bindtap="onDec">-</view>
+          <text class="step-val">{{quantity}}</text>
+          <view class="step-btn" bindtap="onInc">+</view>
+        </view>
+      </view>
+      <view class="total-line"><text class="total-label">合计</text><text class="total-val">¥{{totalPrice || (price * quantity)}}</text></view>
+    </view>
+
+    <!-- 产品介绍 -->
+    <view class="card">
+      <text class="section-title">产品介绍</text>
+      <text class="desc">{{desc}}</text>
+    </view>
+
+    <!-- 商品详情图 -->
+    <view class="card detail-images" wx:if="{{detailImages && detailImages.length}}">
+      <text class="section-title">商品详情</text>
+      <view class="detail-image-list">
+        <image 
+          wx:for="{{detailImages}}" 
+          wx:key="index" 
+          class="detail-image" 
+          src="{{item}}" 
+          mode="widthFix"
+          lazy-load
+          bindtap="onPreviewDetailImage"
+          data-src="{{item}}"
+        />
+      </view>
+    </view>
+
+    <!-- 产品参数 -->
+    <view class="card" wx:if="{{params && params.length > 0}}">
+      <text class="section-title">产品参数</text>
+      <view class="params">
+        <view wx:for="{{params}}" wx:key="key" class="param-row">
+          <text class="param-line">{{item.key}}：{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </block>
+
+  <!-- ==================== 实物商品（保持原有 UI） ==================== -->
+  <block wx:else>
+    <swiper class="banner" indicator-dots autoplay circular>
+      <block wx:for="{{images}}" wx:key="*this">
+        <swiper-item>
+          <image class="banner-image" src="{{item}}" mode="aspectFill"></image>
+        </swiper-item>
+      </block>
+    </swiper>
+
+    <view class="info">
+      <text class="name">{{name}}</text>
+      <text class="price">¥{{price}}</text>
+    </view>
+
+    <!-- 规格预览入口 (点击弹出选择弹窗) -->
+    <view class="card spec-entry" bindtap="onShowSkuPopup" data-action="preview" wx:if="{{variantGroups && variantGroups.length > 0}}">
+      <view class="spec-entry-left">
+        <text class="spec-entry-label">选择</text>
+        <text class="spec-entry-value">{{selectedSpecsText || '请选择规格'}}</text>
+      </view>
+      <van-icon name="arrow" size="16px" color="#999" />
+    </view>
+
+    <!-- 商品简介 -->
+    <view class="card">
+      <text class="section-title">简介</text>
+      <text class="desc">{{desc}}</text>
+    </view>
+
+    <!-- 产品参数 -->
+    <product-specs 
+      product="{{product}}" 
+      groupedSpecs="{{product.groupedFixedSpecs}}"
+      params="{{params}}"
+    />
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </block>
 </view>
 
-<!-- 规格选择弹窗 -->
+<!-- ==================== 实物商品：规格选择弹窗 ==================== -->
 <van-popup 
   show="{{showSkuPopup}}" 
   position="bottom" 
@@ -60,6 +178,7 @@ module.exports = {
   safe-area-inset-bottom
   bind:close="onCloseSkuPopup"
   custom-style="max-height: 80vh;"
+  wx:if="{{!isVirtual}}"
 >
   <view class="sku-popup">
     <!-- 商品信息头部 -->
@@ -123,29 +242,25 @@ module.exports = {
   </view>
 </van-popup>
 
-<!-- Vant Weapp 商品导航组件 - 必须放在页面容器外部 -->
-<van-goods-action safe-area-inset-bottom>
-  <!-- 左侧图标按钮：客服 - 使用 dot 属性显示小红点 -->
+<!-- Vant Weapp 商品导航组件 - 实物商品 -->
+<van-goods-action safe-area-inset-bottom wx:if="{{!isVirtual}}">
   <van-goods-action-icon
     icon="chat-o"
     text="客服"
     dot
     bind:click="onContact"
   />
-  <!-- 购物车 - 使用 info 属性显示数量徽标 -->
   <van-goods-action-icon
     icon="cart-o"
     text="购物车"
     info="{{cartCount}}"
     bind:click="onGoCart"
   />
-  <!-- 收藏按钮 -->
   <van-goods-action-icon
     icon="{{favIcon}}"
     text="收藏"
     bind:click="onToggleFav"
   />
-  <!-- 朴素按钮：加入购物车 -->
   <van-goods-action-button
     text="加入购物车"
     type="warning"
@@ -154,13 +269,67 @@ module.exports = {
     bind:click="onShowSkuPopup"
     data-action="cart"
   />
-  <!-- 主按钮：立即购买 -->
   <van-goods-action-button
     text="立即购买"
     type="danger"
     color="linear-gradient(to right, #36cfc9, #1890ff)"
     bind:click="onShowSkuPopup"
     data-action="buy"
+  />
+</van-goods-action>
+
+<!-- Vant Weapp 商品导航组件 - 虚拟商品（未购买） -->
+<van-goods-action safe-area-inset-bottom wx:if="{{isVirtual && !hasPurchased}}">
+  <van-goods-action-icon
+    icon="chat-o"
+    text="客服"
+    dot
+    bind:click="onContact"
+  />
+  <van-goods-action-icon
+    icon="cart-o"
+    text="购物车"
+    info="{{cartCount}}"
+    bind:click="onGoCart"
+  />
+  <van-goods-action-icon
+    icon="{{favIcon}}"
+    text="收藏"
+    bind:click="onToggleFav"
+  />
+  <van-goods-action-button
+    text="加入购物车"
+    type="warning"
+    plain
+    color="#36cfc9"
+    bind:click="onConfirmAddToCart"
+  />
+  <van-goods-action-button
+    text="立即购买"
+    type="danger"
+    color="linear-gradient(to right, #36cfc9, #1890ff)"
+    bind:click="onConfirmBuyNow"
+  />
+</van-goods-action>
+
+<!-- Vant Weapp 商品导航组件 - 虚拟商品（已购买） -->
+<van-goods-action safe-area-inset-bottom wx:if="{{isVirtual && hasPurchased}}">
+  <van-goods-action-icon
+    icon="chat-o"
+    text="客服"
+    dot
+    bind:click="onContact"
+  />
+  <van-goods-action-icon
+    icon="{{favIcon}}"
+    text="收藏"
+    bind:click="onToggleFav"
+  />
+  <van-goods-action-button
+    text="{{deliveryType === 'service' ? '查看联系方式' : '查看下载信息'}}"
+    type="danger"
+    color="#10b981"
+    bind:click="onViewPurchaseInfo"
   />
 </van-goods-action>
 
