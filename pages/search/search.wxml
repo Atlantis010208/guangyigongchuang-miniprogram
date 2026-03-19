@@ -171,14 +171,26 @@
             </view>
           </view>
 
-          <!-- 卡片 2: 灯具信息 (光通量) -->
+          <!-- 卡片 2: 灯具信息 (光通量 = 功率 × 发光效率) -->
           <view class="v2-card group-card">
             <view class="v2-input-row">
-              <view class="v2-label-wrap" bindtap="onOpenLampFluxInfo" style="width: auto; padding-right: 20rpx;">
-                <text class="v2-label">单灯光通量 <text class="v2-unit">(Lm)</text></text>
+              <view class="v2-label-wrap" bindtap="onOpenLampFluxInfo">
+                <text class="v2-label">光通量 <text class="v2-unit">(Lm)</text></text>
                 <image class="v2-info-icon" src="/images/使用说明.png"></image>
               </view>
-              <input class="v2-input-box" type="number" value="{{lampFlux}}" data-field="lampFlux" bindinput="onFieldInput" placeholder="请输入光通量" placeholder-style="color:#C0C4CC"/>
+              <view class="v2-input-box formula">
+                <view class="floor-height-wrapper">
+                  <input class="formula-input" type="number" value="{{lampPower}}" data-field="lampPower" bindinput="onLampPowerInput" placeholder="功率" placeholder-style="color:#C0C4CC;"/>
+                  <text class="unit-m">W</text>
+                </view>
+                <text class="op">×</text>
+                <view class="floor-height-wrapper">
+                  <input class="formula-input" type="number" value="{{lampEfficacy}}" data-field="lampEfficacy" bindinput="onLampEfficacyInput" placeholder="光效" placeholder-style="color:#C0C4CC;"/>
+                  <text class="unit-m">lm/w</text>
+                </view>
+                <text class="op">=</text>
+                <input class="res" type="number" value="{{lampFlux}}" data-field="lampFlux" bindinput="onLampFluxInput" placeholder="0" placeholder-style="color:#C0C4CC;" style="text-align: center; min-width: 60rpx; max-width: 80rpx;"/>
+              </view>
             </view>
           </view>
 

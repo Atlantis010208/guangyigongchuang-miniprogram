@@ -32,7 +32,9 @@ Page({
 
     // ========== 通用字段 ==========
     activeTab: 'count',            // 当前标签: 'lux' | 'count'
-    lampFlux: '',                  // 单灯光通量（lm）
+    lampFlux: '',                  // 单灯光通量（lm）= lampPower × lampEfficacy
+    lampPower: '',                 // 单灯功率（W）
+    lampEfficacy: 80,              // 发光效率（lm/W），默认80
     area: '',                      // 面积（㎡）
     utilFactor: '',               // 利用系数
     maintenanceFactor: 0.8,        // 维护系数
@@ -221,7 +223,8 @@ Page({
     if (toNum(this.data.maintenanceFactor) <= 0) return need('请输入维护系数')
 
     if (activeTab === 'count') {
-      if (toNum(this.data.lampFlux) <= 0) return need('请输入单灯光通量')
+      if (toNum(this.data.lampPower) <= 0) return need('请输入单灯功率')
+      if (toNum(this.data.lampFlux) <= 0) return need('单灯光通量计算异常，请检查功率和发光效率')
     }
 
     if (activeTab === 'quantity') {
@@ -268,6 +271,8 @@ Page({
       activeTab,
       headerBgFileId,
       lampFlux: '',
+      lampPower: '',
+      lampEfficacy: 80,
       area: '',
       utilFactor: '',
       maintenanceFactor: 0.8,
@@ -666,6 +671,33 @@ Page({
     this.recalc()
   },
 
+  // 单灯功率输入 → 自动计算光通量
+  onLampPowerInput(e) {
+    const value = e.detail.value
+    const efficacy = parseFloat(this.data.lampEfficacy) || 80
+    const power = parseFloat(value) || 0
+    const flux = Math.round(power * efficacy)
+    this.setData({ lampPower: value, lampFlux: flux > 0 ? flux : '' })
+    this.recalc()
+  },
+
+  // 发光效率输入 → 自动计算光通量
+  onLampEfficacyInput(e) {
+    const value = e.detail.value
+    const power = parseFloat(this.data.lampPower) || 0
+    const efficacy = parseFloat(value) || 0
+    const flux = Math.round(power * efficacy)
+    this.setData({ lampEfficacy: value, lampFlux: flux > 0 ? flux : '' })
+    this.recalc()
+  },
+
+  // 直接修改光通量结果
+  onLampFluxInput(e) {
+    const value = e.detail.value
+    this.setData({ lampFlux: value })
+    this.recalc()
+  },
+
   // 层高输入
   onFloorHeightInput(e) {
     const value = e.detail.value
@@ -940,8 +972,9 @@ Page({
     // 灯具数量
     const calcLampCountResult = calcLampCount(targetLux, area, util, mnt, lampFlux)
 
-    // 单位面积平均功率
-    const avgPowerPerArea = calcAvgPowerPerArea(calcLampCountResult, 7, area)
+    // 单位面积平均功率（使用用户输入的单灯功率）
+    const lampPowerNum = parseFloat(this.data.lampPower) || 0
+    const avgPowerPerArea = calcAvgPowerPerArea(calcLampCountResult, lampPowerNum, area)
 
     this.setData({ 
       avgLux, 
@@ -1003,8 +1036,9 @@ Page({
           const effectiveFlux = parseFloat(lampFlux) * parseFloat(utilFactor) * parseFloat(maintenanceFactor)
           const count = Math.ceil(fluxNeeded / effectiveFlux)
           
-          // 计算功率密度：功率密度 = (灯具数量 * 7) / 面积
-          const powerDensity = (count * 7) / parseFloat(area)
+          // 计算功率密度：功率密度 = (灯具数量 * 单灯功率) / 面积
+          const lampPowerNum = parseFloat(this.data.lampPower) || 0
+          const powerDensity = (count * lampPowerNum) / parseFloat(area)
           const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
 
           resultData = {
@@ -1018,6 +1052,8 @@ Page({
               { label: '房间面积', value: area + ' ㎡' },
               { label: '空间类型', value: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义' },
               { label: '总光通量', value: Math.round(fluxNeeded) + ' Lm' },
+              { label: '单灯功率', value: this.data.lampPower + 'W' },
+              { label: '发光效率', value: this.data.lampEfficacy + ' lm/W' },
               { label: '单灯光通量', value: lampFlux + ' Lm' },
               { label: '利用系数', value: utilFactor },
               { label: '维护系数', value: maintenanceFactor }
@@ -1040,12 +1076,13 @@ Page({
           
           const singleFlux = fluxNeeded / (parseFloat(lampCount) * parseFloat(utilFactor) * parseFloat(maintenanceFactor))
           
-          // 计算功率密度：功率密度 = (灯具数量 * 7) / 面积
-          const powerDensity = (parseFloat(lampCount) * 7) / parseFloat(area)
-          const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
+          // 计算需购买瓦数：建议单灯光通量 / 发光效率（默认80）
+          const efficacyVal = parseFloat(this.data.lampEfficacy) || 80
+          const requiredWattage = Math.round(singleFlux / efficacyVal)
           
-          // 计算需购买瓦数：建议单灯光通量 / 80
-          const requiredWattage = Math.round(singleFlux / 80)
+          // 计算功率密度：功率密度 = (灯具数量 * 需购买瓦数) / 面积
+          const powerDensity = (parseFloat(lampCount) * requiredWattage) / parseFloat(area)
+          const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
           
           resultData = {
             mode: 'quantity',

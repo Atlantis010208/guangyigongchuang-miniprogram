@@ -359,24 +359,27 @@ page {
 
 /* 复合公式输入框 */
 .v2-input-box.formula {
+  flex: 1; /* 占据剩余空间 */
   justify-content: flex-end;
-  gap: 10rpx;
+  gap: 6rpx; /* 减小间距，防止溢出 */
   background: transparent; 
   padding: 0;
+  min-width: 0; /* 允许压缩 */
 }
 
 .floor-height-wrapper {
   display: flex;
   align-items: center;
-  margin-right: 4rpx;
+  margin-right: 0; /* 移除之前的 margin-right */
+  flex-shrink: 0;
 }
 
 .formula-input {
-  width: 100rpx;
+  width: 75rpx; /* 进一步缩短，由于只输入数字足够了 */
   height: 100%;
   background: transparent;
-  text-align: right;
-  font-size: 30rpx;
+  text-align: center; /* 居中显示，避免数字右对齐显得左边空太大 */
+  font-size: 28rpx;
   color: #333;
   flex-shrink: 0;
 }
@@ -384,8 +387,9 @@ page {
 .unit-m {
   font-size: 24rpx;
   color: #999;
-  margin-left: 4rpx;
+  margin-left: 2rpx;
   flex-shrink: 0;
+  white-space: nowrap; /* 强制单位不换行 */
 }
 
 .formula-picker {
