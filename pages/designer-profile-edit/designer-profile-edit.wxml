@@ -1,0 +1,60 @@
+<view class="page-container">
+  <!-- 头像部分 -->
+  <view class="avatar-section">
+    <view class="avatar-wrapper" bindtap="onChangeAvatar">
+      <view class="avatar-container">
+        <image class="avatar-img" src="{{user.avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlt_6-cZUO6qjroX1AXEu-wtMYE02ryL-K4rHCfhgcBWl55SjnQ46sUbkWeY4myh6udonIinxC2kl40TgyNm_lLLjoGi6S-BBYVGs9_IZJIDvhv1ibdkNpIiJ_aNMgrG_ARvgXTUAoAOL5y2SK7-qeY4P8aM8PF4fg2E1zkN97ZE-APv59lMyAfXyJUG2-cT1LLm51JH1CsxHy2qoymF9TPYgd1Rbi4sYkJ4OfvF4rMvr3XTifGmiZhOmXcnxjKDy2IECJ9hvAcFc'}}" mode="aspectFill"></image>
+      </view>
+      <view class="camera-icon-wrapper">
+        <van-icon name="photograph" color="#ffffff" size="14px" />
+      </view>
+    </view>
+    <view class="change-avatar-text" bindtap="onChangeAvatar">更换头像</view>
+  </view>
+
+  <!-- 表单部分 -->
+  <view class="form-section">
+    <view class="form-group">
+      <view class="form-item">
+        <view class="form-label">姓名</view>
+        <input class="form-input" value="{{user.name}}" placeholder="请输入姓名" placeholder-class="placeholder-style" bindinput="onInput" data-field="name" />
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">专业简介</view>
+        <textarea class="form-textarea" value="{{user.bio}}" placeholder="请填写个人简介" placeholder-class="placeholder-style" bindinput="onInput" data-field="bio" auto-height></textarea>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">设计年限</view>
+        <view class="input-with-unit">
+          <input class="form-input" type="number" value="{{user.experience}}" placeholder="0" placeholder-class="placeholder-style" bindinput="onInput" data-field="experience" />
+          <text class="unit-text">年</text>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">擅长风格</view>
+        <input class="form-input" value="{{user.styles}}" placeholder="例如：现代简约、新中式" placeholder-class="placeholder-style" bindinput="onInput" data-field="styles" />
+      </view>
+    </view>
+
+    <view class="form-group contact-group">
+      <view class="group-title">联系方式</view>
+      <view class="form-item">
+        <view class="form-label">手机号</view>
+        <input class="form-input" type="number" value="{{user.phone}}" placeholder="请输入手机号" placeholder-class="placeholder-style" bindinput="onInput" data-field="phone" />
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">微信号</view>
+        <input class="form-input" value="{{user.wechat}}" placeholder="请输入微信号" placeholder-class="placeholder-style" bindinput="onInput" data-field="wechat" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部保存按钮 -->
+  <view class="bottom-action">
+    <button class="save-btn" bindtap="onSave" hover-class="save-btn-hover">保存</button>
+  </view>
+</view>

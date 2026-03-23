@@ -1,0 +1,120 @@
+<van-popup
+  show="{{ show }}"
+  position="bottom"
+  round
+  bind:close="onClose"
+  custom-style="height: 92vh; display: flex; flex-direction: column; background-color: #FFFFFF;"
+>
+  <!-- 抽屉头部 (固定) -->
+  <view class="drawer-header">
+    <view class="drag-handle"></view>
+    <view class="nav-content">
+      <view class="cancel-btn" bindtap="onClose">取消</view>
+      <view class="title">筛选条件 (Filters)</view>
+      <view class="placeholder-btn"></view> <!-- 占位平衡 -->
+    </view>
+  </view>
+
+  <!-- 滚动区域 -->
+  <scroll-view class="scroll-area" scroll-y="{{true}}" show-scrollbar="{{false}}">
+    <view class="content-inner">
+      
+      <!-- 空间类型 (SPACE TYPE) -->
+      <view class="section">
+        <view class="section-title">空间类型 (SPACE TYPE)</view>
+        <view class="tags-group">
+          <view class="tag-item {{selectedSpaceType === item ? 'tag-active' : ''}}" 
+                wx:for="{{spaceTypes}}" 
+                wx:key="*this"
+                data-type="{{item}}"
+                bindtap="selectSpaceType">
+            {{item}}
+          </view>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <!-- 预算范围 (BUDGET ¥) -->
+      <view class="section">
+        <view class="section-header">
+          <view class="section-title mb-0">预算范围 (BUDGET ¥)</view>
+          <view class="budget-value">¥5,000 - ¥25,000</view>
+        </view>
+        <view class="range-inputs">
+          <view class="input-box">
+            <view class="input-label">最低 (MIN)</view>
+            <input type="number" class="input-field" value="{{budgetMin}}" bindinput="onBudgetMinInput" placeholder="0" />
+          </view>
+          <view class="range-separator">-</view>
+          <view class="input-box">
+            <view class="input-label">最高 (MAX)</view>
+            <input type="number" class="input-field" value="{{budgetMax}}" bindinput="onBudgetMaxInput" placeholder="不限" />
+          </view>
+        </view>
+        
+        <!-- 模拟滑块UI -->
+        <view class="slider-track-container">
+          <view class="slider-track">
+            <view class="slider-fill"></view>
+            <view class="slider-thumb left-thumb"></view>
+            <view class="slider-thumb right-thumb"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <!-- 面积大小 (AREA M²) -->
+      <view class="section">
+        <view class="section-title">面积大小 (AREA M²)</view>
+        <view class="range-inputs">
+          <view class="input-box">
+            <view class="input-label">最低 (MIN)</view>
+            <input type="number" class="input-field" value="{{areaMin}}" bindinput="onAreaMinInput" placeholder="100" />
+          </view>
+          <view class="range-separator">-</view>
+          <view class="input-box">
+            <view class="input-label">最高 (MAX)</view>
+            <input type="number" class="input-field" value="{{areaMax}}" bindinput="onAreaMaxInput" placeholder="500+" />
+          </view>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <!-- 配套要求 (FACILITIES) -->
+      <view class="section">
+        <view class="section-title">配套要求 (FACILITIES)</view>
+        <view class="facility-grid">
+          <view class="facility-item {{tools.includes(selectedFacilities, item.id) ? 'facility-active' : ''}}"
+                wx:for="{{facilities}}"
+                wx:key="id"
+                data-id="{{item.id}}"
+                bindtap="toggleFacility">
+            <text class="facility-name">{{item.name}}</text>
+            <van-icon name="{{item.icon}}" size="20px" />
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部安全高度占位，确保内容能滚到底 -->
+      <view style="height: 100px;"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="footer-bar" style="padding-bottom: {{safeAreaBottom === 0 ? 20 : safeAreaBottom}}px;">
+    <view class="reset-btn" bindtap="resetFilters">重置</view>
+    <view class="confirm-btn" bindtap="confirmFilters">确定 ({{resultCount}}个结果)</view>
+  </view>
+</van-popup>
+
+<wxs module="tools">
+  module.exports = {
+    includes: function(arr, item) {
+      if (!arr) return false;
+      return arr.indexOf(item) !== -1;
+    }
+  }
+</wxs>

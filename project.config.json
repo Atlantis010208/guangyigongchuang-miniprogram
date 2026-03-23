@@ -225,8 +225,8 @@
     "miniprogram": {
       "list": [
         {
-          "name": "默认预览-产品页",
-          "pathName": "pages/products/products",
+          "name": "默认启动页",
+          "pathName": "pages/splash/splash",
           "query": "",
           "scene": null
         }

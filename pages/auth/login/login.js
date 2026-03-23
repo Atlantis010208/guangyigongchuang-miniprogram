@@ -93,6 +93,13 @@ Page({
       return
     }
 
+    // 已有设计师角色的老用户，每次登录静默重新校验白名单状态
+    const doc = userDoc || wx.getStorageSync('userDoc') || {}
+    if (doc.roles === 2 && doc.phoneNumber) {
+      this.revalidateDesignerStatus(doc)
+      // 不阻塞跳转，静默校验
+    }
+
     // 如果有指定的重定向页面
     if (this.redirectUrl) {
       wx.redirectTo({ 
@@ -143,7 +150,16 @@ Page({
           app.globalData.isFirstLaunch = false
         }
         wx.setStorageSync('userDoc', { ...userDoc, roles: 2, identitySelected: true })
+        // 存储用户角色（用于启动页判断）
+        wx.setStorageSync('userRole', 'designer')
         wx.showToast({ title: '验证通过', icon: 'success', duration: 2000 })
+        
+        // 跳转到设计师端首页
+        setTimeout(() => {
+          wx.switchTab({
+            url: '/pages/designer-home/designer-home'
+          })
+        }, 1500)
       } else {
         // 白名单验证失败，跳转到权限受限提示页
         wx.redirectTo({
@@ -159,6 +175,47 @@ Page({
         showCancel: false,
         confirmText: '知道了'
       })
+    }
+  },
+
+  /**
+   * 静默重新校验设计师白名单状态
+   * 用于已有设计师角色(roles=2)的老用户每次登录时后台校验
+   * 如果白名单已被移除/停用，自动降级为普通用户并提示
+   * @param {object} userDoc 用户文档
+   */
+  async revalidateDesignerStatus(userDoc) {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'check_designer_whitelist',
+        data: { phone: userDoc.phoneNumber, revalidate: true }
+      })
+
+      if (res.result && res.result.success && !res.result.isDesigner) {
+        // 白名单已失效，云函数已降级角色，同步本地缓存
+        console.warn('[revalidate] 设计师白名单已失效，角色已降级')
+        const app = getApp()
+        const updatedDoc = { ...userDoc, roles: 1, identitySelected: false }
+        if (app) {
+          app.globalData.userDoc = updatedDoc
+        }
+        wx.setStorageSync('userDoc', updatedDoc)
+
+        // 提示用户
+        wx.showModal({
+          title: '设计师权限变更',
+          content: '您的设计师权限已被管理员调整，如有疑问请联系管理员。',
+          showCancel: false,
+          confirmText: '知道了',
+          success: () => {
+            // 跳转到身份选择页重新选择
+            wx.reLaunch({ url: '/pages/identity/identity' })
+          }
+        })
+      }
+    } catch (err) {
+      // 静默校验，网络异常不影响正常使用
+      console.warn('[revalidate] 设计师白名单校验异常:', err)
     }
   },
 

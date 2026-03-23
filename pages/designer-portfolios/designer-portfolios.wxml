@@ -1,0 +1,40 @@
+<view class="page-container">
+  <!-- 顶部标签栏 -->
+  <view class="tabs-container">
+    <scroll-view class="tabs-scroll" scroll-x="true" show-scrollbar="false" enhanced="true" bounces="true">
+      <view class="tabs-wrapper">
+        <view class="tab-item {{currentTab === '全部' ? 'active' : ''}}" bindtap="onTabClick" data-tab="全部">
+          <text>全部</text>
+        </view>
+        <view class="tab-item {{currentTab === '住宅' ? 'active' : ''}}" bindtap="onTabClick" data-tab="住宅">
+          <text>住宅</text>
+        </view>
+        <view class="tab-item {{currentTab === '商业' ? 'active' : ''}}" bindtap="onTabClick" data-tab="商业">
+          <text>商业</text>
+        </view>
+        <view class="tab-item {{currentTab === '艺术装置' ? 'active' : ''}}" bindtap="onTabClick" data-tab="艺术装置">
+          <text>艺术装置</text>
+        </view>
+        <view class="tab-item {{currentTab === '景观' ? 'active' : ''}}" bindtap="onTabClick" data-tab="景观">
+          <text>景观</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 作品网格 -->
+  <view class="portfolio-grid">
+    <view class="portfolio-item" wx:for="{{filteredPortfolios}}" wx:key="id" bindtap="onPortfolioDetail" data-id="{{item.id}}">
+      <image class="portfolio-img" src="{{item.image}}" mode="aspectFill" lazy-load="true"></image>
+      <view class="portfolio-overlay">
+        <view class="portfolio-category">{{item.category}}</view>
+        <view class="portfolio-title">{{item.title}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="bottom-tips">
+    <text>没有更多了</text>
+  </view>
+</view>

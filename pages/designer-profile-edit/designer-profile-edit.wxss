@@ -1,0 +1,196 @@
+page {
+  background-color: #ffffff;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+/* 头像部分 */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0;
+}
+
+.avatar-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.avatar-container {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #f3f4f6;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-icon-wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  background-color: #000000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.change-avatar-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2563eb;
+}
+
+/* 表单部分 */
+.form-section {
+  padding: 0 24px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group.contact-group {
+  margin-top: 8px;
+}
+
+.group-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.form-item {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 16px;
+  color: #111827;
+  height: 24px;
+  min-height: 24px;
+  line-height: 24px;
+}
+
+.form-textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 16px;
+  color: #111827;
+  line-height: 1.5;
+  min-height: 72px;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.input-with-unit .form-input {
+  border-bottom: none;
+  flex: 1;
+}
+
+.unit-text {
+  font-size: 16px;
+  color: #111827;
+  padding-right: 8px;
+}
+
+.placeholder-style {
+  color: #d1d5db;
+}
+
+/* 聚焦状态下的底部边框颜色 */
+.form-input:focus,
+.form-textarea:focus {
+  border-bottom-color: #000000;
+}
+
+.input-with-unit:focus-within {
+  border-bottom-color: #000000;
+}
+
+/* 底部操作区 */
+.bottom-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  padding: 16px 24px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 10;
+}
+
+.save-btn {
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 14px 0;
+  line-height: 1.5;
+  box-shadow: 0 10px 15px -3px rgba(229, 231, 235, 0.5), 0 4px 6px -2px rgba(229, 231, 235, 0.5);
+  border: none;
+}
+
+.save-btn::after {
+  border: none;
+}
+
+.save-btn-hover {
+  transform: scale(0.98);
+  opacity: 0.9;
+}

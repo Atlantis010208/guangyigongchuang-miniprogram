@@ -129,6 +129,11 @@ Page({
    * 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
    */
   onShow() {
+    // 更新自定义 tabBar 的选中状态和角色
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateRole()
+      this.getTabBar().setData({ selected: 0 })
+    }
     // 每次显示时也检查身份选择状态
     this.checkIdentitySelection()
     this.loadUserAvatar()

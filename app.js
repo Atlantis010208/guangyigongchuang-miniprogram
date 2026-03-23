@@ -37,6 +37,9 @@ App({
 
   onShow(options) {
     console.log('小程序显示', options)
+    // 每次切到前台时，静默检查工具包白名单激活状态
+    // 解决"先注册后导入白名单"导致已登录用户无法自动激活的问题
+    this.silentCheckToolkitWhitelist()
   },
 
   onHide() {
@@ -175,16 +178,20 @@ App({
   updateCartCount(count) {
     this.globalData.cartCount = count
     
-    // 更新底部标签栏的角标
-    if (count > 0) {
-      wx.setTabBarBadge({
-        index: 3, // 购物袋页面的索引
-        text: count.toString()
-      })
-    } else {
-      wx.removeTabBarBadge({
-        index: 3
-      })
+    // 更新底部标签栏的角标（custom-tab-bar 模式下可能不生效，用 try-catch 保护）
+    try {
+      if (count > 0) {
+        wx.setTabBarBadge({
+          index: 3, // 购物袋页面的索引
+          text: count.toString()
+        })
+      } else {
+        wx.removeTabBarBadge({
+          index: 3
+        })
+      }
+    } catch (e) {
+      console.warn('更新 tabBar 角标失败:', e)
     }
   },
 
@@ -312,6 +319,46 @@ App({
     } catch (e) {
       console.warn('检查登录状态失败', e)
       this.globalData.isLoggedIn = false
+    }
+  },
+
+  /**
+   * 静默检查并激活工具包白名单
+   * 在 onShow 时调用，解决"先注册后导入白名单"导致已登录用户无法自动激活的问题
+   * - 每次切到前台最多检查一次（用 lastToolkitCheckTime 节流，间隔 1 小时）
+   * - 不影响主流程，异常时静默忽略
+   */
+  async silentCheckToolkitWhitelist() {
+    try {
+      // 节流：1 小时内不重复检查
+      const CHECK_INTERVAL = 60 * 60 * 1000
+      const lastCheck = wx.getStorageSync('lastToolkitWhitelistCheck') || 0
+      if (Date.now() - lastCheck < CHECK_INTERVAL) return
+
+      // 必须已登录且有手机号
+      const userDoc = this.globalData.userDoc || wx.getStorageSync('userDoc')
+      if (!userDoc || !userDoc.phoneNumber) return
+
+      console.log('[白名单] 静默检查工具包白名单...')
+      wx.setStorageSync('lastToolkitWhitelistCheck', Date.now())
+
+      const res = await wx.cloud.callFunction({
+        name: 'login',
+        data: { verifyOnly: true }
+      })
+
+      if (res && res.result && res.result.toolkitWhitelistActivated) {
+        console.log('[白名单] 工具包白名单已激活:', res.result.toolkitWhitelistInfo)
+        // 更新本地缓存中的用户信息
+        if (res.result.user) {
+          const util = require('./utils/util')
+          util.setStorage('userDoc', res.result.user)
+          this.globalData.userDoc = res.result.user
+        }
+      }
+    } catch (e) {
+      // 静默失败，不影响正常使用
+      console.warn('[白名单] 工具包白名单静默检查异常:', e)
     }
   },
 

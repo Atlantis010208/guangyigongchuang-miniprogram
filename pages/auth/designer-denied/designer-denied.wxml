@@ -18,19 +18,19 @@
     <view class="contact-card">
       <view class="contact-icon-box">
         <!-- support_agent icon -->
-        <image class="headset-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEyIDNDNy4wMjk0NCAzIDMgNy4wMjk0NCAzIDEyVjE2QzMgMTcuNjU2OSA0LjM0MzE1IDE5IDYgMTlIOFYxM0g1VjEyQzUgOC4xMzQwMSA4LjEzNDAxIDUgMTIgNUMxNS44NjYgNSAxOSA4LjEzNDAxIDE5IDEyVjEzSDE2VjE5SDE4QzE5LjY1NjkgMTkgMjEgMTcuNjU2OSAyMSAxNlYxMkMyMSA3LjAyOTQ0IDE2Ljk3MDYgMyAxMiAzWiIgZmlsbD0iIzAwMDAwMCIvPjxwYXRoIGQ9Ik05IDE0QzkgMTUuMTA0NiA5Ljg5NTQzIDE2IDExIDE2SDEzQzE0LjEwNDYgMTYgMTUgMTUuMTA0NiAxNSAxNFYxMkMxNSAxMC44OTU0IDE0LjEwNDYgMTAgMTMgMTBIMTFDOS44OTU0MyAxMCA5IDEwLjg5NTQgOSAxMlYxNFoiIGZpbGw9IiMwMDAwMDAiLz48L3N2Zz4=" />
+        <image class="headset-icon" src="/images/客服.png" />
       </view>
       <view class="contact-info">
         <view class="contact-title">联系客服</view>
         <view class="contact-list">
           <view class="contact-item" bindtap="makePhoneCall">
             <!-- call icon -->
-            <image class="small-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTYuNjIgMTAuNzlDOC4wNiAxMy42MiAxMC4zOCAxNS45NCAxMy4yMSAxNy4zOEwxNS40MSAxNS4xOEMxNS42OSAxNC45MCAxNi4wOCAxNC44MiAxNi40MyAxNC45NEMxNy41NSAxNS4zMSAxOC43NiAxNS41MSAyMCAxNS41MUMyMC41NSAxNS41MSAyMSAxNS45NiAyMSAxNi41MVYyMEMyMSAyMC41NSAyMC41NSAyMSAyMCAyMUMxMC42MSAyMSAzIDEzLjM5IDMgNEMzIDMuNDUgMy40NSAzIDQgM0g3LjVDOC4wNSAzIDguNSAzLjQ1IDguNSA0QzguNSA1LjI1IDguNyA2LjQ1IDkuMDcgNy41N0M5LjE4IDcuOTIgOS4xMCA4LjMxIDguODIgOC41OUw2LjYyIDEwLjc5WiIgZmlsbD0iIzY0NzQ4YiIvPjwvc3ZnPg==" />
+            <image class="small-icon" src="/images/电话.png" />
             <text class="contact-text">{{phoneNumber}}</text>
           </view>
           <view class="contact-item" bindtap="copyWechat">
             <!-- chat_bubble icon -->
-            <image class="small-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTIwIDJINEMyLjkgMiAyIDIuOSAyIDRWMjJMNiAxOEgyMEMyMS4xIDE4IDIyIDE3LjEgMjIgMTZWNEMyMiAyLjkgMjEuMSAyIDIwIDJaIiBmaWxsPSIjNjQ3NDhiIi8+PC9zdmc+" />
+            <image class="small-icon" src="/images/微信（身份）.png" />
             <text class="contact-text">{{wechatId}}</text>
           </view>
         </view>
@@ -40,7 +40,6 @@
     <view class="action-buttons">
       <button class="btn-primary" bindtap="contactAdmin">
         <!-- admin panel icon -->
-        <image class="btn-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEyIDFMMyA1VjExQzMgMTYuNTUgNi44NCAyMS43NCAxMiAyM0MxNy4xNiAyMS43NCAyMSAxNi41NSAyMSAxMVY1TDEyIDFaTTEyIDExLjk5SDE5QzE4LjQ3IDE2LjExIDE1LjcyIDE5Ljc4IDEyIDIwLjkzVjEySDVWNi4zTDEyIDMuMTlWMTEuOTlaIiBmaWxsPSIjZmZmZmZmIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSIyIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggZD0iTTEyIDExQzEwLjY3IDExIDggMTEuNjcgOCAxM1YxNEgxNlYxM0MxNiAxMS42NyAxMy4zMyAxMSAxMiAxMVoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=" />
         联系管理员
       </button>
       <button class="btn-secondary" bindtap="switchIdentity">切换身份</button>

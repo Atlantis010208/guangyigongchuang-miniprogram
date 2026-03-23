@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "全部需求",
+  "navigationBarBackgroundColor": "#F5F5F7",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "van-icon": "@vant/weapp/icon/index"
+  }
+}

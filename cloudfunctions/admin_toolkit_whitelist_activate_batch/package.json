@@ -1,0 +1,10 @@
+{
+  "name": "admin_toolkit_whitelist_activate_batch",
+  "version": "1.0.0",
+  "description": "批量激活工具包白名单（修复先注册后导入导致未激活的存量问题）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

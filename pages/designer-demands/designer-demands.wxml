@@ -1,0 +1,180 @@
+<view class="page-container">
+  
+  <view class="main-content">
+    <!-- Category Scroll -->
+    <view class="sticky-header">
+      <scroll-view class="category-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
+        <view class="category-list">
+          <view class="category-btn {{currentCategory === index ? 'active' : ''}}" 
+                wx:for="{{categories}}" 
+                wx:key="index"
+                data-index="{{index}}"
+                bindtap="switchCategory">
+            {{item}}
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- Demand List -->
+    <view class="demand-list">
+      <!-- 需求卡片1 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tags-group">
+              <view class="tag-blue">新需求</view>
+              <view class="time-text">2小时前发布</view>
+            </view>
+            <view class="card-title">豪华顶层公寓</view>
+            <view class="card-subtitle">
+              <van-icon name="location-o" size="14px" />
+              上海，静安区
+            </view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="wap-home-o" size="24px" color="#9CA3AF" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥8,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">240m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">14 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover">立即接单</button>
+        </view>
+      </view>
+
+      <!-- 需求卡片2 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tags-group">
+              <view class="tag-purple">加急</view>
+              <view class="time-text">5小时前发布</view>
+            </view>
+            <view class="card-title">精品咖啡店</view>
+            <view class="card-subtitle">
+              <van-icon name="location-o" size="14px" />
+              成都，太古里
+            </view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="shop-o" size="24px" color="#9CA3AF" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥5,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">85m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">7 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover">立即接单</button>
+        </view>
+      </view>
+
+      <!-- 需求卡片3 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tags-group">
+              <view class="tag-gray">标准</view>
+            </view>
+            <view class="card-title">科技园办公空间</view>
+            <view class="card-subtitle">
+              <van-icon name="location-o" size="14px" />
+              深圳，南山区
+            </view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="hotel-o" size="24px" color="#9CA3AF" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥12,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">450m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">30 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover">立即接单</button>
+        </view>
+      </view>
+
+      <!-- 需求卡片4 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tags-group">
+              <view class="tag-green">环保</view>
+            </view>
+            <view class="card-title">城市公园夜景</view>
+            <view class="card-subtitle">
+              <van-icon name="location-o" size="14px" />
+              杭州，西湖区
+            </view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="flower-o" size="24px" color="#9CA3AF" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥20,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">1200m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">45 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover">立即接单</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

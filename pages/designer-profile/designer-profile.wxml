@@ -1,0 +1,64 @@
+<view class="page-container">
+  <!-- 个人信息部分 -->
+  <view class="profile-section">
+    <view class="settings-btn" bindtap="onSettings">
+      <van-icon name="setting-o" size="24px" />
+    </view>
+
+    <view class="avatar-wrapper">
+      <view class="avatar-container">
+        <image class="avatar-img" src="{{user.avatar}}" mode="aspectFill"></image>
+      </view>
+      <view class="verified-badge">
+        <van-icon name="passed" color="#fff" size="16px" />
+      </view>
+    </view>
+
+    <view class="user-name">{{user.name}}</view>
+    <view class="user-title">{{user.title}}</view>
+
+    <view class="stats-container">
+      <view class="stat-item">
+        <view class="stat-value">{{user.stats.projects}}</view>
+        <view class="stat-label">已接项目</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{user.stats.rating}}</view>
+        <view class="stat-label">获得评价</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{user.stats.years}}<text class="stat-unit">年</text></view>
+        <view class="stat-label">设计年限</view>
+      </view>
+    </view>
+
+    <button class="edit-btn" bindtap="onEditProfile">编辑资料</button>
+  </view>
+
+  <!-- 作品集部分 -->
+  <view class="portfolio-section">
+    <view class="section-header">
+      <view class="header-left">
+        <view class="section-title">我的作品集</view>
+        <view class="add-btn" bindtap="onAddPortfolio">
+          <van-icon name="plus" size="16px" />
+          <text>添加作品</text>
+        </view>
+      </view>
+      <view class="view-all" bindtap="onViewAllPortfolios">
+        <text>全部</text>
+        <van-icon name="arrow" size="14px" />
+      </view>
+    </view>
+
+    <view class="portfolio-grid">
+      <view class="portfolio-item" wx:for="{{portfolios}}" wx:key="id" bindtap="onPortfolioDetail" data-id="{{item.id}}">
+        <image class="portfolio-img" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="portfolio-overlay">
+          <view class="portfolio-category">{{item.category}}</view>
+          <view class="portfolio-title">{{item.title}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

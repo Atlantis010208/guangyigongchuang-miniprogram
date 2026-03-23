@@ -1,0 +1,244 @@
+page {
+  background-color: #ffffff;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+}
+
+/* 隐藏滚动条 */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  color: transparent;
+}
+
+/* 个人信息部分 */
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 24px 0;
+}
+
+.settings-btn {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #111827;
+  transition: background-color 0.2s;
+  margin-bottom: 8px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.avatar-container {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #f3f4f6;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.verified-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  background-color: #000000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.user-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  letter-spacing: -0.025em;
+}
+
+.user-title {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  max-width: 280px;
+  margin-bottom: 24px;
+  line-height: 1.625;
+}
+
+.stats-container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: #f9fafb;
+  border-radius: 16px;
+  padding: 16px 0;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-unit {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.edit-btn {
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 14px 0;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(229, 231, 235, 0.8);
+  border: none;
+  line-height: 1.5;
+}
+
+.edit-btn::after {
+  border: none;
+}
+
+.edit-btn:active {
+  transform: scale(0.98);
+}
+
+/* 作品集部分 */
+.portfolio-section {
+  margin-top: 40px;
+  padding: 0 24px 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.025em;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.view-all {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.portfolio-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/5;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.portfolio-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.portfolio-item:active .portfolio-img {
+  transform: scale(1.05);
+}
+
+.portfolio-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+}
+
+.portfolio-category {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.portfolio-title {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}

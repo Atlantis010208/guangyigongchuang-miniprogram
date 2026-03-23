@@ -26,6 +26,11 @@ Page({
   },
 
   onShow() {
+    // 更新自定义 tabBar 的选中状态和角色
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateRole()
+      this.getTabBar().setData({ selected: 1 })
+    }
     // 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
     this.loadUserAvatar();
     // 每次显示时刷新课程列表（确保获取最新数据，包括价格更新）

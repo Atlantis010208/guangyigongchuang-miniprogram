@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/splash/splash",
     "pages/products/products",
     "pages/course/index/index",
     "pages/search/search",
@@ -16,7 +17,15 @@
     "pages/auth/designer-denied/designer-denied",
     "pages/course/course-detail/course-detail",
     "pages/course/video-player/video-player",
-    "pages/identity/identity"
+    "pages/identity/identity",
+    "pages/designer-home/designer-home",
+    "pages/designer-profile/designer-profile",
+    "pages/designer-profile-edit/designer-profile-edit",
+    "pages/designer-portfolios/designer-portfolios",
+    "pages/designer-portfolio-add/designer-portfolio-add",
+    "pages/designer-demands/designer-demands",
+    "pages/designer-demand-detail/designer-demand-detail",
+    "pages/designer-projects/designer-projects"
   ],
   "subpackages": [
     {
@@ -135,6 +144,7 @@
     "navigationBarBackgroundColor": "#f2f2f7"
   },
   "tabBar": {
+    "custom": true,
     "color": "#999999",
     "selectedColor": "#007AFF",
     "backgroundColor": "#ffffff",
@@ -162,6 +172,18 @@
         "pagePath": "pages/cart/cart",
         "text": "订单管理",
         "iconPath": "images/cart.png", 
+        "selectedIconPath": "images/cart-active.png"
+      },
+      {
+        "pagePath": "pages/designer-home/designer-home",
+        "text": "需求大厅",
+        "iconPath": "images/explore.png",
+        "selectedIconPath": "images/explore-active.png"
+      },
+      {
+        "pagePath": "pages/designer-projects/designer-projects",
+        "text": "我的项目",
+        "iconPath": "images/cart.png",
         "selectedIconPath": "images/cart-active.png"
       }
     ]

@@ -43,6 +43,11 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
+    // 更新自定义 tabBar 的选中状态和角色
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateRole()
+      this.getTabBar().setData({ selected: 3 })
+    }
     // 检查登录状态
     const app = getApp()
     const isLoggedIn = app.isLoggedIn()

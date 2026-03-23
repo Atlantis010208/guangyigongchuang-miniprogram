@@ -50,6 +50,8 @@ Page({
         // 更新本地全局变量
         app.globalData.userDoc = res.result.user
         wx.setStorageSync('userDoc', res.result.user)
+        // 存储用户角色（用于启动页判断）
+        wx.setStorageSync('userRole', 'owner')
         // 标记已非首次启动
         app.globalData.isFirstLaunch = false
 

@@ -1,0 +1,235 @@
+page {
+  background-color: #f7f7f7;
+  height: 100vh;
+  font-family: 'Source Han Sans SC', 'Inter', sans-serif;
+  color: #050505;
+}
+
+.splash-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background-color: #ffffff;
+  position: relative;
+}
+
+/* 顶部 Branding */
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: env(safe-area-inset-top);
+  height: 80px; /* 包含刘海的安全距离和自身高度 */
+  z-index: 10;
+  background-color: transparent;
+}
+
+.header-text {
+  font-size: 10px;
+  font-weight: 300;
+  color: #000000;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+}
+
+/* 头部淡入动画 */
+@keyframes header-fade-in {
+  0% { opacity: 0; transform: translateY(-5px); }
+  100% { opacity: 0.2; transform: translateY(0); }
+}
+
+.reveal-header {
+  opacity: 0;
+  animation: header-fade-in 2s ease-out 0.5s forwards;
+}
+
+/* 中间内容区 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  padding-top: 64px;
+}
+
+.branding-centerpiece {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 56px;
+  position: relative;
+}
+
+/* Logo 动画区 */
+.logo-container {
+  position: relative;
+  width: 208px;
+  height: 208px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  filter: grayscale(100%) brightness(0);
+  opacity: 0.8;
+}
+
+@keyframes breathe-light {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.animate-breathe {
+  animation: breathe-light 6s ease-in-out infinite;
+}
+
+/* 文字区 */
+.text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 300; /* font-han-light */
+  letter-spacing: 0.4em;
+  color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  padding-left: 0.4em; /* 补偿字母间距 */
+}
+
+@keyframes title-reveal-silk {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.reveal-title-char {
+  display: inline-block;
+  opacity: 0;
+  animation: title-reveal-silk 1.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.subtitle {
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dot {
+  margin: 0 12px;
+}
+
+@keyframes subtitle-reveal-silk {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    letter-spacing: 0.4em;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 0.7em;
+  }
+}
+
+.reveal-subtitle-item {
+  display: inline-block;
+  opacity: 0;
+  animation: subtitle-reveal-silk 2s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+/* 底部加载区 */
+.footer {
+  position: relative;
+  width: 100%;
+  padding: 0 48px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.loading-wrapper {
+  width: 100%;
+  max-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-track {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 33.333%;
+  background-color: rgba(0, 0, 0, 0.4);
+  animation: loading-fade 4s infinite ease-in-out;
+}
+
+@keyframes loading-fade {
+  0% { left: -40%; opacity: 0; }
+  50% { opacity: 1; }
+  100% { left: 110%; opacity: 0; }
+}
+
+.loading-text {
+  display: flex;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.4em;
+  padding-left: 0.4em;
+}

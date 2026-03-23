@@ -1,0 +1,150 @@
+<view class="page-container">
+  
+  <view class="main-content">
+    <view class="header">
+      <view class="header-text">
+        <text class="h1">发现</text>
+        <text class="p">灯光设计项目</text>
+      </view>
+      <view class="avatar-container" bindtap="goToProfile">
+        <image class="avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      </view>
+    </view>
+
+    <scroll-view class="category-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
+      <view class="category-list">
+        <view class="category-btn {{currentCategory === index ? 'active' : ''}}" 
+              wx:for="{{categories}}" 
+              wx:key="index"
+              data-index="{{index}}"
+              bindtap="switchCategory">
+          {{item}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="section-header">
+      <text class="h2">可用需求</text>
+      <view class="filter-group">
+        <view class="filter-btn" bindtap="goToFilter">
+          <van-icon name="filter-o" size="20px" color="#86868B" />
+        </view>
+        <view class="view-all-btn" bindtap="viewAllDemands">
+          <text>查看全部</text>
+          <van-icon name="arrow" size="14px" custom-class="arrow-icon" />
+        </view>
+      </view>
+    </view>
+
+    <view class="demand-list">
+      <!-- 需求卡片1 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tag-blue">新需求</view>
+            <view class="card-title">豪华顶层公寓</view>
+            <view class="card-subtitle">上海，静安区</view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="wap-home-o" size="20px" color="#6B7280" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥8,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">240m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">14 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="1">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="1">立即接单</button>
+        </view>
+      </view>
+
+      <!-- 需求卡片2 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tag-purple">加急</view>
+            <view class="card-title">精品咖啡店</view>
+            <view class="card-subtitle">成都，太古里</view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="shop-o" size="20px" color="#6B7280" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥5,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">85m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">7 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="2">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="2">立即接单</button>
+        </view>
+      </view>
+
+      <!-- 需求卡片3 -->
+      <view class="card">
+        <view class="card-header">
+          <view>
+            <view class="tag-gray">标准</view>
+            <view class="card-title">科技园办公空间</view>
+            <view class="card-subtitle">深圳，南山区</view>
+          </view>
+          <view class="card-icon">
+            <van-icon name="hotel-o" size="20px" color="#6B7280" />
+          </view>
+        </view>
+
+        <view class="stats-grid">
+          <view class="stat-box">
+            <text class="stat-label">预算</text>
+            <text class="stat-value">¥12,000</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">面积</text>
+            <text class="stat-value">450m²</text>
+          </view>
+          <view class="stat-box">
+            <text class="stat-label">工期</text>
+            <text class="stat-value">30 天</text>
+          </view>
+        </view>
+
+        <view class="action-group">
+          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="3">查看详情</button>
+          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="3">立即接单</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选弹窗组件 -->
+  <designer-filter-popup 
+    show="{{showFilter}}" 
+    bind:close="onCloseFilter" 
+    bind:confirm="onConfirmFilter"
+  />
+</view>

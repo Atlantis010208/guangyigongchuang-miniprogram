@@ -1,0 +1,119 @@
+<view class="page-container">
+  
+  <view class="main-content">
+    <!-- Header with Search -->
+    <view class="header-section">
+      <view class="search-container">
+        <view class="search-bar">
+          <van-icon name="search" size="20px" color="#94a3b8" />
+          <input class="search-input" placeholder="搜索项目名称..." placeholder-style="color: #94a3b8;" />
+        </view>
+      </view>
+
+      <!-- Category Tabs -->
+      <view class="tabs-scroll">
+        <view class="tabs-list">
+          <view class="tab-item {{currentTab === index ? 'active' : ''}}" 
+                wx:for="{{tabs}}" 
+                wx:key="index"
+                data-index="{{index}}"
+                bindtap="switchTab">
+            <text class="tab-text">{{item.name}}</text>
+            <view class="tab-indicator" wx:if="{{currentTab === index}}"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Project List -->
+    <view class="project-list">
+      <!-- Project Card 1: 设计中 -->
+      <view class="project-card">
+        <view class="card-header">
+          <view class="card-title-group">
+            <view class="card-title">杭州滨江·云端豪宅灯光方案</view>
+            <view class="card-subtitle">客户: 张先生 | 别墅区 A-12</view>
+          </view>
+          <view class="status-tag tag-blue">设计中</view>
+        </view>
+
+        <view class="stage-info">
+          <van-icon name="edit" size="16px" color="#135bec" />
+          <text class="stage-text">初稿阶段</text>
+        </view>
+
+        <view class="progress-bar">
+          <view class="progress-inner bg-blue" style="width: 35%"></view>
+        </view>
+
+        <view class="card-footer">
+          <text class="update-time">更新于 2小时前</text>
+          <view class="detail-btn">
+            <text>查看详情</text>
+            <van-icon name="arrow" size="16px" />
+          </view>
+        </view>
+      </view>
+
+      <!-- Project Card 2: 待确认 -->
+      <view class="project-card">
+        <view class="card-header">
+          <view class="card-title-group">
+            <view class="card-title">上海新天地商业展厅</view>
+            <view class="card-subtitle">客户: 蔚来汽车 | 展厅 B3</view>
+          </view>
+          <view class="status-tag tag-amber">待确认</view>
+        </view>
+
+        <view class="stage-info">
+          <van-icon name="comment-o" size="16px" color="#f59e0b" />
+          <text class="stage-text">方案审核中</text>
+        </view>
+
+        <view class="progress-bar">
+          <view class="progress-inner bg-amber" style="width: 80%"></view>
+        </view>
+
+        <view class="card-footer">
+          <text class="update-time">更新于 昨天</text>
+          <view class="detail-btn">
+            <text>查看详情</text>
+            <van-icon name="arrow" size="16px" />
+          </view>
+        </view>
+      </view>
+
+      <!-- Project Card 3: 已完成 -->
+      <view class="project-card card-completed">
+        <view class="card-header">
+          <view class="card-title-group">
+            <view class="card-title">深圳湾一号私人会所</view>
+            <view class="card-subtitle">客户: 李总 | 顶层复式</view>
+          </view>
+          <view class="status-tag tag-green">已完成</view>
+        </view>
+
+        <view class="stage-info">
+          <van-icon name="passed" size="16px" color="#22c55e" />
+          <text class="stage-text">交付完成</text>
+        </view>
+
+        <view class="progress-bar">
+          <view class="progress-inner bg-green" style="width: 100%"></view>
+        </view>
+
+        <view class="card-footer">
+          <text class="update-time">2023-10-15</text>
+          <view class="detail-btn">
+            <text>查看详情</text>
+            <van-icon name="arrow" size="16px" />
+          </view>
+        </view>
+      </view>
+
+      <view class="no-more">
+        <text>没有更多项目了</text>
+      </view>
+    </view>
+  </view>
+</view>

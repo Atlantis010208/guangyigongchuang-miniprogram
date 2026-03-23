@@ -30,7 +30,8 @@ function isValidPhone(phone) {
 }
 
 /**
- * 标准化手机号
+ * 标准化手机号（与 check_designer_whitelist 中的 normalizePhone 保持一致）
+ * 如需修改此函数，请同步修改 check_designer_whitelist/index.js 中的同名函数
  */
 function normalizePhone(phone) {
   if (!phone) return ''

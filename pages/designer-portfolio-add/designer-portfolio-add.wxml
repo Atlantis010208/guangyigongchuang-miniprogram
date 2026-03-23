@@ -1,0 +1,70 @@
+<view class="page-container">
+  <!-- 上传封面图 -->
+  <view class="upload-cover-section">
+    <view class="upload-cover-box {{coverImage ? 'has-image' : ''}}" bindtap="onChooseCover">
+      <block wx:if="{{!coverImage}}">
+        <view class="upload-placeholder">
+          <van-icon name="plus" size="32px" color="#9ca3af" />
+          <text class="upload-text">上传封面图</text>
+        </view>
+      </block>
+      <block wx:else>
+        <image class="cover-image" src="{{coverImage}}" mode="aspectFill"></image>
+        <view class="change-cover-mask">
+          <van-icon name="photograph" size="24px" color="#ffffff" />
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 表单信息 -->
+  <view class="form-section">
+    <view class="form-item">
+      <view class="form-label">作品名称</view>
+      <input class="form-input" value="{{projectName}}" placeholder="请输入作品名称" placeholder-class="placeholder-style" bindinput="onInput" data-field="projectName" />
+    </view>
+
+    <view class="form-item">
+      <view class="form-label">空间类型</view>
+      <view class="picker-wrapper">
+        <picker mode="selector" range="{{spaceTypes}}" value="{{spaceTypeIndex}}" bindchange="onSpaceTypeChange">
+          <view class="picker-inner">
+            <input class="form-input picker-input" disabled value="{{spaceTypes[spaceTypeIndex]}}" placeholder="例如：住宅、商业、办公" placeholder-class="placeholder-style" />
+            <van-icon name="arrow-down" color="#d1d5db" size="20px" class="arrow-icon" />
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-item description-item">
+      <view class="form-label mb-2">设计理念说明</view>
+      <textarea class="form-textarea" value="{{description}}" placeholder="请阐述您的设计理念、照明手法及项目亮点..." placeholder-class="placeholder-style" bindinput="onInput" data-field="description" maxlength="500"></textarea>
+    </view>
+  </view>
+
+  <!-- 项目图集 -->
+  <view class="gallery-section">
+    <view class="section-title">项目图集</view>
+    <view class="gallery-grid">
+      <view class="gallery-item" wx:for="{{galleryImages}}" wx:key="*this">
+        <image class="gallery-image" src="{{item}}" mode="aspectFill"></image>
+        <view class="delete-btn" catchtap="onDeleteImage" data-index="{{index}}">
+          <van-icon name="cross" size="12px" color="#ffffff" />
+        </view>
+      </view>
+      
+      <view class="gallery-upload-btn" bindtap="onAddGalleryImages" wx:if="{{galleryImages.length < 9}}">
+        <van-icon name="photograph" size="24px" color="#9ca3af" />
+        <text class="gallery-upload-text">添加图片</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部占位，防止被按钮遮挡 -->
+  <view class="bottom-spacer"></view>
+
+  <!-- 底部确认发布按钮 -->
+  <view class="bottom-action">
+    <button class="submit-btn" bindtap="onSubmit" hover-class="submit-btn-hover">确认发布</button>
+  </view>
+</view>

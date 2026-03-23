@@ -1,0 +1,41 @@
+<view class="splash-container">
+  <!-- 顶部 Branding -->
+  <view class="header">
+    <view class="header-text reveal-header">GUANG YI DESIGN</view>
+  </view>
+
+  <!-- 中间主要内容区 -->
+  <view class="main-content">
+    <view class="branding-centerpiece">
+      <!-- Logo 动画区 -->
+      <view class="logo-container animate-breathe">
+        <image class="logo-img" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙照明 logo(正-透明-黑字).png" mode="aspectFit"></image>
+      </view>
+
+      <!-- Logo 文字区 -->
+      <view class="text-container">
+        <view class="title">
+          <text class="reveal-title-char" style="animation-delay: 0.8s;">光</text>
+          <text class="reveal-title-char" style="animation-delay: 1.05s;">乙</text>
+        </view>
+        <view class="subtitle">
+          <text class="reveal-subtitle-item" style="animation-delay: 1.6s;">GUYI</text>
+          <text class="reveal-subtitle-item dot" style="animation-delay: 1.9s;">•</text>
+          <text class="reveal-subtitle-item" style="animation-delay: 2.1s;">Lighting</text>
+          <text class="reveal-subtitle-item dot" style="animation-delay: 2.4s;">•</text>
+          <text class="reveal-subtitle-item" style="animation-delay: 2.6s;">Design</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部加载状态区 -->
+  <view class="footer">
+    <view class="loading-wrapper">
+      <view class="loading-track animate-pulse-glow">
+        <view class="loading-indicator"></view>
+      </view>
+      <view class="loading-text">内容加载中</view>
+    </view>
+  </view>
+</view>
