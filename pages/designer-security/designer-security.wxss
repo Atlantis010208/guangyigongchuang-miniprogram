@@ -1,0 +1,68 @@
+page {
+  background-color: #F2F2F2;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: #F2F2F2;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  padding-top: 12px;
+}
+
+/* 列表组 */
+.list-group {
+  background-color: #ffffff;
+  margin-bottom: 16px;
+  /* 如果想要紧贴两侧，不设置 border-radius 和 margin 的左右 */
+}
+
+.list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: #ffffff;
+  transition: background-color 0.2s;
+}
+
+.list-item-hover {
+  background-color: #f8f8f8;
+}
+
+.item-label {
+  font-size: 17px;
+  color: #000000;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.item-value {
+  font-size: 17px;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+}
+
+.divider {
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+}
+
+/* 底部提示文字 */
+.tips-text {
+  padding: 0 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 1.4;
+}

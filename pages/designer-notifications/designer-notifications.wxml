@@ -1,0 +1,78 @@
+<view class="page-container">
+  
+  <view class="settings-section">
+    <view class="section-title">推送通知</view>
+    
+    <view class="list-group">
+      <!-- 新需求提醒 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="bell" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">新需求提醒</text>
+            <text class="item-desc">当有新的创意设计需求发布时通知我</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{notifyNewDemand}}" bind:change="onChangeNewDemand" active-color="#000000" size="28px" />
+        </view>
+        <view class="divider"></view>
+      </view>
+      
+      <!-- 订单进度更新 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="logistics" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">订单进度更新</text>
+            <text class="item-desc">订单状态变更、交付物确认等进度提醒</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{notifyOrderProgress}}" bind:change="onChangeOrderProgress" active-color="#000000" size="28px" />
+        </view>
+        <view class="divider"></view>
+      </view>
+      
+      <!-- 系统通知 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="info" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">系统通知</text>
+            <text class="item-desc">包含账号安全、版本更新及平台公告</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{notifySystem}}" bind:change="onChangeSystem" active-color="#000000" size="28px" />
+        </view>
+      </view>
+    </view>
+    
+    <view class="tips-text">
+      开启后，您将通过微信服务通知或应用内弹窗即时收到相关消息。
+    </view>
+  </view>
+
+  <view class="settings-section mt-8">
+    <view class="section-title">免打扰设置</view>
+    
+    <view class="list-group">
+      <!-- 夜间免打扰模式 -->
+      <view class="list-item min-h-72">
+        <view class="item-left">
+          <!-- 用 clock-o 替代月亮图标 -->
+          <van-icon name="clock-o" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content justify-center">
+            <text class="item-title">夜间免打扰模式</text>
+            <text class="item-desc">22:00 - 08:00 期间将静默接收推送</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{dndMode}}" bind:change="onChangeDnd" active-color="#000000" size="28px" />
+        </view>
+      </view>
+    </view>
+  </view>
+
+</view>

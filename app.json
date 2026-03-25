@@ -25,6 +25,11 @@
     "pages/designer-portfolio-add/designer-portfolio-add",
     "pages/designer-demands/designer-demands",
     "pages/designer-demand-detail/designer-demand-detail",
+    "pages/designer-order-success/designer-order-success",
+    "pages/designer-settings/designer-settings",
+    "pages/designer-security/designer-security",
+    "pages/designer-privacy/designer-privacy",
+    "pages/designer-notifications/designer-notifications",
     "pages/designer-projects/designer-projects"
   ],
   "subpackages": [

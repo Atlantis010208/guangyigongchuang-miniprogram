@@ -1,0 +1,57 @@
+<view class="page-container">
+  
+  <view class="settings-section">
+    <view class="section-title">隐私设置</view>
+    
+    <view class="list-group">
+      <!-- 公开我的作品集 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="photo-o" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">公开我的作品集</text>
+            <text class="item-desc">允许所有用户在您的个人主页浏览设计案例</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{publicPortfolio}}" bind:change="onChangePortfolio" active-color="#000000" size="28px" />
+        </view>
+        <view class="divider"></view>
+      </view>
+      
+      <!-- 允许业主发起咨询 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="chat-o" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">允许业主发起咨询</text>
+            <text class="item-desc">开启后业主可通过您的主页发送私信咨询</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{allowConsult}}" bind:change="onChangeConsult" active-color="#000000" size="28px" />
+        </view>
+        <view class="divider"></view>
+      </view>
+      
+      <!-- 展示我的评分与评价 -->
+      <view class="list-item">
+        <view class="item-left">
+          <van-icon name="star-o" size="24px" color="#9CA3AF" custom-class="item-icon" />
+          <view class="item-content">
+            <text class="item-title">展示我的评分与评价</text>
+            <text class="item-desc">向公众展示历史合作订单的评分及客户评价</text>
+          </view>
+        </view>
+        <view class="item-right">
+          <van-switch checked="{{showRating}}" bind:change="onChangeRating" active-color="#000000" size="28px" />
+        </view>
+      </view>
+    </view>
+    
+    <view class="tips-text">
+      关闭后，相关信息将仅对已建立合作关系的客户可见，可能会影响您的接单机会。
+    </view>
+  </view>
+
+</view>

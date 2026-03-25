@@ -1,0 +1,108 @@
+page {
+  background-color: #F2F2F7;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: #F2F2F7;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  padding-bottom: 40px;
+}
+
+.settings-section {
+  padding: 16px;
+}
+
+.mt-8 {
+  margin-top: 24px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: #8E8E93;
+  margin-bottom: 8px;
+  padding-left: 16px;
+  letter-spacing: 0.05em;
+}
+
+/* 列表组 */
+.list-group {
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.min-h-72 {
+  min-height: 72px;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding-right: 16px;
+}
+
+.item-icon {
+  opacity: 0.8;
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.item-title {
+  font-size: 17px;
+  color: #000000;
+  line-height: 1.2;
+}
+
+.item-desc {
+  font-size: 13px;
+  color: #8E8E93;
+  line-height: 1.4;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.divider {
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+}
+
+/* 底部提示文字 */
+.tips-text {
+  padding: 0 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #8E8E93;
+  line-height: 1.5;
+}

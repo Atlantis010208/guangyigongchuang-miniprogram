@@ -1,0 +1,74 @@
+<view class="page-container">
+  <view class="settings-content">
+    
+    <!-- 第一组 -->
+    <view class="list-group">
+      <view class="list-item" hover-class="list-item-hover" bindtap="goToSecurity">
+        <view class="item-left">
+          <van-icon name="shield-o" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">账号与安全</text>
+        </view>
+        <van-icon name="arrow" color="#C7C7CC" size="16px" />
+      </view>
+      <view class="divider"></view>
+      
+      <view class="list-item" hover-class="list-item-hover" bindtap="goToPrivacy">
+        <view class="item-left">
+          <van-icon name="lock" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">隐私管理</text>
+        </view>
+        <van-icon name="arrow" color="#C7C7CC" size="16px" />
+      </view>
+      <view class="divider"></view>
+
+      <view class="list-item" hover-class="list-item-hover" bindtap="goToNotifications">
+        <view class="item-left">
+          <van-icon name="bell" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">消息通知设置</text>
+        </view>
+        <van-icon name="arrow" color="#C7C7CC" size="16px" />
+      </view>
+    </view>
+
+    <!-- 第二组 -->
+    <view class="list-group">
+      <view class="list-item" hover-class="list-item-hover" bindtap="onClearCache">
+        <view class="item-left">
+          <van-icon name="delete" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">清除缓存</text>
+        </view>
+        <view class="item-right">
+          <text class="item-value">{{cacheSize}}</text>
+          <van-icon name="arrow" color="#C7C7CC" size="16px" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 第三组 -->
+    <view class="list-group">
+      <view class="list-item" hover-class="list-item-hover">
+        <view class="item-left">
+          <van-icon name="info-o" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">关于我们</text>
+        </view>
+        <van-icon name="arrow" color="#C7C7CC" size="16px" />
+      </view>
+      <view class="divider"></view>
+      
+      <view class="list-item" hover-class="list-item-hover">
+        <view class="item-left">
+          <van-icon name="orders-o" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">用户协议与隐私政策</text>
+        </view>
+        <van-icon name="arrow" color="#C7C7CC" size="16px" />
+      </view>
+    </view>
+
+    <!-- 退出登录按钮 -->
+    <view class="logout-section">
+      <button class="logout-btn" bindtap="onLogout" hover-class="logout-btn-hover">退出登录</button>
+      <view class="version-text">VERSION 1.2.0 (BUILD 20231024)</view>
+    </view>
+
+  </view>
+</view>

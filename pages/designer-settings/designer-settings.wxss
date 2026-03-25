@@ -1,0 +1,107 @@
+page {
+  background-color: #F2F2F2;
+}
+
+.page-container {
+  min-height: 100vh;
+  background-color: #F2F2F2;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+.settings-content {
+  padding: 16px 20px 40px;
+}
+
+/* 列表组 */
+.list-group {
+  background-color: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: #ffffff;
+  transition: background-color 0.2s;
+}
+
+.list-item-hover {
+  background-color: #f3f4f6;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-icon {
+  font-weight: 300 !important;
+}
+
+.item-text {
+  font-size: 17px;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.item-value {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-right: 4px;
+}
+
+.divider {
+  height: 0.5px;
+  background-color: rgba(0, 0, 0, 0.05);
+  margin-left: 56px;
+}
+
+/* 退出登录 */
+.logout-section {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logout-btn {
+  width: 100%;
+  background-color: #181818;
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 500;
+  padding: 14px 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  line-height: 1.5;
+  transition: opacity 0.2s;
+}
+
+.logout-btn::after {
+  border: none;
+}
+
+.logout-btn-hover {
+  opacity: 0.8;
+}
+
+.version-text {
+  margin-top: 24px;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}

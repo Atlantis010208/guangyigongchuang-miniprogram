@@ -212,12 +212,102 @@ Page({
     });
   },
 
-  // 立即接单
-  acceptOrder(e) {
-    // 立即接单逻辑
-    wx.showToast({
-      title: '接单成功',
-      icon: 'success'
-    });
+/**
+ * 头像加载失败时的处理
+ */
+async onAvatarError() {
+  const { userAvatarFileID } = this.data;
+  if (userAvatarFileID && userAvatarFileID.startsWith('cloud://') && wx.cloud) {
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: [userAvatarFileID] });
+      if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+        this.setData({ userAvatarDisplay: res.fileList[0].tempFileURL });
+        return;
+      }
+    } catch (e) {}
   }
+  this.setData({ userAvatarDisplay: '' });
+},
+
+/**
+ * 跳转到个人中心
+ */
+goToProfile() {
+  wx.navigateTo({
+    url: '/pages/designer-profile/designer-profile'
+  });
+},
+
+// 切换分类
+switchCategory(e) {
+  const index = e.currentTarget.dataset.index;
+  this.setData({
+    currentCategory: index
+  });
+},
+
+// 显示筛选弹窗
+goToFilter() {
+  this.setData({
+    showFilter: true
+  });
+  // 隐藏 tabBar 避免遮挡弹窗
+  if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+    this.getTabBar().setData({ show: false });
+  }
+},
+
+// 关闭筛选弹窗
+onCloseFilter() {
+  this.setData({
+    showFilter: false
+  });
+  // 恢复 tabBar 显示
+  if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+    this.getTabBar().setData({ show: true });
+  }
+},
+
+// 确认筛选条件
+onConfirmFilter(e) {
+  const filters = e.detail;
+  console.log('接收到筛选条件:', filters);
+  // 恢复 tabBar 显示
+  if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+    this.getTabBar().setData({ show: true });
+  }
+  // TODO: 根据筛选条件重新加载需求列表
+  wx.showToast({
+    title: '已应用筛选',
+    icon: 'success'
+  });
+},
+
+// 查看全部需求
+viewAllDemands() {
+  wx.navigateTo({
+    url: '/pages/designer-demands/designer-demands'
+  });
+},
+
+// 查看需求详情
+onViewDemand(e) {
+  const id = e.currentTarget.dataset.id;
+  wx.navigateTo({
+    url: `/pages/designer-demand-detail/designer-demand-detail?id=${id}`
+  });
+},
+
+// 立即接单
+acceptOrder(e) {
+  wx.showLoading({ title: '处理中...' });
+  
+  // 模拟抢单请求延迟
+  setTimeout(() => {
+    wx.hideLoading();
+    wx.navigateTo({
+      url: '/pages/designer-order-success/designer-order-success?projectName=上海静安区 150㎡ 住宅照明设计'
+    });
+  }, 800);
+},
 });

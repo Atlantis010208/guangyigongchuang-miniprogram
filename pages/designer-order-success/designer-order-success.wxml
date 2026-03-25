@@ -1,0 +1,52 @@
+<view class="page-container">
+  <!-- 内容主体 -->
+  <view class="main-content">
+    
+    <!-- 成功图标与动画 -->
+    <view class="success-icon-container">
+      <view class="icon-circle">
+        <van-icon name="success" size="48px" color="#111827" custom-class="check-icon" />
+      </view>
+      <view class="dot top-right"></view>
+      <view class="dot bottom-left"></view>
+    </view>
+    
+    <!-- 标题 -->
+    <view class="title">抢单成功</view>
+    
+    <!-- 订单信息卡片 -->
+    <view class="info-card">
+      <view class="info-section">
+        <view class="info-label">项目名称</view>
+        <view class="info-value">{{projectName || '上海静安区 150㎡ 住宅照明设计'}}</view>
+      </view>
+      
+      <view class="divider"></view>
+      
+      <view class="info-section">
+        <view class="info-label">订单状态</view>
+        <view class="status-row">
+          <view class="status-dot-container">
+            <view class="status-dot-ping"></view>
+            <view class="status-dot"></view>
+          </view>
+          <view class="status-text">设计中 (沟通阶段)</view>
+        </view>
+      </view>
+      
+      <view class="divider"></view>
+      
+      <view class="info-section">
+        <view class="info-label">温馨提示</view>
+        <view class="tips-text">请尽快联系业主进行初步沟通。</view>
+      </view>
+    </view>
+    
+  </view>
+
+  <!-- 底部按钮区域 -->
+  <view class="bottom-actions">
+    <button class="btn-primary" bindtap="goToProject" hover-class="btn-primary-hover">进入项目管理</button>
+    <button class="btn-secondary" bindtap="goBackToDemands" hover-class="btn-secondary-hover">返回需求大厅</button>
+  </view>
+</view>

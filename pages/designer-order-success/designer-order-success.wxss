@@ -1,0 +1,237 @@
+page {
+  background-color: #ffffff;
+}
+
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 内容主体 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px 80px;
+  position: relative;
+}
+
+/* 图标动画区 */
+.success-icon-container {
+  position: relative;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.icon-circle {
+  width: 96px;
+  height: 96px;
+  background-color: #f5f5f7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-icon {
+  font-weight: 600;
+}
+
+.dot {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  opacity: 0.6;
+}
+
+.dot.top-right {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+}
+
+.dot.bottom-left {
+  top: 40px;
+  left: -12px;
+  width: 8px;
+  height: 8px;
+}
+
+/* 标题 */
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 40px;
+  letter-spacing: -0.025em;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+}
+
+/* 订单信息卡片 */
+.info-card {
+  width: 100%;
+  background-color: rgba(248, 250, 252, 0.5);
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(226, 232, 240, 0.6);
+  margin: 20px 0;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot-container {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot-ping {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #4ade80;
+  opacity: 0.75;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.status-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #22c55e;
+}
+
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.tips-text {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* 底部按钮区域 */
+.bottom-actions {
+  width: 100%;
+  padding: 16px 24px 48px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 56px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-primary-hover {
+  background-color: #000000;
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  width: 100%;
+  height: 48px;
+  background-color: transparent;
+  color: #64748b;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-secondary::after {
+  border: none;
+}
+
+.btn-secondary-hover {
+  color: #0f172a;
+}
+
+/* 动画定义 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

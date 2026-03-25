@@ -23,9 +23,9 @@ Page({
   onBack() {
     wx.navigateBack({
       fail: () => {
-        // 如果没有上一页，跳转到需求大厅
+        // 如果没有上一页，跳转到首页需求大厅
         wx.switchTab({
-          url: '/pages/designer-demands/designer-demands'
+          url: '/pages/designer-home/designer-home'
         });
       }
     });
@@ -66,17 +66,8 @@ Page({
           // 模拟网络请求
           setTimeout(() => {
             wx.hideLoading();
-            wx.showToast({
-              title: '抢单成功',
-              icon: 'success',
-              duration: 2000,
-              success: () => {
-                setTimeout(() => {
-                  wx.switchTab({
-                    url: '/pages/designer-projects/designer-projects'
-                  });
-                }, 1500);
-              }
+            wx.navigateTo({
+              url: '/pages/designer-order-success/designer-order-success?projectName=上海静安区 150㎡ 住宅照明设计'
             });
           }, 800);
         }
