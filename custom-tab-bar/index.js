@@ -8,7 +8,7 @@ Component({
     ownerList: [
       {
         pagePath: '/pages/products/products',
-        text: '灯光方案',
+        text: '首页',
         iconPath: '/images/product.png',
         selectedIconPath: '/images/product-active.png'
       },

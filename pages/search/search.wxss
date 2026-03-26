@@ -192,6 +192,24 @@ page {
   opacity: 0.6;
 }
 
+.v2-upgrade-btn {
+  margin-left: 20rpx;
+  font-size: 22rpx;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8rpx 24rpx;
+  border-radius: 30rpx;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1rpx solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.v2-upgrade-btn:active {
+  opacity: 0.7;
+}
+
 .v2-overlay-desc {
   position: absolute;
   left: 50rpx;

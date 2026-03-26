@@ -419,9 +419,33 @@ Page({
 
   onUpgradeConfirm() {
     this.setData({ showUpgradeModal: false })
-    wx.navigateTo({ 
-      url: '/pages/toolkit/toolkit-detail/toolkit-detail?id=TK_DEFAULT_001' 
-    })
+
+    const app = getApp()
+    if (!app.isLoggedIn()) {
+      wx.showModal({
+        title: '提示',
+        content: '请先登录后再购买',
+        confirmText: '去登录',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/auth/login/login' })
+          }
+        }
+      })
+      return
+    }
+
+    // 直接跳转到订单确认页，跳过工具包详情页
+    const item = {
+      id: 'TK_DEFAULT_001',
+      name: '灯光设计工具包',
+      price: 69,
+      image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg',
+      quantity: 1,
+      specs: { version: '标准版' }
+    }
+    const query = encodeURIComponent(JSON.stringify(item))
+    wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
   },
 
   stopPropagation() {},
@@ -1003,9 +1027,17 @@ Page({
         cancelText: '取消',
         success: (res) => {
           if (res.confirm) {
-            wx.navigateTo({
-              url: '/pages/toolkit/toolkit-detail/toolkit-detail?id=TK_DEFAULT_001'
-            })
+            // 直接跳转到订单确认页，跳过工具包详情页
+            const item = {
+              id: 'TK_DEFAULT_001',
+              name: '灯光设计工具包',
+              price: 69,
+              image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg',
+              quantity: 1,
+              specs: { version: '标准版' }
+            }
+            const query = encodeURIComponent(JSON.stringify(item))
+            wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
           }
         }
       })

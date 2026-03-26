@@ -1,21 +1,23 @@
 <view class="mall-page">
-  <!-- 左侧分类导航 -->
-  <view class="sidebar">
-    <view class="sidebar-item {{category === '灯具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="灯具">
-      <view class="active-indicator" wx:if="{{category === '灯具'}}"></view>
-      <text>灯具</text>
-    </view>
-    <view class="sidebar-item {{category === '设计服务' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="设计服务">
-      <view class="active-indicator" wx:if="{{category === '设计服务'}}"></view>
-      <text>设计服务</text>
-    </view>
-    <view class="sidebar-item {{category === '资料工具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="资料工具">
-      <view class="active-indicator" wx:if="{{category === '资料工具'}}"></view>
-      <text>资料工具</text>
+  <!-- Search Bar -->
+  <view class="search-container">
+    <view class="search-box">
+      <icon class="search-icon" type="search" size="18" color="#94a3b8"></icon>
+      <input class="search-input" placeholder="搜索商品..." placeholder-class="search-placeholder" bindconfirm="onSearch" confirm-type="search" value="{{keyword}}" />
     </view>
   </view>
 
-  <!-- 右侧商品列表 -->
+  <!-- Categories Tabs -->
+  <scroll-view class="tabs-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
+    <view class="tabs">
+      <view class="tab-item {{category === '设计服务' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="设计服务">设计服务</view>
+      <view class="tab-item {{category === '资料工具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="资料工具">资料工具</view>
+      <view class="tab-item {{category === '灯具' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="灯具">灯具设备</view>
+      <view class="tab-item {{category === '智能家居' ? 'active' : ''}}" bindtap="onCategoryChange" data-category="智能家居">智能家居</view>
+    </view>
+  </scroll-view>
+
+  <!-- Main Product Grid -->
   <view class="main-content">
     <!-- Loading State -->
     <view class="loading-state" wx:if="{{loading && products.length === 0}}">
@@ -32,21 +34,18 @@
     <view class="product-grid" wx:if="{{products.length > 0}}">
       <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
         <view class="product-image-wrap">
-          <image class="product-image" src="{{item.image}}" mode="aspectFill"></image>
-          <!-- 虚拟商品交付方式标签 -->
-          <view class="delivery-tag" wx:if="{{item.isVirtual && item.deliveryLabel}}">{{item.deliveryLabel}}</view>
+          <image class="product-image" src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImageError" data-index="{{index}}"></image>
+          <view class="image-placeholder" wx:if="{{!item.image}}">
+            <text class="placeholder-text">暂无图片</text>
+          </view>
         </view>
         <view class="product-info">
           <text class="product-name">{{item.name}}</text>
-          <view class="product-bottom">
-            <text class="product-price">¥{{item.price}}</text>
-            <!-- 实物商品显示加购按钮，虚拟商品显示箭头 -->
-            <view class="product-action-arrow" wx:if="{{item.isVirtual}}">
-              <text class="arrow-icon">›</text>
-            </view>
-            <view class="product-action-btn" wx:else catchtap="onQuickAdd" data-id="{{item.id}}">
-              <text class="plus-icon">+</text>
-            </view>
+          <text class="product-desc">{{item.shortDesc || '专业团队 · 一对一服务'}}</text>
+          <view class="product-price-wrap">
+            <text class="price-symbol">¥</text>
+            <text class="price-value">{{item.price}}</text>
+            <text class="price-suffix" wx:if="{{item.type === 'service' || item.price > 1000}}">起</text>
           </view>
         </view>
       </view>

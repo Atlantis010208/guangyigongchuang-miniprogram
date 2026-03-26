@@ -91,6 +91,7 @@
         <view class="v2-overlay-subtitle-wrap">
           <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
           <image class="v2-help-icon" src="/images/使用说明.png" bindtap="onOpenRules"></image>
+          <text class="v2-upgrade-btn" wx:if="{{activeTab === 'lux' && !isPro}}" bindtap="onUpgradeConfirm">立即开通</text>
         </view>
         <text class="v2-overlay-desc">{{tools.getModeDesc(activeTab)}}</text>
       </view>

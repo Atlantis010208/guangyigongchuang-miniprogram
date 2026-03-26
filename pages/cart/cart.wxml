@@ -24,8 +24,8 @@
     <!-- 筛选器：商城订单 / 方案订单 -->
     <view class="filters">
     <scroll-view class="filter-scroll" scroll-x>
-      <view class="filter-chip {{filterType==='mall' ? 'active' : ''}}" data-type="mall" bindtap="onFilterTap">电子商城 ({{mallOrders.length || 0}})</view>
-      <view class="filter-chip {{filterType==='scheme' ? 'active' : ''}}" data-type="scheme" bindtap="onFilterTap">方案订单 ({{requests.length || 0}})</view>
+      <view class="filter-chip {{filterType==='mall' ? 'active' : ''}}" data-type="mall" bindtap="onFilterTap">商品订单 ({{mallOrders.length || 0}})</view>
+      <view class="filter-chip {{filterType==='scheme' ? 'active' : ''}}" data-type="scheme" bindtap="onFilterTap">共创订单 ({{requests.length || 0}})</view>
     </scroll-view>
   </view>
 

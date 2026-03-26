@@ -14,7 +14,7 @@ Page({
     pageSize: 20,           // 每页数量
     total: 0,               // 总数量
     keyword: '',            // 搜索关键词
-    category: '灯具',       // 当前分类（默认灯具，与侧边栏高亮一致）
+    category: '设计服务',       // 当前分类
     sortBy: 'createdAt',    // 排序字段
     sortOrder: 'desc',      // 排序方向
     isFromCloud: false      // 数据来源标识（云端/本地）
@@ -71,6 +71,17 @@ Page({
       if (res && res.success && res.data) {
         const { products, pagination } = res.data
         
+        // 调试：打印第一个商品的图片字段
+        if (products && products.length > 0) {
+          const p = products[0]
+          console.log('[商城] 第一个商品图片字段:', {
+            name: p.name,
+            images: p.images,
+            coverImage: p.coverImage,
+            image: p.image
+          })
+        }
+
         // 格式化商品数据
         const formattedProducts = this.formatProducts(products)
         
@@ -82,7 +93,7 @@ Page({
           isFromCloud: true
         })
         
-        console.log('[商城] 从云端加载商品成功:', formattedProducts.length, '件')
+        console.log('[商城] 从云端加载商品成功:', formattedProducts.length, '件, 首个图片:', formattedProducts[0]?.image)
       } else {
         console.warn('[商城] 云函数返回异常，使用默认数据:', res?.message)
         this.loadDefaultProducts()
@@ -154,23 +165,42 @@ Page({
    * @returns {array} 格式化后的商品数据
    */
   formatProducts(products) {
-    return (products || []).map(item => ({
-      id: item._id || item.id,
-      name: item.name || '',
-      price: item.price || 0,
-      image: (item.images && item.images[0]) || item.image || '',
-      category: item.category || '',
-      description: item.description || '',
-      stock: item.stock || 0,
-      sales: item.sales || 0,
-      type: item.type || '',
-      virtualCategory: item.virtualCategory || '',
-      deliveryType: item.deliveryType || '',
-      isVirtual: item.type === 'virtual',
-      deliveryLabel: item.type === 'virtual'
-        ? (item.deliveryType === 'service' ? '服务交付' : '网盘下载')
-        : ''
-    }))
+    return (products || []).map(item => {
+      // 图片优先级：coverImage > images[0] > image > detailImages[0]
+      const image = item.coverImage
+        || (item.images && item.images.length > 0 ? item.images[0] : '')
+        || item.image
+        || (item.detailImages && item.detailImages.length > 0 ? item.detailImages[0] : '')
+        || ''
+      
+      if (!image) {
+        console.warn('[商城] 商品缺少图片:', item.name, item._id)
+      }
+
+      // 提取简短描述（取第一行或前30个字符）
+      const desc = item.description || ''
+      const firstLine = desc.split('\n').find(line => line.trim()) || ''
+      const shortDesc = firstLine.replace(/^【.*?】/, '').trim().substring(0, 30) || ''
+
+      return {
+        id: item._id || item.id,
+        name: item.name || '',
+        price: item.price || 0,
+        image,
+        category: item.category || '',
+        description: desc,
+        shortDesc,
+        stock: item.stock || 0,
+        sales: item.sales || 0,
+        type: item.type || '',
+        virtualCategory: item.virtualCategory || '',
+        deliveryType: item.deliveryType || '',
+        isVirtual: item.type === 'virtual',
+        deliveryLabel: item.type === 'virtual'
+          ? (item.deliveryType === 'service' ? '服务交付' : '网盘下载')
+          : ''
+      }
+    })
   },
 
   /**
@@ -209,6 +239,14 @@ Page({
       hasMore: true
     })
     this.loadProducts()
+  },
+
+  /**
+   * 图片加载失败处理
+   */
+  onImageError(e) {
+    const index = e.currentTarget.dataset.index
+    console.warn('[商城] 图片加载失败, index:', index, '原始src:', this.data.products[index]?.image)
   },
 
   /**
