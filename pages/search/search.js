@@ -1283,4 +1283,18 @@ Page({
     })
   },
 
+  /**
+   * 返回上一页
+   */
+  onBackTap() {
+    wx.navigateBack({
+      delta: 1,
+      fail: () => {
+        // 如果没有上一页（比如从分享点进来的），则跳转到首页
+        wx.switchTab({
+          url: '/pages/toolbox/toolbox'
+        })
+      }
+    })
+  }
 })

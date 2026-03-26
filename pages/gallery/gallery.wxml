@@ -1,0 +1,134 @@
+<view class="container {{showModal ? 'no-scroll' : ''}}">
+  <view class="content-wrapper">
+    <!-- Header -->
+    <view class="header">
+      <view class="header-content">
+        <view class="title">实景灯光图库</view>
+        <view class="subtitle">高端照明设计灵感</view>
+      </view>
+    </view>
+
+    <!-- Search Bar -->
+    <view class="search-container">
+      <view class="search-box">
+        <image class="search-icon" src="/images/toolbox/search.svg" mode="aspectFit"></image>
+        <input class="search-input" placeholder="搜索灯光场景..." placeholder-class="search-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" />
+      </view>
+    </view>
+
+    <!-- Categories -->
+    <scroll-view class="category-scroll" scroll-x="{{true}}" enhanced show-scrollbar="{{false}}">
+      <view class="category-list">
+        <block wx:for="{{categories}}" wx:key="*this">
+          <view class="category-item {{activeCategory === item ? 'active' : ''}}" bindtap="onCategorySelect" data-category="{{item}}">
+            {{item}}
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+
+    <!-- Gallery Content (Masonry Layout) -->
+    <view class="gallery-container">
+      <block wx:if="{{isFetching}}">
+        <!-- Skeletons -->
+        <view class="masonry">
+          <view class="masonry-col">
+            <view class="skeleton aspect-4-3"></view>
+            <view class="skeleton aspect-square"></view>
+            <view class="skeleton aspect-3-4"></view>
+          </view>
+          <view class="masonry-col">
+            <view class="skeleton aspect-square"></view>
+            <view class="skeleton aspect-3-4"></view>
+            <view class="skeleton aspect-4-3"></view>
+          </view>
+        </view>
+      </block>
+      <block wx:elif="{{filteredImages.length > 0}}">
+        <!-- Waterfall Columns -->
+        <view class="masonry">
+          <!-- Left Column -->
+          <view class="masonry-col">
+            <block wx:for="{{leftColImages}}" wx:key="id">
+              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}">
+                <view class="image-wrap {{item.aspect}}">
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
+                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, item.id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
+                  </view>
+                </view>
+              </view>
+            </block>
+          </view>
+          <!-- Right Column -->
+          <view class="masonry-col">
+            <block wx:for="{{rightColImages}}" wx:key="id">
+              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}">
+                <view class="image-wrap {{item.aspect}}">
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
+                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, item.id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
+                  </view>
+                </view>
+              </view>
+            </block>
+          </view>
+        </view>
+        
+        <!-- Loading More -->
+        <view class="loading-more" wx:if="{{activeCategory !== '收藏'}}">
+          <view class="spinner" wx:if="{{isLoadingMore}}"></view>
+          <text wx:if="{{isLoadingMore}}">加载更多...</text>
+        </view>
+      </block>
+      <block wx:else>
+        <!-- Empty State -->
+        <view class="empty-state">
+          <view class="empty-icon-wrap">
+            <image class="empty-icon" src="{{activeCategory === '收藏' && !searchQuery ? '/images/toolbox/heart.svg' : '/images/toolbox/search.svg'}}" mode="aspectFit"></image>
+          </view>
+          <view class="empty-title">{{activeCategory === '收藏' && !searchQuery ? '暂无收藏内容' : '未找到相关场景'}}</view>
+          <view class="empty-desc">{{activeCategory === '收藏' && !searchQuery ? '点击图片右上角的心形图标即可收藏' : '请尝试更换搜索词或分类'}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>
+
+<!-- Fullscreen Image Modal -->
+<view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal">
+  <view class="modal-close" catchtap="onCloseModal">
+    <image class="icon-close" src="/images/toolbox/x.svg" mode="aspectFit"></image>
+  </view>
+
+  <swiper class="modal-swiper" current="{{currentSwiperIndex}}" bindchange="onSwiperChange" duration="300" circular="{{false}}">
+    <block wx:for="{{filteredImages}}" wx:key="id">
+      <swiper-item class="modal-swiper-item">
+        <view class="modal-image-wrap" catchtap="toggleModalControls">
+          <image class="modal-image" src="https://picsum.photos/seed/{{item.seed}}/1200/1600" mode="aspectFit" lazy-load></image>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view class="modal-controls {{showControls ? 'visible' : ''}}" catchtap="true">
+    <view class="modal-actions">
+      <view class="action-btn circle" catchtap="onToggleFavoriteCurrent">
+        <image class="icon-heart-large" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, filteredImages[currentSwiperIndex].id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}}"></image>
+      </view>
+      <view class="action-btn pill" catchtap="onDownloadCurrent">
+        <image class="icon-download" src="/images/toolbox/download.svg" mode="aspectFit"></image>
+        <text>{{isDownloading ? '下载中...' : '保存高清原图'}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<wxs module="tools">
+  module.exports = {
+    includes: function(arr, item) {
+      if (!arr) return false;
+      return arr.indexOf(item) !== -1;
+    }
+  }
+</wxs>

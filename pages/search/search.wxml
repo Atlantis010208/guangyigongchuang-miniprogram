@@ -85,6 +85,9 @@
       <!-- 蓝色渐变头部 -->
       <view class="v2-header">
         <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
+        <view class="v2-back-btn" bindtap="onBackTap">
+          <image class="v2-back-icon" src="/images/toolbox/chevron-left.svg"></image>
+        </view>
         <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
         <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
         <text class="v2-overlay-title">照度计算器</text>

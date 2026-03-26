@@ -113,7 +113,7 @@ page {
   border-bottom-right-radius: 40rpx;
   overflow: hidden;
   box-sizing: border-box;
-  padding-top: 80rpx;
+  padding-top: 120rpx;
 }
 
 .v2-header-bg {

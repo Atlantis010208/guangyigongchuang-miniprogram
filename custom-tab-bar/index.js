@@ -19,8 +19,8 @@ Component({
         selectedIconPath: '/images/24_课程.png'
       },
       {
-        pagePath: '/pages/search/search',
-        text: '照明计算',
+        pagePath: '/pages/toolbox/toolbox',
+        text: '工具',
         iconPath: '/images/search.png',
         selectedIconPath: '/images/search-active.png'
       },

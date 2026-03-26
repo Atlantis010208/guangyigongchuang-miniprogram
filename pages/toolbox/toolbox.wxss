@@ -1,0 +1,229 @@
+page {
+  background-color: #F4F5F7; /* 统一浅灰背景色 */
+  min-height: 100vh;
+}
+
+.container {
+  padding: 30rpx 40rpx 160rpx; /* 微调页面两侧留白 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  margin-bottom: 40rpx;
+  padding: 0 10rpx;
+}
+
+.title {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #1A1A1C;
+  letter-spacing: -1rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #8E8E93;
+  margin-top: 10rpx;
+  font-weight: 500;
+}
+
+/* Bento Grid Layout */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 320rpx; /* 微调高度，让方形更自然 */
+  gap: 24rpx; /* 缩小卡片间距 */
+}
+
+/* Base Card */
+.bento-card {
+  background: #FFFFFF;
+  border-radius: 40rpx; /* 调整圆角更贴近原图 */
+  padding: 36rpx 36rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.02); /* 降低阴影不透明度，使卡片更轻盈 */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hover-scale {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-scale:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+
+.col-span-2 {
+  grid-column: span 2;
+}
+
+.row-span-2 {
+  grid-row: span 2;
+}
+
+/* Icon Wrap */
+.icon-wrap {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  background: #F4F5F7; /* 调整圆底背景颜色 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.icon-small {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 14rpx;
+}
+
+.card-title {
+  font-size: 34rpx; /* 增大标题字号 */
+  font-weight: 600;
+  color: #1C1C1E;
+  letter-spacing: -0.5rpx;
+}
+
+/* Color Temperature Card Specifics */
+.flex-col-between {
+  justify-content: space-between;
+}
+
+.ct-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx; /* 增加色温条与头部的间距 */
+}
+
+.ct-title-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.ct-range {
+  font-size: 26rpx;
+  color: #8E8E93;
+  font-weight: 500; /* 修改字体粗细 */
+  letter-spacing: 1rpx;
+}
+
+.ct-gradient {
+  position: relative;
+  height: 120rpx; /* 增加渐变条高度 */
+  width: 100%;
+  border-radius: 40rpx;
+  background: linear-gradient(to right, #F5A623, #FCEABB, #D6EAF8); /* 调整渐变颜色与图二对应 */
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.ct-ticks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 60rpx; /* 调整刻度间距 */
+  opacity: 0.15;
+}
+
+.ct-tick {
+  width: 4rpx;
+  height: 32rpx;
+  background: #000;
+  border-radius: 4rpx;
+}
+
+/* Gallery Card Specifics */
+.gallery-card {
+  padding: 0; /* Override default padding */
+}
+
+.gallery-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.gallery-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05), rgba(0,0,0,0.6));
+  z-index: 2;
+}
+
+.gallery-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 36rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  z-index: 3;
+}
+
+.gallery-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-title {
+  color: #FFFFFF;
+  font-size: 40rpx;
+  font-weight: 600;
+  letter-spacing: -1rpx;
+  margin-bottom: 6rpx;
+}
+
+.gallery-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 26rpx;
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
+}
+
+.gallery-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-camera {
+  width: 40rpx;
+  height: 40rpx;
+}
