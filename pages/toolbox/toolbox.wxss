@@ -1,18 +1,24 @@
 page {
   background-color: #F4F5F7; /* 统一浅灰背景色 */
   min-height: 100vh;
+  display: block; /* 显式设置为 block，防止继承 flex */
+  box-sizing: border-box;
 }
 
-.container {
-  padding: 30rpx 40rpx 160rpx; /* 微调页面两侧留白 */
-  display: flex;
-  flex-direction: column;
+/* 使用唯一的容器类名，避开全局 container 样式 */
+.toolbox-root {
+  padding: 30rpx 30rpx 160rpx; /* 两侧边距 20rpx */
+  display: block; /* 块级布局，确保子元素自然撑满 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Header */
 .header {
-  margin-bottom: 40rpx;
+  margin-bottom: 30rpx;
   padding: 0 10rpx;
+  width: 100%; /* 显式宽度 */
+  box-sizing: border-box;
 }
 
 .title {
@@ -21,6 +27,7 @@ page {
   font-weight: 700;
   color: #1A1A1C;
   letter-spacing: -1rpx;
+  text-align: left; /* 确保标题左对齐 */
 }
 
 .subtitle {
@@ -29,29 +36,34 @@ page {
   color: #8E8E93;
   margin-top: 10rpx;
   font-weight: 500;
+  text-align: left; /* 确保副标题左对齐 */
 }
 
 /* Bento Grid Layout */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 320rpx; /* 微调高度，让方形更自然 */
-  gap: 24rpx; /* 缩小卡片间距 */
+  grid-auto-rows: 350rpx;
+  gap: 16rpx; /* 进一步减小 gap */
+  width: 100%; /* 显式宽度 */
+  box-sizing: border-box;
 }
 
 /* Base Card */
 .bento-card {
   background: #FFFFFF;
-  border-radius: 40rpx; /* 调整圆角更贴近原图 */
+  border-radius: 56rpx; /* 增大卡片圆角以匹配图二 */
   padding: 36rpx 36rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.02); /* 降低阴影不透明度，使卡片更轻盈 */
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.02); 
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  width: auto; /* 自动填充网格区域 */
+  height: 100%; /* 撑满网格高度 */
 }
 
 .hover-scale {
@@ -73,18 +85,24 @@ page {
 
 /* Icon Wrap */
 .icon-wrap {
-  width: 110rpx;
-  height: 110rpx;
-  border-radius: 50%;
-  background: #F4F5F7; /* 调整圆底背景颜色 */
+  width: 112rpx; /* 微调放大一点 */
+  height: 112rpx;
+  border-radius: 40rpx; /* 图二看起来是有点圆角矩形，或者更饱满的圆形，调整圆角适配加大后的尺寸 */
+  background: #F4F5F7;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1rpx solid #EBECEF; /* 图二有微微的边框感 */
+}
+
+/* 如果图二是纯圆，则使用 50% */
+.icon-wrap {
+  border-radius: 50%; /* 图二图标背景确实是一个正圆，因此强制为 50% */
 }
 
 .icon {
-  width: 52rpx;
-  height: 52rpx;
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .icon-small {
@@ -95,8 +113,8 @@ page {
 
 .card-title {
   font-size: 34rpx; /* 增大标题字号 */
-  font-weight: 600;
-  color: #1C1C1E;
+  font-weight: 700; /* 图二字体更粗 */
+  color: #1A1A1C;
   letter-spacing: -0.5rpx;
 }
 
@@ -120,7 +138,7 @@ page {
 .ct-range {
   font-size: 26rpx;
   color: #8E8E93;
-  font-weight: 500; /* 修改字体粗细 */
+  font-weight: 600; /* 修改字体粗细 */
   letter-spacing: 1rpx;
 }
 
@@ -128,8 +146,9 @@ page {
   position: relative;
   height: 120rpx; /* 增加渐变条高度 */
   width: 100%;
-  border-radius: 40rpx;
-  background: linear-gradient(to right, #F5A623, #FCEABB, #D6EAF8); /* 调整渐变颜色与图二对应 */
+  border-radius: 48rpx; /* 增大渐变条圆角 */
+  /* 调整渐变颜色与图二对应：左侧橙黄，中间偏白带点黄，右侧浅蓝 */
+  background: linear-gradient(to right, #FFA726, #FFF4E0, #D6EAF8); 
   box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
@@ -149,7 +168,7 @@ page {
 
 .ct-tick {
   width: 4rpx;
-  height: 32rpx;
+  height: 24rpx; /* 减小刻度线的高度，图二的刻度线比较小 */
   background: #000;
   border-radius: 4rpx;
 }
