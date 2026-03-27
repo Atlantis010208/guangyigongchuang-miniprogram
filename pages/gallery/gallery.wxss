@@ -1,6 +1,9 @@
 page {
   background-color: #F2F2F7;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden; /* 防止水平滚动 */
+  box-sizing: border-box; /* 确保 page 也使用 border-box */
 }
 
 .no-scroll {
@@ -8,14 +11,19 @@ page {
   height: 100vh;
 }
 
-.container {
+/* 使用新的根节点类名，避开全局 container */
+.gallery-root {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: block; /* 改回 block，防止 flex 导致子元素撑破容器 */
+  width: 100%;
+  overflow-x: hidden; /* 强制裁剪溢出部分 */
+  box-sizing: border-box; /* 关键：防止 padding 撑破屏幕 */
 }
 
 .content-wrapper {
-  padding: 20rpx 40rpx 100rpx;
+  padding: 20rpx 30rpx 100rpx; /* 稍微减小一点左右边距，或者保持40但加上 box-sizing */
+  width: 100%;
+  box-sizing: border-box; /* 关键：防止 padding 撑破屏幕 */
 }
 
 /* Header */
@@ -24,6 +32,7 @@ page {
   display: flex;
   align-items: center;
   padding: 0 10rpx;
+  box-sizing: border-box;
 }
 
 .header-content {
@@ -49,6 +58,8 @@ page {
 .search-container {
   margin-bottom: 30rpx;
   padding: 0 10rpx;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .search-box {
@@ -60,18 +71,22 @@ page {
   align-items: center;
   padding: 0 32rpx;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .search-icon {
   width: 36rpx;
   height: 36rpx;
   margin-right: 16rpx;
+  flex-shrink: 0;
 }
 
 .search-input {
   flex: 1;
   font-size: 30rpx;
   color: #1C1C1E;
+  min-width: 0; /* 防止 input 撑破 flex 容器 */
 }
 
 .search-placeholder {
@@ -83,11 +98,13 @@ page {
   width: 100%;
   margin-bottom: 40rpx;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .category-list {
   display: flex;
   padding: 0 10rpx 10rpx;
+  box-sizing: border-box;
 }
 
 .category-item {
@@ -101,6 +118,7 @@ page {
   margin-right: 16rpx;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .category-item.active {
@@ -112,18 +130,23 @@ page {
 /* Masonry Gallery */
 .gallery-container {
   padding: 0 10rpx;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .masonry {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .masonry-col {
-  width: 48%;
+  width: 48%; /* 给点间隙，避免挤在一起 */
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .image-card {
@@ -134,6 +157,8 @@ page {
   box-shadow: 0 16rpx 60rpx rgba(0, 0, 0, 0.04);
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hover-scale:active {
@@ -144,6 +169,7 @@ page {
 .image-wrap {
   position: relative;
   width: 100%;
+  box-sizing: border-box; /* 添加以防万一 */
 }
 
 .aspect-square { padding-bottom: 100%; }
@@ -158,6 +184,7 @@ page {
   height: 100%;
   opacity: 0;
   transition: opacity 0.5s ease;
+  object-fit: cover; /* 确保图片覆盖满容器且不溢出 */
 }
 
 .gallery-img.loaded {

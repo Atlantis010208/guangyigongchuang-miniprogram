@@ -1,4 +1,4 @@
-<view class="container {{showModal ? 'no-scroll' : ''}}">
+<view class="gallery-root {{showModal ? 'no-scroll' : ''}}">
   <view class="content-wrapper">
     <!-- Header -->
     <view class="header">
