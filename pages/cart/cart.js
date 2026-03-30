@@ -46,7 +46,7 @@ Page({
     // 更新自定义 tabBar 的选中状态和角色
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateRole()
-      this.getTabBar().setData({ selected: 3 })
+      this.getTabBar().setData({ selected: 4 }) // 订单管理在 ownerList 中变成了索引 4
     }
     // 检查登录状态
     const app = getApp()

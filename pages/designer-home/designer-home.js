@@ -6,11 +6,13 @@ Page({
     user: { avatar: '' },
     userAvatarDisplay: '', // 用于显示的头像临时链接
     userAvatarFileID: '', // 原始 cloud:// fileID
+    demands: [] // 需求列表数据
   },
 
   onLoad(options) {
     // 隐藏返回首页按钮，因为这是设计师的首页
     wx.hideHomeButton();
+    this.loadDemands();
   },
 
   onShow() {
@@ -22,6 +24,70 @@ Page({
     
     // 获取用户数据
     this.loadUserData();
+  },
+
+  /**
+   * 加载需求列表数据（目前使用 mock，结构与真实数据一致）
+   */
+  loadDemands() {
+    // TODO: 后续联调时，替换为真实的云端请求： db.collection('requests').where({ category: 'publish', status: 'submitted' }).get()
+    const mockDemands = [
+      {
+        _id: '1',
+        space: '住宅',
+        service: '整套灯光设计',
+        budget: '¥19/m²',
+        area: '150',
+        stage: '未开始',
+        priority: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        space: '商铺',
+        service: '只深化灯光施工图',
+        budget: '¥9/m²',
+        area: '85',
+        stage: '装修中',
+        priority: false,
+        createdAt: new Date(Date.now() - 2 * 86400000).toISOString() // 2天前
+      },
+      {
+        _id: '3',
+        space: '办公室',
+        service: '选灯配灯服务',
+        budget: '¥5/m²（只针对选灯配灯）',
+        area: '450',
+        stage: '正在设计',
+        priority: false,
+        createdAt: new Date(Date.now() - 10 * 86400000).toISOString() // 10天前
+      }
+    ];
+
+    // 处理标签显示逻辑
+    const formattedDemands = mockDemands.map(item => {
+      let tagType = '';
+      let tagText = '';
+      
+      const isNew = (Date.now() - new Date(item.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
+      
+      if (item.priority) {
+        tagType = 'purple';
+        tagText = '加急';
+      } else if (isNew) {
+        tagType = 'blue';
+        tagText = '新需求';
+      }
+
+      return {
+        ...item,
+        title: `${item.space}灯光设计需求`,
+        tagType,
+        tagText
+      };
+    });
+
+    this.setData({ demands: formattedDemands });
   },
 
   /**

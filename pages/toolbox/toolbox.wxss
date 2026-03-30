@@ -7,7 +7,7 @@ page {
 
 /* 使用唯一的容器类名，避开全局 container 样式 */
 .toolbox-root {
-  padding: 30rpx 30rpx 160rpx; /* 两侧边距 20rpx */
+  padding: 30rpx 40rpx 160rpx; /* 两侧边距 20rpx */
   display: block; /* 块级布局，确保子元素自然撑满 */
   width: 100%;
   box-sizing: border-box;
@@ -43,8 +43,8 @@ page {
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 350rpx;
-  gap: 16rpx; /* 进一步减小 gap */
+  grid-auto-rows: 300rpx;
+  gap: 30rpx; /* 进一步减小 gap */
   width: 100%; /* 显式宽度 */
   box-sizing: border-box;
 }

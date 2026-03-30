@@ -1,4 +1,4 @@
-<view class="gallery-root {{showModal ? 'no-scroll' : ''}}">
+<view class="gallery-root">
   <view class="content-wrapper">
     <!-- Header -->
     <view class="header">
@@ -50,7 +50,7 @@
           <!-- Left Column -->
           <view class="masonry-col">
             <block wx:for="{{leftColImages}}" wx:key="id">
-              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}">
+              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
                   <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
@@ -63,7 +63,7 @@
           <!-- Right Column -->
           <view class="masonry-col">
             <block wx:for="{{rightColImages}}" wx:key="id">
-              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}">
+              <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
                   <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
@@ -96,7 +96,7 @@
 </view>
 
 <!-- Fullscreen Image Modal -->
-<view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal">
+<view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal" catchtouchmove="true">
   <view class="modal-close" catchtap="onCloseModal">
     <image class="icon-close" src="/images/toolbox/x.svg" mode="aspectFit"></image>
   </view>

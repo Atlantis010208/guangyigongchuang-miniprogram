@@ -37,107 +37,41 @@
     </view>
 
     <view class="demand-list">
-      <!-- 需求卡片1 -->
-      <view class="card">
-        <view class="card-header">
-          <view>
-            <view class="tag-blue">新需求</view>
-            <view class="card-title">豪华顶层公寓</view>
-            <view class="card-subtitle">上海，静安区</view>
+      <block wx:for="{{demands}}" wx:key="_id">
+        <view class="card">
+          <view class="card-header">
+            <view>
+              <view class="tag-{{item.tagType}}" wx:if="{{item.tagText}}">{{item.tagText}}</view>
+              <view class="card-title">{{item.title}}</view>
+              <view class="card-subtitle">{{item.service}}</view>
+            </view>
+            <view class="card-icon">
+              <!-- 动态根据空间类型展示图标 -->
+              <van-icon name="{{item.space === '住宅' ? 'wap-home-o' : (item.space === '商铺' ? 'shop-o' : 'hotel-o')}}" size="20px" color="#6B7280" />
+            </view>
           </view>
-          <view class="card-icon">
-            <van-icon name="wap-home-o" size="20px" color="#6B7280" />
-          </view>
-        </view>
 
-        <view class="stats-grid">
-          <view class="stat-box">
-            <text class="stat-label">预算</text>
-            <text class="stat-value">¥8,000</text>
+          <view class="stats-grid">
+            <view class="stat-box">
+              <text class="stat-label">预算</text>
+              <text class="stat-value">{{item.budget}}</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">面积</text>
+              <text class="stat-value">{{item.area}}m²</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">进度</text>
+              <text class="stat-value">{{item.stage}}</text>
+            </view>
           </view>
-          <view class="stat-box">
-            <text class="stat-label">面积</text>
-            <text class="stat-value">240m²</text>
-          </view>
-          <view class="stat-box">
-            <text class="stat-label">工期</text>
-            <text class="stat-value">14 天</text>
-          </view>
-        </view>
 
-        <view class="action-group">
-          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="1">查看详情</button>
-          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="1">立即接单</button>
-        </view>
-      </view>
-
-      <!-- 需求卡片2 -->
-      <view class="card">
-        <view class="card-header">
-          <view>
-            <view class="tag-purple">加急</view>
-            <view class="card-title">精品咖啡店</view>
-            <view class="card-subtitle">成都，太古里</view>
-          </view>
-          <view class="card-icon">
-            <van-icon name="shop-o" size="20px" color="#6B7280" />
+          <view class="action-group">
+            <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="{{item._id}}">查看详情</button>
+            <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="{{item._id}}">立即接单</button>
           </view>
         </view>
-
-        <view class="stats-grid">
-          <view class="stat-box">
-            <text class="stat-label">预算</text>
-            <text class="stat-value">¥5,000</text>
-          </view>
-          <view class="stat-box">
-            <text class="stat-label">面积</text>
-            <text class="stat-value">85m²</text>
-          </view>
-          <view class="stat-box">
-            <text class="stat-label">工期</text>
-            <text class="stat-value">7 天</text>
-          </view>
-        </view>
-
-        <view class="action-group">
-          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="2">查看详情</button>
-          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="2">立即接单</button>
-        </view>
-      </view>
-
-      <!-- 需求卡片3 -->
-      <view class="card">
-        <view class="card-header">
-          <view>
-            <view class="tag-gray">标准</view>
-            <view class="card-title">科技园办公空间</view>
-            <view class="card-subtitle">深圳，南山区</view>
-          </view>
-          <view class="card-icon">
-            <van-icon name="hotel-o" size="20px" color="#6B7280" />
-          </view>
-        </view>
-
-        <view class="stats-grid">
-          <view class="stat-box">
-            <text class="stat-label">预算</text>
-            <text class="stat-value">¥12,000</text>
-          </view>
-          <view class="stat-box">
-            <text class="stat-label">面积</text>
-            <text class="stat-value">450m²</text>
-          </view>
-          <view class="stat-box">
-            <text class="stat-label">工期</text>
-            <text class="stat-value">30 天</text>
-          </view>
-        </view>
-
-        <view class="action-group">
-          <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDemand" data-id="3">查看详情</button>
-          <button class="btn-primary" hover-class="btn-primary-hover" bindtap="acceptOrder" data-id="3">立即接单</button>
-        </view>
-      </view>
+      </block>
     </view>
   </view>
 

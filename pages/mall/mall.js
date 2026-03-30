@@ -25,6 +25,18 @@ Page({
   },
 
   onShow() {
+    // 检查登录状态 (如果页面有这个方法)
+    if (typeof this.checkLoginStatus === 'function') {
+      this.checkLoginStatus();
+    }
+    
+    // 设置自定义 tabBar 的选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({
+        selected: 1 // 1 是商城在 ownerList 中的索引
+      })
+    }
+    
     // 页面显示时刷新数据
     if (this.data.products.length === 0) {
       this.loadProducts()

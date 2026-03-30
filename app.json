@@ -32,17 +32,12 @@
     "pages/designer-security/designer-security",
     "pages/designer-privacy/designer-privacy",
     "pages/designer-notifications/designer-notifications",
-    "pages/designer-projects/designer-projects"
+    "pages/designer-projects/designer-projects",
+    "pages/mall/mall",
+    "pages/mall/product-detail/product-detail",
+    "pages/mall/cart/cart"
   ],
   "subpackages": [
-    {
-      "root": "pages/mall/",
-      "pages": [
-        "mall",
-        "product-detail/product-detail",
-        "cart/cart"
-      ]
-    },
     {
       "root": "pages/order/",
       "pages": [
@@ -162,6 +157,12 @@
         "text": "首页",
         "iconPath": "images/product.png",
         "selectedIconPath": "images/product-active.png"
+      },
+      {
+        "pagePath": "pages/mall/mall",
+        "text": "商城",
+        "iconPath": "images/积分商城.png",
+        "selectedIconPath": "images/积分商城_选中.png"
       },
       {
         "pagePath": "pages/course/index/index",

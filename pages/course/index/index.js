@@ -29,7 +29,7 @@ Page({
     // 更新自定义 tabBar 的选中状态和角色
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateRole()
-      this.getTabBar().setData({ selected: 1 })
+      this.getTabBar().setData({ selected: 2 }) // 课程在 ownerList 中变成了索引 2
     }
     // 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
     this.loadUserAvatar();

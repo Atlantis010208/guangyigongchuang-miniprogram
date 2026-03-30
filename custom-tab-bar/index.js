@@ -13,6 +13,12 @@ Component({
         selectedIconPath: '/images/product-active.png'
       },
       {
+        pagePath: '/pages/mall/mall',
+        text: '商城',
+        iconPath: '/images/积分商城.png',
+        selectedIconPath: '/images/积分商城_选中.png'
+      },
+      {
         pagePath: '/pages/course/index/index',
         text: '课程',
         iconPath: '/images/24_课程(未选中).png',

@@ -95,16 +95,27 @@ page {
 
 /* Categories */
 .category-scroll {
-  width: 100%;
-  margin-bottom: 40rpx;
+  width: calc(100% + 60rpx); /* 父级有 30rpx 的左右 padding，这里加上 60rpx */
+  margin-left: -30rpx;
+  margin-right: -30rpx;
+  margin-bottom: 0; /* 将原来的 margin-bottom 移到 padding-bottom，避免阴影被截断 */
   white-space: nowrap;
   box-sizing: border-box;
 }
 
 .category-list {
   display: flex;
-  padding: 0 10rpx 10rpx;
+  padding: 0 30rpx 50rpx; /* 增加底部内边距，让卡片阴影完整显示。总间距保持 50rpx 不变 */
   box-sizing: border-box;
+}
+
+/* 修复 scroll-view 最后一个元素右侧 padding 失效的问题 */
+.category-list::after {
+  content: "";
+  display: block;
+  min-width: 14rpx; /* 30rpx (期望留白) - 16rpx (最后一个item的margin-right) = 14rpx */
+  height: 1px;
+  flex-shrink: 0;
 }
 
 .category-item {

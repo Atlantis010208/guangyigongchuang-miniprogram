@@ -15,8 +15,8 @@
       <image class="hero-bg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdM-2NSx05XD6Mkrdig7xsN4LBoI3F1kJoSP0C_eJquyxzuenbwn9qRf1ubRqi796B1LIFOYJiijMMjwU7dZZz1vkgOirJUIRYQZ0EZooduh6Uur3w5DG_TM2pk30bko3RCQ-CmqN0z-ZUbD7t5e5zZA2YxPm5Yqv5cvGC5BoyZWiVLSiUJejyVJMUvKAu1nPzdIcQEujFM_Lckspqu1DFLmnSYZYzNmb-tG6duJQb3JOb2_zmGCqGE5KF83CqPJovrbSqh4dVeFs" mode="aspectFill"></image>
       <view class="hero-mask"></view>
       <view class="hero-content">
-        <view class="hero-tag">住宅照明</view>
-        <view class="hero-title">上海静安区 150㎡ 住宅照明设计</view>
+        <view class="hero-tag">{{demand.tagText}}</view>
+        <view class="hero-title">{{demand.title}}</view>
       </view>
     </view>
 
@@ -26,20 +26,20 @@
       <view class="info-grid">
         <view class="info-card">
           <view class="info-label">空间类型</view>
-          <view class="info-value">住宅空间</view>
+          <view class="info-value">{{demand.space}}</view>
         </view>
         <view class="info-card">
           <view class="info-label">设计面积</view>
-          <view class="info-value">150㎡</view>
+          <view class="info-value">{{demand.area}}㎡</view>
           <view class="info-sub">(不足50㎡按50㎡计)</view>
         </view>
         <view class="info-card">
           <view class="info-label">设计预算</view>
-          <view class="info-value">¥15/㎡</view>
+          <view class="info-value">{{demand.budget}}</view>
         </view>
-        <view class="info-card">
-          <view class="info-label">项目地点</view>
-          <view class="info-value text-truncate">上海市 静安区</view>
+        <view class="info-card" wx:if="{{demand.priority}}">
+          <view class="info-label">优享特权</view>
+          <view class="info-value text-truncate" style="color: #8b5cf6">已付订金加急</view>
         </view>
       </view>
     </view>
@@ -53,14 +53,14 @@
             <image class="service-icon" src="/assets/icons/room_service.png" mode="aspectFit"></image>
             <text class="service-label">服务需求</text>
           </view>
-          <view class="service-value">整套灯光设计</view>
+          <view class="service-value">{{demand.service}}</view>
         </view>
         <view class="service-item">
           <view class="service-left">
             <image class="service-icon" src="/assets/icons/event_upcoming.png" mode="aspectFit"></image>
             <text class="service-label">项目进度</text>
           </view>
-          <view class="service-value">正在设计</view>
+          <view class="service-value">{{demand.stage}}</view>
         </view>
       </view>
     </view>
@@ -69,17 +69,17 @@
     <view class="section no-border">
       <view class="section-title">合作意愿</view>
       <view class="coop-list">
-        <view class="coop-item">
+        <view class="coop-item" wx:if="{{demand.share === '愿意'}}">
           <van-icon name="checked" color="#135bec" size="20px" class="coop-icon" />
-          <text class="coop-text">分享预算明细</text>
+          <text class="coop-text">愿意分享装修故事换取折扣</text>
+        </view>
+        <view class="coop-item" wx:if="{{demand.coCreate === '愿意'}}">
+          <van-icon name="checked" color="#135bec" size="20px" class="coop-icon" />
+          <text class="coop-text">愿意与设计师共创设计</text>
         </view>
         <view class="coop-item">
           <van-icon name="checked" color="#135bec" size="20px" class="coop-icon" />
-          <text class="coop-text">共同创作</text>
-        </view>
-        <view class="coop-item">
-          <van-icon name="checked" color="#135bec" size="20px" class="coop-icon" />
-          <text class="coop-text">接受平台流程</text>
+          <text class="coop-text">接受平台担保与流程</text>
         </view>
       </view>
     </view>

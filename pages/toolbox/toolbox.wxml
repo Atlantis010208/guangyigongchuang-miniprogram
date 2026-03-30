@@ -1,4 +1,4 @@
-<view class="container">
+<view class="toolbox-root">
   <view class="header">
     <text class="title">工具箱</text>
     <text class="subtitle">照明设计专业工具</text>
@@ -54,20 +54,5 @@
       </view>
     </view>
 
-    <!-- Small Square 3: 曝光测试 -->
-    <view class="bento-card hover-scale" bindtap="navigateToComingSoon">
-      <view class="icon-wrap">
-        <image class="icon" src="/images/toolbox/sun.svg" mode="aspectFit"></image>
-      </view>
-      <text class="card-title">曝光测试</text>
-    </view>
-
-    <!-- Small Square 4: 距离测量 -->
-    <view class="bento-card hover-scale" bindtap="navigateToComingSoon">
-      <view class="icon-wrap">
-        <image class="icon" src="/images/toolbox/ruler.svg" mode="aspectFit"></image>
-      </view>
-      <text class="card-title">距离测量</text>
-    </view>
   </view>
 </view>

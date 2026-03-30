@@ -12,7 +12,7 @@ Page({
     // 切换自定义 tabBar 的激活状态
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
-        selected: 2 // 0:首页 1:课程 2:工具 3:订单
+        selected: 3 // 0:首页 1:商城 2:课程 3:工具 4:订单
       })
     }
   },

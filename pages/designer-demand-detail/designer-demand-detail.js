@@ -4,7 +4,8 @@ Page({
   data: {
     statusBarHeight: 20, // 默认状态栏高度
     isCollected: false,
-    demandId: ''
+    demandId: '',
+    demand: null // 需求详情数据
   },
 
   onLoad(options) {
@@ -15,8 +16,33 @@ Page({
       demandId: options.id || ''
     });
 
-    // 这里可以根据 demandId 去云数据库加载真实数据
-    // this.loadDemandDetail(options.id);
+    this.loadDemandDetail(options.id);
+  },
+
+  // 加载需求详情
+  loadDemandDetail(id) {
+    // 模拟从数据库获取真实数据
+    const mockData = {
+      _id: id || '1',
+      space: '住宅',
+      service: '整套灯光设计',
+      budget: '¥19/m²',
+      area: '150',
+      stage: '正在设计',
+      share: '愿意',
+      coCreate: '愿意',
+      priority: true,
+      createdAt: new Date().toISOString()
+    };
+
+    // 构建展示用的字段
+    const demand = {
+      ...mockData,
+      title: `${mockData.space}灯光设计需求`,
+      tagText: mockData.space + '照明'
+    };
+
+    this.setData({ demand });
   },
 
   // 返回上一页

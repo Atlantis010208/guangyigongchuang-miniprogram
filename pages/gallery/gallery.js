@@ -198,15 +198,30 @@ Page({
     if (index > -1) {
       this.setData({ 
         showModal: true,
-        currentSwiperIndex: index
+        currentSwiperIndex: index,
+        initialSwiperIndex: index // 记录打开时的初始索引
       });
       this.resetControlsTimeout();
     }
   },
 
   onCloseModal: function() {
+    const { filteredImages, currentSwiperIndex, initialSwiperIndex } = this.data;
+    const currentImg = filteredImages[currentSwiperIndex];
+    
     this.setData({ showModal: false });
     this.clearControlsTimeout();
+
+    // 只有当用户在大图中滑动切换了图片时，才需要重新定位
+    if (currentImg && currentSwiperIndex !== initialSwiperIndex) {
+      setTimeout(() => {
+        wx.pageScrollTo({
+          selector: `#img-${currentImg.id}`,
+          duration: 300,
+          offsetTop: -80 // 留出一点顶部安全距离
+        });
+      }, 50);
+    }
   },
 
   onSwiperChange: function(e) {
