@@ -31,56 +31,8 @@
     <view class="cover-gradient"></view>
   </view>
 
-  <!-- Info Section -->
-  <view class="info-card apple-card padding-medium shadow-medium slide-up" wx:if="{{!isPurchased}}">
-    <text class="title-large">{{course.title}}</text>
-    <text class="subtitle-text">{{course.subtitle}}</text>
-    
-    <view class="flex-row flex-between margin-bottom-medium">
-      <view class="price-box">
-        <text class="currency">¥</text>
-        <text class="amount-large">{{course.price}}</text>
-        <text class="original-price" wx:if="{{course.originalPrice}}">¥{{course.originalPrice}}</text>
-      </view>
-    </view>
-
-    <view class="tags-row">
-      <text class="apple-tag margin-right-small" wx:for="{{course.tags}}" wx:key="*this">{{item}}</text>
-    </view>
-  </view>
-
-  <!-- Segment Control -->
-  <view class="segment-control margin-top-medium margin-bottom-medium">
-    <view class="segment-item {{activeTab === 0 ? 'active' : ''}}" bindtap="onTabChange" data-index="{{0}}">
-      <text class="segment-text">简介</text>
-      <view class="segment-line" wx:if="{{activeTab === 0}}"></view>
-    </view>
-    <view class="segment-item {{activeTab === 1 ? 'active' : ''}}" bindtap="onTabChange" data-index="{{1}}">
-      <text class="segment-text">课程章节</text>
-      <view class="segment-line" wx:if="{{activeTab === 1}}"></view>
-    </view>
-  </view>
-
-  <!-- Tab Content: Intro -->
-  <view class="tab-content" wx:if="{{activeTab === 0}}">
-    <view class="content-block apple-card padding-medium">
-      <text class="title-medium margin-bottom-small" style="display: block;">课程介绍</text>
-      <text class="intro-text">{{course.description}}</text>
-    </view>
-
-    <!-- 课程详情内容（图片展示） -->
-    <view class="detail-section margin-top-medium" wx:if="{{course.detailImages && course.detailImages.length > 0}}">
-      <text class="title-medium margin-bottom-medium margin-left-small">课程详情</text>
-      <view class="detail-images-list">
-        <block wx:for="{{course.detailImages}}" wx:key="*this">
-          <image src="{{item}}" mode="widthFix" class="detail-image shadow-medium" lazy-load></image>
-        </block>
-      </view>
-    </view>
-  </view>
-
-  <!-- Tab Content: Syllabus -->
-  <view class="tab-content" wx:if="{{activeTab === 1}}">
+  <!-- Course Syllabus -->
+  <view class="tab-content">
     <!-- Courseware Bar -->
     <view class="courseware-section margin-bottom-medium" wx:if="{{course.driveLink}}">
       <view class="courseware-bar shadow-sm">

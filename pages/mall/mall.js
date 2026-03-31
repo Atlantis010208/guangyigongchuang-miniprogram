@@ -14,13 +14,36 @@ Page({
     pageSize: 20,           // 每页数量
     total: 0,               // 总数量
     keyword: '',            // 搜索关键词
-    category: '设计服务',       // 当前分类
+    categories: [],           // 分类列表（动态加载）
+    category: '',             // 当前分类（空为全部）
     sortBy: 'createdAt',    // 排序字段
     sortOrder: 'desc',      // 排序方向
     isFromCloud: false      // 数据来源标识（云端/本地）
   },
 
   onLoad() {
+    this.loadCategories()
+  },
+
+  /**
+   * 动态加载分类列表
+   */
+  async loadCategories() {
+    const DEFAULT_CATEGORIES = ['设计服务', '资料工具']
+    try {
+      const res = await util.callCf('virtual_categories', {})
+      if (res && res.success && res.data && res.data.categories && res.data.categories.length > 0) {
+        const categories = ['全部', ...res.data.categories]
+        this.setData({ categories, category: '全部' })
+      } else {
+        const categories = ['全部', ...DEFAULT_CATEGORIES]
+        this.setData({ categories, category: '全部' })
+      }
+    } catch (e) {
+      console.error('[mall] 加载分类失败:', e)
+      const categories = ['全部', ...DEFAULT_CATEGORIES]
+      this.setData({ categories, category: '全部' })
+    }
     this.loadProducts()
   },
 
@@ -75,7 +98,8 @@ Page({
         page: 1,
         pageSize: this.data.pageSize,
         keyword: this.data.keyword,
-        category: this.data.category,
+        type: 'virtual',
+        category: this.data.category === '全部' ? undefined : this.data.category,
         sortBy: this.data.sortBy,
         sortOrder: this.data.sortOrder
       })
@@ -133,7 +157,8 @@ Page({
         page: nextPage,
         pageSize: this.data.pageSize,
         keyword: this.data.keyword,
-        category: this.data.category,
+        type: 'virtual',
+        category: this.data.category === '全部' ? undefined : this.data.category,
         sortBy: this.data.sortBy,
         sortOrder: this.data.sortOrder
       })

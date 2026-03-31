@@ -1,0 +1,9 @@
+{
+  "name": "virtual_categories",
+  "version": "1.0.0",
+  "description": "小程序端虚拟商品分类查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

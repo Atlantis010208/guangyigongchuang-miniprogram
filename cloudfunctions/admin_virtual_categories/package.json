@@ -1,0 +1,10 @@
+{
+  "name": "admin_virtual_categories",
+  "version": "1.0.0",
+  "description": "虚拟商品分类管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

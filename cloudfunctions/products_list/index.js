@@ -8,11 +8,15 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
-// 小程序侧边栏中文分类名 → 数据库查询条件映射
-const CATEGORY_MAP = {
-  '设计服务': { type: 'virtual', virtualCategory: 'design_service' },
-  '资料工具': { type: 'virtual', virtualCategory: 'data_tool' },
-  '灯具':     { type: _.neq('virtual') }
+// 旧英文枚举 → 中文名映射（兼容旧数据）
+const LEGACY_CATEGORY_MAP = {
+  '设计服务': 'design_service',
+  '资料工具': 'data_tool',
+  'CAD图纸':  'cad',
+  '3D模型':   'model',
+  '材质贴图': 'material',
+  '计算工具': 'calculation',
+  '其他资源': 'other',
 }
 
 // 云函数入口函数
@@ -24,6 +28,7 @@ exports.main = async (event, context) => {
     const {
       page = 1,
       pageSize = 20,
+      type,
       category,
       minPrice,
       maxPrice,
@@ -38,13 +43,20 @@ exports.main = async (event, context) => {
       status: 'active'
     }
 
-    // 分类筛选（支持小程序中文分类名映射）
+    // 商品类型筛选
+    if (type) {
+      query.type = type
+    }
+
+    // 分类筛选：直接按 virtualCategory 匹配，同时兼容旧英文枚举值
     if (category) {
-      const mapped = CATEGORY_MAP[category]
-      if (mapped) {
-        Object.assign(query, mapped)
+      const legacyKey = LEGACY_CATEGORY_MAP[category]
+      query.type = 'virtual'
+      if (legacyKey) {
+        // 同时匹配中文名和旧英文 key，兼容新旧数据
+        query.virtualCategory = _.in([category, legacyKey])
       } else {
-        query.categoryId = category
+        query.virtualCategory = category
       }
     }
 
