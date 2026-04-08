@@ -1,0 +1,9 @@
+{
+  "name": "designer_profile",
+  "version": "1.0.0",
+  "description": "设计师档案管理云函数 - 支持获取和更新设计师档案",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

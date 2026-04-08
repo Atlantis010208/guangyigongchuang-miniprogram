@@ -1,5 +1,3 @@
-const app = getApp();
-
 Page({
   data: {
     user: {
@@ -11,38 +9,44 @@ Page({
       phone: '',
       wechat: ''
     },
-    // 保存初始数据用于判断是否有修改
-    initialUser: null
+    pendingAvatarPath: '',  // 待上传的本地头像路径
+    saving: false
   },
 
   onLoad(options) {
     this.loadUserData();
   },
 
-  // 加载用户数据
+  // 加载设计师档案
   loadUserData() {
-    // 模拟从全局或者本地存储读取数据
-    // 这里为了演示 UI，先填充假数据，后续可以接入真实的云数据库读取
-    const dummyData = {
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlt_6-cZUO6qjroX1AXEu-wtMYE02ryL-K4rHCfhgcBWl55SjnQ46sUbkWeY4myh6udonIinxC2kl40TgyNm_lLLjoGi6S-BBYVGs9_IZJIDvhv1ibdkNpIiJ_aNMgrG_ARvgXTUAoAOL5y2SK7-qeY4P8aM8PF4fg2E1zkN97ZE-APv59lMyAfXyJUG2-cT1LLm51JH1CsxHy2qoymF9TPYgd1Rbi4sYkJ4OfvF4rMvr3XTifGmiZhOmXcnxjKDy2IECJ9hvAcFc',
-      name: '张伟',
-      bio: '资深灯光设计师，专注室内照明与光影美学。',
-      experience: '8',
-      styles: '现代简约, 商业照明, 艺术装置',
-      phone: '13800138000',
-      wechat: 'zhangwei_lighting'
-    };
-
-    // 如果全局有真实数据，优先使用真实数据（可根据实际数据结构调整）
-    const userDoc = app.globalData.userDoc || wx.getStorageSync('userDoc');
-    if (userDoc && userDoc.name) {
-      dummyData.name = userDoc.name;
-      // 其他字段如果数据库有也可以替换
-    }
-
-    this.setData({
-      user: dummyData,
-      initialUser: { ...dummyData }
+    wx.showLoading({ title: '加载中...', mask: true });
+    wx.cloud.callFunction({
+      name: 'designer_profile',
+      data: { action: 'get' },
+      success: (res) => {
+        wx.hideLoading();
+        if (res.result && res.result.success) {
+          const d = res.result.data;
+          this.setData({
+            user: {
+              avatar: d.tempAvatarUrl || d.avatar || '',
+              name: d.name || '',
+              bio: d.bio || '',
+              experience: d.experience !== undefined ? String(d.experience) : '',
+              styles: d.styles || '',
+              phone: d.phone || '',
+              wechat: d.wechat || ''
+            }
+          });
+        } else {
+          wx.showToast({ title: res.result ? res.result.message : '加载失败', icon: 'none' });
+        }
+      },
+      fail: (err) => {
+        wx.hideLoading();
+        console.error('[designer-profile-edit] 加载失败:', err);
+        wx.showToast({ title: '网络错误', icon: 'none' });
+      }
     });
   },
 
@@ -50,13 +54,10 @@ Page({
   onInput(e) {
     const field = e.currentTarget.dataset.field;
     const value = e.detail.value;
-    
-    this.setData({
-      [`user.${field}`]: value
-    });
+    this.setData({ [`user.${field}`]: value });
   },
 
-  // 点击更换头像
+  // 点击更换头像：先选图，预览，待保存时再上传
   onChangeAvatar() {
     wx.chooseMedia({
       count: 1,
@@ -65,41 +66,81 @@ Page({
       success: (res) => {
         const tempFilePath = res.tempFiles[0].tempFilePath;
         this.setData({
-          'user.avatar': tempFilePath
+          'user.avatar': tempFilePath,
+          pendingAvatarPath: tempFilePath
         });
-        // 实际业务中这里可能需要先上传到云存储，然后再更新 avatar 字段
       }
     });
   },
 
+  // 上传头像到云存储，返回 fileID
+  uploadAvatar(tempFilePath) {
+    return new Promise((resolve, reject) => {
+      const timestamp = Date.now();
+      const ext = tempFilePath.split('.').pop() || 'jpg';
+      wx.cloud.uploadFile({
+        cloudPath: `designer-avatars/${timestamp}.${ext}`,
+        filePath: tempFilePath,
+        success: (res) => resolve(res.fileID),
+        fail: reject
+      });
+    });
+  },
+
   // 点击保存
-  onSave() {
-    const { user } = this.data;
-    
-    // 简单的表单校验
-    if (!user.name.trim()) {
+  async onSave() {
+    const { user, pendingAvatarPath, saving } = this.data;
+    if (saving) return;
+
+    if (!user.name || !user.name.trim()) {
       wx.showToast({ title: '姓名不能为空', icon: 'none' });
       return;
     }
-    
+
+    this.setData({ saving: true });
     wx.showLoading({ title: '保存中...', mask: true });
-    
-    // 模拟网络请求保存数据
-    setTimeout(() => {
-      wx.hideLoading();
-      wx.showToast({
-        title: '保存成功',
-        icon: 'success',
-        duration: 1500,
-        success: () => {
-          // 这里可以更新全局数据或者缓存
-          // app.globalData.userDoc = { ...app.globalData.userDoc, ...user };
-          
-          setTimeout(() => {
-            wx.navigateBack();
-          }, 1500);
+
+    try {
+      const updateData = {
+        name: user.name.trim(),
+        bio: user.bio || '',
+        experience: parseInt(user.experience) || 0,
+        styles: user.styles || '',
+        phone: user.phone || '',
+        wechat: user.wechat || ''
+      };
+
+      // 如果有新头像，先上传
+      if (pendingAvatarPath) {
+        const fileID = await this.uploadAvatar(pendingAvatarPath);
+        updateData.avatarUrl = fileID;
+      }
+
+      wx.cloud.callFunction({
+        name: 'designer_profile',
+        data: { action: 'update', updateData },
+        success: (res) => {
+          wx.hideLoading();
+          this.setData({ saving: false, pendingAvatarPath: '' });
+          if (res.result && res.result.success) {
+            wx.showToast({ title: '保存成功', icon: 'success', duration: 1500 });
+            setTimeout(() => wx.navigateBack(), 1500);
+          } else {
+            wx.showToast({ title: res.result ? res.result.message : '保存失败', icon: 'none' });
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          this.setData({ saving: false });
+          console.error('[designer-profile-edit] 保存失败:', err);
+          wx.showToast({ title: '网络错误', icon: 'none' });
         }
       });
-    }, 800);
+    } catch (err) {
+      wx.hideLoading();
+      this.setData({ saving: false });
+      console.error('[designer-profile-edit] 头像上传失败:', err);
+      wx.showToast({ title: '头像上传失败，请重试', icon: 'none' });
+    }
   }
 });

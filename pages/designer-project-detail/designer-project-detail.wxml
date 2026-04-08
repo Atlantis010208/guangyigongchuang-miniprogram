@@ -1,0 +1,70 @@
+<scroll-view class="page" scroll-y>
+  <view class="header"><text class="title">项目进度</text></view>
+  
+  <!-- 顶部步骤条 -->
+  <view class="steps-section">
+    <van-steps 
+      steps="{{progressSteps}}" 
+      active="{{progressActive}}"
+      active-color="#007AFF"
+      inactive-color="#c7c7cc"
+    />
+  </view>
+
+  <view class="section">
+    <view class="info">
+      <view class="block-title">项目信息</view>
+      
+      <!-- 项目基本信息 -->
+      <view class="cell"><text class="label">项目类型</text><text class="val">{{project.categoryText || '灯光设计'}}</text></view>
+      <view class="cell"><text class="label">空间类型</text><text class="val">{{project.space || '-'}}</text></view>
+      <view class="cell"><text class="label">服务类型</text><text class="val">{{project.service || '-'}}</text></view>
+      <view class="cell"><text class="label">预算</text><text class="val">{{project.budget || '-'}}</text></view>
+      <view class="cell"><text class="label">套内面积</text><text class="val">{{project.area ? project.area + '㎡' : '-'}}</text></view>
+      <view class="cell"><text class="label">项目进度</text><text class="val">{{project.stage || '-'}}</text></view>
+      
+      <!-- 客户联系方式 -->
+      <block wx:if="{{project.clientInfo}}">
+        <view class="block-title mt-4">客户信息</view>
+        <view class="cell" wx:if="{{project.clientInfo.nickname}}">
+          <text class="label">客户称呼</text>
+          <text class="val">{{project.clientInfo.nickname}}</text>
+        </view>
+        <view class="cell" wx:if="{{project.clientInfo.phone}}">
+          <text class="label">联系电话</text>
+          <text 
+            class="val phone longpress-copy" 
+            bindtap="onCallClient" 
+            bindlongpress="onLongPressPhone" 
+            data-phone="{{project.clientInfo.phone}}"
+          >{{project.clientInfo.phone}} <van-icon name="phone-o" color="#007AFF" size="14px" style="margin-left: 4px;"/></text>
+        </view>
+      </block>
+      
+      <view class="cell mt-2"><text class="label">接单时间</text><text class="val">{{acceptedTimeText}}</text></view>
+      <text wx:if="{{project.status==='cancelled'}}" class="badge cancel">已取消</text>
+      <text wx:if="{{project.priority}}" class="badge priority">加急</text>
+    </view>
+    
+  </view>
+
+  <view class="section actions">
+    <!-- 进行中且未提交验收：显示提交验收按钮 -->
+    <block wx:if="{{(project.status==='review' || project.status==='design') && !project.designerConfirmed}}">
+      <button class="btn primary" bindtap="onSubmitVerify">提交验收</button>
+      <button class="btn ghost" bindtap="onCallClient">联系客户</button>
+      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+    </block>
+    <!-- 待验收：显示等待提示 -->
+    <block wx:elif="{{project.status==='verifying'}}">
+      <view class="verify-hint">已提交验收，等待客户确认</view>
+      <button class="btn ghost" bindtap="onCallClient">联系客户</button>
+      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+    </block>
+    <!-- 已完成或其他状态 -->
+    <block wx:else>
+      <button class="btn primary" bindtap="onCallClient" disabled="{{project.status==='cancelled'}}">联系客户</button>
+      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+    </block>
+  </view>
+</scroll-view>

@@ -16,6 +16,12 @@
       </scroll-view>
     </view>
 
+    <!-- 新需求提示条 -->
+    <view class="new-tip" wx:if="{{showNewTip}}" bindtap="onTapNewTip">
+      <van-icon name="bell" size="14px" color="#2563EB" />
+      <text class="new-tip-text">有 {{newCount}} 条新需求，点击刷新</text>
+    </view>
+
     <!-- Demand List -->
     <view class="demand-list">
       <block wx:for="{{demands}}" wx:key="_id">
@@ -55,7 +61,7 @@
 
           <view class="action-group">
             <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDetail" data-id="{{item._id}}">查看详情</button>
-            <button class="btn-primary" hover-class="btn-primary-hover">立即接单</button>
+            <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onAcceptInList" data-id="{{item._id}}" data-title="{{item.title || (item.space + '灯光设计需求')}}">立即接单</button>
           </view>
         </view>
       </block>

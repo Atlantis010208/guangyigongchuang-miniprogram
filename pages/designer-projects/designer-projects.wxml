@@ -6,7 +6,13 @@
       <view class="search-container">
         <view class="search-bar">
           <van-icon name="search" size="20px" color="#94a3b8" />
-          <input class="search-input" placeholder="搜索项目名称..." placeholder-style="color: #94a3b8;" />
+          <input 
+            class="search-input" 
+            placeholder="搜索项目名称/客户..." 
+            placeholder-style="color: #94a3b8;" 
+            value="{{searchQuery}}"
+            bindinput="onSearchInput"
+          />
         </view>
       </view>
 
@@ -26,94 +32,58 @@
     </view>
 
     <!-- Project List -->
-    <view class="project-list">
-      <!-- Project Card 1: 设计中 -->
-      <view class="project-card">
-        <view class="card-header">
-          <view class="card-title-group">
-            <view class="card-title">杭州滨江·云端豪宅灯光方案</view>
-            <view class="card-subtitle">客户: 张先生 | 别墅区 A-12</view>
+    <scroll-view class="project-list-scroll" scroll-y enable-back-to-top bindscrolltolower="onReachBottom" bindrefresherrefresh="onPullDownRefresh" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}">
+      <view class="project-list">
+        
+        <!-- Empty State -->
+        <view class="empty-state" wx:if="{{filteredProjects.length === 0 && !loading}}">
+          <van-icon name="orders-o" size="64px" color="#cbd5e1" />
+          <text class="empty-text">暂无相关项目</text>
+        </view>
+        
+        <block wx:for="{{filteredProjects}}" wx:key="_id">
+          <view class="project-card {{item.status === 'done' ? 'card-completed' : ''}}">
+            <view class="card-header">
+              <view class="card-title-group">
+                <view class="card-title">{{item.title}}</view>
+                <view class="card-subtitle">客户: {{item.clientInfo ? item.clientInfo.nickname : '未知'}} | {{item.space || '灯光设计'}}</view>
+              </view>
+              <!-- 动态状态标签 -->
+              <view class="status-tag {{item.status === 'done' ? 'tag-green' : (item.status === 'pending' ? 'tag-amber' : 'tag-blue')}}">
+                {{item.statusText}}
+              </view>
+            </view>
+
+            <view class="stage-info">
+              <van-icon name="{{item.status === 'done' ? 'passed' : (item.status === 'pending' ? 'comment-o' : 'edit')}}" 
+                        size="16px" 
+                        color="{{item.status === 'done' ? '#22c55e' : (item.status === 'pending' ? '#f59e0b' : '#135bec')}}" />
+              <text class="stage-text">{{item.currentStepText}}</text>
+            </view>
+
+            <view class="progress-bar">
+              <view class="progress-inner {{item.status === 'done' ? 'bg-green' : (item.status === 'pending' ? 'bg-amber' : 'bg-blue')}}" 
+                    style="width: {{item.progress}}%"></view>
+            </view>
+
+            <view class="card-footer">
+              <text class="update-time">{{item.timeText}}</text>
+              <view class="detail-btn" bindtap="goToDetail" data-id="{{item._id}}">
+                <text>查看详情</text>
+                <van-icon name="arrow" size="16px" />
+              </view>
+            </view>
           </view>
-          <view class="status-tag tag-blue">设计中</view>
-        </view>
+        </block>
 
-        <view class="stage-info">
-          <van-icon name="edit" size="16px" color="#135bec" />
-          <text class="stage-text">初稿阶段</text>
+        <view class="no-more" wx:if="{{!hasMore && filteredProjects.length > 0}}">
+          <text>没有更多项目了</text>
         </view>
-
-        <view class="progress-bar">
-          <view class="progress-inner bg-blue" style="width: 35%"></view>
+        <view class="loading-state" wx:if="{{loading && filteredProjects.length > 0}}">
+          <van-loading size="24px" type="spinner" color="#94a3b8">加载中...</van-loading>
         </view>
-
-        <view class="card-footer">
-          <text class="update-time">更新于 2小时前</text>
-          <view class="detail-btn">
-            <text>查看详情</text>
-            <van-icon name="arrow" size="16px" />
-          </view>
-        </view>
+        
       </view>
-
-      <!-- Project Card 2: 待确认 -->
-      <view class="project-card">
-        <view class="card-header">
-          <view class="card-title-group">
-            <view class="card-title">上海新天地商业展厅</view>
-            <view class="card-subtitle">客户: 蔚来汽车 | 展厅 B3</view>
-          </view>
-          <view class="status-tag tag-amber">待确认</view>
-        </view>
-
-        <view class="stage-info">
-          <van-icon name="comment-o" size="16px" color="#f59e0b" />
-          <text class="stage-text">方案审核中</text>
-        </view>
-
-        <view class="progress-bar">
-          <view class="progress-inner bg-amber" style="width: 80%"></view>
-        </view>
-
-        <view class="card-footer">
-          <text class="update-time">更新于 昨天</text>
-          <view class="detail-btn">
-            <text>查看详情</text>
-            <van-icon name="arrow" size="16px" />
-          </view>
-        </view>
-      </view>
-
-      <!-- Project Card 3: 已完成 -->
-      <view class="project-card card-completed">
-        <view class="card-header">
-          <view class="card-title-group">
-            <view class="card-title">深圳湾一号私人会所</view>
-            <view class="card-subtitle">客户: 李总 | 顶层复式</view>
-          </view>
-          <view class="status-tag tag-green">已完成</view>
-        </view>
-
-        <view class="stage-info">
-          <van-icon name="passed" size="16px" color="#22c55e" />
-          <text class="stage-text">交付完成</text>
-        </view>
-
-        <view class="progress-bar">
-          <view class="progress-inner bg-green" style="width: 100%"></view>
-        </view>
-
-        <view class="card-footer">
-          <text class="update-time">2023-10-15</text>
-          <view class="detail-btn">
-            <text>查看详情</text>
-            <van-icon name="arrow" size="16px" />
-          </view>
-        </view>
-      </view>
-
-      <view class="no-more">
-        <text>没有更多项目了</text>
-      </view>
-    </view>
+    </scroll-view>
   </view>
 </view>

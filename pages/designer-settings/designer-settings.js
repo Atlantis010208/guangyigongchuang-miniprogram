@@ -64,6 +64,23 @@ Page({
     });
   },
 
+  // 切换到业主端
+  switchToOwner() {
+    wx.showModal({
+      title: '切换到业主端',
+      content: '确定要切换到业主端吗？',
+      confirmText: '切换',
+      confirmColor: '#181818',
+      success: (res) => {
+        if (res.confirm) {
+          wx.setStorageSync('userRole', 'owner');
+          if (app.globalData) app.globalData.userRole = 'owner';
+          wx.switchTab({ url: '/pages/products/products' });
+        }
+      }
+    });
+  },
+
   // 退出登录逻辑
   onLogout() {
     wx.showModal({
@@ -73,18 +90,17 @@ Page({
       success: (res) => {
         if (res.confirm) {
           wx.showLoading({ title: '退出中...' });
-          
-          // 模拟退出请求并清除本地数据
-          setTimeout(() => {
-            wx.clearStorageSync(); // 真实业务视情况决定是否清空全部
-            app.globalData.userDoc = null;
-            
-            wx.hideLoading();
-            // 跳转到启动页或登录页
-            wx.reLaunch({
-              url: '/pages/splash/splash'
-            });
-          }, 800);
+          // 先调云函数使会话失效，失败不阻塑退出流程
+          wx.cloud.callFunction({
+            name: 'designer_settings',
+            data: { action: 'logout' },
+            complete: () => {
+              wx.clearStorageSync();
+              if (app.globalData) app.globalData.userDoc = null;
+              wx.hideLoading();
+              wx.reLaunch({ url: '/pages/splash/splash' });
+            }
+          });
         }
       }
     });

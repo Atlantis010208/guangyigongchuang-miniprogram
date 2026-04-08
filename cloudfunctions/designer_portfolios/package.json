@@ -1,0 +1,9 @@
+{
+  "name": "designer_portfolios",
+  "version": "1.0.0",
+  "description": "设计师作品集管理云函数 - 支持列表、添加、删除作品",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

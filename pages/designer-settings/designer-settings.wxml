@@ -64,6 +64,20 @@
       </view>
     </view>
 
+    <!-- 切换端入口 -->
+    <view class="list-group">
+      <view class="list-item switch-item" hover-class="list-item-hover" bindtap="switchToOwner">
+        <view class="item-left">
+          <van-icon name="exchange" size="22px" color="#181818" custom-class="item-icon" />
+          <text class="item-text">切换到业主端</text>
+        </view>
+        <view class="item-right">
+          <text class="switch-badge">业主</text>
+          <van-icon name="arrow" color="#C7C7CC" size="16px" />
+        </view>
+      </view>
+    </view>
+
     <!-- 退出登录按钮 -->
     <view class="logout-section">
       <button class="logout-btn" bindtap="onLogout" hover-class="logout-btn-hover">退出登录</button>

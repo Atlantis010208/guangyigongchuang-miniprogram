@@ -33,6 +33,7 @@
     "pages/designer-privacy/designer-privacy",
     "pages/designer-notifications/designer-notifications",
     "pages/designer-projects/designer-projects",
+    "pages/designer-project-detail/designer-project-detail",
     "pages/mall/mall",
     "pages/mall/product-detail/product-detail",
     "pages/mall/cart/cart"

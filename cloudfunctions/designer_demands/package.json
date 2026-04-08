@@ -1,0 +1,9 @@
+{
+  "name": "designer_demands",
+  "version": "1.0.0",
+  "description": "设计师需求大厅云函数 - 支持浏览需求列表、查看详情、接单",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

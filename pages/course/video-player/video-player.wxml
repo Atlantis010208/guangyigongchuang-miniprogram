@@ -149,6 +149,20 @@
         </view>
         <!-- 已学习人数 -->
         <text class="learned-count">{{learnedCount * 35}}人已学习</text>
+
+        <!-- 🆕 视频内章节列表（融入简介模式） -->
+        <view class="video-time-chapters" wx:if="{{currentLesson.timeChapters && currentLesson.timeChapters.length > 0}}">
+          <view 
+            class="video-time-chapter-item {{currentChapterIndex === index ? 'active' : ''}}" 
+            wx:for="{{currentLesson.timeChapters}}" 
+            wx:key="time"
+            bindtap="onChapterTap"
+            data-time="{{item.time}}"
+          >
+            <text class="chapter-time">{{item.timeStr}}</text>
+            <text class="chapter-name">{{item.title}}</text>
+          </view>
+        </view>
       </view>
 
       <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter">

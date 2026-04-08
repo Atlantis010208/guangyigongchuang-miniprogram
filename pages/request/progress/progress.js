@@ -65,11 +65,12 @@ Page({
         const hasDesigner = !!doc.designerId
         const hasAppointment = !!doc.appointmentId || !!doc.hasAppointment
         
-        if (workflowStage === 'completed') {
+        const docStatus = doc.status || ''
+        if (workflowStage === 'completed' || docStatus === 'done' || docStatus === 'completed') {
           // 已完成阶段
           progressActive = 2
-        } else if (hasDesigner || hasAppointment) {
-          // 已分配设计师或有预约，进入进行中
+        } else if (docStatus === 'verifying' || hasDesigner || hasAppointment) {
+          // 待验收 / 已分配设计师或有预约，进入进行中
           progressActive = 1
         } else {
           // 待确认：未分配且未预约
@@ -165,8 +166,8 @@ Page({
           steps: [],
           createdAt: doc.createdAt || '',
           priority: !!doc.priority,  // 🔥 从云数据库读取 priority
-          userConfirmed: false,
-          designerConfirmed: false,
+          userConfirmed: !!doc.userConfirmed,
+          designerConfirmed: !!doc.designerConfirmed,
           // 设计师信息（预约成功或分配成功后显示）
           designerInfo: designerInfo,
           hasDesignerContact: hasDesignerContact,
@@ -317,6 +318,44 @@ Page({
       wx.showToast({ title:'订单已完成', icon:'success' })
       this.loadData()
     }
+  },
+  // 用户：确认验收（云端闭环）
+  onUserConfirmVerify() {
+    wx.showModal({
+      title: '确认验收',
+      content: '确认已收到满意的设计方案？确认后项目将标记为已完成。',
+      success: (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '处理中...' });
+          const reqId = this.data.req.id;
+          wx.cloud.callFunction({
+            name: 'requests_update',
+            data: {
+              orderNo: reqId,
+              patch: {
+                userConfirmed: true,
+                status: 'done',
+                completedAt: Date.now()
+              }
+            },
+            success: (r) => {
+              wx.hideLoading();
+              if (r.result && r.result.success) {
+                wx.showToast({ title: '验收完成', icon: 'success' });
+                this.loadData();
+              } else {
+                wx.showToast({ title: r.result ? r.result.message : '操作失败', icon: 'none' });
+              }
+            },
+            fail: (err) => {
+              wx.hideLoading();
+              console.error('[progress] 确认验收失败:', err);
+              wx.showToast({ title: '网络错误', icon: 'none' });
+            }
+          });
+        }
+      }
+    });
   },
   // 自动确认：若设计师已标记完成，用户24小时未确认则默认同意
   checkAutoConfirm(){
@@ -479,6 +518,42 @@ Page({
       data: email,
       success: ()=>{
         wx.showToast({ title:'邮箱已复制', icon:'success' })
+      }
+    })
+  },
+  // 引导业主订阅项目进度通知
+  requestSubscribe() {
+    const tmplId = 'f9PDbOaLcS43cOSGq2rkto8q5Ik4gxzBT7RAtorK8GI'
+    wx.requestSubscribeMessage({
+      tmplIds: [tmplId],
+      success: (res) => {
+        console.log('[progress] 订阅消息授权结果:', res)
+        if (res[tmplId] === 'accept') {
+          wx.showToast({ title: '通知已开启', icon: 'success' })
+        } else if (res[tmplId] === 'reject') {
+          // 用户拒绝（可能勾选了"总是保持"），引导去设置页
+          wx.showModal({
+            title: '通知已关闭',
+            content: '您已拒绝消息通知。如需开启，请点击"去设置"，在通知管理中允许通知。',
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting()
+              }
+            }
+          })
+        }
+      },
+      fail: (err) => {
+        console.warn('[progress] 订阅消息授权失败:', err)
+        // 20004 错误码表示用户关闭了订阅消息总开关
+        if (err.errCode === 20004) {
+          wx.showModal({
+            title: '通知未开启',
+            content: '请先在"微信 → 设置 → 通知 → 小程序通知"中开启消息通知，再返回重试。',
+            showCancel: false
+          })
+        }
       }
     })
   }

@@ -1,0 +1,9 @@
+{
+  "name": "designer_projects",
+  "version": "1.0.0",
+  "description": "设计师我的项目管理云函数 - 支持项目列表、详情、更新工作流阶段",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

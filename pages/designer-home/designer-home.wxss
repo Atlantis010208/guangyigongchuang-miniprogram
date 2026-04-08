@@ -306,3 +306,34 @@ page {
 .btn-primary-hover {
   background-color: #111827; /* hover:bg-gray-900 */
 }
+
+/* 新需求提示条 */
+.new-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-top: 12px;
+  animation: tipSlideIn 0.3s ease-out;
+}
+
+.new-tip-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2563EB;
+}
+
+@keyframes tipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -170,7 +170,7 @@ Page({
     }
   },
 
-  async onSubmit(){
+  onSubmit(){
     if (this.data.submitting || this._submitting) return
     
     // 检查登录状态 - 提交需求需要登录
@@ -191,7 +191,35 @@ Page({
       })
       return
     }
-    
+
+    // 同步校验表单
+    const space = this.data.space==='其他' ? (this.data.spaceOther||'其他') : this.data.space
+    const budget = this.data.budget==='其他' ? (this.data.budgetOther||'其他') : this.data.budget
+    if(!space){ wx.showToast({ title:'请选择空间类型', icon:'none' }); return }
+    if(!this.data.service){ wx.showToast({ title:'请选择服务类型', icon:'none' }); return }
+    if(!budget){ wx.showToast({ title:'请选择预算', icon:'none' }); return }
+    if(!this.data.area){ wx.showToast({ title:'请输入设计面积', icon:'none' }); return }
+    if(!this.data.stage){ wx.showToast({ title:'请选择项目进度', icon:'none' }); return }
+
+    // 校验通过后，立即同步调用订阅弹窗（必须在用户点击同步上下文中）
+    // 同时订阅：接单通知 + 订单完成通知
+    const tmplIds = [
+      'bxor0x4ZJ_JoEnPct2ieOYRzGWrM2imsmrZtiX5NHE0',
+      'f9PDbOaLcS43cOSGq2rkto8q5Ik4gxzBT7RAtorK8GI'
+    ]
+    wx.requestSubscribeMessage({
+      tmplIds: tmplIds,
+      complete: () => {
+        // 无论用户允许/拒绝/关闭，都继续执行提交
+        this._doSubmit(space, budget)
+      }
+    })
+  },
+
+  async _doSubmit(space, budget){
+    this._submitting = true
+    this.setData({ submitting: true })
+
     // 查询云端押金状态，用于优先服务标记
     let depositPaid = false
     try {
@@ -207,17 +235,7 @@ Page({
     const userDoc = wx.getStorageSync('userDoc') || {}
     const userIdLocal = (userDoc && userDoc._id) ? userDoc._id : null
 
-    const space = this.data.space==='其他' ? (this.data.spaceOther||'其他') : this.data.space
-    const budget = this.data.budget==='其他' ? (this.data.budgetOther||'其他') : this.data.budget
-    if(!space){ wx.showToast({ title:'请选择空间类型', icon:'none' }); return }
-    if(!this.data.service){ wx.showToast({ title:'请选择服务类型', icon:'none' }); return }
-    if(!budget){ wx.showToast({ title:'请选择预算', icon:'none' }); return }
-    if(!this.data.area){ wx.showToast({ title:'请输入设计面积', icon:'none' }); return }
-    if(!this.data.stage){ wx.showToast({ title:'请选择项目进度', icon:'none' }); return }
-
     const id = Date.now().toString()
-    this._submitting = true
-    this.setData({ submitting: true })
     const req = {
       id,
       space,

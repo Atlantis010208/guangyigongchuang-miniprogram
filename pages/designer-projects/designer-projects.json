@@ -3,6 +3,7 @@
   "navigationBarBackgroundColor": "#F5F5F7",
   "navigationBarTextStyle": "black",
   "usingComponents": {
-    "van-icon": "@vant/weapp/icon/index"
+    "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"
   }
 }

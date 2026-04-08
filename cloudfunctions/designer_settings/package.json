@@ -1,0 +1,9 @@
+{
+  "name": "designer_settings",
+  "version": "1.0.0",
+  "description": "设计师设置管理云函数 - 支持获取和更新消息通知设置",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

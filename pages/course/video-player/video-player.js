@@ -57,7 +57,10 @@ Page({
     viewerCount: 0,
     
     // 已学习人数（从云函数获取真实数据）
-    learnedCount: 0
+    learnedCount: 0,
+    
+    // 🆕 当前播放到的视频章节索引
+    currentChapterIndex: -1
   },
 
   // 实例属性（不触发渲染）
@@ -232,6 +235,22 @@ Page({
           console.warn(`[video-player] 未找到 ${currentQuality} 视频 URL`);
         }
         
+        // 🆕 统一处理所有章节和课时的章节数据
+        if (chapters && chapters.length > 0) {
+          chapters.forEach(chapter => {
+            if (chapter.lessons && chapter.lessons.length > 0) {
+              chapter.lessons.forEach(lesson => {
+                this._processLessonChapters(lesson);
+              });
+            }
+          });
+        }
+
+        // 🆕 处理当前课时（如果是独立对象）
+        if (currentLesson) {
+          this._processLessonChapters(currentLesson);
+        }
+        
         // 【流量优化】设置视频封面图 poster
         if (currentLesson) {
           currentLesson.poster = coverUrl || '';
@@ -340,13 +359,36 @@ Page({
    */
   onTimeUpdate(e) {
     const now = Date.now();
-    // 增加节流时间到 2 秒，减少事件处理频率
-    if (now - this._lastTimeUpdate < 2000) return;
-    this._lastTimeUpdate = now;
     
     // 记录当前播放位置和总时长（用于保存进度）
     this._currentTime = e.detail.currentTime || 0;
     this._duration = e.detail.duration || 0;
+    
+    // ==================
+    // 🆕 视频章节高亮逻辑 (无节流限制，保证高亮及时)
+    // ==================
+    const currentLesson = this.data.currentLesson;
+    if (currentLesson && currentLesson.timeChapters && currentLesson.timeChapters.length > 0) {
+      const chapters = currentLesson.timeChapters;
+      let activeIndex = -1;
+      
+      // 找到最后一个 time <= currentTime 的章节
+      for (let i = chapters.length - 1; i >= 0; i--) {
+        if (this._currentTime >= chapters[i].time) {
+          activeIndex = i;
+          break;
+        }
+      }
+      
+      // 如果计算出的高亮章节与当前不同，则更新 UI
+      if (activeIndex !== this.data.currentChapterIndex) {
+        this.setData({ currentChapterIndex: activeIndex });
+      }
+    }
+    
+    // 增加节流时间到 2 秒，减少事件处理频率
+    if (now - this._lastTimeUpdate < 2000) return;
+    this._lastTimeUpdate = now;
     
     // 如果正在缓冲但视频在播放，取消缓冲状态
     if (this.data.isBuffering && e.detail.currentTime > 0) {
@@ -360,6 +402,19 @@ Page({
         this._preloadTriggered = true;  // 防止重复触发
         this._preloadNextLessonUrl();
       }
+    }
+  },
+  
+  /**
+   * 🆕 点击视频章节跳转
+   */
+  onChapterTap(e) {
+    const time = e.currentTarget.dataset.time;
+    if (typeof time === 'number' && this.videoContext) {
+      console.log(`[video-player] 跳转到章节时间: ${time}s`);
+      this.videoContext.seek(time);
+      // 跳转后自动播放
+      this.videoContext.play();
     }
   },
 
@@ -841,9 +896,13 @@ Page({
     // 检测是否是长视频
     const isLongVideo = this._isLongVideo(lesson.duration);
     
+    // 🆕 处理课时内的章节数据
+    this._processLessonChapters(lesson);
+    
     // 直接设置新视频源（不要先清空，避免组件被销毁）
     this.setData({
       currentLesson: lesson,
+      currentChapterIndex: -1, // 切换课时重置章节索引
       isBuffering: true,
       videoLoaded: false,
       autoplay: true,
@@ -875,7 +934,39 @@ Page({
       }, 500);
     }, 300);
   },
-  
+
+  /**
+   * 处理课时内的视频章节数据
+   * 包括格式化时间显示和测试用的 Mock 数据注入
+   * @param {Object} lesson - 课时对象
+   * @private
+   */
+  _processLessonChapters(lesson) {
+    if (!lesson) return;
+
+    // 【测试代码】如果当前视频没有章节数据，自动加一点用于预览 UI
+    // 注意：正式环境上线前应移除此 Mock 逻辑
+    if (!lesson.timeChapters || lesson.timeChapters.length === 0) {
+      lesson.timeChapters = [
+        { time: 0, title: '前言介绍' },
+        { time: 15, title: '核心原理解析' },
+        { time: 45, title: '实操演示环节' },
+        { time: 70, title: '课程总结与作业' }
+      ];
+    }
+
+    if (lesson.timeChapters && lesson.timeChapters.length > 0) {
+      // 确保按时间排序
+      lesson.timeChapters.sort((a, b) => a.time - b.time);
+      // 格式化时间显示
+      lesson.timeChapters.forEach(chapter => {
+        const mins = Math.floor(chapter.time / 60);
+        const secs = Math.floor(chapter.time % 60);
+        chapter.timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      });
+    }
+  },
+
   /**
    * 检测是否是长视频（超过30分钟）
    * @param {string} duration - 时长字符串，如 "01:08:33" 或 "18:21"
@@ -1722,6 +1813,10 @@ Page({
           lesson.videoUrl = newData.videoUrl;
           lesson.videoUrls = newData.videoUrls;
           lesson._needsLazyLoad = false;
+          
+          // 🆕 补充处理章节数据（防止按需加载时章节数据丢失）
+          this._processLessonChapters(lesson);
+          
           console.log(`[video-player] 更新章节列表中课时 ${lessonId} 的数据`);
           break;
         }

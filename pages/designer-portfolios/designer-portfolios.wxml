@@ -24,10 +24,14 @@
 
   <!-- 作品网格 -->
   <view class="portfolio-grid">
-    <view class="portfolio-item" wx:for="{{filteredPortfolios}}" wx:key="id" bindtap="onPortfolioDetail" data-id="{{item.id}}">
-      <image class="portfolio-img" src="{{item.image}}" mode="aspectFill" lazy-load="true"></image>
+    <view class="portfolio-item" wx:for="{{filteredPortfolios}}" wx:key="_id"
+      bindtap="onPortfolioDetail"
+      bindlongpress="onPortfolioLongPress"
+      data-id="{{item._id}}"
+      data-title="{{item.title}}">
+      <image class="portfolio-img" src="{{item.tempCoverImage}}" mode="aspectFill" lazy-load="true"></image>
       <view class="portfolio-overlay">
-        <view class="portfolio-category">{{item.category}}</view>
+        <view class="portfolio-category">{{item.spaceType}}</view>
         <view class="portfolio-title">{{item.title}}</view>
       </view>
     </view>

@@ -2,6 +2,8 @@
   "navigationBarTitleText": "设计师需求大厅",
   "navigationBarBackgroundColor": "#F5F5F7",
   "navigationBarTextStyle": "black",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#F5F5F7",
   "usingComponents": {
     "van-icon": "@vant/weapp/icon/index",
     "designer-filter-popup": "/components/designer-filter-popup/index"

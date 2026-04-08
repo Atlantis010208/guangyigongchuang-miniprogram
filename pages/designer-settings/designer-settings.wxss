@@ -66,6 +66,18 @@ page {
   margin-left: 56px;
 }
 
+/* 切换端 badge */
+.switch-badge {
+  font-size: 11px;
+  color: #ffffff;
+  background-color: #181818;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-right: 6px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
 /* 退出登录 */
 .logout-section {
   margin-top: 32px;

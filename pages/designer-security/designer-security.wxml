@@ -6,7 +6,7 @@
     <view class="list-item" hover-class="list-item-hover">
       <text class="item-label">手机号</text>
       <view class="item-right">
-        <text class="item-value">138****8888</text>
+        <text class="item-value">{{maskedPhone || '加载中...'}}</text>
         <van-icon name="arrow" color="#C7C7CC" size="16px" />
       </view>
       <view class="divider"></view>
@@ -16,7 +16,7 @@
     <view class="list-item" hover-class="list-item-hover">
       <text class="item-label">微信绑定</text>
       <view class="item-right">
-        <text class="item-value">已绑定</text>
+        <text class="item-value">{{wechatBound || '加载中...'}}</text>
         <van-icon name="arrow" color="#C7C7CC" size="16px" />
       </view>
       <view class="divider"></view>
@@ -26,7 +26,7 @@
     <view class="list-item" hover-class="list-item-hover">
       <text class="item-label">实名认证</text>
       <view class="item-right">
-        <text class="item-value">已认证</text>
+        <text class="item-value">{{realNameVerified || '加载中...'}}</text>
         <van-icon name="arrow" color="#C7C7CC" size="16px" />
       </view>
     </view>

@@ -7,7 +7,7 @@
 
     <view class="avatar-wrapper">
       <view class="avatar-container">
-        <image class="avatar-img" src="{{user.avatar}}" mode="aspectFill"></image>
+        <image class="avatar-img" src="{{user.tempAvatarUrl || user.avatar}}" mode="aspectFill"></image>
       </view>
       <view class="verified-badge">
         <van-icon name="passed" color="#fff" size="16px" />
@@ -15,19 +15,19 @@
     </view>
 
     <view class="user-name">{{user.name}}</view>
-    <view class="user-title">{{user.title}}</view>
+    <view class="user-title">{{user.bio}}</view>
 
     <view class="stats-container">
       <view class="stat-item">
-        <view class="stat-value">{{user.stats.projects}}</view>
+        <view class="stat-value">{{user.projects || 0}}</view>
         <view class="stat-label">已接项目</view>
       </view>
       <view class="stat-item">
-        <view class="stat-value">{{user.stats.rating}}</view>
+        <view class="stat-value">{{user.rating || 0}}</view>
         <view class="stat-label">获得评价</view>
       </view>
       <view class="stat-item">
-        <view class="stat-value">{{user.stats.years}}<text class="stat-unit">年</text></view>
+        <view class="stat-value">{{user.experience || 0}}<text class="stat-unit">年</text></view>
         <view class="stat-label">设计年限</view>
       </view>
     </view>
@@ -52,10 +52,10 @@
     </view>
 
     <view class="portfolio-grid">
-      <view class="portfolio-item" wx:for="{{portfolios}}" wx:key="id" bindtap="onPortfolioDetail" data-id="{{item.id}}">
-        <image class="portfolio-img" src="{{item.image}}" mode="aspectFill"></image>
+      <view class="portfolio-item" wx:for="{{portfolios}}" wx:key="_id" bindtap="onPortfolioDetail" data-id="{{item._id}}">
+        <image class="portfolio-img" src="{{item.tempCoverImage}}" mode="aspectFill"></image>
         <view class="portfolio-overlay">
-          <view class="portfolio-category">{{item.category}}</view>
+          <view class="portfolio-category">{{item.spaceType}}</view>
           <view class="portfolio-title">{{item.title}}</view>
         </view>
       </view>

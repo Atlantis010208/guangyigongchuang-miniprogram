@@ -1,0 +1,111 @@
+.page{min-height:100vh;background:#f2f2f7;padding-bottom:120rpx}
+.header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
+
+/* 顶部步骤条样式 */
+.steps-section {
+  background: #fff;
+  border-radius: 24rpx;
+  margin: 0 30rpx 20rpx;
+  padding: 36rpx 10rpx 40rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  --steps-icon-size: 36rpx;
+  --steps-title-font-size: 28rpx;
+  --steps-description-font-size: 24rpx;
+  --steps-line-color: #ebedf0;
+  --steps-finish-line-color: #135bec; /* 设计师端主色调 */
+  --steps-finish-text-color: #135bec;
+  --steps-process-text-color: #135bec;
+}
+
+.steps-section .van-steps {
+  background: transparent !important;
+  padding-left: 40rpx !important;
+  padding-right: 40rpx !important;
+  padding-bottom: 24rpx !important;
+  overflow: visible !important;
+}
+
+.steps-section .van-step, 
+.steps-section .van-step__wrapper {
+  overflow: visible !important;
+}
+
+.steps-section .van-step__circle {
+  width: 18rpx !important;
+  height: 18rpx !important;
+  background-color: #ebedf0 !important;
+}
+
+.steps-section .van-step__icon {
+  font-size: 38rpx !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 38rpx !important;
+  height: auto !important;
+  line-height: 1 !important;
+}
+
+.steps-section .van-step__title {
+  font-size: 28rpx !important;
+  font-weight: 500;
+  padding-bottom: 12rpx !important; 
+  padding-top: 0 !important;
+}
+
+.steps-section .van-step__line {
+  height: 4rpx !important;
+  top: 60rpx !important;
+  background-color: #ebedf0 !important;
+}
+
+/* 详情卡片 */
+.section{background:#fff;border-radius:30rpx;margin:20rpx 30rpx;padding:30rpx}
+.info .row{display:block;font-size:28rpx;color:#000;margin-bottom:10rpx}
+.block-title{font-size:32rpx;font-weight:700;color:#000;display:block;margin-bottom:12rpx}
+.mt-4 { margin-top: 32rpx !important; }
+.mt-2 { margin-top: 16rpx !important; }
+
+.cell{display:flex;align-items:center;justify-content:space-between;padding:18rpx 0;border-bottom:1rpx solid #f2f2f7}
+.cell:last-child{border-bottom:none}
+.label{font-size:28rpx;color:#64748b}
+.val{font-size:28rpx;color:#1c1c1e;font-weight:500}
+
+.badge.cancel{display:inline-block;margin-top:6rpx;padding:6rpx 14rpx;border-radius:999rpx;background:#ffecec;color:#ff3b30;font-size:22rpx}
+.badge.priority{display:inline-block;margin-left:10rpx;margin-top:6rpx;padding:6rpx 14rpx;border-radius:999rpx;background:#fef3c7;color:#d97706;font-size:22rpx;border:1rpx solid #fcd34d}
+
+/* 验收提示文案 */
+.verify-hint {
+  text-align: center;
+  font-size: 26rpx;
+  color: #64748b;
+  padding: 16rpx 0;
+  flex: 1;
+}
+
+/* 底部操作区 */
+.actions{display:flex;align-items:center;padding:30rpx;position:fixed;bottom:0;left:0;right:0;margin:0;border-radius:30rpx 30rpx 0 0;box-shadow:0 -4rpx 16rpx rgba(0,0,0,0.05);z-index:100;padding-bottom:calc(30rpx + env(safe-area-inset-bottom));}
+.btn{flex:1;border-radius:50rpx;padding:24rpx 0;font-size:28rpx;font-weight:600;border:2rpx solid transparent;background:#fff;color:#000}
+.actions .btn + .btn{margin-left:16rpx}
+.btn.primary{background:#135bec;color:#fff}
+.btn.ghost{border:2rpx solid #e2e8f0;background:#fff;color:#334155}
+.btn[disabled]{background:#e2e8f0;color:#94a3b8}
+
+/* 长按复制样式 */
+.val.phone{
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  letter-spacing: 0.5rpx;
+  display: flex;
+  align-items: center;
+  color: #135bec;
+}
+.longpress-copy {
+  position: relative;
+  padding: 8rpx 16rpx;
+  margin: -8rpx -16rpx;
+  border-radius: 8rpx;
+  transition: background 0.2s;
+}
+.longpress-copy:active {
+  background: #f1f5f9;
+}

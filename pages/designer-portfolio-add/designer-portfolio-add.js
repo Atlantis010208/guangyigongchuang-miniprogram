@@ -72,7 +72,7 @@ Page({
   },
 
   // 提交发布
-  onSubmit() {
+  async onSubmit() {
     const { coverImage, projectName, spaceTypeIndex, spaceTypes, description, galleryImages } = this.data;
 
     // 表单验证
@@ -97,21 +97,65 @@ Page({
       return;
     }
 
-    // 模拟上传和保存
-    wx.showLoading({ title: '发布中...', mask: true });
-    
-    setTimeout(() => {
-      wx.hideLoading();
-      wx.showToast({
-        title: '发布成功',
-        icon: 'success',
-        duration: 1500,
-        success: () => {
-          setTimeout(() => {
-            wx.navigateBack();
-          }, 1500);
+    wx.showLoading({ title: '上传图片中...', mask: true });
+
+    try {
+      // 并发上传封面图和图集到云存储
+      const timestamp = Date.now();
+
+      const uploadFile = (filePath, cloudName) => {
+        return new Promise((resolve, reject) => {
+          wx.cloud.uploadFile({
+            cloudPath: `portfolios/${timestamp}/${cloudName}`,
+            filePath,
+            success: (res) => resolve(res.fileID),
+            fail: reject
+          });
+        });
+      };
+
+      const coverFileID = await uploadFile(coverImage, 'cover.jpg');
+      const galleryFileIDs = await Promise.all(
+        galleryImages.map((img, i) => uploadFile(img, `gallery_${i}.jpg`))
+      );
+
+      wx.showLoading({ title: '保存作品...', mask: true });
+
+      wx.cloud.callFunction({
+        name: 'designer_portfolios',
+        data: {
+          action: 'add',
+          portfolio: {
+            title: projectName.trim(),
+            spaceType: spaceTypes[spaceTypeIndex],
+            description: description.trim(),
+            coverImage: coverFileID,
+            galleryImages: galleryFileIDs
+          }
+        },
+        success: (res) => {
+          wx.hideLoading();
+          if (res.result && res.result.success) {
+            wx.showToast({
+              title: '发布成功',
+              icon: 'success',
+              duration: 1500
+            });
+            setTimeout(() => wx.navigateBack(), 1500);
+          } else {
+            wx.showToast({ title: res.result ? res.result.message : '发布失败', icon: 'none' });
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          console.error('[designer-portfolio-add] 保存失败:', err);
+          wx.showToast({ title: '网络错误', icon: 'none' });
         }
       });
-    }, 1000);
+    } catch (err) {
+      wx.hideLoading();
+      console.error('[designer-portfolio-add] 上传失败:', err);
+      wx.showToast({ title: '图片上传失败，请重试', icon: 'none' });
+    }
   }
 });

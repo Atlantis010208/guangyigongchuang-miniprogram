@@ -160,6 +160,47 @@
   box-sizing: border-box;
 }
 
+.video-time-chapters {
+  margin-top: 10rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.video-time-chapter-item {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  padding: 4rpx 0;
+}
+
+.chapter-time {
+  width: 90rpx;
+  margin-right: 16rpx;
+  font-family: monospace;
+  color: #007aff; /* 蓝色时间 */
+  font-weight: 500;
+}
+
+.chapter-name {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.5); /* 恢复为辅助灰色 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 移除选中项高亮效果 */
+.video-time-chapter-item.active .chapter-name {
+  color: rgba(255, 255, 255, 0.5); 
+  font-weight: normal;
+}
+
+.video-time-chapter-item.active .chapter-time {
+  color: #007aff;
+  font-weight: 500;
+}
+
 .section-header {
   margin-bottom: 30rpx;
 }

@@ -6,8 +6,13 @@ Page({
     user: { avatar: '' },
     userAvatarDisplay: '', // 用于显示的头像临时链接
     userAvatarFileID: '', // 原始 cloud:// fileID
-    demands: [] // 需求列表数据
+    demands: [], // 需求列表数据
+    newCount: 0,
+    showNewTip: false
   },
+
+  _pollTimer: null,
+  _lastTotal: 0,
 
   onLoad(options) {
     // 隐藏返回首页按钮，因为这是设计师的首页
@@ -24,70 +29,87 @@ Page({
     
     // 获取用户数据
     this.loadUserData();
+    // 刷新需求列表
+    this.loadDemands();
+    // 启动轮询
+    this._startPolling();
+  },
+
+  onHide() {
+    this._stopPolling();
+  },
+
+  onUnload() {
+    this._stopPolling();
+  },
+
+  _startPolling() {
+    this._stopPolling();
+    this._pollTimer = setInterval(() => {
+      this._checkNewDemands();
+    }, 15000);
+  },
+
+  _stopPolling() {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+  },
+
+  _checkNewDemands() {
+    wx.cloud.callFunction({
+      name: 'designer_demands',
+      data: { action: 'count' },
+      success: (res) => {
+        if (res.result && res.result.success) {
+          const total = res.result.data.total || 0;
+          if (this._lastTotal > 0 && total > this._lastTotal) {
+            const diff = total - this._lastTotal;
+            this.setData({ newCount: diff, showNewTip: true });
+          }
+        }
+      }
+    });
+  },
+
+  onTapNewTip() {
+    this.setData({ showNewTip: false, newCount: 0 });
+    this.loadDemands();
+  },
+
+  onPullDownRefresh() {
+    this.loadDemands();
+    this.loadUserData();
+    wx.stopPullDownRefresh();
   },
 
   /**
-   * 加载需求列表数据（目前使用 mock，结构与真实数据一致）
+   * 加载需求列表数据（首页展示最新3条）
    */
   loadDemands() {
-    // TODO: 后续联调时，替换为真实的云端请求： db.collection('requests').where({ category: 'publish', status: 'submitted' }).get()
-    const mockDemands = [
-      {
-        _id: '1',
-        space: '住宅',
-        service: '整套灯光设计',
-        budget: '¥19/m²',
-        area: '150',
-        stage: '未开始',
-        priority: true,
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        space: '商铺',
-        service: '只深化灯光施工图',
-        budget: '¥9/m²',
-        area: '85',
-        stage: '装修中',
-        priority: false,
-        createdAt: new Date(Date.now() - 2 * 86400000).toISOString() // 2天前
-      },
-      {
-        _id: '3',
-        space: '办公室',
-        service: '选灯配灯服务',
-        budget: '¥5/m²（只针对选灯配灯）',
-        area: '450',
-        stage: '正在设计',
-        priority: false,
-        createdAt: new Date(Date.now() - 10 * 86400000).toISOString() // 10天前
-      }
-    ];
+    const categories = this.data.categories;
+    const idx = this.data.currentCategory;
+    const spaceType = (idx === 0) ? null : categories[idx];
 
-    // 处理标签显示逻辑
-    const formattedDemands = mockDemands.map(item => {
-      let tagType = '';
-      let tagText = '';
-      
-      const isNew = (Date.now() - new Date(item.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000;
-      
-      if (item.priority) {
-        tagType = 'purple';
-        tagText = '加急';
-      } else if (isNew) {
-        tagType = 'blue';
-        tagText = '新需求';
+    wx.cloud.callFunction({
+      name: 'designer_demands',
+      data: { action: 'list', page: 1, pageSize: 3, spaceType },
+      success: (res) => {
+        if (res.result && res.result.success) {
+          const total = res.result.data.total;
+          if (total !== undefined) {
+            this._lastTotal = total;
+          }
+          this.setData({ demands: res.result.data.list || [], showNewTip: false, newCount: 0 });
+        } else {
+          console.warn('[designer-home] 加载需求失败:', res.result && res.result.message);
+        }
+      },
+      fail: (err) => {
+        console.error('[designer-home] 加载需求失败:', err);
       }
-
-      return {
-        ...item,
-        title: `${item.space}灯光设计需求`,
-        tagType,
-        tagText
-      };
     });
-
-    this.setData({ demands: formattedDemands });
   },
 
   /**
@@ -224,6 +246,7 @@ Page({
     this.setData({
       currentCategory: index
     });
+    this.loadDemands();
   },
 
   // 显示筛选弹窗
@@ -366,14 +389,53 @@ onViewDemand(e) {
 
 // 立即接单
 acceptOrder(e) {
-  wx.showLoading({ title: '处理中...' });
-  
-  // 模拟抢单请求延迟
-  setTimeout(() => {
-    wx.hideLoading();
-    wx.navigateTo({
-      url: '/pages/designer-order-success/designer-order-success?projectName=上海静安区 150㎡ 住宅照明设计'
-    });
-  }, 800);
+  const id = e.currentTarget.dataset.id;
+  if (!id) return;
+  const demands = this.data.demands || [];
+  const demand = demands.find(d => d._id === id);
+  const title = (demand && demand.title) || '灯光设计需求';
+
+  wx.showModal({
+    title: '抢单确认',
+    content: `确认要承接「${title}」吗？承接后需尽快与业主联系。`,
+    confirmText: '立即抢单',
+    confirmColor: '#111827',
+    success: (res) => {
+      if (!res.confirm) return;
+      wx.showLoading({ title: '处理中...', mask: true });
+      wx.cloud.callFunction({
+        name: 'designer_demands',
+        data: { action: 'accept', requestId: id },
+        success: (r) => {
+          wx.hideLoading();
+          if (r.result && r.result.success) {
+            wx.navigateTo({
+              url: `/pages/designer-order-success/designer-order-success?projectName=${encodeURIComponent(title)}`
+            });
+          } else {
+            const code = r.result ? r.result.code : '';
+            const msg = r.result ? r.result.message : '抢单失败';
+            if (code === 'ALREADY_TAKEN') {
+              wx.showModal({
+                title: '手慢了',
+                content: '该需求已被其他设计师接单',
+                showCancel: false,
+                success: () => this.loadDemands()
+              });
+            } else if (code === 'ALREADY_MINE') {
+              wx.showToast({ title: '您已接过此单', icon: 'none' });
+            } else {
+              wx.showModal({ title: '抢单失败', content: msg, showCancel: false });
+            }
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          console.error('[designer-home] 抢单失败:', err);
+          wx.showToast({ title: '网络错误', icon: 'none' });
+        }
+      });
+    }
+  });
 },
 });

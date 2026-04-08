@@ -124,9 +124,14 @@
       <button class="btn ghost" bindtap="onDesignerDone" disabled="{{req.status==='canceled'}}">完成订单</button>
       <button class="btn ghost" bindtap="onContact">联系客服</button>
     </block>
+    <block wx:elif="{{!isDesigner && req.designerConfirmed && !req.userConfirmed}}">
+      <button class="btn primary" bindtap="onUserConfirmVerify">确认验收</button>
+      <button class="btn ghost" bindtap="onContact">联系客服</button>
+    </block>
     <block wx:else>
       <button class="btn primary" bindtap="onGoDeposit">押金</button>
       <button class="btn primary" bindtap="onModify" disabled="{{req.status==='canceled'}}">修改订单</button>
+      <button class="btn ghost" bindtap="requestSubscribe">开启通知</button>
       <button class="btn ghost" bindtap="onContact">联系客服</button>
       <button class="btn ghost more" bindtap="onMoreTap">
         <image class="more-icon-img" src="/images/更多.svg" mode="aspectFit" />
