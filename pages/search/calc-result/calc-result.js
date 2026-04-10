@@ -78,6 +78,7 @@ Page({
     },
 
     // P6: 舒适指数
+    animatedScoreWidth: false,
     comfortData: {
       score: 92,
       levelText: 'A级：适合长期居住',
@@ -173,6 +174,11 @@ Page({
           this.setData({ animatedMarkerLeft: this.data.rangeData.markerLeft })
         }, 50)
       }
+      if (this.data.currentPage === 5) {
+        setTimeout(() => {
+          this.setData({ animatedScoreWidth: true })
+        }, 50)
+      }
     })
   },
 
@@ -235,14 +241,23 @@ Page({
 
     // 处理 P3 照度区间分布页的进度条滑动动效
     if (current === 2) {
-      // 稍微延迟以确保页面已切换，触发过渡动画
       setTimeout(() => {
         this.setData({ animatedMarkerLeft: this.data.rangeData.markerLeft })
       }, 50)
     } else {
-      // 离开 P3 页面时重置，以便下次进入重新播放动效
       if (this.data.animatedMarkerLeft !== 0) {
         this.setData({ animatedMarkerLeft: 0 })
+      }
+    }
+
+    // 处理 P6 舒适指数页的分数条生长动效
+    if (current === 5) {
+      setTimeout(() => {
+        this.setData({ animatedScoreWidth: true })
+      }, 50)
+    } else {
+      if (this.data.animatedScoreWidth) {
+        this.setData({ animatedScoreWidth: false })
       }
     }
   },
@@ -508,6 +523,11 @@ Page({
       if (this.data.currentPage === 2) {
         setTimeout(() => {
           this.setData({ animatedMarkerLeft: this.data.rangeData.markerLeft })
+        }, 50)
+      }
+      if (this.data.currentPage === 5) {
+        setTimeout(() => {
+          this.setData({ animatedScoreWidth: true })
         }, 50)
       }
     })

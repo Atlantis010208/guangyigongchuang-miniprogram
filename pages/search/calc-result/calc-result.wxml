@@ -254,7 +254,7 @@
 
         <!-- 环形评分 -->
         <view class="comfort-ring-area">
-          <view class="comfort-ring">
+          <view class="comfort-ring {{animatedScoreWidth ? 'animate-ring' : ''}}">
             <view class="ring-bg"></view>
             <view class="ring-progress" style="--progress: {{comfortData.score}};"></view>
             <view class="ring-center">
@@ -262,18 +262,18 @@
               <text class="ring-score-label">SCORE</text>
             </view>
           </view>
-          <view class="comfort-level-tag">{{comfortData.levelText}}</view>
+          <view class="comfort-level-tag {{animatedScoreWidth ? 'animate-fade-up' : ''}}">{{comfortData.levelText}}</view>
         </view>
 
         <!-- 分项评分 -->
-        <view class="score-card">
+        <view class="score-card {{animatedScoreWidth ? 'animate-card-up' : ''}}">
           <view class="score-bar-item" wx:for="{{comfortData.scores}}" wx:key="label">
             <view class="score-bar-header">
               <text class="score-bar-label">{{item.label}}</text>
               <text class="score-bar-num">{{item.score}}<text class="score-bar-max">/{{item.max}}</text></text>
             </view>
             <view class="score-bar-track">
-              <view class="score-bar-fill" style="width: {{item.score / item.max * 100}}%;"></view>
+              <view class="score-bar-fill" style="width: {{animatedScoreWidth ? (item.score / item.max * 100) : 0}}%;"></view>
             </view>
           </view>
         </view>
