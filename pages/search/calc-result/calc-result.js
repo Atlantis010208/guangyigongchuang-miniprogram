@@ -45,6 +45,7 @@ Page({
     rangeData: {
       luxValue: 0,
       markerLeft: 38,
+      currentBrightness: 1.0,
       ranges: [
         { range: '0–80 lx', state: '昏暗区', scene: '酒吧 / 情绪氛围', colorClass: 'dot-dark', active: false },
         { range: '80–150 lx', state: '偏暗区', scene: '夜间休闲', colorClass: 'dot-dim', active: false },
@@ -305,8 +306,6 @@ Page({
     else if (luxValue <= 80) markerLeft = (luxValue / 80) * 16
     else if (luxValue <= 150) markerLeft = 16 + ((luxValue - 80) / 70) * 14
     else if (luxValue <= 300) markerLeft = 30 + ((luxValue - 150) / 150) * 30
-    else if (luxValue <= 500) markerLeft = 60 + ((luxValue - 300) / 200) * 20
-    else markerLeft = 80 + Math.min(((luxValue - 500) / 200) * 20, 18)
 
     // 确定当前所在区间
     let activeIndex = 2
@@ -471,6 +470,7 @@ Page({
       rangeData: {
         luxValue: Math.round(luxValue),
         markerLeft: Math.round(markerLeft),
+        currentBrightness: currentBrightness,
         ranges: ranges
       },
       detailData: {

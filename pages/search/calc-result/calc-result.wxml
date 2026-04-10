@@ -109,7 +109,7 @@
 
         <!-- 示意图展示区域 -->
         <view class="range-illustration">
-          <image class="illustration-img" src="/images/lighting-scene.jpg" mode="aspectFill"></image>
+          <image class="illustration-img" style="filter: brightness({{rangeData.currentBrightness || 1}});" src="/images/lighting-scene.jpg" mode="aspectFill"></image>
         </view>
 
         <!-- 区间列表 -->

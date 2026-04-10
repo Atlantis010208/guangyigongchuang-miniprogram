@@ -278,11 +278,24 @@ function buildRangeData(luxValue) {
   else markerLeft = 80 + Math.min(((luxValue - 500) / 200) * 20, 18)
 
   let activeIndex = 2
-  if (luxValue < 80) activeIndex = 0
-  else if (luxValue < 150) activeIndex = 1
-  else if (luxValue <= 300) activeIndex = 2
-  else if (luxValue <= 500) activeIndex = 3
-  else activeIndex = 4
+  let currentBrightness = 1.0 // 默认亮度 100%
+
+  if (luxValue < 80) {
+    activeIndex = 0
+    currentBrightness = 0.35 // 昏暗区
+  } else if (luxValue < 150) {
+    activeIndex = 1
+    currentBrightness = 0.65 // 偏暗区
+  } else if (luxValue <= 300) {
+    activeIndex = 2
+    currentBrightness = 1.00 // 舒适区 (原图)
+  } else if (luxValue <= 500) {
+    activeIndex = 3
+    currentBrightness = 1.35 // 偏亮区
+  } else {
+    activeIndex = 4
+    currentBrightness = 1.70 // 过亮区
+  }
 
   const ranges = [
     { range: '0–80 lx', state: '昏暗区', scene: '酒吧 / 情绪氛围', colorClass: 'dot-dark', active: false },
@@ -293,7 +306,7 @@ function buildRangeData(luxValue) {
   ]
   ranges[activeIndex].active = true
 
-  return { luxValue: Math.round(luxValue), markerLeft, ranges }
+  return { luxValue: Math.round(luxValue), markerLeft, ranges, currentBrightness }
 }
 
 /**
