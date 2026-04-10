@@ -107,9 +107,17 @@
           </view>
         </view>
 
-        <!-- 示意图展示区域 -->
+        <!-- 示意图展示区域 (5分亮度阶梯) -->
         <view class="range-illustration">
-          <image class="illustration-img" style="filter: brightness({{rangeData.currentBrightness || 1}});" src="/images/lighting-scene.jpg" mode="aspectFill"></image>
+          <image class="illustration-img" src="/images/04102248_14.jpg" mode="aspectFill"></image>
+          <!-- 5个亮度分区的遮罩 (宽度与上方进度条对齐: 16%, 14%, 30%, 20%, 20%) -->
+          <view class="illu-masks">
+            <view class="illu-mask mask-dark {{rangeData.ranges[0].active ? 'mask-active' : 'mask-inactive'}}" style="width: 16%;"></view>
+            <view class="illu-mask mask-dim {{rangeData.ranges[1].active ? 'mask-active' : 'mask-inactive'}}" style="width: 14%;"></view>
+            <view class="illu-mask mask-comfort {{rangeData.ranges[2].active ? 'mask-active' : 'mask-inactive'}}" style="width: 30%;"></view>
+            <view class="illu-mask mask-bright {{rangeData.ranges[3].active ? 'mask-active' : 'mask-inactive'}}" style="width: 20%;"></view>
+            <view class="illu-mask mask-over {{rangeData.ranges[4].active ? 'mask-active' : 'mask-inactive'}}" style="width: 20%;"></view>
+          </view>
         </view>
 
         <!-- 区间列表 -->

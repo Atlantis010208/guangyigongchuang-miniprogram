@@ -434,18 +434,60 @@ page {
 /* 示意图区域 */
 .range-illustration {
   width: 100%;
-  height: 120rpx;
+  height: 200rpx;
   border-radius: 32rpx;
   overflow: hidden;
   margin-bottom: 20rpx;
   background: #FFFFFF;
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 .illustration-img {
   width: 100%;
   height: 100%;
   opacity: 1;
+  display: block;
+}
+
+.illu-masks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.illu-mask {
+  height: 100%;
+  transition: all 0.3s ease;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 用半透明黑色和白色来模拟亮暗程度，原图作为舒适区基准 */
+.mask-dark { background: rgba(0, 0, 0, 0.65); }
+.mask-dim { background: rgba(0, 0, 0, 0.45); }
+.mask-comfort { background: rgba(0, 0, 0, 0); }
+.mask-bright { background: rgba(255, 255, 255, 0.25); }
+.mask-over { background: rgba(255, 255, 255, 0.55); }
+
+/* 当前高亮选中的区间，非选中区间适当变暗以突出选中区间 */
+.illu-mask.mask-active {
+  border: 4rpx solid #10B981; /* 默认用舒适区绿色边框，或者用统一深色 */
+  z-index: 2;
+  box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.2);
+  transform: scaleY(1.05); /* 选中的区间稍微高一点点突出 */
+}
+.illu-mask.mask-dark.mask-active { border-color: #E2E8F0; }
+.illu-mask.mask-dim.mask-active { border-color: #CBD5E1; }
+.illu-mask.mask-comfort.mask-active { border-color: #10B981; }
+.illu-mask.mask-bright.mask-active { border-color: #FBBF24; }
+.illu-mask.mask-over.mask-active { border-color: #FB7185; }
+
+.illu-mask.mask-inactive {
+  opacity: 0.6; /* 非当前区块变暗点，突出当前区块 */
 }
 
 /* 区间列表 */
