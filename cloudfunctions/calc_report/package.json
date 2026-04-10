@@ -1,0 +1,9 @@
+{
+  "name": "calc_report",
+  "version": "1.0.0",
+  "description": "照明计算报告生成云函数 - 生成8页报告数据、CSV数据并持久化",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

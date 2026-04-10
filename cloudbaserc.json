@@ -44,6 +44,12 @@
       "runtime": "Nodejs18.15",
       "installDependency": true,
       "description": "获取课程视频数据（需登录且已购买）"
+    },
+    {
+      "name": "calc_report",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "照明计算报告生成云函数 - 生成8页报告数据、CSV数据并持久化"
     }
   ]
 }

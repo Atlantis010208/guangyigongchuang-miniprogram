@@ -1,9 +1,9 @@
 {
   "navigationBarTitleText": "计算结果",
-  "navigationBarBackgroundColor": "#F5F7FA",
+  "navigationBarBackgroundColor": "#F8FAFC",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#F5F7FA",
+  "backgroundColor": "#F8FAFC",
   "enablePullDownRefresh": false,
-  "disableScroll": true,
+  "disableScroll": false,
   "usingComponents": {}
 }

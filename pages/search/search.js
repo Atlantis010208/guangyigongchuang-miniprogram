@@ -1048,158 +1048,178 @@ Page({
 
     wx.showLoading({ title: '计算中...' })
 
-    if (this._calcTimer) {
-      clearTimeout(this._calcTimer)
-      this._calcTimer = null
+    // 构建云函数参数
+    const { roomTypes, roomTypeIndex } = this.data
+    const cloudParams = {
+      mode: activeTab,
+      area: parseFloat(area),
+      utilFactor: parseFloat(utilFactor),
+      maintenanceFactor: parseFloat(maintenanceFactor),
+      spaceType: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义',
+      roomTypeIndex: roomTypeIndex
     }
 
-    this._calcTimer = setTimeout(() => {
-      this._calcTimer = null
+    if (activeTab === 'count') {
+      cloudParams.targetLux = parseFloat(this.data.targetLux)
+      cloudParams.lampFlux = parseFloat(this.data.lampFlux)
+      cloudParams.lampPower = parseFloat(this.data.lampPower) || 0
+      cloudParams.lampEfficacy = parseFloat(this.data.lampEfficacy) || 80
+    } else if (activeTab === 'quantity') {
+      cloudParams.targetLux = parseFloat(this.data.targetLux)
+      cloudParams.lampCount = parseFloat(this.data.lampCount)
+      cloudParams.lampEfficacy = parseFloat(this.data.lampEfficacy) || 80
+    } else {
+      cloudParams.selectedLamps = this.data.selectedLamps
+    }
+
+    // 调用云函数生成报告
+    wx.cloud.callFunction({
+      name: 'calc_report',
+      data: { action: 'generate', params: cloudParams },
+      timeout: 5000
+    }).then(res => {
       wx.hideLoading()
-      
-      let resultData = {}
-
-      if (activeTab === 'count' || activeTab === 'quantity') {
-        const { targetLux, lampFlux, roomTypes, roomTypeIndex, lampCount } = this.data
-        
-        if (activeTab === 'count') {
-          if (!targetLux || !lampFlux) {
-            wx.showToast({ title: '请补全参数', icon: 'none' })
-            this.applyNavBarStyle(false)
-            return
-          }
-
-          const fluxNeeded = parseFloat(targetLux) * parseFloat(area)
-          const effectiveFlux = parseFloat(lampFlux) * parseFloat(utilFactor) * parseFloat(maintenanceFactor)
-          const count = Math.ceil(fluxNeeded / effectiveFlux)
-          
-          // 计算功率密度：功率密度 = (灯具数量 * 单灯功率) / 面积
-          const lampPowerNum = parseFloat(this.data.lampPower) || 0
-          const powerDensity = (count * lampPowerNum) / parseFloat(area)
-          const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
-
-          resultData = {
-            mode: 'count',
-            mainValue: count,
-            mainUnit: '盏',
-            mainLabel: '建议灯具数量',
-            headerLeft: { label: '功率密度', value: powerDensityStr },
-            headerRight: { label: '目标照度', value: targetLux + 'Lx' },
-            details: [
-              { label: '房间面积', value: area + ' ㎡' },
-              { label: '空间类型', value: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义' },
-              { label: '总光通量', value: Math.round(fluxNeeded) + ' Lm' },
-              { label: '单灯功率', value: this.data.lampPower + 'W' },
-              { label: '发光效率', value: this.data.lampEfficacy + ' lm/W' },
-              { label: '单灯光通量', value: lampFlux + ' Lm' },
-              { label: '利用系数', value: utilFactor },
-              { label: '维护系数', value: maintenanceFactor }
-            ]
-          }
-        } else {
-          // Quantity mode: TargetLux + Count -> Required Flux per Lamp
-          if (!targetLux || !lampCount) {
-            wx.showToast({ title: '请补全参数', icon: 'none' })
-            this.applyNavBarStyle(false)
-            return
-          }
-          
-          const fluxNeeded = parseFloat(targetLux) * parseFloat(area)
-          // Total Effective Flux = Count * SingleFlux * UF * MF
-          // => SingleFlux = Total Effective Flux / (Count * UF * MF)
-          // Wait, FluxNeeded (Total) = E * A
-          // FluxNeeded = Count * SingleFlux * UF * MF
-          // => SingleFlux = (E * A) / (Count * UF * MF)
-          
-          const singleFlux = fluxNeeded / (parseFloat(lampCount) * parseFloat(utilFactor) * parseFloat(maintenanceFactor))
-          
-          // 计算需购买瓦数：建议单灯光通量 / 发光效率（默认80）
-          const efficacyVal = parseFloat(this.data.lampEfficacy) || 80
-          const requiredWattage = Math.round(singleFlux / efficacyVal)
-          
-          // 计算功率密度：功率密度 = (灯具数量 * 需购买瓦数) / 面积
-          const powerDensity = (parseFloat(lampCount) * requiredWattage) / parseFloat(area)
-          const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
-          
-          resultData = {
-            mode: 'quantity',
-            mainValue: Math.round(singleFlux),
-            mainUnit: 'Lm',
-            mainLabel: '建议单灯光通量',
-            headerLeft: { label: '灯具数量', value: lampCount + '盏' },
-            headerMiddle: { label: '需购买瓦数', value: requiredWattage + 'W' },
-            headerRight: { label: '目标照度', value: targetLux + 'Lx' },
-            details: [
-              { label: '房间面积', value: area + ' ㎡' },
-              { label: '空间类型', value: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义' },
-              { label: '功率密度', value: powerDensityStr },
-              { label: '利用系数', value: utilFactor },
-              { label: '维护系数', value: maintenanceFactor },
-              { label: '总光通量需求', value: Math.round(fluxNeeded) + ' Lm' }
-            ]
-          }
-        }
-
+      const result = res.result
+      if (result && result.success && result.data) {
+        console.log('[search] 云函数计算成功, calcId:', result.data.calcId)
+        // 保存历史记录（含 calcId）
+        this.saveHistory(result.data.resultData, result.data.calcId)
+        // 通过 _cloudReportData 传递完整后端数据给结果页
+        this.setData({ _cloudReportData: result.data }, () => {
+          wx.navigateTo({ url: '/pages/search/calc-result/calc-result' })
+        })
       } else {
-        // Lux mode
-        if (this.data.selectedLamps.length === 0) {
-          wx.showToast({ title: '请添加灯具', icon: 'none' })
-          this.applyNavBarStyle(false)
+        console.warn('[search] 云函数返回失败，回退本地计算:', result)
+        this._fallbackLocalCalculate()
+      }
+    }).catch(err => {
+      wx.hideLoading()
+      console.warn('[search] 云函数调用失败，回退本地计算:', err)
+      this._fallbackLocalCalculate()
+    })
+  },
+
+  /**
+   * 前端本地计算兜底（云函数失败时调用）
+   */
+  _fallbackLocalCalculate() {
+    const { activeTab, area, utilFactor, maintenanceFactor } = this.data
+    let resultData = {}
+
+    if (activeTab === 'count' || activeTab === 'quantity') {
+      const { targetLux, lampFlux, roomTypes, roomTypeIndex, lampCount } = this.data
+
+      if (activeTab === 'count') {
+        if (!targetLux || !lampFlux) {
+          wx.showToast({ title: '请补全参数', icon: 'none' })
           return
         }
-        
-        // 计算总光通量：灯具总光通量 = 功率 × 发光效率 × 数量 × 光源利用率
-        const totalFlux = this.data.selectedLamps.reduce((sum, lamp) => {
-          return sum + (parseFloat(lamp.powerW || 0) * parseFloat(lamp.efficacy || 0) * parseFloat(lamp.lengthQty || 0) * parseFloat(lamp.sourceUtil || 1))
-        }, 0)
-        
-        const totalPower = this.data.selectedLamps.reduce((sum, lamp) => {
-          return sum + (parseFloat(lamp.powerW || 0) * parseFloat(lamp.lengthQty || 0))
-        }, 0)
 
-        // 平均照度 = (总光通量 × 利用系数 × 维护系数) / 面积
-        const avgLux = calcAvgLux(totalFlux, area, utilFactor, maintenanceFactor)
-        const powerDensity = totalPower / parseFloat(area)
-
-        // 构造灯具明细列表：单灯总光通量 = 功率 × 发光效率 × 数量 × 光源利用率
-        const lampDetails = this.data.selectedLamps.map(lamp => {
-          const lampFlux = parseFloat(lamp.powerW || 0) * parseFloat(lamp.efficacy || 0) * parseFloat(lamp.lengthQty || 0) * parseFloat(lamp.sourceUtil || 1)
-          return {
-            label: lamp.displayName || lamp.name || '未知灯具',
-            value: Math.round(lampFlux) + ' Lm'
-          }
-        })
+        const fluxNeeded = parseFloat(targetLux) * parseFloat(area)
+        const effectiveFlux = parseFloat(lampFlux) * parseFloat(utilFactor) * parseFloat(maintenanceFactor)
+        const count = Math.ceil(fluxNeeded / effectiveFlux)
+        const lampPowerNum = parseFloat(this.data.lampPower) || 0
+        const powerDensity = (count * lampPowerNum) / parseFloat(area)
+        const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
 
         resultData = {
-          mode: 'lux',
-          mainValue: Math.round(avgLux),
-          mainUnit: 'Lx',
-          mainLabel: '平均照度',
-          headerLeft: { label: '总光通量', value: Math.round(totalFlux) + 'Lm' },
-          headerRight: { label: '功率密度', value: powerDensity.toFixed(2) + 'W/㎡' },
-          details: lampDetails,
-          bottomTable: this.data.selectedLamps
+          mode: 'count',
+          mainValue: count,
+          mainUnit: '盏',
+          mainLabel: '建议灯具数量',
+          headerLeft: { label: '功率密度', value: powerDensityStr },
+          headerRight: { label: '目标照度', value: targetLux + 'Lx' },
+          details: [
+            { label: '房间面积', value: area + ' ㎡' },
+            { label: '空间类型', value: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义' },
+            { label: '总光通量', value: Math.round(fluxNeeded) + ' Lm' },
+            { label: '单灯功率', value: this.data.lampPower + 'W' },
+            { label: '发光效率', value: this.data.lampEfficacy + ' lm/W' },
+            { label: '单灯光通量', value: lampFlux + ' Lm' },
+            { label: '利用系数', value: utilFactor },
+            { label: '维护系数', value: maintenanceFactor }
+          ]
+        }
+      } else {
+        if (!targetLux || !lampCount) {
+          wx.showToast({ title: '请补全参数', icon: 'none' })
+          return
+        }
+
+        const fluxNeeded = parseFloat(targetLux) * parseFloat(area)
+        const singleFlux = fluxNeeded / (parseFloat(lampCount) * parseFloat(utilFactor) * parseFloat(maintenanceFactor))
+        const efficacyVal = parseFloat(this.data.lampEfficacy) || 80
+        const requiredWattage = Math.round(singleFlux / efficacyVal)
+        const powerDensity = (parseFloat(lampCount) * requiredWattage) / parseFloat(area)
+        const powerDensityStr = powerDensity.toFixed(2) + 'W/㎡'
+
+        resultData = {
+          mode: 'quantity',
+          mainValue: Math.round(singleFlux),
+          mainUnit: 'Lm',
+          mainLabel: '建议单灯光通量',
+          headerLeft: { label: '灯具数量', value: lampCount + '盏' },
+          headerMiddle: { label: '需购买瓦数', value: requiredWattage + 'W' },
+          headerRight: { label: '目标照度', value: targetLux + 'Lx' },
+          details: [
+            { label: '房间面积', value: area + ' ㎡' },
+            { label: '空间类型', value: roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义' },
+            { label: '功率密度', value: powerDensityStr },
+            { label: '利用系数', value: utilFactor },
+            { label: '维护系数', value: maintenanceFactor },
+            { label: '总光通量需求', value: Math.round(fluxNeeded) + ' Lm' }
+          ]
         }
       }
 
-      // 保存历史记录
-      this.saveHistory(resultData)
+    } else {
+      if (this.data.selectedLamps.length === 0) {
+        wx.showToast({ title: '请添加灯具', icon: 'none' })
+        return
+      }
 
-      // 将结果数据保存到页面实例，供结果页读取
-      this.setData({ resultData }, () => {
-        // 确保数据设置完成后再跳转到结果页面
-        wx.navigateTo({
-          url: '/pages/search/calc-result/calc-result'
-        })
+      const totalFlux = this.data.selectedLamps.reduce((sum, lamp) => {
+        return sum + (parseFloat(lamp.powerW || 0) * parseFloat(lamp.efficacy || 0) * parseFloat(lamp.lengthQty || 0) * parseFloat(lamp.sourceUtil || 1))
+      }, 0)
+
+      const totalPower = this.data.selectedLamps.reduce((sum, lamp) => {
+        return sum + (parseFloat(lamp.powerW || 0) * parseFloat(lamp.lengthQty || 0))
+      }, 0)
+
+      const avgLux = calcAvgLux(totalFlux, area, utilFactor, maintenanceFactor)
+      const powerDensity = totalPower / parseFloat(area)
+
+      const lampDetails = this.data.selectedLamps.map(lamp => {
+        const lampFlux = parseFloat(lamp.powerW || 0) * parseFloat(lamp.efficacy || 0) * parseFloat(lamp.lengthQty || 0) * parseFloat(lamp.sourceUtil || 1)
+        return {
+          label: lamp.displayName || lamp.name || '未知灯具',
+          value: Math.round(lampFlux) + ' Lm'
+        }
       })
 
-    }, 300)
+      resultData = {
+        mode: 'lux',
+        mainValue: Math.round(avgLux),
+        mainUnit: 'Lx',
+        mainLabel: '平均照度',
+        headerLeft: { label: '总光通量', value: Math.round(totalFlux) + 'Lm' },
+        headerRight: { label: '功率密度', value: powerDensity.toFixed(2) + 'W/㎡' },
+        details: lampDetails,
+        bottomTable: this.data.selectedLamps
+      }
+    }
+
+    // 本地兜底：保存历史记录并跳转
+    this.saveHistory(resultData)
+    this.setData({ resultData }, () => {
+      wx.navigateTo({ url: '/pages/search/calc-result/calc-result' })
+    })
   },
 
   /**
    * 保存计算历史
    */
-  saveHistory(resultData) {
+  saveHistory(resultData, calcId) {
     try {
       const { activeTab, area, roomTypes, roomTypeIndex, targetLux } = this.data
       const roomName = roomTypes[roomTypeIndex] ? roomTypes[roomTypeIndex].name : '自定义'
@@ -1225,6 +1245,7 @@ Page({
 
       const historyItem = {
         id: Date.now(),
+        calcId: calcId || '',
         customName: defaultTitle,
         timestamp: Date.now(),
         mode: activeTab,

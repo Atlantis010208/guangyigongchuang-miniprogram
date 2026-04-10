@@ -1,69 +1,396 @@
-<!-- 计算结果页面 -->
-<view class="result-page">
-  <wxs module="tools">
-    module.exports.getModeName = function(tab) {
-      if (tab === 'count') return '按照度算灯具';
-      if (tab === 'quantity') return '按数量算灯具';
-      if (tab === 'lux') return '按灯具算照度';
-      return '计算结果';
-    }
-  </wxs>
+<!-- 照明计算结果报告页面 - 全屏分页滑动 -->
+<view class="report-page">
+  <swiper class="report-swiper" vertical="{{true}}" duration="{{400}}" easing-function="easeInOutCubic"
+    bindchange="onSwiperChange" current="{{currentPage}}">
 
-  <scroll-view scroll-y class="result-scroll">
-    <!-- 核心结果大卡片 -->
-    <view class="result-card main-card">
-      <view class="card-header">
-        <text class="card-title">{{tools.getModeName(mode)}} 计算结果</text>
-        <view class="card-header-line"></view>
-      </view>
-      
-      <view class="main-val-area">
-        <text class="val-label">{{mainLabel}}</text>
-        <view class="val-row">
-          <text class="big-num">{{mainValue}}</text>
-          <text class="big-unit">{{mainUnit}}</text>
-        </view>
-      </view>
+    <!-- ====== P1: 封面页 ====== -->
+    <swiper-item>
+      <view class="page page-cover">
+        <view class="cover-content">
+          <!-- 大标题 -->
+          <view class="cover-title-area">
+            <view class="cover-title">住宅空间</view>
+            <view class="cover-title">照度评估报告</view>
+            <view class="cover-subtitle">基于国家建筑照明设计标准自动生成</view>
+          </view>
 
-      <view class="sub-val-row {{headerMiddle ? 'three-cols' : ''}}">
-        <view class="sub-item">
-          <text class="sub-num gold">{{headerLeft.value}}</text>
-          <text class="sub-label">{{headerLeft.label}}</text>
-        </view>
-        <view class="sub-item" wx:if="{{headerMiddle}}">
-          <text class="sub-num green">{{headerMiddle.value}}</text>
-          <text class="sub-label">{{headerMiddle.label}}</text>
-        </view>
-        <view class="sub-item">
-          <text class="sub-num blue">{{headerRight.value}}</text>
-          <text class="sub-label">{{headerRight.label}}</text>
-        </view>
-      </view>
-
-      <view class="divider"></view>
-
-      <!-- 嵌套的详细参数卡片 -->
-      <view class="detail-card-inner">
-        <view class="detail-list">
-          <view class="detail-item" wx:for="{{details}}" wx:key="label">
-            <text class="detail-label">{{item.label}}</text>
-            <text class="detail-val">{{item.value}}</text>
+          <!-- 信息卡片（根据计算模式动态渲染参数列表） -->
+          <view class="cover-card">
+            <view class="info-row {{index === coverParams.length - 1 ? 'last' : ''}}" wx:for="{{coverParams}}" wx:key="index">
+              <text class="info-label">{{item.label}}</text>
+              <text class="info-value">{{item.value}}</text>
+            </view>
           </view>
         </view>
+
+        <!-- 滚动提示箭头 -->
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+
+        <!-- 底部品牌 -->
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
       </view>
-    </view>
+    </swiper-item>
 
-  </scroll-view>
+    <!-- ====== P2: 核心结论页 ====== -->
+    <swiper-item>
+      <view class="page page-conclusion">
+        <view class="section-tag">核心结论</view>
 
-  <!-- 底部操作栏 -->
-  <view class="bottom-bar">
-    <button class="btn-white" bindtap="onExportCSV">
-      <image class="btn-icon" src="/images/导出.png"></image>
-      <text>导出CSV</text> 
-    </button>
-    <button class="btn-green" bindtap="onRecalculate">
-      <image class="btn-icon" src="/images/重新计算.png"></image>
-      <text>重新计算</text>
-    </button>
+        <view class="conclusion-main">
+          <!-- 大圆圈照度值 -->
+          <view class="conclusion-circle">
+            <view class="circle-border {{coreResult.isQualified ? '' : 'fail'}}"></view>
+            <text class="circle-value">{{coreResult.luxValue}}</text>
+            <text class="circle-unit">lx</text>
+            <text class="circle-desc">平均照度 (Eavg)</text>
+          </view>
+
+          <!-- 达标状态 -->
+          <view class="status-tag {{coreResult.isQualified ? 'status-pass' : 'status-fail'}}">
+            <view class="status-dot"></view>
+            <text class="status-text">{{coreResult.statusText}}</text>
+          </view>
+
+          <!-- 国标区间卡片 -->
+          <view class="standard-card">
+            <text class="standard-label">国家建议标准</text>
+            <text class="standard-value">{{coreResult.standardText}}</text>
+          </view>
+
+          <text class="conclusion-tip">{{coreResult.tipText}}</text>
+        </view>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P3: 照度区间分布页 ====== -->
+    <swiper-item>
+      <view class="page page-range">
+        <view class="section-tag">照度区间分布</view>
+
+        <!-- 进度条区域 -->
+        <view class="range-bar-area">
+          <!-- 当前值标记 -->
+          <view class="range-marker" style="left: {{animatedMarkerLeft != null ? animatedMarkerLeft : 0}}%;">
+            <view class="marker-label">{{rangeData.luxValue}} lx</view>
+            <view class="marker-arrow"></view>
+          </view>
+
+          <!-- 彩色条 -->
+          <view class="range-bar">
+            <view class="bar-seg seg-dark" style="width: 16%;"></view>
+            <view class="bar-seg seg-dim" style="width: 14%;"></view>
+            <view class="bar-seg seg-comfort" style="width: 30%;"></view>
+            <view class="bar-seg seg-bright" style="width: 20%;"></view>
+            <view class="bar-seg seg-over" style="width: 20%;"></view>
+          </view>
+
+          <!-- 刻度 -->
+          <view class="range-scale">
+            <text class="scale-num" style="left: 0%;">0</text>
+            <text class="scale-num" style="left: 16%;">80</text>
+            <text class="scale-num" style="left: 30%;">150</text>
+            <text class="scale-num" style="left: 60%;">300</text>
+            <text class="scale-num" style="left: 80%;">500+</text>
+          </view>
+        </view>
+
+        <!-- 示意图展示区域 -->
+        <view class="range-illustration">
+          <image class="illustration-img" src="/images/lighting-scene.jpg" mode="aspectFill"></image>
+        </view>
+
+        <!-- 区间列表 -->
+        <view class="range-list">
+          <view class="range-row {{item.active ? 'range-active' : ''}}" wx:for="{{rangeData.ranges}}" wx:key="state">
+            <view class="range-dot {{item.colorClass}}"></view>
+            <view class="range-info">
+              <text class="range-state">{{item.state}}</text>
+              <text class="range-scene">{{item.scene}}</text>
+            </view>
+            <text class="range-val">{{item.range}}</text>
+          </view>
+        </view>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P4: 详细计算数据页 ====== -->
+    <swiper-item>
+      <view class="page page-detail">
+        <view class="section-tag">详细计算数据</view>
+
+        <scroll-view scroll-y class="detail-scroll">
+          <!-- 输入参数 -->
+          <view class="detail-card">
+            <view class="detail-card-title">
+              <view class="title-dot"></view>
+              <text>输入参数</text>
+            </view>
+            <view class="data-grid">
+              <view class="data-point" wx:for="{{detailData.inputParams}}" wx:key="label">
+                <text class="dp-label">{{item.label}}</text>
+                <text class="dp-value">{{item.value}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 计算结果 -->
+          <view class="detail-card">
+            <view class="detail-card-title">
+              <view class="title-dot"></view>
+              <text>计算结果</text>
+            </view>
+            <view class="calc-result-list">
+              <view class="calc-row {{index === detailData.calcResults.length - 1 ? 'last' : ''}}" wx:for="{{detailData.calcResults}}" wx:key="label" wx:for-index="index">
+                <text class="calc-label">{{item.label}}</text>
+                <text class="calc-val {{item.highlight ? 'highlight-green' : ''}}">{{item.value}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 标准来源 -->
+          <view class="source-card">
+            <text class="source-title">标准来源</text>
+            <text class="source-item">• 《GB 50034-2013 建筑照明设计标准》</text>
+            <text class="source-item">• 住宅空间一般活动照度值</text>
+          </view>
+        </scroll-view>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P5: 风险与舒适度分析页 ====== -->
+    <swiper-item>
+      <view class="page page-risk">
+        <view class="section-tag">风险与舒适度分析</view>
+
+        <view class="risk-card">
+          <view class="risk-card-deco"></view>
+          <!-- 状态评估 -->
+          <view class="risk-header">
+            <view class="risk-icon-wrap {{riskData.isQualified ? 'wrap-pass' : 'wrap-fail'}}">
+              <view class="risk-icon {{riskData.isQualified ? 'icon-check' : 'icon-warn'}}"></view>
+            </view>
+            <view class="risk-header-text">
+              <text class="risk-title">状态评估</text>
+              <text class="risk-status {{riskData.isQualified ? 'text-green' : 'text-red'}}">{{riskData.statusLabel}}</text>
+            </view>
+          </view>
+
+          <!-- 长期影响 -->
+          <view class="risk-section">
+            <view class="risk-section-title">
+              <view class="risk-sec-icon icon-eye"></view>
+              <text>长期影响</text>
+            </view>
+            <view class="risk-list">
+              <text class="risk-item" wx:for="{{riskData.impacts}}" wx:key="*this">{{item}}</text>
+            </view>
+          </view>
+
+          <!-- 优化建议 -->
+          <view class="risk-section risk-section-border">
+            <view class="risk-section-title">
+              <view class="risk-sec-icon icon-bulb"></view>
+              <text>优化建议</text>
+            </view>
+            <view class="risk-list">
+              <text class="risk-item" wx:for="{{riskData.suggestions}}" wx:key="*this">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <text class="risk-quote">"亮度不是越高越好，合适才适合长期生活。"</text>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P6: 舒适指数页 ====== -->
+    <swiper-item>
+      <view class="page page-comfort">
+        <view class="section-tag">长期居住舒适指数</view>
+
+        <!-- 环形评分 -->
+        <view class="comfort-ring-area">
+          <view class="comfort-ring">
+            <view class="ring-bg"></view>
+            <view class="ring-progress" style="--progress: {{comfortData.score}};"></view>
+            <view class="ring-center">
+              <text class="ring-score">{{comfortData.score}}</text>
+              <text class="ring-score-label">SCORE</text>
+            </view>
+          </view>
+          <view class="comfort-level-tag">{{comfortData.levelText}}</view>
+        </view>
+
+        <!-- 分项评分 -->
+        <view class="score-card">
+          <view class="score-bar-item" wx:for="{{comfortData.scores}}" wx:key="label">
+            <view class="score-bar-header">
+              <text class="score-bar-label">{{item.label}}</text>
+              <text class="score-bar-num">{{item.score}}<text class="score-bar-max">/{{item.max}}</text></text>
+            </view>
+            <view class="score-bar-track">
+              <view class="score-bar-fill" style="width: {{item.score / item.max * 100}}%;"></view>
+            </view>
+          </view>
+        </view>
+
+        <text class="comfort-note">本指数用于评估长期居住舒适度，不等同于商业照明标准。</text>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P7: 节能与能耗参考页 ====== -->
+    <swiper-item>
+      <view class="page page-energy">
+        <view class="section-tag">节能与能耗参考</view>
+
+        <scroll-view scroll-y class="energy-scroll">
+          <!-- 双卡 -->
+          <view class="energy-duo">
+            <view class="energy-card-single">
+              <view class="energy-icon-wrap bg-amber">
+                <text class="energy-icon-text">⚡</text>
+              </view>
+              <text class="energy-big-num">{{energyData.currentDensity}}</text>
+              <text class="energy-card-desc">当前功率密度 (W/㎡)</text>
+            </view>
+            <view class="energy-card-single">
+              <view class="energy-icon-wrap bg-green">
+                <text class="energy-icon-text">🛡</text>
+              </view>
+              <text class="energy-big-num">≤ {{energyData.standardDensity}}</text>
+              <text class="energy-card-desc">国家参考标准 (W/㎡)</text>
+            </view>
+          </view>
+
+          <!-- 节能评估 -->
+          <view class="energy-assess-card">
+            <view class="energy-assess-icon-wrap">
+              <text class="energy-assess-icon-text">🍃</text>
+            </view>
+            <view class="energy-assess-text">
+              <text class="energy-assess-title">{{energyData.assessTitle}}</text>
+              <text class="energy-assess-desc">{{energyData.assessDesc}}</text>
+            </view>
+          </view>
+
+          <!-- 年度电费对比 -->
+          <view class="energy-cost-card">
+            <text class="energy-cost-title">年度预估电费对比 (按每日4小时)</text>
+            <view class="cost-row">
+              <view class="cost-header">
+                <text class="cost-label bold">当前方案 ({{energyData.currentWatt}}W)</text>
+                <text class="cost-val bold">约 ¥ {{energyData.currentCost}} / 年</text>
+              </view>
+              <view class="cost-bar-track">
+                <view class="cost-bar-fill bg-emerald" style="width: {{energyData.costPercent}}%;"></view>
+              </view>
+            </view>
+            <view class="cost-row">
+              <view class="cost-header">
+                <text class="cost-label dim">国标上限 ({{energyData.standardWatt}}W)</text>
+                <text class="cost-val dim">约 ¥ {{energyData.standardCost}} / 年</text>
+              </view>
+              <view class="cost-bar-track">
+                <view class="cost-bar-fill bg-gray" style="width: 100%;"></view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="scroll-hint">
+          <view class="scroll-arrow"></view>
+        </view>
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+    <!-- ====== P8: 免责声明页 ====== -->
+    <swiper-item>
+      <view class="page page-disclaimer">
+        <view class="section-tag">免责声明</view>
+
+        <view class="disclaimer-card">
+          <view class="disclaimer-icon-wrap">
+            <text class="disclaimer-icon-text">ℹ</text>
+          </view>
+          <view class="disclaimer-list">
+            <view class="disclaimer-item" wx:for="{{disclaimerItems}}" wx:key="*this">
+              <view class="disclaimer-dot"></view>
+              <text class="disclaimer-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 底部操作栏 -->
+        <view class="action-bar">
+          <button class="btn-export" bindtap="onExportCSV">
+            <image class="btn-icon" src="/images/导出.png" mode="aspectFit"></image>
+            <text>导出CSV</text>
+          </button>
+          <button class="btn-recalc" bindtap="onRecalculate">
+            <image class="btn-icon" src="/images/重新计算.png" mode="aspectFit"></image>
+            <text>重新计算</text>
+          </button>
+        </view>
+
+        <view class="page-footer">
+          <text class="footer-brand">光乙照明研究系统</text>
+          <text class="footer-desc">二哥灯光设计专注长期居住的光环境研究</text>
+        </view>
+      </view>
+    </swiper-item>
+
+  </swiper>
+
+  <!-- 页面指示器 -->
+  <view class="page-indicator">
+    <view class="indicator-dot {{currentPage === index ? 'active' : ''}}" wx:for="{{8}}" wx:key="index"></view>
   </view>
 </view>
