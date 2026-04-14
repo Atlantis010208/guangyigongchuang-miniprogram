@@ -1,0 +1,91 @@
+<view class="page-container">
+  <view class="main-content">
+    <!-- 分类筛选 -->
+    <view class="sticky-header">
+      <scroll-view class="category-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
+        <view class="category-list">
+          <view class="category-btn {{currentStatus === item.key ? 'active' : ''}}"
+                wx:for="{{statusTabs}}"
+                wx:key="key"
+                data-status="{{item.key}}"
+                bindtap="switchStatus">
+            {{item.label}}
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 新邀请提示条 -->
+    <view class="new-tip" wx:if="{{showNewTip}}" bindtap="onTapNewTip">
+      <van-icon name="bell" size="14px" color="#2563EB" />
+      <text class="new-tip-text">有 {{newCount}} 条新邀请，点击刷新</text>
+    </view>
+
+    <!-- 邀请列表 -->
+    <view class="demand-list" wx:if="{{invitations.length > 0}}">
+      <block wx:for="{{invitations}}" wx:key="id">
+        <view class="card">
+          <view class="card-header">
+            <view>
+              <view class="tags-group">
+                <view class="tag-{{item.statusTagType}}">{{item.statusText}}</view>
+                <view class="time-text">{{item.timeText}}</view>
+              </view>
+              <view class="card-title">{{item.requestSummary.title || '灯光设计需求'}}</view>
+              <view class="card-subtitle">
+                <van-icon name="points" size="14px" />
+                业主邀请
+              </view>
+            </view>
+            <view class="card-icon">
+              <van-icon name="{{item.requestSummary.space === '住宅' ? 'wap-home-o' : (item.requestSummary.space === '商铺' ? 'shop-o' : 'hotel-o')}}" size="24px" color="#9CA3AF" />
+            </view>
+          </view>
+
+          <view class="stats-grid">
+            <view class="stat-box">
+              <text class="stat-label">预算</text>
+              <text class="stat-value">{{item.requestSummary.budget || '-'}}</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">面积</text>
+              <text class="stat-value">{{item.requestSummary.area ? item.requestSummary.area + 'm²' : '-'}}</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">空间</text>
+              <text class="stat-value">{{item.requestSummary.space || '-'}}</text>
+            </view>
+          </view>
+
+          <view class="action-group">
+            <!-- 待处理：接受 / 查看详情 -->
+            <block wx:if="{{item.status === 'pending'}}">
+              <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onViewDetail" data-id="{{item.requestId}}" data-invite-id="{{item.id}}">查看详情</button>
+              <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onAccept" data-id="{{item.id}}" data-title="{{item.requestSummary.title}}">接受邀请</button>
+            </block>
+            <!-- 已接受 -->
+            <block wx:elif="{{item.status === 'accepted'}}">
+              <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onViewDetail" data-id="{{item.requestId}}" data-invite-id="{{item.id}}">查看项目</button>
+            </block>
+            <!-- 其他状态 -->
+            <block wx:else>
+              <button class="btn-secondary" hover-class="btn-secondary-hover" disabled>{{item.statusText}}</button>
+            </block>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{!loading}}" class="empty-state">
+      <image class="empty-icon" src="/images/邀请好友.png" mode="aspectFit"></image>
+      <text class="empty-title">暂无邀请</text>
+      <text class="empty-sub">业主的邀请会显示在这里</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="loading-hint">
+      <text>加载中...</text>
+    </view>
+  </view>
+</view>

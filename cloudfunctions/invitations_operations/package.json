@@ -1,0 +1,9 @@
+{
+  "name": "invitations_operations",
+  "version": "1.0.0",
+  "description": "邀请查询与状态变更（列表/接受/拒绝/取消/计数）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

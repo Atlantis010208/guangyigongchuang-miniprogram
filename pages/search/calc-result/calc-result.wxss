@@ -1007,9 +1007,8 @@ page {
   height: 100%;
   background: #1E293B;
   border-radius: 6rpx;
-  transition: width 0.8s ease-out;
   width: 0;
-  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .comfort-note {
@@ -1106,6 +1105,11 @@ page {
 
 .energy-icon-text {
   font-size: 36rpx;
+}
+
+.energy-icon-img {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .energy-big-num {

@@ -422,12 +422,17 @@ Page({
   },
   onContact(){
     wx.showActionSheet({
-      itemList:['电话联系','在线客服'],
+      itemList:['电话联系 17728117703','复制客服微信 qqqkpi'],
       success:(res)=>{
         if(res.tapIndex===0){
-          wx.makePhoneCall({ phoneNumber: '400-000-0000' })
+          wx.makePhoneCall({ phoneNumber: '17728117703' })
         } else {
-          wx.showToast({ title:'已进入在线客服(示意)', icon:'none' })
+          wx.setClipboardData({
+            data: 'qqqkpi',
+            success: () => {
+              wx.showToast({ title:'微信号已复制', icon:'success' })
+            }
+          })
         }
       }
     })

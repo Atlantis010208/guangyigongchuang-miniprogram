@@ -25,7 +25,7 @@
 
       <view class="cells inline">
         <view class="cell" bindtap="go" data-url="/pages/cart/cart" hover-class="cell-hover"><text>订单</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/appointments/appointments" hover-class="cell-hover"><text>我的预约</text><text class="arrow">〉</text></view>
+        <view class="cell" bindtap="go" data-url="/pages/profile/invitations/invitations" hover-class="cell-hover"><text>我的邀请</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart" hover-class="cell-hover"><text>购物车</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit" hover-class="cell-hover"><text>押金</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/profile/services/services" hover-class="cell-hover"><text>服务</text><text class="arrow">〉</text></view>

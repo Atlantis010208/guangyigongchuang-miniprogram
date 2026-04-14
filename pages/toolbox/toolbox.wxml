@@ -13,35 +13,17 @@
       <text class="card-title">照度计算器</text>
     </view>
 
-    <!-- Small Square 2: 功率换算 -->
-    <view class="bento-card hover-scale" bindtap="navigateToComingSoon">
+    <!-- Small Square 2: 色温调节器 -->
+    <view class="bento-card hover-scale" bindtap="navigateToColorTemp">
       <view class="icon-wrap">
-        <image class="icon" src="/images/toolbox/zap.svg" mode="aspectFit"></image>
+        <image class="icon" src="/images/toolbox/sliders-horizontal.svg" mode="aspectFit"></image>
       </view>
-      <text class="card-title">功率换算</text>
-    </view>
-
-    <!-- Horizontal Rectangle: 色温调节带 -->
-    <view class="bento-card col-span-2 flex-col-between hover-scale" bindtap="navigateToComingSoon">
-      <view class="ct-header">
-        <view class="ct-title-wrap">
-          <image class="icon-small" src="/images/toolbox/sliders-horizontal.svg" mode="aspectFit"></image>
-          <text class="card-title">色温调节带</text>
-        </view>
-        <text class="ct-range">2700K - 6500K</text>
-      </view>
-      <view class="ct-gradient">
-        <view class="ct-ticks">
-          <view class="ct-tick"></view>
-          <view class="ct-tick"></view>
-          <view class="ct-tick"></view>
-        </view>
-      </view>
+      <text class="card-title">色温选择器</text>
     </view>
 
     <!-- Large Square: 实景灯光图库 -->
     <view class="bento-card col-span-2 row-span-2 gallery-card hover-scale" bindtap="navigateToGallery">
-      <image class="gallery-bg" src="https://picsum.photos/seed/luxuryinterior/800/800" mode="aspectFill"></image>
+      <image wx:if="{{coverLoaded}}" class="gallery-bg" src="{{galleryCover}}" mode="aspectFill"></image>
       <view class="gallery-overlay"></view>
       <view class="gallery-content">
         <view class="gallery-text-wrap">

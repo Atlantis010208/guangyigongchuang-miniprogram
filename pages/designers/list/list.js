@@ -39,7 +39,9 @@ Page({
     // 搜索防抖定时器
     searchTimer: null,
     // 🔥 从订单列表携带的需求信息
-    preselectedRequest: null
+    preselectedRequest: null,
+    // 选中的设计师ID
+    selectedDesignerId: ''
   },
 
   onLoad(options) {
@@ -50,8 +52,8 @@ Page({
         category: options.category || '',
         source: options.source || '',
         title: decodeURIComponent(options.title || ''),
-        area: options.area || '',
-        budget: options.budget || '',
+        area: decodeURIComponent(options.area || ''),
+        budget: decodeURIComponent(options.budget || ''),
         style: decodeURIComponent(options.style || '')
       }
       this.setData({ preselectedRequest })
@@ -197,6 +199,125 @@ Page({
     
     util.navigateTo(url)
     util.hapticFeedback('light')
+  },
+
+  /**
+   * 邀请设计师接单
+   */
+  async onConfirmSelect(e) {
+    const designerId = e.currentTarget.dataset.id
+    const designerName = e.currentTarget.dataset.name || '设计师'
+
+    util.hapticFeedback('medium')
+
+    // 如果有预选需求，直接带上 requestId
+    const { preselectedRequest } = this.data
+    const requestId = (preselectedRequest && preselectedRequest.id) ? preselectedRequest.id : ''
+
+    // 请求订阅消息授权（用户拒绝也不影响邀请流程）
+    try {
+      await wx.requestSubscribeMessage({
+        tmplIds: ['bxor0x4ZJ_JoEnPct2ieOZ1tGcMuzNZrceQonfMhkFI']
+      })
+    } catch (subErr) {
+      console.warn('[designers/list] 订阅消息授权跳过:', subErr)
+    }
+
+    wx.showLoading({ title: '发送邀请...', mask: true })
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'invitations_create',
+        data: { designerId, requestId }
+      })
+
+      wx.hideLoading()
+      const result = res.result || {}
+
+      if (result.success) {
+        util.showToast('邀请已发送')
+        util.hapticFeedback('light')
+        // 标记该设计师已邀请（UI上可做已邀请状态）
+        this.setData({ selectedDesignerId: designerId })
+        return
+      }
+
+      // 需要选择需求
+      if (result.code === 'NEED_SELECT_REQUEST' && result.data && result.data.requests) {
+        wx.hideLoading()
+        this._showRequestPicker(designerId, designerName, result.data.requests)
+        return
+      }
+
+      // 没有需求，提示去发布
+      if (result.code === 'NO_REQUEST') {
+        wx.showModal({
+          title: '提示',
+          content: '您还没有发布照明需求，是否先去发布？',
+          confirmText: '去发布',
+          cancelText: '取消',
+          success: (modalRes) => {
+            if (modalRes.confirm) {
+              wx.switchTab({ url: '/pages/services/services' })
+            }
+          }
+        })
+        return
+      }
+
+      // 重复邀请
+      if (result.code === 'DUPLICATE_INVITE') {
+        util.showToast('已邀请该设计师，请耐心等待回复')
+        return
+      }
+
+      // 其他错误
+      util.showToast(result.message || '邀请失败')
+
+    } catch (err) {
+      wx.hideLoading()
+      console.error('[designers/list] 邀请失败:', err)
+      util.showToast('网络错误，请重试')
+    }
+  },
+
+  /**
+   * 弹出需求选择器（业主有多个待处理需求时）
+   */
+  _showRequestPicker(designerId, designerName, requests) {
+    const items = requests.map(r => `${r.title || '灯光设计需求'} (${r.area || '?'}m²)`)
+
+    wx.showActionSheet({
+      itemList: items,
+      success: async (res) => {
+        const selected = requests[res.tapIndex]
+        if (!selected) return
+
+        wx.showLoading({ title: '发送邀请...', mask: true })
+        try {
+          const cfRes = await wx.cloud.callFunction({
+            name: 'invitations_create',
+            data: { designerId, requestId: selected._id }
+          })
+          wx.hideLoading()
+
+          const result = cfRes.result || {}
+          if (result.success) {
+            util.showToast('邀请已发送')
+            util.hapticFeedback('light')
+            this.setData({ selectedDesignerId: designerId })
+          } else if (result.code === 'DUPLICATE_INVITE') {
+            util.showToast('已邀请该设计师，请耐心等待回复')
+          } else {
+            util.showToast(result.message || '邀请失败')
+          }
+        } catch (err) {
+          wx.hideLoading()
+          console.error('[designers/list] 邀请失败:', err)
+          util.showToast('网络错误，请重试')
+        }
+      }
+    })
   },
 
   /**

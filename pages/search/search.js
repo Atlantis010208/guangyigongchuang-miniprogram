@@ -61,7 +61,9 @@ Page({
     focusedLampId: '',
     lampAddOptions: ['请选择灯具'],
     lampAddValue: 0,
-    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png',
+    headerBgFileId: '',
+    headerBgLoaded: false,
+    headerBgReady: false,
     pageConfig: null,             // 云端页面配置
     editingLamp: null,             // 正在编辑的灯具
     showResult: false,             // 是否显示结果页
@@ -176,8 +178,8 @@ Page({
           const { pageConfig } = this.data
           if (pageConfig && pageConfig.modes && pageConfig.modes[params.activeTab]) {
             const modeBg = pageConfig.modes[params.activeTab].bgImage
-            if (modeBg) {
-               this.setData({ headerBgFileId: modeBg })
+            if (modeBg && modeBg !== this.data.headerBgFileId) {
+               this.setData({ headerBgFileId: modeBg, headerBgReady: false })
             }
           }
           this.recalc()
@@ -205,6 +207,12 @@ Page({
 
   onHide() {
     console.log('[search] onHide')
+  },
+
+  onHeaderBgLoad() {
+    if (!this.data.headerBgReady) {
+      this.setData({ headerBgReady: true })
+    }
   },
 
   validateCalculateInputs() {
@@ -272,7 +280,7 @@ Page({
       }
     }
     
-    this.setData({
+    const resetUpdates = {
       activeTab,
       headerBgFileId,
       lampFlux: '',
@@ -304,7 +312,11 @@ Page({
       roomTypeIndex: -1,
       floorHeight: '',
       colorIndex: -1
-    })
+    }
+    if (headerBgFileId !== this.data.headerBgFileId) {
+      resetUpdates.headerBgReady = false
+    }
+    this.setData(resetUpdates)
   },
 
   buildLampAddOptions(rows) {
@@ -477,10 +489,18 @@ Page({
         return config
       } else {
         console.warn('[search] 云端配置加载失败，使用默认配置')
+        this.setData({
+          headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png',
+          headerBgLoaded: true
+        })
         return null
       }
     } catch (err) {
       console.warn('[search] 获取配置失败，使用默认配置:', err)
+      this.setData({
+        headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png',
+        headerBgLoaded: true
+      })
       return null
     }
   },
@@ -497,7 +517,10 @@ Page({
     // 应用当前 Tab 的背景图
     if (config.modes && config.modes[activeTab] && config.modes[activeTab].bgImage) {
       updates.headerBgFileId = config.modes[activeTab].bgImage
+    } else {
+      updates.headerBgFileId = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/主页/照度计算背景图.png'
     }
+    updates.headerBgLoaded = true
     
     // 应用空间类型
     if (config.roomTypes && config.roomTypes.length > 0) {
@@ -554,7 +577,11 @@ Page({
       }
     }
     
-    this.setData({ activeTab: tab, headerBgFileId })
+    const updates = { activeTab: tab, headerBgFileId }
+    if (headerBgFileId !== this.data.headerBgFileId) {
+      updates.headerBgReady = false
+    }
+    this.setData(updates)
     this.recalc()
   },
 

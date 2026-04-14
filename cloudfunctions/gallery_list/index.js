@@ -1,0 +1,432 @@
+/**
+ * 云函数：gallery_list
+ * 功能：灯光图库列表查询、搜索、标签获取、图片详情（小程序端）
+ * 权限：无需登录，任何用户可浏览
+ * 
+ * 支持操作：
+ *   - list: 图库列表（游标分页、标签筛选、多标签 AND 筛选）
+ *   - search: 关键词搜索（keywords 正则匹配 + 标签组合）
+ *   - tags: 获取标签列表（支持 tagVersion 缓存判断）
+ *   - detail: 单张图片详情（含原图 URL）
+ */
+const cloud = require('wx-server-sdk')
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+})
+
+const db = cloud.database()
+const _ = db.command
+
+// 云函数入口
+exports.main = async (event, context) => {
+  try {
+    const { action } = event
+
+    if (!action) {
+      return {
+        success: false,
+        code: 'MISSING_ACTION',
+        errorMessage: '缺少操作类型参数',
+        timestamp: Date.now()
+      }
+    }
+
+    switch (action) {
+      case 'list':
+        return await getImageList(event)
+      case 'search':
+        return await searchImages(event)
+      case 'tags':
+        return await getTags(event)
+      case 'detail':
+        return await getImageDetail(event)
+      case 'getCover':
+        return await getGalleryCover()
+      default:
+        return {
+          success: false,
+          code: 'INVALID_ACTION',
+          errorMessage: '不支持的操作类型: ' + action,
+          timestamp: Date.now()
+        }
+    }
+
+  } catch (error) {
+    console.error('[gallery_list] 异常:', error)
+    return {
+      success: false,
+      code: 'GALLERY_LIST_ERROR',
+      errorMessage: error.message || '图库查询失败',
+      timestamp: Date.now()
+    }
+  }
+}
+
+/**
+ * 图库列表（游标分页、标签筛选）
+ */
+async function getImageList(event) {
+  const {
+    tag,
+    tags,
+    pageSize = 20,
+    lastId,
+    sortBy = 'sortOrder',
+    sortOrder = 'desc'
+  } = event
+
+  const limit = Math.min(Number(pageSize), 40)
+
+  // 构建查询条件
+  const query = { status: 1 }
+
+  // 单标签筛选
+  if (tag) {
+    query.tags = tag
+  }
+
+  // 多标签 AND 筛选
+  if (tags && Array.isArray(tags) && tags.length > 0) {
+    query.tags = _.all(tags)
+  }
+
+  // 分页：使用 offset(skip) 方式
+  const skip = Number(event.offset) || 0
+
+  // 查询图片列表
+  const listRes = await db.collection('gallery_images')
+    .where(query)
+    .orderBy(sortBy, sortOrder)
+    .orderBy('createdAt', 'desc')
+    .skip(skip)
+    .limit(limit + 1) // 多取一条判断是否有下一页
+    .get()
+
+  const allImages = listRes.data || []
+  const hasMore = allImages.length > limit
+  const images = hasMore ? allImages.slice(0, limit) : allImages
+
+  // 返回精简字段，thumbUrl 直接使用 cloud:// 格式（小程序 image 组件原生支持）
+  const result = images.map(img => ({
+    _id: img._id,
+    title: img.title,
+    tags: img.tags,
+    thumbUrl: img.thumbFileID || img.fileID,
+    aspect: img.aspect,
+    favoriteCount: img.favoriteCount || 0
+  }))
+
+  const newLastId = images.length > 0 ? images[images.length - 1]._id : null
+
+  return {
+    success: true,
+    code: 'OK',
+    data: {
+      images: result,
+      hasMore,
+      lastId: newLastId
+    },
+    timestamp: Date.now()
+  }
+}
+
+/**
+ * 关键词搜索（keywords 正则匹配 + 标签组合）
+ */
+async function searchImages(event) {
+  const {
+    keyword = '',
+    tag,
+    tags,
+    pageSize = 20,
+    lastId
+  } = event
+
+  // 如果没有搜索关键词，退化为普通列表
+  if (!keyword.trim()) {
+    return await getImageList({ ...event, action: 'list' })
+  }
+
+  const limit = Math.min(Number(pageSize), 40)
+
+  // 构建查询条件
+  const query = { status: 1 }
+
+  // 关键词搜索
+  query.keywords = db.RegExp({ regexp: keyword.trim(), options: 'i' })
+
+  // 标签筛选（与搜索组合 AND 逻辑）
+  if (tag) {
+    query.tags = tag
+  }
+  if (tags && Array.isArray(tags) && tags.length > 0) {
+    query.tags = _.all(tags)
+  }
+
+  // 分页：使用 offset(skip) 方式
+  const skip = Number(event.offset) || 0
+
+  const listRes = await db.collection('gallery_images')
+    .where(query)
+    .orderBy('sortOrder', 'desc')
+    .orderBy('createdAt', 'desc')
+    .skip(skip)
+    .limit(limit + 1)
+    .get()
+
+  const allImages = listRes.data || []
+  const hasMore = allImages.length > limit
+  const images = hasMore ? allImages.slice(0, limit) : allImages
+
+  // thumbUrl 直接使用 cloud:// 格式（小程序 image 组件原生支持）
+  const result = images.map(img => ({
+    _id: img._id,
+    title: img.title,
+    tags: img.tags,
+    thumbUrl: img.thumbFileID || img.fileID,
+    aspect: img.aspect,
+    favoriteCount: img.favoriteCount || 0
+  }))
+
+  const newLastId = images.length > 0 ? images[images.length - 1]._id : null
+
+  return {
+    success: true,
+    code: 'OK',
+    data: {
+      images: result,
+      hasMore,
+      lastId: newLastId
+    },
+    timestamp: Date.now()
+  }
+}
+
+/**
+ * 获取标签列表（支持 tagVersion 缓存）
+ */
+async function getTags(event) {
+  const { tagVersion: clientVersion } = event
+
+  // 获取服务端 tagVersion
+  let serverVersion = 1
+  try {
+    const configRes = await db.collection('gallery_config').doc('tag_version').get()
+    if (configRes.data) {
+      serverVersion = configRes.data.value
+    }
+  } catch (e) {
+    console.warn('[gallery_list] 获取 tagVersion 失败:', e.message)
+  }
+
+  // 如果客户端版本与服务端一致，返回 304 标识
+  if (clientVersion !== undefined && Number(clientVersion) === serverVersion) {
+    return {
+      success: true,
+      code: 'OK',
+      data: {
+        tags: [],
+        tagVersion: serverVersion,
+        notModified: true
+      },
+      timestamp: Date.now()
+    }
+  }
+
+  // 查询所有启用的标签
+  const listRes = await db.collection('gallery_tags')
+    .where({ status: 1 })
+    .orderBy('sortOrder', 'asc')
+    .orderBy('name', 'asc')
+    .limit(200)
+    .get()
+
+  const tags = (listRes.data || []).map(tag => ({
+    _id: tag._id,
+    name: tag.name,
+    group: tag.group,
+    imageCount: tag.imageCount || 0
+  }))
+
+  return {
+    success: true,
+    code: 'OK',
+    data: {
+      tags,
+      tagVersion: serverVersion,
+      notModified: false
+    },
+    timestamp: Date.now()
+  }
+}
+
+/**
+ * 单张图片详情（含原图 URL）
+ */
+async function getImageDetail(event) {
+  const { imageId } = event
+
+  if (!imageId) {
+    return {
+      success: false,
+      code: 'INVALID_PARAMS',
+      errorMessage: '缺少图片ID(imageId)',
+      timestamp: Date.now()
+    }
+  }
+
+  let image = null
+  try {
+    const imgRes = await db.collection('gallery_images').doc(imageId).get()
+    image = imgRes.data
+  } catch (e) {
+    return {
+      success: false,
+      code: 'IMAGE_NOT_FOUND',
+      errorMessage: '图片不存在',
+      timestamp: Date.now()
+    }
+  }
+
+  if (!image || image.status !== 1) {
+    return {
+      success: false,
+      code: 'IMAGE_NOT_FOUND',
+      errorMessage: '图片不存在或已下架',
+      timestamp: Date.now()
+    }
+  }
+
+  // 转换原图和缩略图 URL
+  const cloudFileIds = new Set()
+  if (image.fileID && image.fileID.startsWith('cloud://')) cloudFileIds.add(image.fileID)
+  if (image.thumbFileID && image.thumbFileID.startsWith('cloud://')) cloudFileIds.add(image.thumbFileID)
+
+  let fileUrl = image.fileID
+  let thumbUrl = image.thumbFileID || image.fileID
+
+  if (cloudFileIds.size > 0) {
+    try {
+      const tempRes = await cloud.getTempFileURL({ fileList: [...cloudFileIds] })
+      const urlMap = {}
+      ;(tempRes.fileList || []).forEach(f => {
+        if (f.fileID && f.tempFileURL) urlMap[f.fileID] = f.tempFileURL
+      })
+      fileUrl = urlMap[image.fileID] || image.fileID
+      thumbUrl = urlMap[image.thumbFileID] || urlMap[image.fileID] || image.thumbFileID || image.fileID
+    } catch (e) {
+      console.warn('[gallery_list] 转换详情图片链接失败:', e.message)
+    }
+  }
+
+  // 更新浏览次数
+  try {
+    await db.collection('gallery_images').doc(imageId).update({
+      data: { viewCount: _.inc(1) }
+    })
+  } catch (e) {
+    // 不影响主流程
+  }
+
+  return {
+    success: true,
+    code: 'OK',
+    data: {
+      _id: image._id,
+      title: image.title,
+      description: image.description,
+      tags: image.tags,
+      fileUrl,
+      thumbUrl,
+      width: image.width,
+      height: image.height,
+      aspect: image.aspect,
+      viewCount: (image.viewCount || 0) + 1,
+      favoriteCount: image.favoriteCount || 0,
+      createdAt: image.createdAt
+    },
+    timestamp: Date.now()
+  }
+}
+
+/**
+ * 获取图库封面图配置（小程序端）
+ */
+async function getGalleryCover() {
+  try {
+    const res = await db.collection('app_config').where({ key: 'gallery_cover' }).limit(1).get()
+    const doc = res.data && res.data[0]
+
+    if (!doc || !doc.value) {
+      return {
+        success: true,
+        code: 'OK',
+        data: { coverUrl: '' },
+        timestamp: Date.now()
+      }
+    }
+
+    // cloud:// 格式的 fileID 小程序 image 组件可直接使用
+    return {
+      success: true,
+      code: 'OK',
+      data: { coverUrl: doc.value },
+      timestamp: Date.now()
+    }
+  } catch (error) {
+    console.error('[gallery_list] 获取封面图配置失败:', error)
+    return {
+      success: true,
+      code: 'OK',
+      data: { coverUrl: '' },
+      timestamp: Date.now()
+    }
+  }
+}
+
+// ========== 工具函数 ==========
+
+/**
+ * 批量转换缩略图的 cloud:// fileID 为临时 HTTPS URL
+ */
+async function processThumbUrls(images) {
+  if (!images || images.length === 0) return images
+
+  const cloudFileIds = new Set()
+  images.forEach(img => {
+    const thumbId = img.thumbFileID || img.fileID
+    if (thumbId && thumbId.startsWith('cloud://')) {
+      cloudFileIds.add(thumbId)
+    }
+  })
+
+  if (cloudFileIds.size === 0) {
+    return images.map(img => ({
+      ...img,
+      thumbUrl: img.thumbFileID || img.fileID
+    }))
+  }
+
+  try {
+    const tempRes = await cloud.getTempFileURL({ fileList: [...cloudFileIds] })
+    const urlMap = {}
+    ;(tempRes.fileList || []).forEach(f => {
+      if (f.fileID && f.tempFileURL) urlMap[f.fileID] = f.tempFileURL
+    })
+
+    return images.map(img => {
+      const thumbId = img.thumbFileID || img.fileID
+      return {
+        ...img,
+        thumbUrl: urlMap[thumbId] || thumbId
+      }
+    })
+  } catch (e) {
+    console.warn('[gallery_list] 批量转换缩略图链接失败:', e.message)
+    return images.map(img => ({
+      ...img,
+      thumbUrl: img.thumbFileID || img.fileID
+    }))
+  }
+}

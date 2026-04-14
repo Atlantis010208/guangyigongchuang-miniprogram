@@ -1,11 +1,21 @@
 // pages/toolbox/toolbox.js
+const DEFAULT_GALLERY_COVER = 'https://picsum.photos/seed/luxuryinterior/800/800'
+
 Page({
   data: {
-    
+    galleryCover: '',
+    coverLoaded: false
   },
 
   onLoad: function (options) {
+    this.loadGalleryCover()
+  },
 
+  onPullDownRefresh: function () {
+    this.loadGalleryCover()
+    setTimeout(() => {
+      wx.stopPullDownRefresh()
+    }, 800)
   },
 
   onShow: function () {
@@ -34,6 +44,29 @@ Page({
       title: '功能开发中，敬请期待',
       icon: 'none',
       duration: 2000
+    })
+  },
+
+  navigateToColorTemp: function () {
+    wx.navigateTo({
+      url: '/pages/color-temp/color-temp'
+    })
+  },
+
+  loadGalleryCover: function () {
+    wx.cloud.callFunction({
+      name: 'gallery_list',
+      data: { action: 'getCover' }
+    }).then(res => {
+      const result = res.result
+      if (result && result.success && result.data && result.data.coverUrl) {
+        this.setData({ galleryCover: result.data.coverUrl, coverLoaded: true })
+      } else {
+        this.setData({ galleryCover: DEFAULT_GALLERY_COVER, coverLoaded: true })
+      }
+    }).catch(err => {
+      console.warn('[toolbox] 加载图库封面图失败:', err)
+      this.setData({ galleryCover: DEFAULT_GALLERY_COVER, coverLoaded: true })
     })
   }
 })

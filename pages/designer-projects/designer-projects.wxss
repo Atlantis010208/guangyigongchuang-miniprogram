@@ -27,6 +27,15 @@ page {
 .main-content {
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.project-list-scroll {
+  flex: 1;
+  height: 0;
 }
 
 /* Header Section */

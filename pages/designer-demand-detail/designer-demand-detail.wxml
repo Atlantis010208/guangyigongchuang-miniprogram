@@ -91,18 +91,31 @@
   <!-- 底部操作栏 -->
   <view class="bottom-action">
     <view class="action-container">
-      <view class="action-btn-small" bindtap="onToggleCollect">
-        <van-icon name="{{isCollected ? 'like' : 'like-o'}}" color="{{isCollected ? '#ef4444' : '#64748b'}}" size="24px" />
-        <text class="action-text">收藏</text>
-      </view>
-      <view class="action-btn-small" bindtap="onConsult">
-        <van-icon name="chat-o" color="#64748b" size="24px" />
-        <text class="action-text">咨询</text>
-      </view>
-      <button class="primary-btn" bindtap="onTakeOrder" hover-class="primary-btn-hover">
-        <text>立即抢单</text>
-        <van-icon name="arrow" size="14px" />
-      </button>
+      <!-- 邀请模式 -->
+      <block wx:if="{{inviteId}}">
+        <button class="reject-btn" bindtap="onRejectInvite" hover-class="reject-btn-hover">
+          <text>婉拒</text>
+        </button>
+        <button class="primary-btn" bindtap="onAcceptInvite" hover-class="primary-btn-hover">
+          <text>接受邀请</text>
+          <van-icon name="arrow" size="14px" />
+        </button>
+      </block>
+      <!-- 普通抢单模式 -->
+      <block wx:else>
+        <view class="action-btn-small" bindtap="onToggleCollect">
+          <van-icon name="{{isCollected ? 'like' : 'like-o'}}" color="{{isCollected ? '#ef4444' : '#64748b'}}" size="24px" />
+          <text class="action-text">收藏</text>
+        </view>
+        <view class="action-btn-small" bindtap="onConsult">
+          <van-icon name="chat-o" color="#64748b" size="24px" />
+          <text class="action-text">咨询</text>
+        </view>
+        <button class="primary-btn" bindtap="onTakeOrder" hover-class="primary-btn-hover">
+          <text>立即抢单</text>
+          <van-icon name="arrow" size="14px" />
+        </button>
+      </block>
     </view>
   </view>
 </view>

@@ -5,6 +5,7 @@ Page({
     statusBarHeight: 20, // 默认状态栏高度
     isCollected: false,
     demandId: '',
+    inviteId: '',
     demand: null // 需求详情数据
   },
 
@@ -13,7 +14,8 @@ Page({
     const systemInfo = wx.getSystemInfoSync();
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight || 20,
-      demandId: options.id || ''
+      demandId: options.id || '',
+      inviteId: options.inviteId || ''
     });
 
     this.loadDemandDetail(options.id);
@@ -116,6 +118,91 @@ Page({
       icon: 'none'
     });
     // 实际业务中这里可以跳转到聊天页面或拉起客服
+  },
+
+  // 接受邀请
+  onAcceptInvite() {
+    const { inviteId, demand } = this.data;
+    if (!inviteId) return;
+
+    const title = demand ? demand.title : '灯光设计需求';
+    wx.showModal({
+      title: '接受邀请',
+      content: `确认要承接「${title}」吗？承接后需尽快与业主联系。`,
+      confirmText: '确认接受',
+      confirmColor: '#111827',
+      success: (res) => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: '处理中...', mask: true });
+        wx.cloud.callFunction({
+          name: 'invitations_operations',
+          data: { action: 'accept', invitationId: inviteId },
+          success: (r) => {
+            wx.hideLoading();
+            if (r.result && r.result.success) {
+              const projectName = demand
+                ? `${demand.space || ''} ${demand.area || ''}㎡ 灯光设计`
+                : '灯光设计项目';
+              wx.navigateTo({
+                url: `/pages/designer-order-success/designer-order-success?projectName=${encodeURIComponent(projectName)}`
+              });
+            } else {
+              const code = (r.result && r.result.code) || '';
+              if (code === 'REQUEST_TAKEN') {
+                wx.showModal({
+                  title: '提示',
+                  content: '该需求已被其他设计师接单',
+                  showCancel: false,
+                  success: () => this.onBack()
+                });
+              } else if (code === 'EXPIRED') {
+                wx.showToast({ title: '邀请已过期', icon: 'none' });
+              } else {
+                wx.showToast({ title: (r.result && r.result.message) || '操作失败', icon: 'none' });
+              }
+            }
+          },
+          fail: (err) => {
+            wx.hideLoading();
+            console.error('[designer-demand-detail] 接受邀请失败:', err);
+            wx.showToast({ title: '网络错误', icon: 'none' });
+          }
+        });
+      }
+    });
+  },
+
+  // 婉拒邀请
+  onRejectInvite() {
+    const { inviteId } = this.data;
+    if (!inviteId) return;
+
+    wx.showModal({
+      title: '婉拒邀请',
+      content: '确定要婉拒这条邀请吗？',
+      confirmColor: '#ff3b30',
+      success: (res) => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: '处理中...', mask: true });
+        wx.cloud.callFunction({
+          name: 'invitations_operations',
+          data: { action: 'reject', invitationId: inviteId },
+          success: (r) => {
+            wx.hideLoading();
+            if (r.result && r.result.success) {
+              wx.showToast({ title: '已婉拒', icon: 'none' });
+              setTimeout(() => this.onBack(), 1000);
+            } else {
+              wx.showToast({ title: (r.result && r.result.message) || '操作失败', icon: 'none' });
+            }
+          },
+          fail: () => {
+            wx.hideLoading();
+            wx.showToast({ title: '网络错误', icon: 'none' });
+          }
+        });
+      }
+    });
   },
 
   // 立即抢单

@@ -1,0 +1,9 @@
+{
+  "name": "gallery_list",
+  "version": "1.0.0",
+  "description": "灯光图库列表/搜索/标签查询（小程序端）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

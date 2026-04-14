@@ -1,125 +1,77 @@
-<!-- 设计师列表页 - 参考 ai_studio 布局 -->
+<!-- pages/designers/list/list.wxml -->
 <view class="container">
-  <!-- 顶部导航栏 -->
-  <view class="header-section">
-    <view class="header-row">
-      <text class="page-title">发现设计师</text>
-    </view>
-
-    <!-- 筛选标签 - 横向滚动 -->
-    <scroll-view class="filter-tabs-wrapper" scroll-x enable-flex>
-      <view
-        class="filter-chip {{sortBy === 'rating' ? 'active' : ''}}"
-        bindtap="onFilterTap"
-        data-filter="rating"
-      >
-        <text>推荐排序</text>
-      </view>
-      <view
-        class="filter-chip {{selectedSpace ? 'active' : ''}}"
-        bindtap="toggleSpaceFilter"
-      >
-        <text>{{selectedSpaceLabel || '擅长风格'}}</text>
-        <text class="arrow-icon">▼</text>
-      </view>
-      <view
-        class="filter-chip {{sortBy === 'experience' ? 'active' : ''}}"
-        bindtap="onFilterTap"
-        data-filter="experience"
-      >
-        <text>从业年限</text>
-      </view>
-      <view
-        class="filter-chip {{sortBy === 'price' ? 'active' : ''}}"
-        bindtap="onFilterTap"
-        data-filter="price"
-      >
-        <text>价格筛选</text>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- 加载状态 -->
-  <view wx:if="{{loading}}" class="loading-state">
-    <view class="spinner"></view>
-    <text class="loading-text">加载中...</text>
-  </view>
-
-  <!-- 设计师列表 -->
-  <view wx:elif="{{designers.length > 0}}" class="designer-list-content">
-    <view
-      wx:for="{{designers}}"
-      wx:key="_id"
-      class="designer-card"
-      bindtap="onDesignerTap"
-      data-id="{{item._id}}"
-    >
-      <!-- 作品集预览 - 使用 portfolioImages 数组 -->
-      <view wx:if="{{item.portfolioImages && item.portfolioImages.length > 1}}" class="portfolio-grid">
-        <image
-          class="main-image"
-          src="{{item.portfolioImages[0]}}"
-          mode="aspectFill"
-        />
-        <view class="side-images">
-          <image
-            class="side-image"
-            src="{{item.portfolioImages[1]}}"
-            mode="aspectFill"
-          />
-          <view class="image-count-box">
-            <text>+{{item.portfolioImages.length}}</text>
-          </view>
+  <view class="main-content">
+    <!-- Demand Summary Card -->
+    <view class="demand-section" wx:if="{{preselectedRequest}}">
+      <view class="demand-card">
+        <view class="demand-info">
+          <text class="demand-label">当前项目需求</text>
+          <text class="demand-title">{{preselectedRequest.title || '照明设计需求'}}</text>
+          <text class="demand-desc">{{preselectedRequest.area ? preselectedRequest.area + 'm²' : '未知面积'}} · {{preselectedRequest.budget || '预算待定'}}</text>
         </view>
       </view>
+    </view>
 
-      <view wx:else class="portfolio-single">
-        <image
-          class="single-image"
-          src="{{item.portfolioImages[0] || item.avatar || '/images/个人中心.png'}}"
-          mode="aspectFill"
-        />
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-state">
+      <view class="spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 列表区域 -->
+    <block wx:elif="{{designers.length > 0}}">
+      <!-- List Section Header -->
+      <view class="list-header">
+        <text class="list-header-title">推荐灯光设计师 ({{designers.length}})</text>
       </view>
 
-      <!-- 设计师信息 -->
-      <view class="card-info-section">
-        <view class="info-left">
-          <image
-            class="designer-avatar"
-            src="{{item.avatar || '/images/个人中心.png'}}"
-            mode="aspectFill"
-          />
-          <view class="info-text">
-            <text class="designer-name">{{item.name}}</text>
-            <text class="designer-meta">{{item.experience || 0}}年经验 · {{item.specialties[0] || '照明设计'}}</text>
-            <view class="badge-group">
-              <view wx:if="{{item.hasCalcExp}}" class="badge badge-orange">
-                <text>照度认证</text>
+      <!-- Designer List -->
+      <view class="designer-list">
+        <view class="designer-card {{item._id === selectedDesignerId ? 'selected' : ''}}" wx:for="{{designers}}" wx:key="_id">
+          
+          <!-- 选中角标 -->
+          <view class="selected-badge" wx:if="{{item._id === selectedDesignerId}}">
+            已选定
+          </view>
+
+          <view class="card-top">
+            <view class="avatar-container">
+              <image class="avatar" src="{{item.avatar || '/images/个人中心.png'}}" mode="aspectFill" />
+              <view class="check-badge" wx:if="{{item._id === selectedDesignerId}}">
+                <text class="check-icon">✓</text>
               </view>
-              <view class="badge badge-gray">
-                <text>实名认证</text>
+            </view>
+            
+            <view class="info-container">
+              <text class="name">{{item.name}}</text>
+              <text class="title">{{item.title || '资深灯光设计师 / 光乙合伙人'}}</text>
+              
+              <view class="stats-row">
+                <view class="stat-rating">
+                  <text class="star">★</text>
+                  <text class="rating-val">{{item.rating || '4.9'}}</text>
+                </view>
+                <text class="divider">|</text>
+                <text class="stat-text">{{item.experience || 12}}年经验</text>
+                <text class="divider">|</text>
+                <text class="stat-text">{{item.completionRate || '98%'}} 完成率</text>
               </view>
             </view>
           </view>
-        </view>
 
-        <view class="info-right">
-          <view class="rating-box">
-            <text class="star-icon">★</text>
-            <text class="rating-num">{{item.rating || 0}}</text>
+          <view class="card-actions">
+            <view class="btn-confirm" bindtap="onConfirmSelect" data-id="{{item._id}}" data-name="{{item.name}}">邀请接单</view>
+            <view class="btn-detail" bindtap="onDesignerTap" data-id="{{item._id}}">查看详情</view>
           </view>
-          <text class="transaction-text">{{item.projects || 0}}单成交</text>
         </view>
       </view>
-    </view>
-  </view>
+    </block>
 
-  <!-- 空状态 -->
-  <view wx:else class="empty-state">
-    <view class="empty-icon">
-      <text class="empty-icon-text">🔍</text>
+    <!-- 空状态 -->
+    <view wx:else class="empty-state">
+      <view class="empty-icon">🔍</view>
+      <text class="empty-title">未找到推荐的设计师</text>
+      <text class="empty-description">请尝试调整需求或稍后再试</text>
     </view>
-    <text class="empty-title">未找到设计师</text>
-    <text class="empty-description">请尝试调整筛选条件</text>
   </view>
 </view>

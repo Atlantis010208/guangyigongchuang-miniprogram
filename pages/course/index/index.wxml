@@ -46,16 +46,9 @@
           
           <!-- 3. 底部操作栏 -->
           <view class="hero-actions">
-            <!-- 已购买：显示立即观看 -->
-            <view class="play-pill" wx:if="{{featuredCourse.isPurchased}}">
+            <view class="play-pill">
               <view class="icon-play-fill"></view>
               <text class="play-text">立即观看</text>
-            </view>
-            
-            <!-- 未购买：显示价格 -->
-            <view class="price-pill" wx:else>
-              <text class="currency-symbol">¥</text>
-              <text class="price-amount">{{featuredCourse.price}}</text>
             </view>
           </view>
         </view>
@@ -81,14 +74,9 @@
             <view class="tags-row">
               <text class="tag-text" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" wx:if="{{index < 2}}">{{tag}}</text>
             </view>
-            <view class="get-button {{item.isPurchased ? 'play-mode' : ''}}">
-              <block wx:if="{{item.isPurchased}}">
-                <view class="icon-play-small"></view>
-                <text class="play-text-small">立即观看</text>
-              </block>
-              <block wx:else>
-              <text>¥{{item.price}}</text>
-              </block>
+            <view class="get-button play-mode">
+              <view class="icon-play-small"></view>
+              <text class="play-text-small">立即观看</text>
             </view>
           </view>
         </view>

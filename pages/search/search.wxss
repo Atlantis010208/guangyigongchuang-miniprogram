@@ -103,7 +103,7 @@ page {
 .v2-header {
   height: 420rpx;
   top: -25rpx;
-  /* background: linear-gradient(180deg, #4FA1F7 0%, #367BE6 100%); */
+  /* background 由 v2-header-bg 图片提供，无需兜底纯色 */
   padding: 40rpx 50rpx;
   display: flex;
   flex-direction: column;
@@ -124,6 +124,23 @@ page {
   height: 100%;
   z-index: 0;
   pointer-events: none;
+}
+
+.v2-back-btn {
+  position: absolute;
+  left: 20rpx;
+  top: 50rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.v2-back-icon {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .v2-logo {

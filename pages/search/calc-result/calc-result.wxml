@@ -300,14 +300,14 @@
           <view class="energy-duo">
             <view class="energy-card-single">
               <view class="energy-icon-wrap bg-amber">
-                <text class="energy-icon-text">⚡</text>
+                <image class="energy-icon-img" src="/images/闪电.png" mode="aspectFit"></image>
               </view>
               <text class="energy-big-num">{{energyData.currentDensity}}</text>
               <text class="energy-card-desc">当前功率密度 (W/㎡)</text>
             </view>
             <view class="energy-card-single">
               <view class="energy-icon-wrap bg-green">
-                <text class="energy-icon-text">🛡</text>
+                <image class="energy-icon-img" src="/images/规范－盾牌.png" mode="aspectFit"></image>
               </view>
               <text class="energy-big-num">≤ {{energyData.standardDensity}}</text>
               <text class="energy-card-desc">国家参考标准 (W/㎡)</text>

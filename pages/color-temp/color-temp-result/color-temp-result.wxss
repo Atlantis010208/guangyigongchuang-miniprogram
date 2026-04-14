@@ -1,0 +1,22 @@
+/* pages/color-temp/color-temp-result/color-temp-result.wxss */
+@import "../../search/search.wxss";
+@import "../color-temp.wxss";
+
+.v2-content {
+  margin-top: 0;
+}
+
+.result-container {
+  padding-top: 30rpx;
+}
+
+.tips-title {
+  display: flex;
+  align-items: center;
+}
+
+.tips-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+}

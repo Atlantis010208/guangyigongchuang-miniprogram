@@ -1,301 +1,555 @@
 // pages/gallery/gallery.js
+// 灯光实景图库 - 接入云函数真实数据
 
-const categories = ["全部", "收藏", "住宅", "商业", "展厅", "办公"];
-
-const initialImages = [
-  { id: 1, title: "极简客厅", category: "住宅", seed: "livingroom", aspect: "aspect-square" },
-  { id: 2, title: "暖光卧室", category: "住宅", seed: "bedroom", aspect: "aspect-3-4" },
-  { id: 3, title: "艺术展厅", category: "展厅", seed: "gallery", aspect: "aspect-4-3" },
-  { id: 4, title: "办公空间", category: "办公", seed: "office", aspect: "aspect-square" },
-  { id: 5, title: "高端餐厅", category: "商业", seed: "restaurant", aspect: "aspect-3-4" },
-  { id: 6, title: "走廊氛围", category: "商业", seed: "corridor", aspect: "aspect-square" },
-  { id: 7, title: "现代厨房", category: "住宅", seed: "kitchen", aspect: "aspect-4-3" },
-  { id: 8, title: "书房阅读", category: "住宅", seed: "study", aspect: "aspect-3-4" },
-  { id: 9, title: "精品橱窗", category: "商业", seed: "boutique", aspect: "aspect-4-3" },
-  { id: 10, title: "会议室", category: "办公", seed: "meeting", aspect: "aspect-square" },
-];
+const app = getApp()
 
 Page({
   data: {
-    categories: categories,
-    activeCategory: "全部",
-    searchQuery: "",
-    images: initialImages,
+    // 标签相关
+    categories: ['全部', '收藏'],
+    activeCategory: '全部',
+    activeTag: '',
+    searchQuery: '',
+
+    // 图片列表
     filteredImages: [],
     leftColImages: [],
     rightColImages: [],
-    favorites: [],
+
+    // 收藏（imageId -> boolean 的映射存在 favoritesMap 中）
+    favoritesMap: {},
+
+    // 分页
+    hasMore: true,
+
+    // 状态
     isFetching: false,
     isLoadingMore: false,
     showModal: false,
     currentSwiperIndex: 0,
     showControls: true,
     isDownloading: false,
-    controlsTimeout: null
+    controlsTimeout: null,
+
+    // 搜索防抖
+    _searchTimer: null
   },
 
   onLoad: function () {
-    // 从本地存储加载收藏列表
-    const savedFavorites = wx.getStorageSync('gallery_favorites');
-    if (savedFavorites) {
-      try {
-        this.setData({ favorites: JSON.parse(savedFavorites) });
-      } catch (e) {
-        console.error("Failed to parse favorites", e);
-      }
-    }
-    
-    this.updateFilteredImages();
+    this.loadTags()
+    this.loadImages()
   },
 
-  onShow: function() {
-    // 隐藏原生 tabBar 避免在全屏时穿帮，但我们这是二级页面通常不需要
-  },
-
-  onCategorySelect: function(e) {
-    const category = e.currentTarget.dataset.category;
-    if (this.data.activeCategory === category) return;
-
-    this.setData({ 
-      activeCategory: category,
-      isFetching: true 
-    });
-
-    // 模拟网络请求延迟
-    setTimeout(() => {
-      this.setData({ isFetching: false });
-      this.updateFilteredImages();
-    }, 600);
-  },
-
-  onSearchInput: function(e) {
-    this.setData({ searchQuery: e.detail.value });
-    this.updateFilteredImages();
-  },
-
-  updateFilteredImages: function() {
-    const { images, activeCategory, searchQuery, favorites } = this.data;
-    
-    const filtered = images.filter((img) => {
-      const matchesCategory = 
-        activeCategory === "全部" ? true :
-        activeCategory === "收藏" ? favorites.includes(img.id) :
-        img.category === activeCategory;
-      const matchesSearch = img.title.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-
-    // 分割成两列以实现瀑布流
-    const leftCol = [];
-    const rightCol = [];
-    
-    filtered.forEach((img, index) => {
-      if (index % 2 === 0) {
-        leftCol.push(img);
-      } else {
-        rightCol.push(img);
-      }
-    });
-
-    this.setData({ 
-      filteredImages: filtered,
-      leftColImages: leftCol,
-      rightColImages: rightCol
-    });
-  },
-
-  onToggleFavorite: function(e) {
-    const id = e.currentTarget.dataset.id;
-    this.toggleFavoriteLogic(id);
-  },
-
-  onToggleFavoriteCurrent: function() {
-    const currentImg = this.data.filteredImages[this.data.currentSwiperIndex];
-    if (currentImg) {
-      this.toggleFavoriteLogic(currentImg.id);
-      this.resetControlsTimeout();
+  onShow: function () {
+    // 每次显示时静默刷新收藏状态（如果已有图片）
+    if (this.data.filteredImages.length > 0) {
+      this.batchCheckFavorites(this.data.filteredImages)
     }
   },
 
-  toggleFavoriteLogic: function(id) {
-    let newFavorites = [...this.data.favorites];
-    const index = newFavorites.indexOf(id);
-    
-    if (index > -1) {
-      newFavorites.splice(index, 1);
-    } else {
-      newFavorites.push(id);
-    }
-    
-    this.setData({ favorites: newFavorites });
-    wx.setStorageSync('gallery_favorites', JSON.stringify(newFavorites));
-    
-    // 如果当前在收藏分类下取消收藏，需要刷新列表
+  onPullDownRefresh: function () {
+    // 重置分页状态，重新加载
+    this.setData({
+      filteredImages: [],
+      leftColImages: [],
+      rightColImages: [],
+      hasMore: true
+    })
+
+    // 重新加载标签（强制刷新，清除缓存版本号）
+    wx.removeStorageSync('gallery_tagVersion')
+    this.loadTags()
+
+    // 重新加载图片
     if (this.data.activeCategory === '收藏') {
-      this.updateFilteredImages();
+      this.loadFavoritesList()
+    } else {
+      this.loadImages()
     }
-  },
 
-  onImageLoad: function(e) {
-    const id = e.currentTarget.dataset.id;
-    // 更新左列图片加载状态
-    const leftIndex = this.data.leftColImages.findIndex(img => img.id === id);
-    if (leftIndex > -1) {
-      this.setData({ [`leftColImages[${leftIndex}].loaded`]: true });
-      return;
-    }
-    // 更新右列图片加载状态
-    const rightIndex = this.data.rightColImages.findIndex(img => img.id === id);
-    if (rightIndex > -1) {
-      this.setData({ [`rightColImages[${rightIndex}].loaded`]: true });
-    }
-  },
-
-  onReachBottom: function() {
-    this.loadMore();
-  },
-
-  loadMore: function() {
-    if (this.data.activeCategory === "收藏" || this.data.isLoadingMore) return;
-    
-    this.setData({ isLoadingMore: true });
-    
+    // 轮询检查加载完成后停止下拉动画
+    const timer = setInterval(() => {
+      if (!this.data.isFetching && !this.data.isLoadingMore) {
+        clearInterval(timer)
+        wx.stopPullDownRefresh()
+      }
+    }, 200)
+    // 兜底 3 秒后停止
     setTimeout(() => {
-      const prevImages = this.data.images;
-      const newImages = Array.from({ length: 6 }).map((_, i) => {
-        const id = prevImages.length + i + 1;
-        const category = this.data.activeCategory === "全部" 
-          ? categories[Math.floor(Math.random() * (categories.length - 2)) + 2] 
-          : this.data.activeCategory;
-        const aspects = ["aspect-square", "aspect-3-4", "aspect-4-3"];
-        const aspect = aspects[Math.floor(Math.random() * aspects.length)];
-        const seed = `generated-${id}-${Date.now()}`;
-        
-        return {
-          id,
-          title: `${category}灵感 ${id}`,
-          category,
-          seed,
-          aspect,
-          loaded: false
-        };
-      });
-      
-      this.setData({ 
-        images: [...prevImages, ...newImages],
-        isLoadingMore: false 
-      });
-      
-      this.updateFilteredImages();
-    }, 800);
+      clearInterval(timer)
+      wx.stopPullDownRefresh()
+    }, 3000)
   },
 
-  // Modal Functions
-  onImageSelect: function(e) {
-    const id = e.currentTarget.dataset.id;
-    const index = this.data.filteredImages.findIndex(img => img.id === id);
-    
+  // ==================== 标签 ====================
+
+  loadTags: function () {
+    const cachedVersion = wx.getStorageSync('gallery_tagVersion') || 0
+    wx.cloud.callFunction({
+      name: 'gallery_list',
+      data: { action: 'tags', tagVersion: cachedVersion }
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success) return
+
+      if (result.data.notModified) {
+        // 使用本地缓存的标签
+        const cachedTags = wx.getStorageSync('gallery_tags') || []
+        if (cachedTags.length > 0) {
+          this.setData({ categories: ['全部', '收藏', ...cachedTags.map(t => t.name)] })
+        }
+        return
+      }
+
+      const tags = result.data.tags || []
+      wx.setStorageSync('gallery_tags', tags)
+      wx.setStorageSync('gallery_tagVersion', result.data.tagVersion)
+      this.setData({ categories: ['全部', '收藏', ...tags.map(t => t.name)] })
+    }).catch(err => {
+      console.error('[gallery] 加载标签失败:', err)
+      // 降级：使用本地缓存
+      const cachedTags = wx.getStorageSync('gallery_tags') || []
+      if (cachedTags.length > 0) {
+        this.setData({ categories: ['全部', '收藏', ...cachedTags.map(t => t.name)] })
+      }
+    })
+  },
+
+  onCategorySelect: function (e) {
+    const category = e.currentTarget.dataset.category
+    if (this.data.activeCategory === category) return
+
+    this.setData({
+      activeCategory: category,
+      activeTag: (category !== '全部' && category !== '收藏') ? category : '',
+      filteredImages: [],
+      leftColImages: [],
+      rightColImages: [],
+      hasMore: true,
+      isFetching: true
+    })
+
+    if (category === '收藏') {
+      this.loadFavoritesList()
+    } else {
+      this.loadImages()
+    }
+  },
+
+  // ==================== 搜索 ====================
+
+  onSearchInput: function (e) {
+    const value = e.detail.value
+    this.setData({ searchQuery: value })
+
+    // 防抖 500ms
+    if (this._searchTimer) clearTimeout(this._searchTimer)
+    this._searchTimer = setTimeout(() => {
+      this.setData({
+        filteredImages: [],
+        leftColImages: [],
+        rightColImages: [],
+        hasMore: true
+      })
+
+      if (this.data.activeCategory === '收藏') {
+        this.loadFavoritesList()
+      } else {
+        this.loadImages()
+      }
+    }, 500)
+  },
+
+  // ==================== 图片列表 ====================
+
+  loadImages: function () {
+    const { activeTag, searchQuery, filteredImages } = this.data
+    const offset = filteredImages.length
+
+    this.setData({ isFetching: offset === 0, isLoadingMore: offset > 0 })
+
+    const params = {
+      action: searchQuery ? 'search' : 'list',
+      pageSize: 20,
+      offset: offset
+    }
+
+    if (activeTag) params.tag = activeTag
+    if (searchQuery) params.keyword = searchQuery
+
+    wx.cloud.callFunction({
+      name: 'gallery_list',
+      data: params
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success) {
+        this.setData({ isFetching: false, isLoadingMore: false })
+        return
+      }
+
+      const newImages = (result.data.images || []).map(img => ({
+        ...img,
+        id: img._id,
+        loaded: false
+      }))
+
+      const prevImages = offset > 0 ? this.data.filteredImages : []
+      const allImages = [...prevImages, ...newImages]
+
+      this.splitColumns(allImages, offset > 0, prevImages.length)
+      this.setData({
+        filteredImages: allImages,
+        hasMore: result.data.hasMore,
+        isFetching: false,
+        isLoadingMore: false
+      })
+
+      // 批量检查收藏状态
+      if (newImages.length > 0) {
+        this.batchCheckFavorites(newImages)
+      }
+    }).catch(err => {
+      console.error('[gallery] 加载图片失败:', err)
+      this.setData({ isFetching: false, isLoadingMore: false })
+    })
+  },
+
+  // ==================== 收藏列表 ====================
+
+  loadFavoritesList: function () {
+    const isLoggedIn = app.isLoggedIn && app.isLoggedIn()
+    if (!isLoggedIn) {
+      // 未登录：使用本地收藏
+      this.setData({ isFetching: false, filteredImages: [], leftColImages: [], rightColImages: [] })
+      return
+    }
+
+    const offset = this.data.filteredImages.length
+    this.setData({ isFetching: offset === 0, isLoadingMore: offset > 0 })
+
+    const params = { action: 'list', pageSize: 20, offset: offset }
+
+    wx.cloud.callFunction({
+      name: 'gallery_favorites',
+      data: params
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success) {
+        this.setData({ isFetching: false, isLoadingMore: false })
+        return
+      }
+
+      const newImages = (result.data.images || []).map(img => ({
+        ...img,
+        id: img._id,
+        loaded: false
+      }))
+
+      const prevImages = offset > 0 ? this.data.filteredImages : []
+      const allImages = [...prevImages, ...newImages]
+
+      // 收藏列表中的图片全部标记为已收藏
+      const newMap = { ...this.data.favoritesMap }
+      newImages.forEach(img => { newMap[img.id] = true })
+
+      this.splitColumns(allImages, offset > 0, prevImages.length)
+      this.setData({
+        filteredImages: allImages,
+        favoritesMap: newMap,
+        hasMore: result.data.hasMore,
+        isFetching: false,
+        isLoadingMore: false
+      })
+    }).catch(err => {
+      console.error('[gallery] 加载收藏列表失败:', err)
+      this.setData({ isFetching: false, isLoadingMore: false })
+    })
+  },
+
+  // ==================== 收藏操作 ====================
+
+  batchCheckFavorites: function (images) {
+    const isLoggedIn = app.isLoggedIn && app.isLoggedIn()
+    if (!isLoggedIn || !images || images.length === 0) return
+
+    const imageIds = images.map(img => img.id || img._id).filter(Boolean)
+    if (imageIds.length === 0) return
+
+    wx.cloud.callFunction({
+      name: 'gallery_favorites',
+      data: { action: 'batchCheck', imageIds }
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success) return
+
+      const serverMap = result.data.favorites || {}
+      const newMap = { ...this.data.favoritesMap, ...serverMap }
+      this.setData({ favoritesMap: newMap })
+    }).catch(err => {
+      console.warn('[gallery] 批量检查收藏失败:', err)
+    })
+  },
+
+  onToggleFavorite: function (e) {
+    const id = e.currentTarget.dataset.id
+    this.toggleFavoriteLogic(id)
+  },
+
+  onToggleFavoriteCurrent: function () {
+    const currentImg = this.data.filteredImages[this.data.currentSwiperIndex]
+    if (currentImg) {
+      this.toggleFavoriteLogic(currentImg.id)
+      this.resetControlsTimeout()
+    }
+  },
+
+  toggleFavoriteLogic: function (id) {
+    const isLoggedIn = app.isLoggedIn && app.isLoggedIn()
+    if (!isLoggedIn) {
+      // 未登录，提示登录
+      app.requireLogin && app.requireLogin({ showModal: true })
+      return
+    }
+
+    const isFavorited = this.data.favoritesMap[id]
+    const action = isFavorited ? 'remove' : 'add'
+
+    // 乐观更新 UI
+    const newMap = { ...this.data.favoritesMap }
+    newMap[id] = !isFavorited
+    this.setData({ favoritesMap: newMap })
+
+    wx.cloud.callFunction({
+      name: 'gallery_favorites',
+      data: { action, imageId: id }
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success) {
+        // 回滚
+        const rollbackMap = { ...this.data.favoritesMap }
+        rollbackMap[id] = isFavorited
+        this.setData({ favoritesMap: rollbackMap })
+        return
+      }
+
+      // 如果在收藏列表中取消了收藏，从列表移除
+      if (this.data.activeCategory === '收藏' && action === 'remove') {
+        const filtered = this.data.filteredImages.filter(img => img.id !== id)
+        this.splitColumns(filtered)
+        this.setData({ filteredImages: filtered })
+      }
+    }).catch(err => {
+      console.error('[gallery] 收藏操作失败:', err)
+      // 回滚
+      const rollbackMap = { ...this.data.favoritesMap }
+      rollbackMap[id] = isFavorited
+      this.setData({ favoritesMap: rollbackMap })
+    })
+  },
+
+  // ==================== 瀑布流分列 ====================
+
+  /**
+   * 瀑布流分列
+   * @param {Array} images - 全量图片数组
+   * @param {boolean} append - true=增量追加（加载更多），false=全量重建（首次/切换分类）
+   * @param {number} appendFrom - 增量追加时从 images 的哪个索引开始
+   */
+  splitColumns: function (images, append, appendFrom) {
+    if (append && appendFrom > 0) {
+      // 增量模式：只追加新图片到列末尾，不触碰已有图片
+      const newImages = images.slice(appendFrom)
+      const updates = {}
+      const leftLen = this.data.leftColImages.length
+      const rightLen = this.data.rightColImages.length
+      let leftAdd = 0
+      let rightAdd = 0
+
+      newImages.forEach((img, i) => {
+        const globalIndex = appendFrom + i
+        if (globalIndex % 2 === 0) {
+          updates[`leftColImages[${leftLen + leftAdd}]`] = img
+          leftAdd++
+        } else {
+          updates[`rightColImages[${rightLen + rightAdd}]`] = img
+          rightAdd++
+        }
+      })
+      this.setData(updates)
+    } else {
+      // 全量模式：首次加载或切换分类
+      const leftCol = []
+      const rightCol = []
+      images.forEach((img, index) => {
+        if (index % 2 === 0) {
+          leftCol.push(img)
+        } else {
+          rightCol.push(img)
+        }
+      })
+      this.setData({ leftColImages: leftCol, rightColImages: rightCol })
+    }
+  },
+
+  // ==================== 图片加载状态 ====================
+
+  onImageLoad: function (e) {
+    const id = e.currentTarget.dataset.id
+    const leftIndex = this.data.leftColImages.findIndex(img => img.id === id)
+    if (leftIndex > -1) {
+      this.setData({ [`leftColImages[${leftIndex}].loaded`]: true })
+      return
+    }
+    const rightIndex = this.data.rightColImages.findIndex(img => img.id === id)
+    if (rightIndex > -1) {
+      this.setData({ [`rightColImages[${rightIndex}].loaded`]: true })
+    }
+  },
+
+  // ==================== 分页加载 ====================
+
+  onReachBottom: function () {
+    this.loadMore()
+  },
+
+  loadMore: function () {
+    if (!this.data.hasMore || this.data.isLoadingMore || this.data.isFetching) return
+
+    if (this.data.activeCategory === '收藏') {
+      this.loadFavoritesList()
+    } else {
+      this.loadImages()
+    }
+  },
+
+  // ==================== 全屏预览 Modal ====================
+
+  onImageSelect: function (e) {
+    const id = e.currentTarget.dataset.id
+    const index = this.data.filteredImages.findIndex(img => img.id === id)
+
     if (index > -1) {
-      this.setData({ 
+      this.setData({
         showModal: true,
         currentSwiperIndex: index,
-        initialSwiperIndex: index // 记录打开时的初始索引
-      });
-      this.resetControlsTimeout();
+        initialSwiperIndex: index
+      })
+      this.resetControlsTimeout()
     }
   },
 
-  onCloseModal: function() {
-    const { filteredImages, currentSwiperIndex, initialSwiperIndex } = this.data;
-    const currentImg = filteredImages[currentSwiperIndex];
-    
-    this.setData({ showModal: false });
-    this.clearControlsTimeout();
+  onCloseModal: function () {
+    const { filteredImages, currentSwiperIndex, initialSwiperIndex } = this.data
+    const currentImg = filteredImages[currentSwiperIndex]
 
-    // 只有当用户在大图中滑动切换了图片时，才需要重新定位
+    this.setData({ showModal: false })
+    this.clearControlsTimeout()
+
     if (currentImg && currentSwiperIndex !== initialSwiperIndex) {
       setTimeout(() => {
         wx.pageScrollTo({
           selector: `#img-${currentImg.id}`,
           duration: 300,
-          offsetTop: -80 // 留出一点顶部安全距离
-        });
-      }, 50);
+          offsetTop: -80
+        })
+      }, 50)
     }
   },
 
-  onSwiperChange: function(e) {
-    this.setData({ currentSwiperIndex: e.detail.current });
-    this.resetControlsTimeout();
+  onSwiperChange: function (e) {
+    this.setData({ currentSwiperIndex: e.detail.current })
+    this.resetControlsTimeout()
   },
 
-  toggleModalControls: function(e) {
+  toggleModalControls: function (e) {
     if (!this.data.showControls) {
-      this.resetControlsTimeout();
+      this.resetControlsTimeout()
     } else {
-      this.setData({ showControls: false });
-      this.clearControlsTimeout();
+      this.setData({ showControls: false })
+      this.clearControlsTimeout()
     }
   },
 
-  resetControlsTimeout: function() {
-    this.setData({ showControls: true });
-    this.clearControlsTimeout();
-    
+  resetControlsTimeout: function () {
+    this.setData({ showControls: true })
+    this.clearControlsTimeout()
+
     const timeout = setTimeout(() => {
-      this.setData({ showControls: false });
-    }, 2500);
-    
-    this.setData({ controlsTimeout: timeout });
+      this.setData({ showControls: false })
+    }, 2500)
+
+    this.setData({ controlsTimeout: timeout })
   },
 
-  clearControlsTimeout: function() {
+  clearControlsTimeout: function () {
     if (this.data.controlsTimeout) {
-      clearTimeout(this.data.controlsTimeout);
-      this.setData({ controlsTimeout: null });
+      clearTimeout(this.data.controlsTimeout)
+      this.setData({ controlsTimeout: null })
     }
   },
 
-  onDownloadCurrent: function() {
-    if (this.data.isDownloading) return;
-    
-    const currentImg = this.data.filteredImages[this.data.currentSwiperIndex];
-    if (!currentImg) return;
-    
-    this.setData({ isDownloading: true });
-    this.resetControlsTimeout();
-    
-    wx.showLoading({ title: '准备下载...' });
-    
-    wx.downloadFile({
-      url: `https://picsum.photos/seed/${currentImg.seed}/1200/1600`,
-      success: (res) => {
-        if (res.statusCode === 200) {
-          wx.saveImageToPhotosAlbum({
-            filePath: res.tempFilePath,
-            success: () => {
-              wx.hideLoading();
-              wx.showToast({ title: '已保存到相册', icon: 'success' });
-            },
-            fail: (err) => {
-              wx.hideLoading();
-              wx.showToast({ title: '保存失败', icon: 'none' });
-              console.error('Save image failed', err);
-            }
-          });
-        } else {
-          wx.hideLoading();
-          wx.showToast({ title: '下载失败', icon: 'none' });
-        }
-      },
-      fail: (err) => {
-        wx.hideLoading();
-        wx.showToast({ title: '下载失败', icon: 'none' });
-        console.error('Download failed', err);
-      },
-      complete: () => {
-        this.setData({ isDownloading: false });
+  // ==================== 下载原图 ====================
+
+  onDownloadCurrent: function () {
+    if (this.data.isDownloading) return
+
+    const currentImg = this.data.filteredImages[this.data.currentSwiperIndex]
+    if (!currentImg) return
+
+    this.setData({ isDownloading: true })
+    this.resetControlsTimeout()
+
+    wx.showLoading({ title: '准备下载...' })
+
+    // 先获取高清原图 URL
+    wx.cloud.callFunction({
+      name: 'gallery_list',
+      data: { action: 'detail', imageId: currentImg.id }
+    }).then(res => {
+      const result = res.result
+      if (!result || !result.success || !result.data.fileUrl) {
+        wx.hideLoading()
+        wx.showToast({ title: '获取原图失败', icon: 'none' })
+        this.setData({ isDownloading: false })
+        return
       }
-    });
+
+      const fileUrl = result.data.fileUrl
+      wx.downloadFile({
+        url: fileUrl,
+        success: (dlRes) => {
+          if (dlRes.statusCode === 200) {
+            wx.saveImageToPhotosAlbum({
+              filePath: dlRes.tempFilePath,
+              success: () => {
+                wx.hideLoading()
+                wx.showToast({ title: '已保存到相册', icon: 'success' })
+              },
+              fail: (err) => {
+                wx.hideLoading()
+                wx.showToast({ title: '保存失败', icon: 'none' })
+                console.error('Save image failed', err)
+              }
+            })
+          } else {
+            wx.hideLoading()
+            wx.showToast({ title: '下载失败', icon: 'none' })
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading()
+          wx.showToast({ title: '下载失败', icon: 'none' })
+          console.error('Download failed', err)
+        },
+        complete: () => {
+          this.setData({ isDownloading: false })
+        }
+      })
+    }).catch(err => {
+      wx.hideLoading()
+      wx.showToast({ title: '下载失败', icon: 'none' })
+      console.error('Get detail failed', err)
+      this.setData({ isDownloading: false })
+    })
   }
-});
+})

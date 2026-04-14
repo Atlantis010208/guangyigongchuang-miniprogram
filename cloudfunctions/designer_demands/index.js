@@ -364,6 +364,21 @@ async function acceptDemand(openid, requestId) {
 
   console.log(`[designer_demands] 接单成功: requestId=${requestId}, designerId=${designer._id}`)
 
+  // 抢单成功后，清理该需求的所有 pending 邀请（标记为 conflict）
+  try {
+    const conflictResult = await db.collection('invitations').where({
+      requestId,
+      status: 'pending'
+    }).update({
+      data: { status: 'conflict', updatedAt: now }
+    })
+    if (conflictResult.stats && conflictResult.stats.updated > 0) {
+      console.log(`[designer_demands] 已清理 ${conflictResult.stats.updated} 条 pending 邀请`)
+    }
+  } catch (conflictErr) {
+    console.warn('[designer_demands] 清理邀请失败（非致命）:', conflictErr.message)
+  }
+
   // 发送订阅消息通知业主：已接单
   try {
     let userOpenid = ''

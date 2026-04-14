@@ -1,0 +1,68 @@
+<!-- pages/color-temp/color-temp-result/color-temp-result.wxml -->
+<view class="page color-temp-page">
+  <view class="v2-content">
+    <view class="result-container">
+      
+      <!-- 核心结果卡片 -->
+      <view class="v2-card group-card result-hero">
+        <view class="result-hero-header">
+          <view class="temp-display">
+            <text class="temp-val">{{result.standardTemp}}</text>
+            <text class="temp-unit">K</text>
+          </view>
+          <view class="temp-tag">{{result.desc}}</view>
+        </view>
+        
+        <!-- 色温条 -->
+        <view class="color-scale">
+          <view class="scale-bar">
+            <view class="scale-marker" style="left: {{(result.standardTemp - 2700) / 3800 * 100}}%"></view>
+          </view>
+          <view class="scale-labels">
+            <text>2700K</text>
+            <text>6500K</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 推荐理由 -->
+      <view class="v2-card group-card ai-reasoning" wx:if="{{result.reasoning}}">
+        <view class="card-title">推荐理由</view>
+        <view class="reasoning-text">{{result.reasoning}}</view>
+      </view>
+
+      <!-- 分层建议卡片 -->
+      <view class="v2-card group-card">
+        <view class="card-title">分层色温建议</view>
+        <view class="advice-list">
+          <view class="advice-item" wx:for="{{result.layers}}" wx:key="index">
+            <view class="advice-content">
+              <view class="advice-top">
+                <text class="advice-name">{{item.name}}</text>
+                <text class="advice-temp" style="color: {{item.temp <= 3000 ? '#E6A23C' : (item.temp >= 5000 ? '#409EFF' : '#303133')}}">{{item.temp}}K</text>
+              </view>
+              <view class="advice-label">{{item.label}}</view>
+              <view class="advice-desc">{{item.desc}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 专业提示 -->
+      <view class="v2-card group-card expert-tips" wx:if="{{result.tips.length > 0}}">
+        <view class="tips-title">
+          <image class="tips-icon" src="/images/设计师.png" mode="aspectFit"></image>
+          <text>设计师说</text>
+        </view>
+        <view class="tip-lines">
+          <view class="tip-line" wx:for="{{result.tips}}" wx:key="*this">
+            <text class="dot">·</text>
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <button class="v2-btn-calculate" style="background: #fff; color: #1E3A5F; border: 2rpx solid #1E3A5F; margin-top: 40rpx;" bindtap="onRecalculate">重新测试</button>
+    </view>
+  </view>
+</view>

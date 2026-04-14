@@ -310,3 +310,28 @@ page {
   transform: scale(0.98);
   background-color: #1e293b;
 }
+
+.reject-btn {
+  flex: 0.6;
+  height: 48px;
+  background-color: #F3F4F6;
+  color: #1D1D1F;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.reject-btn::after {
+  border: none;
+}
+
+.reject-btn-hover {
+  transform: scale(0.98);
+  background-color: #E5E7EB;
+}

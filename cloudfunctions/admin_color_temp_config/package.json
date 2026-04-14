@@ -1,0 +1,9 @@
+{
+  "name": "admin_color_temp_config",
+  "version": "1.0.0",
+  "description": "色温选择器配置管理云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

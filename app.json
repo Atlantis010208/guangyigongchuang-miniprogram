@@ -4,6 +4,9 @@
     "pages/products/products",
     "pages/course/index/index",
     "pages/search/search",
+    "pages/color-temp/color-temp",
+    "pages/color-temp/color-temp-result/color-temp-result",
+    "pages/color-temp/history/history",
     "pages/toolbox/toolbox",
     "pages/gallery/gallery",
     "pages/search/calc-result/calc-result",
@@ -36,7 +39,8 @@
     "pages/designer-project-detail/designer-project-detail",
     "pages/mall/mall",
     "pages/mall/product-detail/product-detail",
-    "pages/mall/cart/cart"
+    "pages/mall/cart/cart",
+    "pages/designer-invites/designer-invites"
   ],
   "subpackages": [
     {
@@ -130,7 +134,8 @@
         "favorites/favorites",
         "receipts/receipts",
         "feedback/feedback",
-        "settings/settings"
+        "settings/settings",
+        "invitations/invitations"
       ]
     },
     {

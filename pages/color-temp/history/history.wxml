@@ -1,0 +1,35 @@
+<view class="page">
+  <!-- 顶部提示栏 -->
+  <view class="header-tip">
+    <text class="header-title">历史记录</text>
+    <text class="header-action">点击回填</text>
+  </view>
+
+  <!-- 列表区域 -->
+  <scroll-view scroll-y class="history-list" wx:if="{{historyList.length > 0}}">
+    <view class="history-item" wx:for="{{historyList}}" wx:key="id" bindtap="onItemTap" data-id="{{item.id}}">
+      <view class="item-header">
+        <text class="item-title">{{item.customName || '色温推荐'}}</text>
+        <view class="edit-btn" catchtap="onEditTitle" data-id="{{item.id}}" data-name="{{item.customName}}">
+          <image src="/images/编辑.png" mode="aspectFit"></image>
+        </view>
+      </view>
+      <view class="item-top">
+        <text class="item-summary">{{item.summary}}</text>
+        <text class="item-time">{{item.timeStr}}</text>
+      </view>
+      <view class="item-bottom">
+        <text class="item-result">{{item.resultStr}}</text>
+      </view>
+    </view>
+    
+    <view class="footer-tip">
+      <text>仅保留最近 20 条记录</text>
+    </view>
+  </scroll-view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text class="empty-text">暂无历史记录</text>
+  </view>
+</view>

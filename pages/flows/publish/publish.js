@@ -134,9 +134,6 @@ Page({
 
   handleOtherConfirm(e) {
     this.setData({ keyboardHeight: 0 })
-    if (this.data.isNextValid) {
-      this.handleNext()
-    }
   },
 
   handleNumberInput(e) {
@@ -148,9 +145,6 @@ Page({
 
   handleNumberConfirm(e) {
     this.setData({ keyboardHeight: 0 })
-    if (this.data.isNextValid) {
-      this.handleNext()
-    }
   },
 
   handlePrev() {
@@ -163,6 +157,9 @@ Page({
 
   handleNext() {
     if (!this.data.isNextValid) return
+    const now = Date.now()
+    if (this._lastNextTime && now - this._lastNextTime < 400) return
+    this._lastNextTime = now
     if (this.data.currentStep < this.data.steps.length - 1) {
       this.setData({ currentStep: this.data.currentStep + 1 }, () => {
         this.checkNextValid()
@@ -211,6 +208,7 @@ Page({
       tmplIds: tmplIds,
       complete: () => {
         // 无论用户允许/拒绝/关闭，都继续执行提交
+        wx.showLoading({ title: '提交中...', mask: true })
         this._doSubmit(space, budget)
       }
     })
@@ -257,7 +255,6 @@ Page({
         { key:'done', label:'已完成', done:false }
       ]
     }
-    wx.showToast({ title:'已提交', icon:'success' })
     // 云端保存：requests + orders
     try{
       const db = api.dbInit()
@@ -280,6 +277,8 @@ Page({
         util.callCf('orders_create', { order: { type: 'products', orderNo: id, category: 'publish', params, status: 'submitted', paid: false, userId, priority: depositPaid } }).catch(()=>{})
       }
     }catch(err){}
+    wx.hideLoading()
+    wx.showToast({ title:'已提交', icon:'success' })
     setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }); this._submitting = false; this.setData({ submitting:false }) }, 400)
   }
 })

@@ -1,0 +1,96 @@
+<view class="page-container">
+  <view class="main-content">
+    <!-- 状态筛选 Tab -->
+    <view class="sticky-header">
+      <scroll-view class="category-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
+        <view class="category-list">
+          <view class="category-btn {{currentStatus === item.key ? 'active' : ''}}"
+                wx:for="{{statusTabs}}"
+                wx:key="key"
+                data-status="{{item.key}}"
+                bindtap="switchStatus">
+            {{item.label}}
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 邀请列表 -->
+    <view class="demand-list" wx:if="{{invitations.length > 0}}">
+      <block wx:for="{{invitations}}" wx:key="id">
+        <view class="card">
+          <view class="card-header">
+            <view>
+              <view class="tags-group">
+                <view class="tag-{{item.statusTagType}}">{{item.statusText}}</view>
+                <view class="time-text">{{item.timeText}}</view>
+              </view>
+              <view class="card-title">{{item.requestSummary.title || '灯光设计需求'}}</view>
+              <view class="card-subtitle">
+                设计师：{{item.designerName || '未知'}}
+              </view>
+            </view>
+            <view class="designer-avatar-box" wx:if="{{item.designerAvatar}}">
+              <image class="designer-avatar" src="{{item.designerAvatar}}" mode="aspectFill" />
+            </view>
+            <view class="designer-avatar-box placeholder" wx:else>
+              <text class="avatar-text">{{item.designerName[0] || '?'}}</text>
+            </view>
+          </view>
+
+          <view class="stats-grid">
+            <view class="stat-box">
+              <text class="stat-label">空间</text>
+              <text class="stat-value">{{item.requestSummary.space || '-'}}</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">面积</text>
+              <text class="stat-value">{{item.requestSummary.area ? item.requestSummary.area + 'm²' : '-'}}</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-label">预算</text>
+              <text class="stat-value">{{item.requestSummary.budget || '-'}}</text>
+            </view>
+          </view>
+
+          <view class="action-group">
+            <!-- 待回应：可取消 -->
+            <block wx:if="{{item.status === 'pending'}}">
+              <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onCancel" data-id="{{item.id}}">取消邀请</button>
+              <button class="btn-primary" hover-class="btn-primary-hover" disabled>等待回应</button>
+            </block>
+            <!-- 已接受：查看进度 -->
+            <block wx:elif="{{item.status === 'accepted'}}">
+              <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onViewProgress" data-id="{{item.requestId}}" data-order="{{item.requestOrderNo}}">查看项目进度</button>
+            </block>
+            <!-- 已拒绝：重新选择 -->
+            <block wx:elif="{{item.status === 'rejected'}}">
+              <button class="btn-secondary" hover-class="btn-secondary-hover" bindtap="onReselect">重新选择设计师</button>
+            </block>
+            <!-- 已过期 -->
+            <block wx:elif="{{item.status === 'expired'}}">
+              <button class="btn-secondary" hover-class="btn-secondary-hover" disabled>设计师未在72小时内响应</button>
+            </block>
+            <!-- 其他状态 -->
+            <block wx:else>
+              <button class="btn-secondary" hover-class="btn-secondary-hover" disabled>{{item.statusText}}</button>
+            </block>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{!loading}}" class="empty-state">
+      <text class="empty-icon">📨</text>
+      <text class="empty-title">暂无邀请记录</text>
+      <text class="empty-sub">去设计师列表邀请心仪的设计师吧</text>
+      <button class="empty-btn" bindtap="goToDesigners">浏览设计师</button>
+    </view>
+
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="loading-hint">
+      <text>加载中...</text>
+    </view>
+  </view>
+</view>

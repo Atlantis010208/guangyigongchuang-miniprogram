@@ -52,9 +52,9 @@
             <block wx:for="{{leftColImages}}" wx:key="id">
               <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
-                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
-                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, item.id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
+                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[item.id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
                   </view>
                 </view>
               </view>
@@ -65,9 +65,9 @@
             <block wx:for="{{rightColImages}}" wx:key="id">
               <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
-                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="https://picsum.photos/seed/{{item.seed}}/600/800" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
-                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, item.id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
+                    <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[item.id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
                   </view>
                 </view>
               </view>
@@ -76,7 +76,7 @@
         </view>
         
         <!-- Loading More -->
-        <view class="loading-more" wx:if="{{activeCategory !== '收藏'}}">
+        <view class="loading-more" wx:if="{{hasMore}}">
           <view class="spinner" wx:if="{{isLoadingMore}}"></view>
           <text wx:if="{{isLoadingMore}}">加载更多...</text>
         </view>
@@ -105,7 +105,7 @@
     <block wx:for="{{filteredImages}}" wx:key="id">
       <swiper-item class="modal-swiper-item">
         <view class="modal-image-wrap" catchtap="toggleModalControls">
-          <image class="modal-image" src="https://picsum.photos/seed/{{item.seed}}/1200/1600" mode="aspectFit" lazy-load></image>
+          <image class="modal-image" src="{{item.thumbUrl}}" mode="aspectFit" lazy-load></image>
         </view>
       </swiper-item>
     </block>
@@ -114,7 +114,7 @@
   <view class="modal-controls {{showControls ? 'visible' : ''}}" catchtap="true">
     <view class="modal-actions">
       <view class="action-btn circle" catchtap="onToggleFavoriteCurrent">
-        <image class="icon-heart-large" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{tools.includes(favorites, filteredImages[currentSwiperIndex].id) ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}}"></image>
+        <image class="icon-heart-large" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[filteredImages[currentSwiperIndex].id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}}"></image>
       </view>
       <view class="action-btn pill" catchtap="onDownloadCurrent">
         <image class="icon-download" src="/images/toolbox/download.svg" mode="aspectFit"></image>
@@ -124,11 +124,3 @@
   </view>
 </view>
 
-<wxs module="tools">
-  module.exports = {
-    includes: function(arr, item) {
-      if (!arr) return false;
-      return arr.indexOf(item) !== -1;
-    }
-  }
-</wxs>

@@ -118,39 +118,34 @@
   <!-- 发布的照明需求列表 -->
   <view class="cart-content" wx:if="{{filterType==='scheme' && requests.length > 0}}">
     <view class="cart-items">
-      <view class="cart-item" wx:for="{{requests}}" wx:key="id" bindtap="onRequestTap" data-id="{{item.id}}">
+      <view class="cart-item {{item.status === 'canceled' ? 'cart-item-no-btn' : ''}}" wx:for="{{requests}}" wx:key="id" bindtap="onRequestTap" data-id="{{item.id}}">
         <view class="item-content">
           <image class="item-image" src="{{item.cover}}" mode="aspectFill"></image>
           <view class="item-info">
-            <text class="item-title">{{item.cardTitle || item.space || '照明需求'}} <text wx:if="{{item.status==='canceled'}}" class="tag-cancel">已撤销</text><text wx:elif="{{item.statusText}}" class="tag-status">{{item.statusText}}</text><text wx:if="{{item.priority}}" class="tag-priority">优先</text></text>
-            <text wx:if="{{item.source==='publish'}}" class="item-specs">面积 {{item.area || '-'}}㎡ · 预算 ¥{{item.budget || '-'}} · 主灯 {{item.mainLight || '-'}} · 风格 {{item.style || '-'}} </text>
-            <text wx:elif="{{item.category==='custom'}}" class="item-specs">{{item.area || '-'}}㎡ · {{item.budget || '-'}} · {{item.style || '-'}} · {{item.progress || '-'}}</text>
-            <!-- 🔥 选配服务：与其他订单保持一致的单行布局 -->
-            <text wx:elif="{{item.category==='selection'}}" class="item-specs">预算 ¥{{item.budget || '-'}} · {{item.stage || '未开工'}}{{item.ceilingDrop ? ' · 吊顶' + item.ceilingDrop : ''}}{{item.bodyHeight ? ' · 灯体' + item.bodyHeight : ''}}</text>
-            <text wx:elif="{{item.source==='scheme'}}" class="item-specs">类别：{{item.categoryCN || item.category || '-'}}</text>
-            <text wx:elif="{{item.source==='optimize'}}" class="item-specs">方案优化服务</text>
-            <text wx:elif="{{item.source==='full'}}" class="item-specs">整套设计服务</text>
-            <text wx:elif="{{item.source==='custom_form'}}" class="item-specs">个性需求定制</text>
-            <!-- 🔥 设计师状态区域 -->
-            <view class="designer-status-row">
-              <block wx:if="{{item.designerStatus === 'assigned'}}">
-                <!-- 已分配：显示设计师名字 -->
-                <view class="designer-assigned">
-                  <text class="designer-label">设计师：</text>
-                  <text class="designer-name">{{item.designerName}}</text>
-                </view>
-              </block>
-              <block wx:elif="{{item.designerStatus === 'pending'}}">
-                <!-- 待确认：已预约但设计师未确认 -->
-                <view class="designer-pending">
-                  <text class="designer-label">设计师：</text>
-                  <text class="designer-status-pending">待确认</text>
-                </view>
-              </block>
-              <block wx:else>
-                <!-- 未预约：显示筛选按钮 -->
-                <button class="mini-btn designer-btn" size="mini" data-request="{{item}}" catchtap="onGoToDesigners">设计师筛选</button>
-              </block>
+            <view class="item-title-row">
+              <text class="item-title">{{item.cardTitle || item.space || '照明需求'}}</text>
+              <text wx:if="{{item.status==='canceled'}}" class="tag-cancel">已撤销</text>
+              <text wx:elif="{{item.statusText}}" class="tag-status">{{item.statusText}}</text>
+              <text wx:if="{{item.priority}}" class="tag-priority">优先</text>
+            </view>
+            <text class="item-specs">{{item.area ? '面积 ' + item.area + '㎡' : ''}}{{item.area && item.budget ? ' · ' : ''}}{{item.budget ? '预算 ' + item.budget : ''}}{{(item.area || item.budget) && item.style ? ' · ' : ''}}{{item.style ? '风格 ' + item.style : ''}}{{(item.area || item.budget || item.style) && item.progress ? ' · ' : ''}}{{item.progress || ''}}</text>
+            <!-- 已分配：显示设计师名字 -->
+            <view wx:if="{{item.designerStatus === 'assigned'}}" class="designer-status-row">
+              <view class="designer-assigned">
+                <text class="designer-label">设计师：</text>
+                <text class="designer-name">{{item.designerName}}</text>
+              </view>
+            </view>
+            <!-- 待确认：已预约但设计师未确认 -->
+            <view wx:elif="{{item.designerStatus === 'pending'}}" class="designer-status-row">
+              <view class="designer-pending">
+                <text class="designer-label">设计师：</text>
+                <text class="designer-status-pending">待确认</text>
+              </view>
+            </view>
+            <!-- 未预约且未撤销：显示筛选按钮 -->
+            <view wx:elif="{{item.status !== 'canceled'}}" class="designer-status-row">
+              <button class="mini-btn designer-btn" size="mini" data-request="{{item}}" catchtap="onGoToDesigners">设计师筛选</button>
             </view>
           </view>
         </view>

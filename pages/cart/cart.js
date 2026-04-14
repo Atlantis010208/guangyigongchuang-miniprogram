@@ -329,7 +329,7 @@ Page({
     if(r.status === 'canceled') return ''
     const steps = Array.isArray(r.steps) ? r.steps : []
     const order = ['submitted','review','design','done']
-    const texts = ['已提交','审核中','设计中','已完成']
+    const texts = ['已提交','进行中','设计中','已完成']
     let highest = -1
     for(const step of steps){
       if(step && step.done){
@@ -342,7 +342,7 @@ Page({
     const s = String(r.status || r.statusText || '').trim()
     if(/完成/.test(s) || /(done|completed)/i.test(s)) return '已完成'
     if(/设计/.test(s) || /计算/.test(s) || /(design|calc(ulate)?)/i.test(s)) return '设计中'
-    if(/审/.test(s) || /(review|approve)/i.test(s)) return '审核中'
+    if(/审/.test(s) || /(review|approve)/i.test(s)) return '进行中'
     return '已提交'
   },
   onRequestTap(e){

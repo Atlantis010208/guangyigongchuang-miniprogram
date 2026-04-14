@@ -84,19 +84,19 @@
     <view wx:if="{{!showResult}}" class="pro-version-v2">
       <!-- 蓝色渐变头部 -->
       <view class="v2-header">
-        <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
-        <view class="v2-back-btn" bindtap="onBackTap">
-          <image class="v2-back-icon" src="/images/toolbox/chevron-left.svg"></image>
-        </view>
-        <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
-        <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
-        <text class="v2-overlay-title">照度计算器</text>
-        <view class="v2-overlay-subtitle-wrap">
-          <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
-          <image class="v2-help-icon" src="/images/使用说明.png" bindtap="onOpenRules"></image>
-          <text class="v2-upgrade-btn" wx:if="{{activeTab === 'lux' && !isPro}}" bindtap="onUpgradeConfirm">立即开通</text>
-        </view>
-        <text class="v2-overlay-desc">{{tools.getModeDesc(activeTab)}}</text>
+        <!-- 背景图：配置加载完即开始下载，但隐藏；下载完成后 bindload 触发显示 -->
+        <image wx:if="{{headerBgLoaded}}" class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill" bindload="onHeaderBgLoad" hidden="{{!headerBgReady}}"></image>
+        <block wx:if="{{headerBgReady}}">
+          <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
+          <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
+          <text class="v2-overlay-title">照度计算器</text>
+          <view class="v2-overlay-subtitle-wrap">
+            <text class="v2-overlay-subtitle">{{tools.getModeName(activeTab)}}</text>
+            <image class="v2-help-icon" src="/images/使用说明.png" bindtap="onOpenRules"></image>
+            <text class="v2-upgrade-btn" wx:if="{{activeTab === 'lux' && !isPro}}" bindtap="onUpgradeConfirm">立即开通</text>
+          </view>
+          <text class="v2-overlay-desc">{{tools.getModeDesc(activeTab)}}</text>
+        </block>
       </view>
 
       <!-- 悬浮内容区域 -->

@@ -1,143 +1,100 @@
-<!-- 设计师详情页 - 参考 ai_studio 布局 -->
-<view class="container">
+<!-- 设计师详情页 -->
+<view class="page-container">
   <!-- 加载状态 -->
   <view wx:if="{{loading}}" class="loading-container">
     <view class="loading-spinner"></view>
-    <text>加载中...</text>
+    <text class="loading-text">加载中...</text>
   </view>
 
   <!-- 设计师详情 -->
   <view wx:elif="{{designer}}" class="detail-content">
-    <!-- 顶部英雄大图 - 使用作品图或头像 -->
+
+    <!-- Hero Section: 居中头像 + 姓名 + 职称 + 地点 -->
     <view class="hero-section">
-      <image
-        class="hero-image"
-        src="{{designer.portfolioImages[0] || designer.avatar || '/images/个人中心.png'}}"
-        mode="aspectFill"
-      />
-      <view class="hero-gradient"></view>
-    </view>
-
-    <!-- 浮动的个人信息卡片 -->
-    <view class="floating-profile-card">
-      <view class="profile-card-content">
-        <view class="profile-header">
-          <view class="profile-text">
-            <text class="designer-name">{{designer.name}}</text>
-            <text class="designer-subtitle">{{designer.title || '照明设计师'}} | {{designer.specialties[0] || '照明设计'}}</text>
-          </view>
-          <image
-            class="profile-avatar"
-            src="{{designer.avatar || '/images/个人中心.png'}}"
-            mode="aspectFill"
-          />
+      <view class="avatar-wrapper">
+        <image class="hero-avatar" src="{{designer.avatar || '/images/个人中心.png'}}" mode="aspectFill" />
+        <view class="verified-badge" wx:if="{{designer.hasCalcExp}}">
+          <text class="verified-icon">✓</text>
         </view>
-
-        <!-- 三栏统计数据 -->
-        <view class="stats-section">
-          <view class="stat-item">
-            <text class="stat-value">{{designer.rating || 0}}</text>
-            <text class="stat-label">评分</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-item">
-            <text class="stat-value">{{designer.projects || 0}}</text>
-            <text class="stat-label">成交</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-item">
-            <text class="stat-value">{{designer.experience || 0}}年</text>
-            <text class="stat-label">经验</text>
-          </view>
-        </view>
-
-        <!-- 认证标签 -->
-        <view class="cert-tags" wx:if="{{designer.hasCalcExp || (designer.certifications && designer.certifications.length > 0)}}">
-          <view wx:if="{{designer.hasCalcExp}}" class="cert-tag cert-tag-primary">
-            <text>✓ 照度计算认证</text>
-          </view>
-          <view wx:for="{{designer.certifications}}" wx:key="*this" class="cert-tag">
-            <text>{{item}}</text>
-          </view>
-        </view>
+      </view>
+      <text class="hero-name">{{designer.name}}</text>
+      <text class="hero-title">{{designer.title || '资深灯光设计师'}} · {{designer.experience || 0}}年经验</text>
+      <view class="hero-location">
+        <text class="location-icon">📍</text>
+        <text class="location-text">{{designer.location || '中国 · 深圳'}}</text>
       </view>
     </view>
 
-    <!-- 个人简介 -->
+    <!-- Stats Row: 三栏统计 -->
+    <view class="stats-row">
+      <view class="stat-card">
+        <text class="stat-value">{{designer.projects || 0}}</text>
+        <text class="stat-label">完成项目</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value">{{designer.rating || 0}}</text>
+        <text class="stat-label">平均评分</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-value">{{designer.responseRate || '99%'}}</text>
+        <text class="stat-label">响应率</text>
+      </view>
+    </view>
+
+    <!-- 设计师简介 -->
     <view wx:if="{{designer.bio}}" class="bio-section">
-      <view class="section-title">
-        <text>个人简介</text>
+      <text class="section-title">设计师简介</text>
+      <text class="bio-text">{{designer.bio}}</text>
+    </view>
+
+    <!-- 作品集 -->
+    <view class="portfolio-section">
+      <view class="section-header">
+        <text class="section-title">作品集</text>
+        <text class="section-action" wx:if="{{designer.portfolioImages && designer.portfolioImages.length > 2}}">查看全部</text>
       </view>
-      <view class="bio-content">
-        <text>{{designer.bio}}</text>
+      <view wx:if="{{designer.portfolioImages && designer.portfolioImages.length > 0}}" class="portfolio-grid">
+        <view class="portfolio-item" wx:for="{{designer.portfolioImages}}" wx:key="index" wx:if="{{index < 4}}" bindtap="previewImage" data-url="{{item}}" data-urls="{{designer.portfolioImages}}">
+          <image class="portfolio-image" src="{{item}}" mode="aspectFill" />
+          <text class="portfolio-name" wx:if="{{designer.portfolioNames[index]}}">{{designer.portfolioNames[index]}}</text>
+        </view>
+      </view>
+      <view wx:else class="empty-content">
+        <text class="empty-text">暂无作品展示</text>
       </view>
     </view>
 
-    <!-- Tab 切换栏 -->
-    <view class="tabs-wrapper">
-      <view
-        class="tab-button {{activeTab === 'works' ? 'active' : ''}}"
-        bindtap="onTabChange"
-        data-tab="works"
-      >
-        <text>代表作品 ({{designer.portfolioImages.length || 0}})</text>
-        <view wx:if="{{activeTab === 'works'}}" class="tab-underline"></view>
-      </view>
-      <view
-        class="tab-button {{activeTab === 'reviews' ? 'active' : ''}}"
-        bindtap="onTabChange"
-        data-tab="reviews"
-      >
-        <text>用户评价 ({{designer.reviews ? designer.reviews.length : 0}})</text>
-        <view wx:if="{{activeTab === 'reviews'}}" class="tab-underline"></view>
-      </view>
-    </view>
-
-    <!-- 内容区域 -->
-    <view class="content-wrapper">
-      <!-- 代表作品 - 使用 portfolioImages 数组 -->
-      <view wx:if="{{activeTab === 'works'}}" class="works-content">
-        <view wx:if="{{designer.portfolioImages && designer.portfolioImages.length > 0}}" class="portfolio-grid">
-          <view
-            wx:for="{{designer.portfolioImages}}"
-            wx:key="index"
-            class="portfolio-item"
-            bindtap="previewImage"
-            data-url="{{item}}"
-            data-urls="{{designer.portfolioImages}}"
-          >
-            <image
-              class="portfolio-image"
-              src="{{item}}"
-              mode="aspectFill"
-            />
-          </view>
-        </view>
-
-        <view wx:else class="empty-content">
-          <text class="empty-text">暂无作品展示</text>
+    <!-- 用户评价 -->
+    <view class="reviews-section">
+      <view class="section-header">
+        <text class="section-title">用户评价</text>
+        <view class="rating-summary" wx:if="{{designer.rating}}">
+          <text class="rating-star">★</text>
+          <text class="rating-value">{{designer.rating}}</text>
         </view>
       </view>
 
-      <!-- 用户评价 -->
-      <view wx:if="{{activeTab === 'reviews'}}" class="reviews-content">
-        <view wx:if="{{designer.reviews && designer.reviews.length > 0}}" class="review-list">
-          <view wx:for="{{designer.reviews}}" wx:key="date" class="review-card">
-            <view class="review-header">
-              <text class="review-user">{{item.user}}</text>
-              <view class="review-rating">
-                <text class="star">★</text>
-                <text class="rating-num">{{item.rating}}</text>
+      <view wx:if="{{designer.reviews && designer.reviews.length > 0}}" class="review-list">
+        <view class="review-card" wx:for="{{designer.reviews}}" wx:key="date">
+          <view class="review-top">
+            <view class="review-user-info">
+              <view class="review-avatar-placeholder">
+                <text class="review-avatar-text">{{item.user[0]}}</text>
+              </view>
+              <view class="review-user-meta">
+                <text class="review-user-name">{{item.user}}</text>
+                <text class="review-date">{{item.date}}</text>
               </view>
             </view>
-            <text class="review-content">{{item.content}}</text>
-            <text class="review-date">{{item.date}}</text>
+            <view class="review-stars">
+              <text class="review-star" wx:for="{{5}}" wx:for-item="starIdx" wx:key="starIdx">{{starIdx < item.rating ? '★' : '☆'}}</text>
+            </view>
           </view>
+          <text class="review-text">{{item.content}}</text>
         </view>
-
-        <view wx:else class="empty-content">
-          <text class="empty-text">暂无用户评价</text>
-        </view>
+      </view>
+      <view wx:else class="empty-content">
+        <text class="empty-text">暂无用户评价</text>
       </view>
     </view>
 
@@ -152,119 +109,16 @@
 
   <!-- 底部操作栏 -->
   <view wx:if="{{!loading && designer}}" class="action-bar">
-    <view class="customer-service" bindtap="onContact">
-      <image class="service-icon-img" src="/images/客服.png" mode="aspectFit" />
-      <text class="service-text">客服</text>
+    <view class="action-icon-btn" bindtap="onCollect">
+      <text class="action-icon-text">♡</text>
+      <text class="action-icon-label">收藏</text>
     </view>
-    <view class="action-buttons">
-      <view class="consult-btn" bindtap="onConsult">
-        <text>私信咨询</text>
-      </view>
-      <view class="book-btn" bindtap="openBooking">
-        <text>立即预约</text>
-        <text class="arrow">→</text>
-      </view>
+    <view class="action-icon-btn" bindtap="onShareTap">
+      <text class="action-icon-text">↗</text>
+      <text class="action-icon-label">分享</text>
     </view>
-  </view>
-
-  <!-- 预约弹窗 -->
-  <view wx:if="{{showBookingModal}}" class="modal-mask" catchtap="closeBooking">
-    <view class="modal-content" catchtap="noop">
-      <view class="modal-header">
-        <text class="modal-title">预约设计师</text>
-        <view class="modal-close" catchtap="closeBooking">✕</view>
-      </view>
-
-      <view class="modal-body">
-        <!-- 加载中 -->
-        <view wx:if="{{loadingRequests}}" class="loading-hint">
-          <text>加载需求中...</text>
-        </view>
-        
-        <!-- 关联需求选择 -->
-        <block wx:elif="{{userRequests.length > 0}}">
-          <view class="form-item">
-            <text class="form-label">关联需求</text>
-            <picker bindchange="onRequestChange" value="{{selectedRequestIndex}}" range="{{userRequests}}" range-key="title">
-              <view class="picker-value">
-                <text class="picker-text selected">{{selectedRequest.title || '请选择'}}</text>
-                <text class="picker-arrow">›</text>
-              </view>
-            </picker>
-          </view>
-          
-          <!-- 自动填充的信息（只读展示） -->
-          <view class="auto-fill-info" wx:if="{{selectedRequest}}">
-            <view class="info-row">
-              <text class="info-label">空间类型</text>
-              <text class="info-value">{{selectedRequest.spaceType || '-'}}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-label">设计面积</text>
-              <text class="info-value">{{selectedRequest.area || '-'}}㎡</text>
-            </view>
-            <view class="info-row">
-              <text class="info-label">预算范围</text>
-              <text class="info-value">{{selectedRequest.budget || '-'}}</text>
-            </view>
-          </view>
-        </block>
-        
-        <!-- 无需求提示 -->
-        <view wx:else class="no-request-hint">
-          <text class="hint-icon">📋</text>
-          <text class="hint-text">您还没有发布照明需求</text>
-          <text class="hint-sub">预约后将自动关联您的需求信息</text>
-        </view>
-
-        <!-- 分隔线 -->
-        <view class="form-divider"></view>
-
-        <!-- 联系方式类型 -->
-        <view class="form-item">
-          <text class="form-label">联系方式 <text class="form-label-required">*</text></text>
-          <picker bindchange="onContactTypeChange" value="{{contactTypeIndex}}" range="{{contactTypeOptions}}">
-            <view class="picker-value">
-              <text class="picker-text {{bookingForm.contactType ? 'selected' : 'placeholder'}}">
-                {{bookingForm.contactType || '请选择'}}
-              </text>
-              <text class="picker-arrow">›</text>
-            </view>
-          </picker>
-        </view>
-
-        <!-- 联系方式内容 -->
-        <view class="form-item">
-          <text class="form-label">{{bookingForm.contactType || '联系方式'}}号码 <text class="form-label-required">*</text></text>
-          <input
-            class="form-input"
-            type="text"
-            placeholder="{{bookingForm.contactType ? '请输入您的' + bookingForm.contactType : '请先选择联系方式'}}"
-            placeholder-class="input-placeholder"
-            value="{{bookingForm.contact}}"
-            bindinput="onContactInput"
-          />
-        </view>
-
-        <!-- 备注 -->
-        <view class="form-item">
-          <text class="form-label">备注 <text class="form-label-hint">（选填）</text></text>
-          <textarea
-            class="form-textarea"
-            placeholder="请描述您的需求或特殊要求"
-            placeholder-class="textarea-placeholder"
-            value="{{bookingForm.remark}}"
-            bindinput="onRemarkInput"
-            maxlength="200"
-          />
-        </view>
-      </view>
-
-      <view class="modal-footer">
-        <view class="submit-btn" bindtap="submitBooking">
-          <text>提交预约</text>
-        </view>
-      </view>
+    <view class="action-main-btn" bindtap="onInvite">
+      <text>邀请抢单</text>
     </view>
   </view>
 </view>

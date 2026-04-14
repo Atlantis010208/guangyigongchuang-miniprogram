@@ -1,0 +1,99 @@
+<!-- pages/color-temp/color-temp.wxml -->
+<view class="page color-temp-page">
+  <!-- 统一版 UI 头部 (保留蓝色背景和标题) -->
+  <view class="v2-header">
+    <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
+    <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
+    <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
+    <text class="v2-overlay-title">{{headerTitle}}</text>
+    <view class="v2-overlay-subtitle-wrap">
+      <text class="v2-overlay-subtitle">{{headerSubtitle}}</text>
+    </view>
+    <text class="v2-overlay-desc">{{headerDesc}}</text>
+  </view>
+
+  <!-- ==================== 内容区域 ==================== -->
+  <view class="v2-content">
+    
+    <!-- 表单态 -->
+    <view class="form-container">
+      
+      <!-- 卡片：基本信息 -->
+      <view class="v2-card group-card">
+        
+        <!-- 空间类别 -->
+        <view class="v2-input-row">
+          <text class="v2-label">空间类别</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{spaceTypes}}" range-key="name" value="{{spaceIndex < 0 ? 0 : spaceIndex}}" bindchange="onSpaceChange">
+            <view class="picker-text {{spaceIndex >= 0 ? '' : 'placeholder'}}">
+              {{spaceIndex >= 0 ? spaceTypes[spaceIndex].name : '请选择空间'}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 目标照度 -->
+        <view class="v2-input-row">
+          <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
+          <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
+        </view>
+
+        <!-- 房间面积 -->
+        <view class="v2-input-row">
+          <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
+          <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
+        </view>
+
+        <!-- 使用人群 -->
+        <view class="v2-input-row">
+          <text class="v2-label">使用人群</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{ageGroups}}" range-key="name" value="{{ageIndex < 0 ? 0 : ageIndex}}" bindchange="onAgeChange">
+            <view class="picker-text {{ageIndex >= 0 ? '' : 'placeholder'}}">
+              {{ageIndex >= 0 ? ageGroups[ageIndex].name : '请选择人群'}}
+            </view>
+          </picker>
+        </view>
+
+        <!-- 主要用途 -->
+        <view class="v2-input-row">
+          <text class="v2-label">主要用途</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{usages}}" range-key="name" value="{{usageIndex < 0 ? 0 : usageIndex}}" bindchange="onUsageChange">
+            <view class="picker-text {{usageIndex >= 0 ? '' : 'placeholder'}}">
+              {{usageIndex >= 0 ? usages[usageIndex].name : '这个空间主要做什么'}}
+            </view>
+          </picker>
+        </view>
+
+      </view>
+
+      <!-- 卡片：灯具信息 -->
+      <view class="v2-card group-card">
+
+        <view class="v2-input-row">
+          <text class="v2-label">主要灯具</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{fixtures}}" range-key="name" value="{{primaryFixtureIndex < 0 ? 0 : primaryFixtureIndex}}" bindchange="onPrimaryFixtureChange">
+            <view class="picker-text {{primaryFixtureIndex >= 0 ? '' : 'placeholder'}}">
+              {{primaryFixtureIndex >= 0 ? fixtures[primaryFixtureIndex].name : '空间里的主灯是什么'}}
+            </view>
+          </picker>
+        </view>
+
+        <view class="v2-input-row">
+          <text class="v2-label">辅助灯具</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{secondaryFixtureOptions}}" range-key="name" value="{{secondaryFixtureIndex < 0 ? 0 : secondaryFixtureIndex}}" bindchange="onSecondaryFixtureChange">
+            <view class="picker-text {{secondaryFixtureIndex >= 0 ? '' : 'placeholder'}}">
+              {{secondaryFixtureIndex >= 0 ? secondaryFixtureOptions[secondaryFixtureIndex].name : '还有其他辅助灯吗'}}
+            </view>
+          </picker>
+        </view>
+
+      </view>
+
+      <button class="v2-btn-calculate" bindtap="onCalculate">获取专业建议</button>
+      
+      <view class="disclaimer">
+        <text class="disclaimer-text">* 建议基于光乙灯光设计标准，推荐色温仅供参考，实际请结合具体软装材质进行微调。</text>
+      </view>
+    </view>
+
+  </view>
+</view>

@@ -19,6 +19,7 @@ Page({
 
   onLoad(options) {
     wx.hideHomeButton();
+    this._scrollLowerTimer = null;
     this.loadProjects(true);
   },
 
@@ -48,19 +49,31 @@ Page({
       name: 'designer_projects',
       data: { action: 'list', page, pageSize, statusFilter },
       success: (res) => {
-        this.setData({ loading: false, refreshing: false });
         if (res.result && res.result.success) {
           const list = res.result.data.list || [];
           const newProjects = reset ? list : [...this.data.projects, ...list];
           
+          // 合并为一次 setData，避免双重渲染
+          const query = this.data.searchQuery.trim().toLowerCase();
+          let filteredProjects = newProjects;
+          if (query) {
+            filteredProjects = newProjects.filter(p => {
+              const titleMatch = p.title && p.title.toLowerCase().includes(query);
+              const clientMatch = p.clientInfo && p.clientInfo.nickname && p.clientInfo.nickname.toLowerCase().includes(query);
+              return titleMatch || clientMatch;
+            });
+          }
+
           this.setData({ 
+            loading: false,
+            refreshing: false,
             projects: newProjects,
+            filteredProjects,
             hasMore: res.result.data.hasMore,
             page: page + 1
           });
-          
-          this.filterProjects(); // 应用搜索过滤
         } else {
+          this.setData({ loading: false, refreshing: false });
           console.warn('[designer-projects] 加载失败:', res.result && res.result.message);
         }
       },
@@ -108,8 +121,12 @@ Page({
     this.loadProjects(true);
   },
 
-  // 触底加载更多
+  // 触底加载更多（节流防抖，避免快速滚动重复触发）
   onReachBottom() {
+    if (this._scrollLowerTimer) return;
+    this._scrollLowerTimer = setTimeout(() => {
+      this._scrollLowerTimer = null;
+    }, 500);
     this.loadProjects();
   },
 
