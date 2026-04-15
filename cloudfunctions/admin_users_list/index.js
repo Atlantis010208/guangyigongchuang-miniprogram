@@ -63,29 +63,34 @@ exports.main = async (event) => {
       }
     }
     
-    // 关键词搜索（昵称或手机号）
+    // 关键词搜索（昵称或手机号，支持模糊匹配）
     if (keyword) {
+      // 转义正则特殊字符，防止搜索 "Py_[太初]" 等包含特殊字符的内容时报错
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = db.RegExp({ regexp: escaped, options: 'i' })
       query = _.and([
         query,
         _.or([
-          { nickname: db.RegExp({ regexp: keyword, options: 'i' }) },
-          { phoneNumber: db.RegExp({ regexp: keyword, options: 'i' }) },
-          { username: db.RegExp({ regexp: keyword, options: 'i' }) },
-          { email: db.RegExp({ regexp: keyword, options: 'i' }) }
+          { nickname: regex },
+          { phoneNumber: regex },
+          { username: regex },
+          { email: regex }
         ])
       ])
     }
     
-    // 获取总数
-    const countRes = await db.collection('users').where(query).count()
-    
-    // 获取数据
-    const dataRes = await db.collection('users')
-      .where(query)
-      .orderBy(orderBy, order)
-      .skip(offset)
-      .limit(Math.min(limit, 100))
-      .get()
+    // 获取总数 + 全局统计（并行查询）
+    const col = db.collection('users')
+    const [countRes, dataRes, totalCount, adminCount, userCount, designerCount, disabledCount] = await Promise.all([
+      col.where(query).count(),
+      col.where(query).orderBy(orderBy, order).skip(offset).limit(Math.min(limit, 100)).get(),
+      // 全局统计（不受筛选条件影响）
+      col.where({ isDelete: _.neq(1) }).count(),
+      col.where({ isDelete: _.neq(1), roles: 0 }).count(),
+      col.where({ isDelete: _.neq(1), roles: 1 }).count(),
+      col.where({ isDelete: _.neq(1), roles: 2 }).count(),
+      col.where({ isDelete: 1 }).count(),
+    ])
     
     // 格式化返回数据
     const users = dataRes.data.map(user => ({
@@ -109,6 +114,13 @@ exports.main = async (event) => {
       code: 'OK',
       data: users,
       total: countRes.total,
+      stats: {
+        total: totalCount.total,
+        admin: adminCount.total,
+        user: userCount.total,
+        designer: designerCount.total,
+        disabled: disabledCount.total,
+      },
       pagination: {
         limit,
         offset,

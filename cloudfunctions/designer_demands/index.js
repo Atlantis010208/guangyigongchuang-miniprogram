@@ -168,8 +168,11 @@ function enrichDemand(item) {
     budgetText = '¥' + item.budget.toLocaleString()
   }
 
+  const ownerName = String(item.ownerName || item.userNickname || item.userName || '').trim()
+
   return {
     ...item,
+    ownerName,
     categoryText: CATEGORY_MAP[item.category] || item.category || '设计需求',
     isNew,
     isExpiringSoon,
@@ -233,12 +236,34 @@ async function listDemands(openid, event) {
     .limit(pageSize)
     .field({
       // 不返回客户敏感字段
-      contact: false,
-      _openid: false
+      contact: false
     })
     .get()
 
-  const list = (res.data || []).map(enrichDemand)
+  const rawList = res.data || []
+  const fallbackOpenids = [...new Set(rawList.filter(item => !item.userNickname && item._openid).map(item => item._openid))]
+  let nicknameMap = {}
+
+  if (fallbackOpenids.length > 0) {
+    const userRes = await db.collection('users')
+      .where({ _openid: _.in(fallbackOpenids) })
+      .field({ _openid: true, nickname: true })
+      .get()
+
+    nicknameMap = (userRes.data || []).reduce((map, user) => {
+      map[user._openid] = user.nickname || ''
+      return map
+    }, {})
+  }
+
+  const list = rawList.map(item => {
+    const enriched = enrichDemand({
+      ...item,
+      userNickname: item.userNickname || nicknameMap[item._openid] || ''
+    })
+    delete enriched._openid
+    return enriched
+  })
 
   return {
     success: true,

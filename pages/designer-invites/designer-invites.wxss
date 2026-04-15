@@ -183,6 +183,14 @@ page {
   margin-right: 4px;
 }
 
+.card-owner {
+  color: var(--text-secondary-light);
+  font-size: 14px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
 .card-icon {
   height: 40px;
   width: 40px;

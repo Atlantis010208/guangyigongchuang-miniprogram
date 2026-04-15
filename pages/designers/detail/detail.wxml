@@ -18,10 +18,10 @@
         </view>
       </view>
       <text class="hero-name">{{designer.name}}</text>
-      <text class="hero-title">{{designer.title || '资深灯光设计师'}} · {{designer.experience || 0}}年经验</text>
-      <view class="hero-location">
+      <text class="hero-title" wx:if="{{designer.title || designer.experience}}">{{designer.title || '灯光设计师'}}{{designer.experience ? ' · ' + designer.experience + '年经验' : ''}}</text>
+      <view class="hero-location" wx:if="{{designer.location}}">
         <text class="location-icon">📍</text>
-        <text class="location-text">{{designer.location || '中国 · 深圳'}}</text>
+        <text class="location-text">{{designer.location}}</text>
       </view>
     </view>
 
@@ -64,7 +64,7 @@
       </view>
     </view>
 
-    <!-- 用户评价 -->
+    <!-- 用户评价（评价功能尚未实现，暂时隐藏）
     <view class="reviews-section">
       <view class="section-header">
         <text class="section-title">用户评价</text>
@@ -97,6 +97,7 @@
         <text class="empty-text">暂无用户评价</text>
       </view>
     </view>
+    -->
 
     <!-- 底部占位 -->
     <view class="bottom-spacer"></view>

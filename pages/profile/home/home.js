@@ -247,6 +247,20 @@ Page({
   },
   
   /**
+   * 跳转设计师工作台
+   */
+  goDesigner() {
+    if (!this.data.isDesigner && !this.data.isAdmin) {
+      wx.showToast({ title: '仅设计师可进入', icon: 'none' })
+      return
+    }
+    const app = getApp()
+    wx.setStorageSync('userRole', 'designer')
+    if (app && app.globalData) app.globalData.userRole = 'designer'
+    wx.switchTab({ url: '/pages/designer-home/designer-home' })
+  },
+
+  /**
    * 拨打电话
    */
   callPhone(e) {

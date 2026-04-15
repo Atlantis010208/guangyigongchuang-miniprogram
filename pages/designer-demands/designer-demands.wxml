@@ -37,6 +37,7 @@
                 <van-icon name="points" size="14px" />
                 {{item.service}}
               </view>
+              <view class="card-owner" wx:if="{{item.ownerName}}">业主：{{item.ownerName}}</view>
             </view>
             <view class="card-icon">
               <!-- 根据空间类型动态渲染图标 -->

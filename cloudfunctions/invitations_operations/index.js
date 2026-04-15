@@ -112,9 +112,14 @@ function formatInvitation(item) {
   else if (hours < 24) timeText = `${hours}小时前`
   else timeText = `${days}天前`
 
+  const ownerName = String(
+    item.ownerName || item.ownerNickname || (item.requestSummary && item.requestSummary.ownerName) || ''
+  ).trim()
+
   return {
     ...item,
     id: item._id,
+    ownerName,
     statusText: statusInfo.text,
     statusColor: statusInfo.color,
     timeText,
@@ -205,7 +210,47 @@ async function listByDesigner(openid, event) {
     .orderBy('createdAt', 'desc')
     .skip(skip).limit(pageSize).get()
 
-  const list = (res.data || []).map(formatInvitation)
+  const rawList = res.data || []
+  const ownerUserIds = [...new Set(rawList.filter(item => item.ownerUserId).map(item => item.ownerUserId))]
+  const ownerOpenids = [...new Set(rawList.filter(item => !item.ownerUserId && item._openid).map(item => item._openid))]
+
+  let ownerByUserId = {}
+  let ownerByOpenid = {}
+
+  if (ownerUserIds.length > 0) {
+    try {
+      const ownerRes = await db.collection('users')
+        .where({ _id: _.in(ownerUserIds) })
+        .field({ _id: true, nickname: true })
+        .get()
+      ownerByUserId = (ownerRes.data || []).reduce((map, user) => {
+        map[user._id] = user.nickname || ''
+        return map
+      }, {})
+    } catch (err) {
+      console.warn('[invitations_operations] 按 ownerUserId 查询业主昵称失败:', err.message)
+    }
+  }
+
+  if (ownerOpenids.length > 0) {
+    try {
+      const ownerRes = await db.collection('users')
+        .where({ _openid: _.in(ownerOpenids) })
+        .field({ _openid: true, nickname: true })
+        .get()
+      ownerByOpenid = (ownerRes.data || []).reduce((map, user) => {
+        map[user._openid] = user.nickname || ''
+        return map
+      }, {})
+    } catch (err) {
+      console.warn('[invitations_operations] 按 _openid 查询业主昵称失败:', err.message)
+    }
+  }
+
+  const list = rawList.map(item => formatInvitation({
+    ...item,
+    ownerName: item.ownerName || ownerByUserId[item.ownerUserId] || ownerByOpenid[item._openid] || ''
+  }))
 
   return {
     success: true, code: 'OK', message: '获取成功',

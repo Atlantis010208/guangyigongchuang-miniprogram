@@ -29,10 +29,35 @@ exports.main = async (event) => {
       }
     }
     
-    const { id, data } = event
+    const { id, data, hardDelete } = event
     
     if (!id) {
       return { success: false, code: 'INVALID_PARAMS', errorMessage: '缺少设计师 ID' }
+    }
+    
+    // 硬删除：彻底从数据库移除
+    if (hardDelete) {
+      const designerRes = await db.collection('designers').doc(id).get()
+      if (!designerRes.data) {
+        return { success: false, code: 'NOT_FOUND', errorMessage: '设计师不存在' }
+      }
+      const old = designerRes.data
+      // 收集需要清理的云存储文件
+      const filesToClean = []
+      if (old.avatar && old.avatar.startsWith('cloud://')) filesToClean.push(old.avatar)
+      if (Array.isArray(old.portfolioImages)) {
+        old.portfolioImages.forEach(img => { if (img && img.startsWith('cloud://')) filesToClean.push(img) })
+      }
+      // 删除数据库记录
+      await db.collection('designers').doc(id).remove()
+      // 清理云存储文件
+      if (filesToClean.length > 0) {
+        try { await cloud.deleteFile({ fileList: filesToClean }) } catch (e) { console.warn('[admin_designers_update] 清理文件失败:', e) }
+      }
+      // 清理 designer_portfolios 集合中关联的作品
+      try { await db.collection('designer_portfolios').where({ designerId: id }).remove() } catch (e) {}
+      console.log(`[admin_designers_update] Admin: ${authResult.user._id}, Hard-deleted designer: ${id}`)
+      return { success: true, code: 'OK', message: '设计师已彻底删除' }
     }
     
     if (!data || Object.keys(data).length === 0) {

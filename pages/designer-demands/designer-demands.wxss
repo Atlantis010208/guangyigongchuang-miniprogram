@@ -158,6 +158,14 @@ page {
   margin-right: 4px; /* mr-1 */
 }
 
+.card-owner {
+  color: var(--text-secondary-light);
+  font-size: 14px; /* text-sm */
+  margin-top: 4px; /* mt-1 */
+  display: flex;
+  align-items: center;
+}
+
 .card-icon {
   height: 40px; /* h-10 */
   width: 40px; /* w-10 */

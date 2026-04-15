@@ -73,11 +73,17 @@ Component({
     _updateRole() {
       const app = getApp()
       const userDoc = (app && app.globalData && app.globalData.userDoc) || wx.getStorageSync('userDoc')
-      // 优先读取独立的 userRole 缓存（和 splash.js 判断逻辑一致）
-      const userRole = wx.getStorageSync('userRole')
-      const isDesigner = userRole === 'designer' || (userDoc && userDoc.roles === 2)
-      const role = isDesigner ? 'designer' : 'owner'
-      const list = isDesigner ? this.data.designerList : this.data.ownerList
+      const globalUserRole = app && app.globalData && app.globalData.userRole
+      const userRole = globalUserRole || wx.getStorageSync('userRole')
+      let role = 'owner'
+
+      if (userRole === 'designer' || userRole === 'owner') {
+        role = userRole
+      } else if (userDoc && userDoc.roles === 2) {
+        role = 'designer'
+      }
+
+      const list = role === 'designer' ? this.data.designerList : this.data.ownerList
 
       this.setData({ role, list })
     },

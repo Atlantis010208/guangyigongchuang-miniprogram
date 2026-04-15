@@ -36,6 +36,7 @@
                 <van-icon name="points" size="14px" />
                 业主邀请
               </view>
+              <view class="card-owner" wx:if="{{item.ownerName}}">业主：{{item.ownerName}}</view>
             </view>
             <view class="card-icon">
               <van-icon name="{{item.requestSummary.space === '住宅' ? 'wap-home-o' : (item.requestSummary.space === '商铺' ? 'shop-o' : 'hotel-o')}}" size="24px" color="#9CA3AF" />

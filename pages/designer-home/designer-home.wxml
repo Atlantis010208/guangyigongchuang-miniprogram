@@ -65,6 +65,7 @@
               <view class="tag-{{item.tagType}}" wx:if="{{item.tagText}}">{{item.tagText}}</view>
               <view class="card-title">{{item.title}}</view>
               <view class="card-subtitle">{{item.service}}</view>
+              <view class="card-owner" wx:if="{{item.ownerName}}">业主：{{item.ownerName}}</view>
             </view>
             <view class="card-icon">
               <!-- 动态根据空间类型展示图标 -->
