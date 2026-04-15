@@ -516,7 +516,7 @@ Page({
     
     // 照度计算 - 跳转到照明计算页面
     if (category === 'office') {
-      wx.switchTab({ url: '/pages/search/search' })
+      wx.navigateTo({ url: '/pages/search/search' })
       return
     }
     
