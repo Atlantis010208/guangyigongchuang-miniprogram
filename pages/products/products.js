@@ -468,7 +468,7 @@ Page({
 
   // 电子商城入口
   onMallTap(){
-    wx.navigateTo({ url: '/pages/mall/mall' })
+    wx.switchTab({ url: '/pages/mall/mall' })
   },
 
   // 英雄卡片点击：进入发布照明需求
