@@ -152,15 +152,23 @@
 
         <!-- 🆕 视频内章节列表（融入简介模式） -->
         <view class="video-time-chapters" wx:if="{{currentLesson.timeChapters && currentLesson.timeChapters.length > 0}}">
-          <view 
-            class="video-time-chapter-item {{currentChapterIndex === index ? 'active' : ''}}" 
-            wx:for="{{currentLesson.timeChapters}}" 
-            wx:key="time"
-            bindtap="onChapterTap"
-            data-time="{{item.time}}"
-          >
-            <text class="chapter-time">{{item.timeStr}}</text>
-            <text class="chapter-name">{{item.title}}</text>
+          <!-- 展开/折叠按钮 - 放在列表上方或作为入口 -->
+          <view class="chapters-toggle-btn" bindtap="toggleChapters">
+            <text class="toggle-text">{{isChaptersExpanded ? '收起本节章节' : '查看本节章节'}}</text>
+            <view class="toggle-arrow {{isChaptersExpanded ? 'up' : 'down'}}"></view>
+          </view>
+
+          <view class="chapters-list" wx:if="{{isChaptersExpanded}}">
+            <view 
+              class="video-time-chapter-item {{currentChapterIndex === index ? 'active' : ''}}" 
+              wx:for="{{currentLesson.timeChapters}}" 
+              wx:key="time"
+              bindtap="onChapterTap"
+              data-time="{{item.time}}"
+            >
+              <text class="chapter-time">{{item.timeStr}}</text>
+              <text class="chapter-name">{{item.title}}</text>
+            </view>
           </view>
         </view>
       </view>

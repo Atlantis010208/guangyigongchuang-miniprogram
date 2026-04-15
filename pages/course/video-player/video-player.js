@@ -60,7 +60,10 @@ Page({
     learnedCount: 0,
     
     // 🆕 当前播放到的视频章节索引
-    currentChapterIndex: -1
+    currentChapterIndex: -1,
+    
+    // 🆕 视频内章节列表展开状态
+    isChaptersExpanded: false
   },
 
   // 实例属性（不触发渲染）
@@ -416,6 +419,15 @@ Page({
       // 跳转后自动播放
       this.videoContext.play();
     }
+  },
+
+  /**
+   * 🆕 切换视频章节列表展开/折叠状态
+   */
+  toggleChapters() {
+    this.setData({
+      isChaptersExpanded: !this.data.isChaptersExpanded
+    });
   },
 
   /**
@@ -937,34 +949,29 @@ Page({
 
   /**
    * 处理课时内的视频章节数据
-   * 包括格式化时间显示和测试用的 Mock 数据注入
+   * 格式化时间显示（支持 MM:SS 和 HH:MM:SS）
    * @param {Object} lesson - 课时对象
    * @private
    */
   _processLessonChapters(lesson) {
     if (!lesson) return;
 
-    // 【测试代码】如果当前视频没有章节数据，自动加一点用于预览 UI
-    // 注意：正式环境上线前应移除此 Mock 逻辑
+    // 无 timeChapters 时不注入假数据，前端 UI 通过 wx:if 自动隐藏章节区域
     if (!lesson.timeChapters || lesson.timeChapters.length === 0) {
-      lesson.timeChapters = [
-        { time: 0, title: '前言介绍' },
-        { time: 15, title: '核心原理解析' },
-        { time: 45, title: '实操演示环节' },
-        { time: 70, title: '课程总结与作业' }
-      ];
+      return;
     }
 
-    if (lesson.timeChapters && lesson.timeChapters.length > 0) {
-      // 确保按时间排序
-      lesson.timeChapters.sort((a, b) => a.time - b.time);
-      // 格式化时间显示
-      lesson.timeChapters.forEach(chapter => {
-        const mins = Math.floor(chapter.time / 60);
-        const secs = Math.floor(chapter.time % 60);
-        chapter.timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      });
-    }
+    // 确保按时间排序
+    lesson.timeChapters.sort((a, b) => a.time - b.time);
+    // 格式化时间显示（支持 HH:MM:SS）
+    lesson.timeChapters.forEach(chapter => {
+      const hours = Math.floor(chapter.time / 3600);
+      const mins = Math.floor((chapter.time % 3600) / 60);
+      const secs = Math.floor(chapter.time % 60);
+      chapter.timeStr = hours > 0
+        ? `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        : `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    });
   },
 
   /**
