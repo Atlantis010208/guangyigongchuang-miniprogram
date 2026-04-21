@@ -31,17 +31,16 @@
           </picker>
         </view>
 
-        <!-- 目标照度 -->
+        <!-- 色温建议 -->
         <view class="v2-input-row">
-          <text class="v2-label">目标照度 <text class="v2-unit">(Lx)</text></text>
-          <input class="v2-input-box" type="number" value="{{targetLux}}" data-field="targetLux" bindinput="onFieldInput" placeholder="请输入照度" placeholder-style="color:#C0C4CC"/>
+          <text class="v2-label">色温建议 <text class="v2-unit">(K)</text></text>
+          <input class="v2-input-box" type="number" value="{{suggestedTemp}}" data-field="suggestedTemp" bindinput="onFieldInput" placeholder="选择空间后自动推荐" placeholder-style="color:#C0C4CC"/>
         </view>
 
-        <!-- 房间面积 -->
-        <view class="v2-input-row">
-          <text class="v2-label">房间面积 <text class="v2-unit">(㎡)</text></text>
-          <input class="v2-input-box" type="number" value="{{area}}" data-field="area" bindinput="onFieldInput" placeholder="请输入面积" placeholder-style="color:#C0C4CC"/>
-        </view>
+      </view>
+
+      <!-- 卡片：场景与灯具 -->
+      <view class="v2-card group-card">
 
         <!-- 使用人群 -->
         <view class="v2-input-row">
@@ -63,27 +62,21 @@
           </picker>
         </view>
 
-      </view>
-
-      <!-- 卡片：灯具信息 -->
-      <view class="v2-card group-card">
-
+        <!-- 灯具选择 -->
         <view class="v2-input-row">
-          <text class="v2-label">主要灯具</text>
-          <picker class="v2-input-box picker" mode="selector" range="{{fixtures}}" range-key="name" value="{{primaryFixtureIndex < 0 ? 0 : primaryFixtureIndex}}" bindchange="onPrimaryFixtureChange">
-            <view class="picker-text {{primaryFixtureIndex >= 0 ? '' : 'placeholder'}}">
-              {{primaryFixtureIndex >= 0 ? fixtures[primaryFixtureIndex].name : '空间里的主灯是什么'}}
+          <text class="v2-label">添加灯具</text>
+          <picker class="v2-input-box picker" mode="selector" range="{{fixtureAddOptions}}" value="{{fixtureAddValue}}" bindchange="onAddFixture">
+            <view class="picker-text {{fixtureAddValue===0 ? 'placeholder' : ''}}">
+              {{fixtureAddOptions[fixtureAddValue]}}
+              <text class="v2-picker-arrow">▼</text>
             </view>
           </picker>
         </view>
-
-        <view class="v2-input-row">
-          <text class="v2-label">辅助灯具</text>
-          <picker class="v2-input-box picker" mode="selector" range="{{secondaryFixtureOptions}}" range-key="name" value="{{secondaryFixtureIndex < 0 ? 0 : secondaryFixtureIndex}}" bindchange="onSecondaryFixtureChange">
-            <view class="picker-text {{secondaryFixtureIndex >= 0 ? '' : 'placeholder'}}">
-              {{secondaryFixtureIndex >= 0 ? secondaryFixtureOptions[secondaryFixtureIndex].name : '还有其他辅助灯吗'}}
-            </view>
-          </picker>
+        
+        <!-- 选中的灯具，直接复用 v2-input-row 保证样式完全一致 -->
+        <view class="v2-input-row" wx:for="{{selectedFixtures}}" wx:key="id">
+          <text style="flex: 1; font-size: 30rpx; color: #333; font-weight: 500;">{{item.name}}</text>
+          <view data-id="{{item.id}}" bindtap="onRemoveFixture" style="font-size: 36rpx; color: #999; padding: 0 10rpx;">×</view>
         </view>
 
       </view>

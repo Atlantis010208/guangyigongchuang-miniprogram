@@ -252,3 +252,20 @@
   margin-right: 12rpx;
   font-weight: bold;
 }
+
+.v2-picker-arrow {
+  font-size: 20rpx;
+  color: #C0C4CC;
+  margin-left: 8rpx;
+}
+
+/* 色温建议提示 */
+.v2-input-hint {
+  padding: 4rpx 32rpx 16rpx;
+  margin-top: -8rpx;
+}
+
+.v2-hint-text {
+  font-size: 22rpx;
+  color: #909399;
+}

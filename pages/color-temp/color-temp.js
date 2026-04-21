@@ -3,7 +3,7 @@
 Page({
   data: {
     // UI 控制
-    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/搜索栏背景/色温调节器背景.jpg',
+    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/color-temp-bg.png',
     headerTitle: '色温调节器',
     headerSubtitle: '专业分层色温建议',
     headerDesc: '基于空间、人群和氛围智能推荐照明方案',
@@ -31,7 +31,8 @@ Page({
       { id: 'office', name: '办公室', baseTemp: 4000, lux: 300, group: '商业' }
     ],
     spaceIndex: -1,
-    targetLux: '',
+    suggestedTemp: '',
+    suggestedTempSource: '',
     area: '',
 
     // 2. 使用人群
@@ -62,15 +63,9 @@ Page({
       { id: 'accent', name: '射灯 / 轨道灯', layer: 'accent' },
       { id: 'task', name: '台灯 / 镜前灯 / 橱柜灯', layer: 'task' }
     ],
-    primaryFixtureIndex: -1,
-    secondaryFixtureOptions: [
-      { id: 'none', name: '没有其他灯了', layer: 'none' },
-      { id: 'basic', name: '吸顶灯 / 筒灯 / 面板灯', layer: 'basic' },
-      { id: 'ambient', name: '灯带 / 壁灯 / 落地灯', layer: 'ambient' },
-      { id: 'accent', name: '射灯 / 轨道灯', layer: 'accent' },
-      { id: 'task', name: '台灯 / 镜前灯 / 橱柜灯', layer: 'task' }
-    ],
-    secondaryFixtureIndex: -1,
+    selectedFixtures: [],
+    fixtureAddOptions: ['请选择灯具'],
+    fixtureAddValue: 0,
 
   },
 
@@ -94,12 +89,13 @@ Page({
         this.setData({
           spaceIndex: p.spaceIndex,
           area: p.area || '',
-          targetLux: p.targetLux || '',
+          suggestedTemp: p.suggestedTemp || p.targetLux || '',
+          suggestedTempSource: '',
           ageIndex: p.ageIndex,
           usageIndex: p.usageIndex,
-          primaryFixtureIndex: p.primaryFixtureIndex,
-          secondaryFixtureIndex: p.secondaryFixtureIndex
+          selectedFixtures: p.selectedFixtures || (p.primaryFixtureIndex >= 0 ? [this.data.fixtures[p.primaryFixtureIndex]] : [])
         })
+        this.setData({ fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, this.data.selectedFixtures) })
         // 将历史结果写入缓存，参数不变时可秒跳
         if (selected.result) {
           this._cachedResult = { paramsKey: this._getParamsKey(), resultData: selected.result }
@@ -133,8 +129,10 @@ Page({
         if (data.spaceTypes && data.spaceTypes.length) updates.spaceTypes = data.spaceTypes
         if (data.ageGroups && data.ageGroups.length) updates.ageGroups = data.ageGroups
         if (data.usages && data.usages.length) updates.usages = data.usages
-        if (data.fixtures && data.fixtures.length) updates.fixtures = data.fixtures
-        if (data.secondaryFixtureOptions && data.secondaryFixtureOptions.length) updates.secondaryFixtureOptions = data.secondaryFixtureOptions
+        if (data.fixtures && data.fixtures.length) {
+          updates.fixtures = data.fixtures
+          updates.fixtureAddOptions = this._buildFixtureAddOptions(data.fixtures, this.data.selectedFixtures)
+        }
         if (data.pageConfig) {
           if (data.pageConfig.bgImage) updates.headerBgFileId = data.pageConfig.bgImage
           if (data.pageConfig.title) updates.headerTitle = data.pageConfig.title
@@ -161,15 +159,20 @@ Page({
     const index = Number(e.detail.value)
     const space = this.data.spaceTypes[index]
     const updates = { spaceIndex: index }
-    if (space && space.lux) {
-      updates.targetLux = String(space.lux)
+    if (space && space.baseTemp) {
+      updates.suggestedTemp = String(space.baseTemp)
+      updates.suggestedTempSource = '基于「' + space.name + '」推荐，可手动修改'
     }
     this.setData(updates)
   },
 
   onFieldInput(e) {
     const field = e.currentTarget.dataset.field
-    this.setData({ [field]: e.detail.value })
+    const updates = { [field]: e.detail.value }
+    if (field === 'suggestedTemp') {
+      updates.suggestedTempSource = e.detail.value ? '自定义色温' : ''
+    }
+    this.setData(updates)
   },
 
   onAgeChange(e) {
@@ -180,20 +183,48 @@ Page({
     this.setData({ usageIndex: Number(e.detail.value) })
   },
 
-  onPrimaryFixtureChange(e) {
-    this.setData({ primaryFixtureIndex: Number(e.detail.value) })
+  onAddFixture(e) {
+    const pickIndex = Number(e.detail.value)
+    if (pickIndex <= 0) {
+      this.setData({ fixtureAddValue: 0 })
+      return
+    }
+    // 从可选列表中找到对应灯具（排除已选的）
+    const available = this.data.fixtures.filter(f => !this.data.selectedFixtures.some(s => s.id === f.id))
+    const fixture = available[pickIndex - 1]
+    if (!fixture) {
+      this.setData({ fixtureAddValue: 0 })
+      return
+    }
+    const newSelected = [...this.data.selectedFixtures, fixture]
+    this.setData({
+      selectedFixtures: newSelected,
+      fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, newSelected),
+      fixtureAddValue: 0
+    })
   },
 
-  onSecondaryFixtureChange(e) {
-    this.setData({ secondaryFixtureIndex: Number(e.detail.value) })
+  onRemoveFixture(e) {
+    const id = e.currentTarget.dataset.id
+    const newSelected = this.data.selectedFixtures.filter(f => f.id !== id)
+    this.setData({
+      selectedFixtures: newSelected,
+      fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, newSelected)
+    })
+  },
+
+  _buildFixtureAddOptions(fixtures, selected) {
+    const available = (fixtures || []).filter(f => !(selected || []).some(s => s.id === f.id))
+    return ['请选择灯具', ...available.map(f => f.name)]
   },
 
   // ========== 计算逻辑 ==========
 
   _getParamsKey() {
-    return [this.data.spaceIndex, this.data.area || '', this.data.targetLux || '',
+    const fixtureIds = this.data.selectedFixtures.map(f => f.id).sort().join(',')
+    return [this.data.spaceIndex, this.data.suggestedTemp || '',
       this.data.ageIndex, this.data.usageIndex,
-      this.data.primaryFixtureIndex, this.data.secondaryFixtureIndex].join('|')
+      fixtureIds].join('|')
   },
 
   onCalculate() {
@@ -231,20 +262,17 @@ Page({
     const space = this.data.spaceTypes[this.data.spaceIndex]
     const age = this.data.ageIndex >= 0 ? this.data.ageGroups[this.data.ageIndex] : null
     const usage = this.data.usageIndex >= 0 ? this.data.usages[this.data.usageIndex] : null
-    const primaryFixture = this.data.primaryFixtureIndex >= 0 ? this.data.fixtures[this.data.primaryFixtureIndex] : null
-    const secondaryFixture = this.data.secondaryFixtureIndex >= 0 ? this.data.secondaryFixtureOptions[this.data.secondaryFixtureIndex] : null
+    const fixtureNames = this.data.selectedFixtures.map(f => f.name)
 
     const promise = wx.cloud.callFunction({
       name: 'color_temp_ai',
       config: { timeout: 300000 },
       data: {
         spaceName: space.name,
-        area: this.data.area,
-        targetLux: this.data.targetLux,
+        suggestedTemp: this.data.suggestedTemp,
         ageName: age ? age.name : '',
         usageName: usage ? usage.name : '',
-        primaryFixtureName: primaryFixture ? primaryFixture.name : '',
-        secondaryFixtureName: (secondaryFixture && secondaryFixture.id !== 'none') ? secondaryFixture.name : ''
+        fixtureNames: fixtureNames
       }
     })
 
@@ -337,15 +365,11 @@ Page({
     
     // 5. 收集选中的灯具对应的照明层
     const selectedLayerIds = []
-    if (this.data.primaryFixtureIndex >= 0) {
-      selectedLayerIds.push(this.data.fixtures[this.data.primaryFixtureIndex].layer)
-    }
-    if (this.data.secondaryFixtureIndex >= 0) {
-      const sec = this.data.secondaryFixtureOptions[this.data.secondaryFixtureIndex]
-      if (sec.layer !== 'none' && !selectedLayerIds.includes(sec.layer)) {
-        selectedLayerIds.push(sec.layer)
+    this.data.selectedFixtures.forEach(f => {
+      if (f.layer && !selectedLayerIds.includes(f.layer)) {
+        selectedLayerIds.push(f.layer)
       }
-    }
+    })
     if (selectedLayerIds.length === 0) {
       selectedLayerIds.push('basic')
     }
@@ -423,15 +447,13 @@ Page({
       spaceIndex: this.data.spaceIndex,
       spaceName: this.data.spaceIndex >= 0 ? this.data.spaceTypes[this.data.spaceIndex].name : '',
       area: this.data.area,
-      targetLux: this.data.targetLux,
+      suggestedTemp: this.data.suggestedTemp,
       ageIndex: this.data.ageIndex,
       ageName: this.data.ageIndex >= 0 ? this.data.ageGroups[this.data.ageIndex].name : '',
       usageIndex: this.data.usageIndex,
       usageName: this.data.usageIndex >= 0 ? this.data.usages[this.data.usageIndex].name : '',
-      primaryFixtureIndex: this.data.primaryFixtureIndex,
-      primaryFixtureName: this.data.primaryFixtureIndex >= 0 ? this.data.fixtures[this.data.primaryFixtureIndex].name : '',
-      secondaryFixtureIndex: this.data.secondaryFixtureIndex,
-      secondaryFixtureName: this.data.secondaryFixtureIndex >= 0 ? this.data.secondaryFixtureOptions[this.data.secondaryFixtureIndex].name : ''
+      selectedFixtures: this.data.selectedFixtures,
+      fixtureNames: this.data.selectedFixtures.map(f => f.name)
     }
     wx.navigateTo({ url: '/pages/color-temp/color-temp-result/color-temp-result' })
   },
