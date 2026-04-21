@@ -1,3 +1,5 @@
+<wxs module="cloud" src="./cloud.wxs"></wxs>
+
 <view class="gallery-root">
   <view class="content-wrapper">
     <!-- Header -->
@@ -16,16 +18,44 @@
       </view>
     </view>
 
-    <!-- Categories -->
-    <scroll-view class="category-scroll" scroll-x="{{true}}" enhanced show-scrollbar="{{false}}">
-      <view class="category-list">
-        <block wx:for="{{categories}}" wx:key="*this">
-          <view class="category-item {{activeCategory === item ? 'active' : ''}}" bindtap="onCategorySelect" data-category="{{item}}">
-            {{item}}
+    <!-- Categories (Dynamic Infinite Cloud Layout via WXS) -->
+    <view class="cloud-wrap" 
+          bind:touchstart="{{cloud.touchStart}}" 
+          catch:touchmove="{{cloud.touchMove}}" 
+          bind:touchend="{{cloud.touchEnd}}"
+          bind:touchcancel="{{cloud.touchEnd}}"
+          change:activeCategory="{{cloud.onActiveChange}}"
+          activeCategory="{{activeCategory}}"
+          change:config="{{cloud.onConfigChange}}"
+          config="{{categoryCloudConfig}}">
+      
+      <!-- wxs init 触发器 -->
+      <view style="display:none;" 
+            change:prop="{{cloud.init}}" prop="{{categoryCloud}}"
+            change:config="{{cloud.onConfigChange}}" config="{{categoryCloudConfig}}"
+            change:active="{{cloud.onActiveChange}}" active="{{activeCategory}}"></view>
+
+      <view class="cloud-mask-top"></view>
+      
+      <!-- 视口中心点，所有标签相对于此原点进行 2D 平移 -->
+      <view class="cloud-viewport">
+        <block wx:for="{{categoryCloud}}" wx:key="name">
+          <!-- 标签外层包裹器：用于 WXS 获取 dataset 并应用内联样式 -->
+          <view class="cloud-tag-wrap" 
+                data-bx="{{item.bx}}" 
+                data-by="{{item.by}}" 
+                data-name="{{item.name}}">
+            <view class="cloud-tag {{activeCategory === item.name ? 'active' : ''}}" 
+                  bindtap="onCategorySelect" 
+                  data-category="{{item.name}}">
+              {{item.name}}
+            </view>
           </view>
         </block>
       </view>
-    </scroll-view>
+
+      <view class="cloud-mask-bottom"></view>
+    </view>
 
     <!-- Gallery Content (Masonry Layout) -->
     <view class="gallery-container">

@@ -7,6 +7,7 @@ Page({
   data: {
     // 标签相关
     categories: ['全部', '收藏'],
+    categoryCloud: [],
     activeCategory: '全部',
     activeTag: '',
     searchQuery: '',
@@ -83,6 +84,100 @@ Page({
 
   // ==================== 标签 ====================
 
+  _applyCategories: function (tags) {
+    const categories = ['全部', '收藏', ...tags.map(t => t.name)]
+    const cloudData = this.buildCloud(categories)
+    this.setData({ 
+      categories, 
+      categoryCloud: cloudData.nodes,
+      categoryCloudConfig: cloudData.config
+    })
+  },
+
+  buildCloud: function (categories) {
+    const anchorAll = { name: '全部' }
+    const anchorFav = { name: '收藏' }
+    
+    // 过滤业务标签
+    let businessTags = categories.filter(c => c !== '全部' && c !== '收藏')
+    
+    // 按照长度排序并交错，使得长短标签均匀分布在网格中
+    businessTags.sort((a, b) => a.length - b.length)
+    const interleavedTags = []
+    while (businessTags.length > 0) {
+      interleavedTags.push(businessTags.shift())
+      if (businessTags.length > 0) interleavedTags.push(businessTags.pop())
+    }
+
+    const tagsToPlace = [anchorAll.name, anchorFav.name, ...interleavedTags]
+
+    // 六边形螺旋网格生成器 (Hexagonal Spiral)
+    // q, r 是轴向坐标，保证每个节点周围正好有 6 个邻居
+    const hexSpiral = [ {q:0, r:0} ] // 中心点
+    let radius = 1
+    
+    // 预生成足够多的网格坐标 (最多支持 200 个标签)
+    while (hexSpiral.length < Math.max(50, tagsToPlace.length + 10)) {
+      let q = radius
+      let r = 0
+      // 遍历 6 个方向的边
+      const directions = [
+        {dq: 0, dr: -1}, {dq: -1, dr: 0}, {dq: -1, dr: 1},
+        {dq: 0, dr: 1}, {dq: 1, dr: 0}, {dq: 1, dr: -1}
+      ]
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < radius; j++) {
+          hexSpiral.push({ q, r })
+          q += directions[i].dq
+          r += directions[i].dr
+        }
+      }
+      radius++
+    }
+
+    // 映射到物理像素 (长方形六边形网格)
+    // 考虑到中文标签普遍较宽，dx 必须显著大于 dy
+    // dx=200, dy=80 使得每个单元格最大容纳约 180rpx 宽度的标签
+    const dx = 200 
+    const dy = 80  
+
+    const placedNodes = []
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+
+    tagsToPlace.forEach((tagName, index) => {
+      if (index >= hexSpiral.length) return
+      
+      const { q, r } = hexSpiral[index]
+      
+      // 标准的六边形转笛卡尔坐标公式
+      const bx = dx * (q + r / 2)
+      const by = dy * r * Math.sqrt(3) / 2
+
+      placedNodes.push({
+        name: tagName,
+        bx: bx,
+        by: by
+      })
+
+      minX = Math.min(minX, bx)
+      maxX = Math.max(maxX, bx)
+      minY = Math.min(minY, by)
+      maxY = Math.max(maxY, by)
+    })
+
+    // Torus 边界优化：使用规整的跨度加上一个单元格的冗余
+    const torusWidth = (maxX - minX) + dx * 1.5
+    const torusHeight = (maxY - minY) + dy * 2.5
+
+    return {
+      nodes: placedNodes,
+      config: {
+        torusWidth: Math.max(600, torusWidth),
+        torusHeight: Math.max(600, torusHeight)
+      }
+    }
+  },
+
   loadTags: function () {
     const cachedVersion = wx.getStorageSync('gallery_tagVersion') || 0
     wx.cloud.callFunction({
@@ -96,7 +191,7 @@ Page({
         // 使用本地缓存的标签
         const cachedTags = wx.getStorageSync('gallery_tags') || []
         if (cachedTags.length > 0) {
-          this.setData({ categories: ['全部', '收藏', ...cachedTags.map(t => t.name)] })
+          this._applyCategories(cachedTags)
         }
         return
       }
@@ -104,13 +199,13 @@ Page({
       const tags = result.data.tags || []
       wx.setStorageSync('gallery_tags', tags)
       wx.setStorageSync('gallery_tagVersion', result.data.tagVersion)
-      this.setData({ categories: ['全部', '收藏', ...tags.map(t => t.name)] })
+      this._applyCategories(tags)
     }).catch(err => {
       console.error('[gallery] 加载标签失败:', err)
       // 降级：使用本地缓存
       const cachedTags = wx.getStorageSync('gallery_tags') || []
       if (cachedTags.length > 0) {
-        this.setData({ categories: ['全部', '收藏', ...cachedTags.map(t => t.name)] })
+        this._applyCategories(cachedTags)
       }
     })
   },

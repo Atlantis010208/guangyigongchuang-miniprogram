@@ -1,0 +1,307 @@
+// 标签云 2D 拖拽与无限滚动 (WXS)
+// 负责处理高频 touch 事件，计算偏移量，并实时应用 2D Torus 映射和鱼眼透视效果
+
+var state = {
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0,
+  globalX: 0,
+  globalY: 0,
+  
+  // 速度与物理参数
+  vx: 0,
+  vy: 0,
+  lastTime: 0,
+  friction: 0.96,
+
+  // 容器大小 (Torus 环面边界)
+  torusWidth: 1000,
+  torusHeight: 800,
+  
+  // 状态机
+  animId: 0, // 当前运行的动画 ID，用于取消旧动画
+  isSnapping: false,
+  isTouching: false,
+  
+  // 业务状态
+  activeCategory: '全部',
+  nodesCache: []
+}
+
+// 辅助函数：安全数值转换
+function safeNum(val, fallback) {
+  return (typeof val === 'number' && isFinite(val) && !isNaN(val)) ? val : (fallback || 0)
+}
+
+// 辅助函数：取消当前动画
+function cancelAnimation(ownerInstance) {
+  state.animId++
+  state.isSnapping = false
+}
+
+function init(newValue, oldValue, ownerInstance, instance) {
+  if (newValue && newValue.length > 0) {
+    var nodes = ownerInstance.selectAllComponents('.cloud-tag-wrap')
+    state.nodesCache = []
+    for (var i = 0; i < nodes.length; i++) {
+      var ds = nodes[i].getDataset()
+      state.nodesCache.push({
+        instance: nodes[i],
+        name: ds.name,
+        bx: parseFloat(ds.bx) || 0,
+        by: parseFloat(ds.by) || 0
+      })
+    }
+    render(ownerInstance)
+  }
+}
+
+function onActiveChange(newValue, oldValue, ownerInstance, instance) {
+  if (newValue && newValue !== state.activeCategory) {
+    state.activeCategory = newValue
+    
+    // 如果用户正在触摸，不要打断用户，仅更新状态
+    if (state.isTouching) {
+      render(ownerInstance)
+      return
+    }
+
+    // 否则，平滑滚动到新选中的节点
+    if (state.nodesCache.length > 0) {
+      var w = state.torusWidth
+      var h = state.torusHeight
+      var targetDx = 0
+      var targetDy = 0
+      var found = false
+      
+      for (var i = 0; i < state.nodesCache.length; i++) {
+        var node = state.nodesCache[i]
+        if (node.name === newValue) {
+          var px = node.bx + state.globalX
+          var py = node.by + state.globalY
+
+          px = ((px + w/2) % w + w) % w - w/2
+          py = ((py + h/2) % h + h) % h - h/2
+          
+          targetDx = px
+          targetDy = py
+          found = true
+          break
+        }
+      }
+      
+      if (found) {
+        startSnapAnimation(ownerInstance, targetDx, targetDy)
+      } else {
+        render(ownerInstance)
+      }
+    }
+  }
+}
+
+function onConfigChange(newValue, oldValue, ownerInstance, instance) {
+  if (newValue) {
+    state.torusWidth = newValue.torusWidth || 1000
+    state.torusHeight = newValue.torusHeight || 800
+    render(ownerInstance)
+  }
+}
+
+function touchStart(e, ownerInstance) {
+  var touch = e.touches[0] || e.changedTouches[0]
+  state.startX = state.lastX = touch.clientX
+  state.startY = state.lastY = touch.clientY
+  state.lastTime = e.timeStamp
+  state.vx = state.vy = 0
+  state.isTouching = true
+  cancelAnimation(ownerInstance) // 触摸立即停止动画
+}
+
+function touchMove(e, ownerInstance) {
+  var touch = e.touches[0] || e.changedTouches[0]
+  var dx = touch.clientX - state.lastX
+  var dy = touch.clientY - state.lastY
+  var dt = e.timeStamp - state.lastTime
+
+  if (dt > 0) {
+    state.vx = Math.max(Math.min(dx / dt, 5), -5)
+    state.vy = Math.max(Math.min(dy / dt, 5), -5)
+  }
+
+  state.globalX = safeNum(state.globalX + dx * 2)
+  state.globalY = safeNum(state.globalY + dy * 2)
+  state.lastX = touch.clientX
+  state.lastY = touch.clientY
+  state.lastTime = e.timeStamp
+  render(ownerInstance)
+}
+
+function touchEnd(e, ownerInstance) {
+  state.isTouching = false
+  if (Math.abs(state.vx) > 0.1 || Math.abs(state.vy) > 0.1) {
+    startAnimation(ownerInstance, 'inertia')
+  }
+  // 移除了 snapToNearest 调用，允许自由停留在任何位置
+}
+
+function startAnimation(ownerInstance, type, params) {
+  cancelAnimation(ownerInstance)
+  var currentId = state.animId
+  
+  if (type === 'inertia') {
+    var step = function() {
+      if (currentId !== state.animId || state.isTouching) return
+      // 当速度极小时自然停止，彻底移除 snapToNearest 调用
+      if (Math.abs(state.vx) < 0.05 && Math.abs(state.vy) < 0.05) {
+        state.vx = 0
+        state.vy = 0
+        return
+      }
+      state.globalX = safeNum(state.globalX + state.vx * 16 * 1.5)
+      state.globalY = safeNum(state.globalY + state.vy * 16 * 1.5)
+      state.vx *= state.friction
+      state.vy *= state.friction
+      render(ownerInstance)
+      ownerInstance.requestAnimationFrame(step)
+    }
+    ownerInstance.requestAnimationFrame(step)
+  } else if (type === 'snap') {
+    state.isSnapping = true
+    var startX = state.globalX
+    var startY = state.globalY
+    var targetX = state.globalX - params.dx
+    var targetY = state.globalY - params.dy
+    var startTime = 0
+    var duration = 350
+    
+    var step = function(timestamp) {
+      if (currentId !== state.animId || state.isTouching) return
+      if (!startTime) startTime = timestamp
+      var progress = Math.min((timestamp - startTime) / duration, 1)
+      var ease = 1 - Math.pow(1 - progress, 4)
+      state.globalX = safeNum(startX + (targetX - startX) * ease)
+      state.globalY = safeNum(startY + (targetY - startY) * ease)
+      render(ownerInstance)
+      if (progress < 1) {
+        ownerInstance.requestAnimationFrame(step)
+      } else {
+        state.isSnapping = false
+      }
+    }
+    ownerInstance.requestAnimationFrame(step)
+  }
+}
+
+function snapToNearest(ownerInstance) {
+  if (state.nodesCache.length === 0) return
+  var w = state.torusWidth, h = state.torusHeight
+  var minDistance = Infinity, nearestDx = 0, nearestDy = 0
+  for (var i = 0; i < state.nodesCache.length; i++) {
+    var node = state.nodesCache[i]
+    var px = ((node.bx + state.globalX + w/2) % w + w) % w - w/2
+    var py = ((node.by + state.globalY + h/2) % h + h) % h - h/2
+    var dist = Math.sqrt(px * px + py * py)
+    if (dist < minDistance) {
+      minDistance = dist
+      nearestDx = px
+      nearestDy = py
+    }
+  }
+  if (minDistance > 2) {
+    startAnimation(ownerInstance, 'snap', { dx: nearestDx, dy: nearestDy })
+  }
+}
+
+function render(ownerInstance) {
+  // 1. 确保节点缓存有效
+  if (!state.nodesCache || state.nodesCache.length === 0) {
+    var nodes = ownerInstance.selectAllComponents('.cloud-tag-wrap')
+    if (!nodes || nodes.length === 0) return
+    state.nodesCache = []
+    for (var i = 0; i < nodes.length; i++) {
+      var ds = nodes[i].getDataset()
+      state.nodesCache.push({
+        instance: nodes[i],
+        name: ds.name || '',
+        bx: parseFloat(ds.bx) || 0,
+        by: parseFloat(ds.by) || 0
+      })
+    }
+  }
+
+  // 2. 核心数值兜底，防止全局变量被 NaN 污染
+  state.globalX = safeNum(state.globalX, 0)
+  state.globalY = safeNum(state.globalY, 0)
+
+  var w = state.torusWidth || 1000
+  var h = state.torusHeight || 800
+
+  // 3. 遍历节点并应用样式
+  for (var i = 0; i < state.nodesCache.length; i++) {
+    var node = state.nodesCache[i]
+    if (!node || !node.instance) continue
+
+    // 计算当前物理坐标 (含 Torus 映射)
+    var rawPx = node.bx + state.globalX
+    var rawPy = node.by + state.globalY
+    
+    var px = ((rawPx + w/2) % w + w) % w - w/2
+    var py = ((rawPy + h/2) % h + h) % h - h/2
+    
+    // 再次校验 px/py，防止溢出
+    px = safeNum(px, 0)
+    py = safeNum(py, 0)
+
+    var dist = Math.sqrt(px * px + py * py)
+    dist = safeNum(dist, 0)
+    
+    // 3. 鱼眼透视计算 (计算距离中心的距离)
+    var dist = Math.sqrt(px * px + py * py)
+    dist = safeNum(dist, 0)
+    
+    // Apple Watch 真实 "穹顶" (Dome) 3D 透视曲线：
+    // 中心 120rpx 内保持 1.0 大小，形成平坦焦点区
+    // 超过后迅速且非线性地衰减至极小 (0.3)，模拟球面的边缘曲率
+    var scale = 1.0
+    if (dist > 120) {
+      scale = 1.0 - Math.pow((dist - 120) / 450, 1.8)
+    }
+    scale = Math.max(0.3, Math.min(1.0, safeNum(scale, 0.3)))
+
+    // 透明度曲线：
+    // 中心 150rpx 完全不透明，之后快速隐没进背景，营造纵深感
+    var opacity = 1.0
+    if (dist > 150) {
+      opacity = 1.0 - Math.pow((dist - 150) / 350, 1.5)
+    }
+    opacity = Math.max(0.05, Math.min(1.0, safeNum(opacity, 0.05)))
+
+    // 层级计算：中心节点永远在上层
+    var zIndex = Math.floor(1000 - dist)
+
+    // 选中态覆盖：最高层级并保持不透明
+    if (node.name === state.activeCategory) {
+      opacity = 1.0
+      zIndex = 2000
+    }
+
+    // 4. 最终应用样式
+    // 增加 translate(-50%, -50%) 确保标签中心对齐坐标点
+    var transformStr = 'translate3d(' + px.toFixed(1) + 'rpx,' + py.toFixed(1) + 'rpx,0) translate(-50%, -50%) scale(' + scale.toFixed(2) + ')'
+    
+    node.instance.setStyle({
+      'transform': transformStr,
+      'opacity': opacity.toFixed(2),
+      'z-index': zIndex
+    })
+  }
+}
+
+module.exports = {
+  touchStart: touchStart,
+  touchMove: touchMove,
+  touchEnd: touchEnd,
+  init: init,
+  onActiveChange: onActiveChange
+}
