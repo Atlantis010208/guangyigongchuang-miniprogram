@@ -14,11 +14,15 @@
     </view>
 
     <!-- Small Square 2: 色温调节器 -->
-    <view class="bento-card hover-scale" bindtap="navigateToColorTemp">
-      <view class="icon-wrap">
-        <image class="icon" src="/images/toolbox/sliders-horizontal.svg" mode="aspectFit"></image>
+    <view class="bento-card ct-card hover-scale" bindtap="navigateToColorTemp">
+      <image class="ct-bg" src="{{ctBgImage}}" mode="aspectFill"></image>
+      <view class="ct-overlay"></view>
+      <view class="ct-content">
+        <view class="icon-wrap icon-wrap-light">
+          <image class="icon" src="/images/toolbox/sliders-horizontal.svg" mode="aspectFit"></image>
+        </view>
+        <text class="card-title card-title-light">色温选择器</text>
       </view>
-      <text class="card-title">色温选择器</text>
     </view>
 
     <!-- Large Square: 实景灯光图库 -->

@@ -1,18 +1,22 @@
 // pages/toolbox/toolbox.js
 const DEFAULT_GALLERY_COVER = 'https://picsum.photos/seed/luxuryinterior/800/800'
+const DEFAULT_CT_BG = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/color-temp-bg.png'
 
 Page({
   data: {
     galleryCover: '',
-    coverLoaded: false
+    coverLoaded: false,
+    ctBgImage: DEFAULT_CT_BG
   },
 
   onLoad: function (options) {
     this.loadGalleryCover()
+    this.loadCtBgImage()
   },
 
   onPullDownRefresh: function () {
     this.loadGalleryCover()
+    this.loadCtBgImage()
     setTimeout(() => {
       wx.stopPullDownRefresh()
     }, 800)
@@ -50,6 +54,21 @@ Page({
   navigateToColorTemp: function () {
     wx.navigateTo({
       url: '/pages/color-temp/color-temp'
+    })
+  },
+
+  loadCtBgImage: function () {
+    const db = wx.cloud.database()
+    db.collection('color_temp_config').doc('global_config').get().then(res => {
+      const data = res.data
+      if (data && data.pageConfig) {
+        const img = data.pageConfig.cardBgImage || data.pageConfig.bgImage
+        if (img) {
+          this.setData({ ctBgImage: img })
+        }
+      }
+    }).catch(err => {
+      console.warn('[toolbox] 加载色温背景图配置失败，使用默认图:', err)
     })
   },
 
