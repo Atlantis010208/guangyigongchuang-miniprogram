@@ -4,9 +4,6 @@ const util = require('../../utils/util')
 // 避坑指南 PDF 文件地址（压缩版）
 const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/（已压缩）2、工具包｜装修灯光注意事项-避坑指南（最新）.pdf'
 
-// 灯光设计服务说明书 PDF 文件地址
-const PDF_DESIGN_SERVICE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光设计服务说明书.pdf'
-
 Page({
 
   /**
@@ -139,8 +136,6 @@ Page({
     this.loadUserAvatar()
     // 预加载避坑指南 PDF（后台静默下载）
     this.preloadPdfFile(PDF_BIKENG_GUIDE)
-    // 预加载灯光设计服务说明书 PDF（后台静默下载）
-    this.preloadPdfFile(PDF_DESIGN_SERVICE)
   },
 
   /**
@@ -487,7 +482,8 @@ Page({
     const service = e.currentTarget.dataset.service
     // 跳转映射
     const map = {
-      selection: '/pages/flows/selection/selection',
+      // 二哥相关服务 → 灯光设计服务说明书
+      selection: '/pages/lighting-manual/index',
       optimize: '/pages/flows/optimize/optimize',
       full: '/pages/flows/publish/publish'
     }
@@ -508,9 +504,11 @@ Page({
       return
     }
     
-    // 设计流程 - 打开灯光设计服务说明书 PDF
+    // 设计流程 - 跳转到灯光设计服务说明书页面
     if (category === 'commercial') {
-      this.openPdfFile(PDF_DESIGN_SERVICE)
+      wx.navigateTo({
+        url: '/pages/lighting-manual/index'
+      })
       return
     }
     
