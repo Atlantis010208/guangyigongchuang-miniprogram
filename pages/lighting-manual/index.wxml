@@ -1,0 +1,505 @@
+<!-- index.wxml -->
+<view class="container">
+
+  <!-- 顶部导航栏（双击回顶） -->
+  <view class="nav-bar" bindtap="onNavBarTap" style="background-color: rgba(255,255,255,{{navOpacity}}); backdrop-filter: blur({{navOpacity * 20}}px);">
+    <view class="nav-back" catchtap="navigateBack">
+      <view class="back-icon"></view>
+    </view>
+    <view class="nav-title" style="opacity: {{navOpacity}}">{{heroInfo.docTitle}}</view>
+  </view>
+
+  <!-- Section 1: Hero (封面) -->
+  <view class="section hero fade-up" id="hero">
+    <view class="hero-bg"></view>
+    <view class="hero-content">
+      <view class="hero-title">
+        <text>灯光 让家</text>
+        <text>有温度</text>
+      </view>
+      <view class="hero-subtitle">{{heroInfo.subtitle}}</view>
+      
+      <view class="hero-nav-grid">
+        <view class="hero-nav-item" wx:for="{{navButtons}}" wx:key="target" bindtap="scrollTo" data-target="{{item.target}}">
+          <text>{{item.text}}</text>
+        </view>
+      </view>
+      <view class="hero-nav-tip">*以上栏目“点击”即可快速导航至你想看的板块*</view>
+      <view class="scroll-indicator">向下滑动了解</view>
+    </view>
+  </view>
+
+  <!-- Section 2: About (关于二哥) -->
+  <view class="section about fade-up" id="about">
+    <view class="section-title-wrap">
+      <text class="section-badge">ABOUT</text>
+      <text class="section-title">十年 · 只做一件事</text>
+    </view>
+
+    <view class="about-card">
+      <view class="avatar-wrap">
+        <view class="avatar"></view> <!-- 占位图 -->
+        <text class="avatar-name">彭康华&二哥</text>
+      </view>
+      <view class="info-block">
+        <view class="info-title">基本信息</view>
+        <view class="info-list">
+          <view class="info-item" wx:for="{{aboutInfo.details}}" wx:key="*this">{{item}}</view>
+        </view>
+      </view>
+      <view class="info-block">
+        <view class="info-title">如果需要找我沟通</view>
+        <view class="info-list">
+          <view class="info-item" wx:for="{{aboutInfo.contactRules}}" wx:key="*this">{{item}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 统计卡片 -->
+    <view class="stats-grid">
+      <view class="stat-card" wx:for="{{aboutInfo.tags}}" wx:key="*this">
+        <text class="stat-num">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section 3: Promise (核心承诺) -->
+  <view class="section promise fade-up">
+    <view class="section-title-wrap">
+      <text class="section-title">我的个人服务理念</text>
+    </view>
+    <scroll-view class="philosophy-scroll" scroll-x="true" show-scrollbar="false" enhanced="{{true}}" show-custom-scrollbar="{{false}}" snap-to-alignment="center" deceleration-rate="fast">
+      <view class="philosophy-list">
+        <view class="philosophy-card" wx:for="{{philosophy}}" wx:key="*this">{{item}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="section-title-wrap" style="margin-top: 80rpx;">
+      <text class="section-title">别人设计只画图，我们不仅设计灯光，更陪你从头走到入住。你将获得：</text>
+    </view>
+    <view class="promise-list">
+      <view class="promise-card" wx:for="{{promises}}" wx:key="title">
+        <image class="promise-icon" src="{{item.icon}}" mode="aspectFit" />
+        <view class="promise-text">
+          <view class="promise-title">{{item.title}}</view>
+          <view class="promise-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section 4: Timeline (落地流程) -->
+  <view class="section timeline fade-up" id="timeline">
+    <view class="section-title-wrap">
+      <text class="section-badge">TIMELINE</text>
+      <text class="section-title">灯光设计落地执行（完整流程图）</text>
+    </view>
+    <image
+      class="flow-image full-flow-image"
+      src="/images/full-flow.png"
+      mode="widthFix"
+      show-menu-by-longpress="{{true}}"
+      bindtap="onPreviewImage"
+      data-urls="{{['/images/full-flow.png']}}"
+      data-current="/images/full-flow.png"
+    />
+
+    <view class="section-title-wrap" style="margin-top: 80rpx; margin-bottom: 32rpx;">
+      <text class="section-title">线上服务各阶段执行（检查表）</text>
+    </view>
+
+    <!-- 横向滚动表格区 -->
+    <scroll-view class="checklist-scroll" scroll-x enable-flex>
+      <view class="checklist-table">
+        <!-- 表头 -->
+        <view class="checklist-header">
+          <view class="th col-phase"><text class="icon-text">A≡</text>服务阶段</view>
+          <view class="th col-todo"><text class="icon-text">A≡</text>要做什么</view>
+          <view class="th col-notice"><text class="icon-text">A≡</text>注意什么</view>
+          <view class="th col-check"><text class="icon-text">A≡</text>完成后检查什么</view>
+        </view>
+        
+        <!-- 表格体 -->
+        <view class="checklist-row" wx:for="{{serviceChecklist}}" wx:key="id">
+          <!-- 第1列：阶段 -->
+          <view class="td col-phase">
+            <view class="phase-id">{{item.id}}</view>
+            <view class="phase-name">{{item.phase}}</view>
+          </view>
+          
+          <!-- 第2列：要做什么 -->
+          <view class="td col-todo">
+            <view class="list-item" wx:for="{{item.todos}}" wx:for-item="todo" wx:key="*this">
+              <text class="dash">-</text>{{todo}}
+            </view>
+          </view>
+          
+          <!-- 第3列：注意什么 -->
+          <view class="td col-notice">
+            <view class="list-item" wx:for="{{item.notices}}" wx:for-item="notice" wx:key="*this">
+              <text class="dash">-</text>{{notice}}
+            </view>
+          </view>
+          
+          <!-- 第4列：检查什么 -->
+          <view class="td col-check">
+            <view class="check-item" wx:for="{{item.checks}}" wx:for-item="check" wx:key="*this">
+              <view class="check-box">
+                <view class="check-mark"></view>
+              </view>
+              <text class="check-text">{{check}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 介绍分割线 -->
+  <view class="intro-quote fade-up">
+    "设计服务分为两类，一是“二哥团队”亲自执笔的设计方案（设计费相对固定 也高一些），二是“共创设计平台”严选的设计师完成的设计方案（设计费灵活 可根据自己预算选择），以下是详细的介绍。"
+  </view>
+
+  <!-- Section 5: Packages 1 (二哥团队套餐) -->
+  <view class="section packages fade-up" id="packages">
+    <view class="section-title-wrap">
+      <text class="section-badge">TEAM PACKAGES</text>
+      <text class="section-title">【关于二哥团队设计】</text>
+      <view class="section-desc">
+        <view>- 就是由二哥和二哥的团队亲自执笔完成灯光设计方案，全过程由二哥团队跟进；</view>
+        <view>- 拥有规范的设计流程、严格的审核机制，运用二哥的设计理念及标准完成设计方案；</view>
+        <view>- 设计收费在¥39-69元/平，根据不同的需求选择；</view>
+      </view>
+    </view>
+
+    <view class="flow-title">二哥团队灯光设计（流程）：</view>
+    <image
+      class="flow-image"
+      src="/images/808ad744fcc2793a3e5712e7f57cdfa.png"
+      mode="widthFix"
+      show-menu-by-longpress="{{true}}"
+      bindtap="onPreviewImage"
+      data-urls="{{['/images/808ad744fcc2793a3e5712e7f57cdfa.png']}}"
+      data-current="/images/808ad744fcc2793a3e5712e7f57cdfa.png"
+    />
+
+    <view class="flow-title" style="margin-top: 60rpx;">二哥灯光设计（收费标准）：</view>
+    <scroll-view class="package-scroll" scroll-x="true" show-scrollbar="false" enhanced="{{true}}" show-custom-scrollbar="{{false}}" snap-to-alignment="center" deceleration-rate="fast">
+      <view class="package-list">
+        <view class="package-card {{item.isPopular ? 'popular' : ''}}" wx:for="{{teamPackages}}" wx:key="name">
+          <view class="pkg-header">
+            <view class="pkg-name">{{item.name}}</view>
+            <view class="pkg-price">{{item.price}}</view>
+          </view>
+          
+          <view class="pkg-divider"></view>
+          
+          <view class="pkg-features {{item.twoColumn ? 'two-col' : ''}}">
+            <view class="feature-item {{!f.included ? 'excluded' : ''}}" wx:for="{{item.features}}" wx:for-item="f" wx:key="text">
+              <text class="f-icon">{{f.included ? '✓' : '✗'}}</text>
+              <text class="f-text">{{f.text}}</text>
+            </view>
+          </view>
+          
+          <view class="pkg-divider-bottom"></view>
+          
+          <view class="pkg-meta">
+            <view class="meta-item"><text class="meta-label">设计周期</text> {{item.cycle}}</view>
+            <view class="meta-item"><text class="meta-label">交付文件</text> {{item.delivery}}</view>
+            <view class="meta-item"><text class="meta-label">限时优惠</text> {{item.offer}}</view>
+            <view class="meta-item"><text class="meta-label">适合人群</text> {{item.audience}}</view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Section 6: Packages 2 (共创平台) -->
+  <view class="section packages platform fade-up" id="platform">
+    <view class="section-title-wrap">
+      <text class="section-badge">CO-CREATE</text>
+      <text class="section-title">「共创平台」灯光设计介绍</text>
+      <view class="section-desc">
+        <view><text style="font-weight: bold; color: #1D1D1F">共创设计平台是什么？</text></view>
+        <view>- 是我们创立的一个共创设计平台，平台内是我们挑选过符合我们要求的“设计师库”，共创设计就是由这些设计师完成的设计</view>
+        <view>- 拥有规范的设计流程、严格的审核机制，设计的方案需要平台审核后，才会交付给客户</view>
+        <view>- 设计收费在5-50/平方不等，设计预算更加灵活</view>
+        <view style="margin-top: 20rpx;"><text style="font-weight: bold; color: #1D1D1F">怎么参与共创设计？</text></view>
+        <view>- 发布入口 点击直达“共创需求发布”</view>
+        <view>- 详细介绍 什么是共创设计平台</view>
+      </view>
+    </view>
+
+    <view class="flow-title">共创平台灯光设计（流程）：</view>
+    <image
+      class="flow-image"
+      src="/images/19518f21745e6bf849c1619610efb5f.png"
+      mode="widthFix"
+      show-menu-by-longpress="{{true}}"
+      bindtap="onPreviewImage"
+      data-urls="{{['/images/19518f21745e6bf849c1619610efb5f.png']}}"
+      data-current="/images/19518f21745e6bf849c1619610efb5f.png"
+    />
+
+    <view class="flow-title" style="margin-top: 60rpx;">共创平台灯光设计（收费标准）：</view>
+    <scroll-view class="package-scroll" scroll-x="true" show-scrollbar="false" enhanced="{{true}}" show-custom-scrollbar="{{false}}" snap-to-alignment="center" deceleration-rate="fast">
+      <view class="package-list">
+        <view class="package-card" wx:for="{{platformPackages}}" wx:key="name">
+          <view class="pkg-header">
+            <view class="pkg-name">{{item.name}}</view>
+            <view class="pkg-price">{{item.price}}</view>
+          </view>
+          <view class="pkg-divider"></view>
+          <view class="pkg-features">
+            <view class="feature-list-inner">
+              <view class="feature-item" wx:for="{{item.features}}" wx:for-item="f" wx:key="text">
+                <text class="f-icon">✓</text>
+                <text class="f-text">{{f.text}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="pkg-divider-bottom"></view>
+          <view class="pkg-meta">
+            <view class="meta-item"><text class="meta-label">设计周期</text> {{item.cycle}}</view>
+            <view class="meta-item"><text class="meta-label">交付内容</text> {{item.delivery}}</view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    
+    <view class="intro-quote" style="margin-top: 40rpx; font-size: 24rpx;">
+      "设计交付的内容并不是一成不变的，我们会不停的更新迭代设计方案、设计的呈现方式、施工图的内容，所以就算交付的内容跟以下不太相同是正常的，我们只会越做越好，我们要追求落地效果而不是华而不实的图纸。"
+    </view>
+  </view>
+
+  <!-- Section 6: Delivery Standards (设计交付标准) -->
+  <view class="section fade-up" id="delivery">
+    <view class="section-title-wrap">
+      <text class="section-badge">DELIVERY</text>
+      <text class="section-title">设计服务交付的 · 内容清单</text>
+      <view class="section-desc" style="margin-top: 24rpx;">
+        设计交付的内容并不是一成不变的，我们会不停的更新迭代设计方案、设计的呈现方式、施工图的内容，所以就算交付的内容跟以下不太相同是正常的，我们只会越做越好，我们要追求落地效果而不是华而不实的图纸。
+      </view>
+      <view class="delivery-subtitle">
+        <text class="subtitle-icon">☷</text> 设计交付标准 ∨
+      </view>
+    </view>
+
+    <view class="delivery-grid">
+      <view class="delivery-card" wx:for="{{deliveryStandards}}" wx:key="_id" wx:for-index="idx">
+        <view class="delivery-thumb" catchtap="onPreviewImage" data-urls="{{item.imageUrls}}" data-current="{{item.imageUrls[0]}}">
+          <image class="delivery-img" src="{{item.imageUrls[0] || item.imageUrl}}" mode="aspectFill" />
+          <view class="dots" wx:if="{{item.imageUrls.length > 1}}">
+            <view class="dot {{dotIdx === 0 ? 'active' : ''}}" wx:for="{{item.imageUrls}}" wx:for-item="_u" wx:for-index="dotIdx" wx:key="dotIdx"></view>
+          </view>
+        </view>
+        <view class="delivery-info" catchtap="onShowDetail" data-type="delivery" data-index="{{idx}}">
+          <view class="delivery-title">{{item.title}}</view>
+          
+          <view class="delivery-meta-row">
+            <view class="meta-label"><text class="meta-icon">⊙</text> 设计阶段：</view>
+            <view class="meta-tag" style="background: {{item.phaseColor}}; color: {{item.phaseTextColor}}">{{item.phase}}</view>
+          </view>
+          
+          <view class="delivery-meta-row">
+            <view class="meta-label"><text class="meta-icon">⊙</text> 设计周期：</view>
+            <view class="meta-tag" style="background: {{item.periodColor}}; color: {{item.periodTextColor}}">{{item.period}}</view>
+          </view>
+          
+          <view class="delivery-desc-label"><text class="meta-icon">A≡</text> 项目概述：</view>
+          <view class="delivery-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section 7: Cases & Reviews (案例口碑) -->
+  <view class="section cases fade-up" id="cases">
+    <view class="section-title-wrap">
+      <text class="section-badge">CASES</text>
+      <text class="section-title">落地案例资料</text>
+    </view>
+    
+    <view class="cases-grid reviews-grid">
+      <view class="review-card" wx:for="{{casesData}}" wx:key="_id" wx:for-index="idx">
+        <view class="card-thumb" catchtap="onPreviewImage" data-urls="{{item.imageUrls}}" data-current="{{item.imageUrls[0]}}">
+          <image class="review-img" src="{{item.imageUrls[0]}}" mode="aspectFill" />
+          <view class="dots" wx:if="{{item.imageUrls.length > 1}}">
+            <view class="dot {{dotIdx === 0 ? 'active' : ''}}" wx:for="{{item.imageUrls}}" wx:for-item="_dotUrl" wx:for-index="dotIdx" wx:key="dotIdx"></view>
+          </view>
+        </view>
+        <view class="review-info" catchtap="onShowDetail" data-type="case" data-index="{{idx}}">
+          <view class="review-title">{{item.title}}</view>
+          <block wx:if="{{item.officialAccountUrl}}">
+            <view class="review-link-row"><text class="link-icon">🔗</text> 跳转链接：</view>
+            <view class="review-link-text" catchtap="onOpenOfficialArticle" data-url="{{item.officialAccountUrl}}">跳转看视频</view>
+          </block>
+          <view class="review-meta">
+            <text class="meta-icon">〣</text> 服务内容：
+            <view class="tag-values">
+              <text class="tag-value" wx:for="{{item.services}}" wx:for-item="srv" wx:key="*this">{{srv}}</text>
+            </view>
+          </view>
+          <view class="review-desc-label"><text class="meta-icon">A≡</text> 项目简介：</view>
+          <view class="review-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-title-wrap" style="margin-top: 80rpx;">
+      <text class="section-badge">REVIEWS</text>
+      <text class="section-title">客户评价</text>
+      <view class="section-desc" style="margin-top: 20rpx;">
+        由于篇幅问题，只上传部分客户反馈截图，可以看看用户对我们落地想过的反馈。当然我们也有过用户差评，大部分都是因为我们有些时候设计项目太多怠慢了客户延迟了设计交付，我们也不停在完善。
+      </view>
+    </view>
+    
+    <!-- 网格布局客户评价（每行两列，同行对齐）-->
+    <view class="reviews-grid">
+      <view class="review-card" wx:for="{{reviewsData}}" wx:key="_id" wx:for-index="idx">
+        <view class="card-thumb" catchtap="onPreviewImage" data-urls="{{item.imageUrls}}" data-current="{{item.imageUrls[0]}}">
+          <image class="review-img" src="{{item.imageUrls[0]}}" mode="aspectFill" />
+          <view class="dots" wx:if="{{item.imageUrls.length > 1}}">
+            <view class="dot {{dotIdx === 0 ? 'active' : ''}}" wx:for="{{item.imageUrls}}" wx:for-item="_dotUrl" wx:for-index="dotIdx" wx:key="dotIdx"></view>
+          </view>
+        </view>
+        <view class="review-info" catchtap="onShowDetail" data-type="review" data-index="{{idx}}">
+          <view class="review-title">{{item.title}}</view>
+          <view class="review-meta">
+            <text class="meta-icon">〣</text> 服务内容：
+            <view class="tag-values">
+              <text class="tag-value" wx:for="{{item.services}}" wx:for-item="srv" wx:key="*this">{{srv}}</text>
+            </view>
+          </view>
+          <view class="review-desc-label"><text class="meta-icon">A≡</text> 项目类型：</view>
+          <view class="review-desc">{{item.projectType}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section 8: Footer -->
+  <view class="footer fade-up" id="delivery">
+    <view class="footer-copy">©️2022 Li Tiantian's User Manual</view>
+  </view>
+
+  <!-- 底部留白，防止 CTA 挡住内容 -->
+  <view class="bottom-spacer"></view>
+
+  <!-- CTA 悬浮按钮 -->
+  <view class="cta-wrap">
+    <view class="cta-btn" bindtap="showContact">
+      <text>立即咨询二哥</text>
+      <view class="arrow-right">→</view>
+    </view>
+  </view>
+
+  <!-- Bottom Sheet: 联系方式面板 -->
+  <view class="bottom-sheet-mask" wx:if="{{showContactSheet}}" bindtap="hideContact"></view>
+  <view class="bottom-sheet {{showContactSheet ? 'active' : ''}}">
+    <view class="sheet-header">
+      <view class="sheet-title">添加二哥微信咨询</view>
+      <view class="sheet-close" bindtap="hideContact">×</view>
+    </view>
+    <view class="sheet-content">
+      <view class="wechat-box">
+        <view class="wechat-label">微信号</view>
+        <view class="wechat-num">17728117703</view>
+      </view>
+      <view class="copy-btn" bindtap="copyWechat">一键复制微信号</view>
+      <view class="wechat-note">添加时请备注：小程序咨询</view>
+    </view>
+  </view>
+
+  <!-- 详情弹窗：案例 / 评价 -->
+  <view class="detail-mask {{detailVisible ? 'active' : ''}}" wx:if="{{detailVisible}}" bindtap="onHideDetail" catchtouchmove="noop"></view>
+  <view class="detail-sheet {{detailVisible ? 'active' : ''}}" wx:if="{{detailVisible}}" catchtap="noop">
+    <view class="detail-header">
+      <view class="detail-header-title">{{detailType === 'case' ? '案例详情' : (detailType === 'delivery' ? '交付标准详情' : '评价详情')}}</view>
+      <view class="detail-close" bindtap="onHideDetail">×</view>
+    </view>
+
+    <scroll-view class="detail-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <!-- 图片轮播 -->
+      <view class="detail-swiper-wrap" wx:if="{{detailItem && detailItem.imageUrls.length}}">
+        <swiper
+          class="detail-swiper"
+          current="{{detailSwiperIndex}}"
+          bindchange="onDetailSwiperChange"
+          circular="{{detailItem.imageUrls.length > 1}}"
+        >
+          <swiper-item wx:for="{{detailItem.imageUrls}}" wx:key="*this">
+            <image
+              class="detail-swiper-img"
+              src="{{item}}"
+              mode="aspectFill"
+              bindtap="onDetailPreviewImage"
+              data-url="{{item}}"
+            />
+          </swiper-item>
+        </swiper>
+        <view class="detail-index" wx:if="{{detailItem.imageUrls.length > 1}}">
+          {{detailSwiperIndex + 1}} / {{detailItem.imageUrls.length}}
+        </view>
+        <view class="detail-dots" wx:if="{{detailItem.imageUrls.length > 1}}">
+          <view
+            class="detail-dot {{detailSwiperIndex === dIdx ? 'active' : ''}}"
+            wx:for="{{detailItem.imageUrls}}"
+            wx:for-index="dIdx"
+            wx:for-item="_u"
+            wx:key="dIdx"
+          ></view>
+        </view>
+      </view>
+
+      <!-- 标题 -->
+      <view class="detail-title" wx:if="{{detailItem}}">{{detailItem.title}}</view>
+
+      <!-- 案例专属：跳转链接 -->
+      <view class="detail-section" wx:if="{{detailType === 'case' && detailItem && detailItem.officialAccountUrl}}">
+        <view class="detail-section-label"><text class="meta-icon">🔗</text> 跳转链接</view>
+        <view class="detail-link" catchtap="onOpenOfficialArticle" data-url="{{detailItem.officialAccountUrl}}">跳转看视频</view>
+      </view>
+
+      <!-- 服务内容（案例 / 评价） -->
+      <view class="detail-section" wx:if="{{(detailType === 'case' || detailType === 'review') && detailItem && detailItem.services.length}}">
+        <view class="detail-section-label"><text class="meta-icon">〣</text> 服务内容</view>
+        <view class="detail-tags">
+          <text class="tag-value" wx:for="{{detailItem.services}}" wx:for-item="srv" wx:key="*this">{{srv}}</text>
+        </view>
+      </view>
+
+      <!-- 评价专属：项目类型 -->
+      <view class="detail-section" wx:if="{{detailType === 'review' && detailItem && detailItem.projectType}}">
+        <view class="detail-section-label"><text class="meta-icon">☗</text> 项目类型</view>
+        <view class="detail-section-text">{{detailItem.projectType}}</view>
+      </view>
+
+      <!-- 交付标准专属：设计阶段 -->
+      <view class="detail-section" wx:if="{{detailType === 'delivery' && detailItem && detailItem.phase}}">
+        <view class="detail-section-label"><text class="meta-icon">⊙</text> 设计阶段</view>
+        <view class="detail-tags">
+          <text class="tag-value" style="background: {{detailItem.phaseColor}}; color: {{detailItem.phaseTextColor}}">{{detailItem.phase}}</text>
+        </view>
+      </view>
+
+      <!-- 交付标准专属：设计周期 -->
+      <view class="detail-section" wx:if="{{detailType === 'delivery' && detailItem && detailItem.period}}">
+        <view class="detail-section-label"><text class="meta-icon">⊙</text> 设计周期</view>
+        <view class="detail-tags">
+          <text class="tag-value" style="background: {{detailItem.periodColor}}; color: {{detailItem.periodTextColor}}">{{detailItem.period}}</text>
+        </view>
+      </view>
+
+      <!-- 案例 / 交付标准：项目简介 -->
+      <view class="detail-section" wx:if="{{(detailType === 'case' || detailType === 'delivery') && detailItem && detailItem.desc}}">
+        <view class="detail-section-label"><text class="meta-icon">A≡</text> {{detailType === 'delivery' ? '项目概述' : '项目简介'}}</view>
+        <view class="detail-section-text detail-desc">{{detailItem.desc}}</view>
+      </view>
+
+      <!-- 底部留白 -->
+      <view style="height: 60rpx;"></view>
+    </scroll-view>
+  </view>
+
+</view>

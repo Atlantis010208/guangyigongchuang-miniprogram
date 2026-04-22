@@ -2,6 +2,7 @@
   "pages": [
     "pages/splash/splash",
     "pages/products/products",
+    "pages/lighting-manual/index",
     "pages/course/index/index",
     "pages/search/search",
     "pages/color-temp/color-temp",
