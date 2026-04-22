@@ -1,12 +1,14 @@
 // pages/toolbox/toolbox.js
 const DEFAULT_GALLERY_COVER = 'https://picsum.photos/seed/luxuryinterior/800/800'
 const DEFAULT_CT_BG = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/color-temp-bg.png'
+const DEFAULT_CALC_BG = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/calculator-bg.jpeg'
 
 Page({
   data: {
     galleryCover: '',
     coverLoaded: false,
-    ctBgImage: DEFAULT_CT_BG
+    ctBgImage: DEFAULT_CT_BG,
+    calcBgImage: DEFAULT_CALC_BG
   },
 
   onLoad: function (options) {

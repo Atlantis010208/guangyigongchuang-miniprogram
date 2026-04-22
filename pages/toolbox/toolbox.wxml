@@ -6,11 +6,15 @@
 
   <view class="bento-grid">
     <!-- Small Square 1: 照度计算器 -->
-    <view class="bento-card hover-scale" bindtap="navigateToSearch">
-      <view class="icon-wrap">
-        <image class="icon" src="/images/toolbox/calculator.svg" mode="aspectFit"></image>
+    <view class="bento-card calc-card hover-scale" bindtap="navigateToSearch">
+      <image class="calc-bg" src="{{calcBgImage}}" mode="aspectFill"></image>
+      <view class="calc-overlay"></view>
+      <view class="calc-content">
+        <view class="icon-wrap icon-wrap-light">
+          <image class="icon" src="/images/toolbox/calculator.svg" mode="aspectFit"></image>
+        </view>
+        <text class="card-title card-title-light">照度计算器</text>
       </view>
-      <text class="card-title">照度计算器</text>
     </view>
 
     <!-- Small Square 2: 色温调节器 -->
