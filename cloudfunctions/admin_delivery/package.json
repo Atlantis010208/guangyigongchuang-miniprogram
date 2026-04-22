@@ -1,0 +1,9 @@
+{
+  "name": "admin_delivery",
+  "version": "1.0.0",
+  "description": "设计服务交付标准 CRUD 管理云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
