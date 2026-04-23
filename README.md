@@ -17,6 +17,9 @@
 - **购物体验**：完整的购物袋功能，支持商品管理（电子商城）
 - **内容探索**：精选照明内容、灯光设计课程、照明知识学习
 - **🆕 多分辨率视频播放**：支持 480p/720p/1080p 三种清晰度，智能记忆用户偏好
+- **🆕 灵感库标签云**：基于 Torus + 六边形螺旋网格的无限滚动标签云布局，支持惯性滑动与鱼眼透视
+- **🆕 色温 AI 助手**：融合 RAG 知识库检索与 GLM 大模型，给出分层照明方案；主模型失败自动降级兜底
+- **🆕 灯光设计服务说明书**：Apple 风格长滚动叙事页面，介绍二哥团队与共创平台的服务、流程、交付标准、落地案例与客户评价
 
 ## 页面结构
 
@@ -50,6 +53,31 @@
 - 稍后购买功能
 - 推荐商品展示
 - 结算功能
+
+### 🖼️ 灵感库页面 (`/pages/gallery/`)
+- 瀑布流图片列表，支持"全部 / 收藏 / 业务标签"切换
+- 标签云：Torus 无限滚动 + 六边形螺旋网格，惯性滑动与鱼眼透视
+- 全屏预览：swiper 横滑切图 + 下滑退出手势（跟手拖动、透明度渐变、回弹/续动）
+- 缩略图走带 CDN 缓存版本号的临时 URL，图片覆盖后可及时刷新
+
+### 💡 色温调节器 (`/pages/color-temp/`)
+- 空间/人群/使用场景 + 动态灯具列表（支持增删）
+- 选择空间后自动填入推荐色温，支持手动覆盖
+- 结果由 `color_temp_ai` 云函数驱动：RAG 检索色温知识库 + GLM 生成分层方案
+- 模型降级链：`glm-5.1` 主模型 → `glm-4.5-air` 兜底，tcb 调用超时 60s
+
+### 🧰 工具箱页面 (`/pages/toolbox/`)
+- Bento 卡片布局：色温选择器、灵感库、实景灯光图库等入口
+- 色温卡片背景图从 `color_temp_config` 云集合读取，可后台随时替换
+
+### 📖 灯光设计服务说明书 (`/pages/lighting-manual/`)
+- Apple 风格单页长滚动叙事，介绍二哥团队与共创平台的服务、流程、交付标准、落地案例与客户评价
+- Hero + 关于二哥 + 个人理念 + 完整流程图 + 检查表 + 套餐对比 + 交付标准 + 案例 + 评价 + 联系方式 Bottom Sheet
+- 案例 / 评价 / 交付标准由 `lighting_cases_list` / `lighting_reviews_list` / `lighting_delivery_list` 三个云函数驱动，支持多图封面 + 圆点指示器 + 原生 `wx.previewImage` 预览
+- 二哥头像由 `lighting_manual_config` 云函数动态下发，后台可随时更新
+
+### 🚀 启动页 (`/pages/splash/`)
+- 品牌启动动画，展示 5 秒后自动进入主页
 
 ## 技术特点
 
@@ -573,3 +601,61 @@ miniprogram-4/
 - 新增：`specs/lighting_calculator_freemium/requirements.md` - 需求文档
 - 新增：`specs/lighting_calculator_freemium/design.md` - 技术设计
 - 新增：`specs/lighting_calculator_freemium/tasks.md` - 任务拆分
+
+### v2.3.0 (2026-03)
+#### ✨ 新功能 - 灵感库标签云布局
+- **无限滚动标签云** - 把原来的横向 `scroll-view` 分类栏升级为二维无限滚动标签云
+  - `pages/gallery/cloud.wxs` 实现：Torus 坐标映射、touch 手势、惯性 + 回弹动画、鱼眼透视缩放
+  - 六边形螺旋网格（hex spiral）均匀分布标签，按长度交错避免视觉集中
+  - 活跃标签自动高亮并置顶层，点击即筛选图片
+- **图片预览体验升级**
+  - swiper 改为按需渲染，避免从 0 滑到目标 index 的多余动画
+  - 新增下滑退出手势：跟手拖动 + 透明度渐变 + 回弹/续动收尾
+  - 同步 `filteredImages` 里的 `loaded` 状态，消除 `loadMore` 后的图片闪烁
+
+#### 🔄 云函数更新
+- `gallery_list` / 搜索接口为缩略图拼接 CDN 缓存版本号（`?v=xxx`），图片覆盖后可强制回源
+- `admin_gallery_images` 软删除改为 `status = -1` + `deletedAt`，并修复了误减标签 `imageCount` 的 Bug
+
+### v2.4.0 (2026-04-01)
+#### ✨ 新功能 - 色温调节器 2.0 + RAG AI 方案
+- **色温调节器交互重构**
+  - 主灯 / 辅灯双 picker 改为动态添加的多灯具列表，支持增删
+  - 新增 `suggestedTemp`（推荐色温），选择空间后自动填入，可手动覆盖
+  - 新增推荐色温提示文案与 picker 下拉箭头样式
+- **RAG + GLM 分层照明方案**
+  - 新增 `cloudfunctions/color_temp_ai/lib/rag.js`：向量检索色温知识库
+  - 云函数入口接入 RAG 上下文并更新参数映射
+  - tcb 初始化 timeout 调整为 60s，规避首包 >15s 的 `ESOCKETTIMEDOUT`
+  - **模型降级链**：`glm-5.1` 主模型失败时自动降级到 `glm-4.5-air` 兜底，返回结构新增 `model` 字段
+- **工具箱卡片美化**
+  - 色温选择器卡片支持云端背景图（`color_temp_config.pageConfig.cardBgImage`）
+  - 背景铺满 + 渐变蒙层 + 白色图标与标题，适配深色封面
+
+### v2.5.0 (2026-04-23)
+#### ✨ 新功能 - 灯光设计服务说明书
+- **全新单页长滚动页面** (`pages/lighting-manual/`)
+  - Apple 风格叙事：Hero + 关于二哥 + 个人理念 + 完整流程图 + 检查表 + 套餐对比 + 交付标准 + 案例 + 评价 + 联系方式 Bottom Sheet
+  - 案例 / 评价 / 交付标准多图卡片：封面图 + 圆点指示器，点击触发 `wx.previewImage` 原生全屏预览
+  - 详情弹窗：swiper 轮播 + 圆点索引 + 服务标签 + 项目概述
+- **后端数据驱动** - 告别硬编码 mock 数据
+  - `lighting_cases` / `lighting_reviews` / `lighting_delivery` 三个集合 + 对应管理端/客户端云函数
+  - 客户端接口批量调用 `getTempFileURL` 生成临时 URL（按 50 切片，最多 9 图 × 20 条）
+  - 后台管理系统新增"灯光案例 / 客户评价 / 交付标准"管理页，复用 `MediaItemUploader` 支持 1–9 张图拖拽排序
+- **二哥头像动态配置**
+  - 新增 `lighting_manual_config` 云函数，支持 `get/set` 单例配置读写
+  - 管理端写入需管理员鉴权，小程序端公开读并自动换取临时 URL
+  - 空值时回退为灰色占位圆形
+
+#### 🔄 云函数新增
+- `lighting_cases_list` / `lighting_reviews_list` / `lighting_delivery_list`（客户端只读）
+- `admin_cases` / `admin_reviews` / `admin_delivery`（管理端 add/update/delete/list）
+- `lighting_manual_config`（单例配置 get/set）
+
+#### 🎬 其它
+- 启动页动画展示时长调整为 5 秒
+
+#### 📝 技术设计文档
+- 新增：`specs/lighting_service_manual/` - 说明书页面需求
+- 新增：`specs/cases_reviews_backend/` - 案例 & 评价后端需求、设计、任务拆分
+- 新增：`specs/gallery_tag_cloud/` - 灵感库标签云需求、设计、任务拆分
