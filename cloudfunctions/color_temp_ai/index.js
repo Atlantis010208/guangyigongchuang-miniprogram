@@ -3,7 +3,8 @@ const tcb = require('@cloudbase/node-sdk')
 const { retrieve } = require('./lib/rag')
 
 cloud.init({ env: 'cloud1-5gb9c5u2c58ad6d7' })
-const app = tcb.init({ env: 'cloud1-5gb9c5u2c58ad6d7' })
+// timeout: 60s —— bigmodel-custom 网关首包偶发 >15s，默认 15s 会触发 ESOCKETTIMEDOUT
+const app = tcb.init({ env: 'cloud1-5gb9c5u2c58ad6d7', timeout: 60000 })
 
 const db = cloud.database()
 const kbDb = app.database() // 用管理员身份访问 color_temp_knowledge（绕过小程序端安全规则）
@@ -144,23 +145,43 @@ exports.main = async (event) => {
       references = []
     }
 
+    // === 模型降级链：glm-5.1（主） → glm-4.5-air（兜底） ===
+    // 两者同属 Coding Plan 覆盖，无额外计费；air 版本更快更稳
     const ai = app.ai()
     const model = ai.createModel('bigmodel-custom')
 
-    // 使用 streamText 流式调用，避免网关超时
-    const stream = await model.streamText({
-      model: 'glm-5.1',
-      messages: [
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.3,
-      enable_thinking: false
-    })
+    async function runModel(modelName) {
+      const stream = await model.streamText({
+        model: modelName,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        enable_thinking: false
+      })
+      let text = ''
+      for await (const chunk of stream.textStream) text += chunk
+      const usage = await stream.usage
+      return { text, usage }
+    }
 
-    // 收集流式文本为完整字符串
     let aiText = ''
-    for await (const chunk of stream.textStream) {
-      aiText += chunk
+    let usage = null
+    let usedModel = 'glm-5.1'
+    try {
+      const res = await runModel('glm-5.1')
+      aiText = res.text
+      usage = res.usage
+    } catch (mainErr) {
+      console.warn('[色温AI] glm-5.1 调用失败，降级到 glm-4.5-air:', mainErr.message)
+      usedModel = 'glm-4.5-air'
+      try {
+        const res = await runModel('glm-4.5-air')
+        aiText = res.text
+        usage = res.usage
+        console.log('[色温AI] 兜底模型 glm-4.5-air 调用成功')
+      } catch (fallbackErr) {
+        console.error('[色温AI] 兜底模型 glm-4.5-air 仍失败:', fallbackErr.message)
+        throw fallbackErr
+      }
     }
     
     // 尝试提取 JSON（AI 可能返回 markdown 代码块包裹的 JSON）
@@ -219,9 +240,10 @@ exports.main = async (event) => {
           title: r.title,
           summary: (r.text || '').slice(0, 120),
           score: r.score
-        }))
+        })),
+        model: usedModel  // 当前实际使用的模型（便于前端/日志排查）
       },
-      usage: await stream.usage
+      usage
     }
 
   } catch (err) {
