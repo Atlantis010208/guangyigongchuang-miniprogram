@@ -107,15 +107,19 @@ async function getImageList(event) {
   const hasMore = allImages.length > limit
   const images = hasMore ? allImages.slice(0, limit) : allImages
 
-  // 返回精简字段，thumbUrl 直接使用 cloud:// 格式（小程序 image 组件原生支持）
-  const result = images.map(img => ({
-    _id: img._id,
-    title: img.title,
-    tags: img.tags,
-    thumbUrl: img.thumbFileID || img.fileID,
-    aspect: img.aspect,
-    favoriteCount: img.favoriteCount || 0
-  }))
+  // 把 cloud:// 协议转成带签名的临时 URL，绕过 CDN 缓存
+  const urlMap = await resolveTempFileURLs(images)
+  const result = images.map(img => {
+    const cloudId = img.thumbFileID || img.fileID
+    return {
+      _id: img._id,
+      title: img.title,
+      tags: img.tags,
+      thumbUrl: urlMap[cloudId] || cloudId,
+      aspect: img.aspect,
+      favoriteCount: img.favoriteCount || 0
+    }
+  })
 
   const newLastId = images.length > 0 ? images[images.length - 1]._id : null
 
@@ -129,6 +133,51 @@ async function getImageList(event) {
     },
     timestamp: Date.now()
   }
+}
+
+/**
+ * CDN 缓存版本号
+ * 当批量覆盖 gallery/full 或 gallery/thumb 下的图片时，需要更新此版本号，
+ * 以便生成的 URL 带上新的 ?v=xxx 参数，绕过 CDN 缓存强制回源拉取新图。
+ * 日常业务不会覆盖同名文件（新上传用新文件名），所以平时无需修改。
+ */
+const CDN_CACHE_VERSION = '20260423-dewm'
+
+/**
+ * 批量把图片记录里的 cloud:// 转成 https URL，并在末尾拼接 ?v=版本号
+ * 目的：
+ *   1. cloud:// 协议由小程序端解析为 CDN 加速域名 URL，会命中 CDN 缓存
+ *   2. 云存储桶为公有读时，getTempFileURL 返回裸链无 sign，无法自动绕过缓存
+ *   3. 通过拼接 ?v=<版本号>，CDN 按完整 URL 作为缓存 key，版本号变化 → 回源 → 拿到新图
+ */
+async function resolveTempFileURLs(images) {
+  const fileIds = new Set()
+  for (const img of images) {
+    const id = img.thumbFileID || img.fileID
+    if (id && typeof id === 'string' && id.startsWith('cloud://')) {
+      fileIds.add(id)
+    }
+  }
+  if (fileIds.size === 0) return {}
+
+  const urlMap = {}
+  const ids = [...fileIds]
+  // cloud.getTempFileURL 单次最多 50 个
+  for (let i = 0; i < ids.length; i += 50) {
+    const chunk = ids.slice(i, i + 50)
+    try {
+      const res = await cloud.getTempFileURL({ fileList: chunk })
+      ;(res.fileList || []).forEach(f => {
+        if (f.fileID && f.tempFileURL) {
+          const sep = f.tempFileURL.includes('?') ? '&' : '?'
+          urlMap[f.fileID] = `${f.tempFileURL}${sep}v=${CDN_CACHE_VERSION}`
+        }
+      })
+    } catch (e) {
+      console.warn('[gallery_list] 获取临时URL失败:', e.message)
+    }
+  }
+  return urlMap
 }
 
 /**
@@ -179,15 +228,19 @@ async function searchImages(event) {
   const hasMore = allImages.length > limit
   const images = hasMore ? allImages.slice(0, limit) : allImages
 
-  // thumbUrl 直接使用 cloud:// 格式（小程序 image 组件原生支持）
-  const result = images.map(img => ({
-    _id: img._id,
-    title: img.title,
-    tags: img.tags,
-    thumbUrl: img.thumbFileID || img.fileID,
-    aspect: img.aspect,
-    favoriteCount: img.favoriteCount || 0
-  }))
+  // 把 cloud:// 转成带签名的临时 URL，绕过 CDN 缓存
+  const urlMap = await resolveTempFileURLs(images)
+  const result = images.map(img => {
+    const cloudId = img.thumbFileID || img.fileID
+    return {
+      _id: img._id,
+      title: img.title,
+      tags: img.tags,
+      thumbUrl: urlMap[cloudId] || cloudId,
+      aspect: img.aspect,
+      favoriteCount: img.favoriteCount || 0
+    }
+  })
 
   const newLastId = images.length > 0 ? images[images.length - 1]._id : null
 

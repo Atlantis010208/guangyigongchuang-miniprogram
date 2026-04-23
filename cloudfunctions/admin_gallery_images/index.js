@@ -292,7 +292,7 @@ async function deleteImage(event) {
   }
 
   // 如果已经是删除状态，直接返回
-  if (image.status === 0) {
+  if (image.status === -1) {
     return {
       success: true,
       code: 'OK',
@@ -306,13 +306,14 @@ async function deleteImage(event) {
     .doc(imageId)
     .update({
       data: {
-        status: 0,
+        status: -1,
+        deletedAt: Date.now(),
         updatedAt: Date.now()
       }
     })
 
-  // 更新标签的 imageCount
-  if (image.tags && image.tags.length > 0) {
+  // 更新标签的 imageCount（仅当图片之前处于上架状态时，下架时已经减过一次）
+  if (image.tags && image.tags.length > 0 && image.status === 1) {
     await updateTagImageCounts(image.tags, -1)
   }
 
@@ -342,9 +343,11 @@ async function listImages(event) {
   // 构建查询条件
   const query = {}
 
-  // 状态筛选（管理端可以查看已下架的）
+  // 状态筛选（管理端可以查看已上架/已下架的；默认不显示已删除 status=-1）
   if (filterStatus !== undefined) {
     query.status = Number(filterStatus)
+  } else {
+    query.status = _.neq(-1)
   }
 
   // 标签筛选

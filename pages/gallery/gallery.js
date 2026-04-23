@@ -29,12 +29,23 @@ Page({
     showModal: false,
     currentSwiperIndex: 0,
     showControls: true,
+
+    // 下滑退出预览
+    dragY: 0,
+    dragProgress: 0,
+    isDragging: false,
+    _dragStartX: 0,
+    _dragStartY: 0,
+    _dragMode: null, // null | 'vertical' | 'horizontal'
     isDownloading: false,
     controlsTimeout: null,
 
     // 搜索防抖
     _searchTimer: null
   },
+
+  // 事件占位方法：仅用于吸收 catchtouchmove / catchtap 以阻止冒泡
+  noop: function () {},
 
   onLoad: function () {
     this.loadTags()
@@ -450,54 +461,46 @@ Page({
    * @param {boolean} append - true=增量追加（加载更多），false=全量重建（首次/切换分类）
    * @param {number} appendFrom - 增量追加时从 images 的哪个索引开始
    */
-  splitColumns: function (images, append, appendFrom) {
-    if (append && appendFrom > 0) {
-      // 增量模式：只追加新图片到列末尾，不触碰已有图片
-      const newImages = images.slice(appendFrom)
-      const updates = {}
-      const leftLen = this.data.leftColImages.length
-      const rightLen = this.data.rightColImages.length
-      let leftAdd = 0
-      let rightAdd = 0
-
-      newImages.forEach((img, i) => {
-        const globalIndex = appendFrom + i
-        if (globalIndex % 2 === 0) {
-          updates[`leftColImages[${leftLen + leftAdd}]`] = img
-          leftAdd++
-        } else {
-          updates[`rightColImages[${rightLen + rightAdd}]`] = img
-          rightAdd++
-        }
-      })
-      this.setData(updates)
-    } else {
-      // 全量模式：首次加载或切换分类
-      const leftCol = []
-      const rightCol = []
-      images.forEach((img, index) => {
-        if (index % 2 === 0) {
-          leftCol.push(img)
-        } else {
-          rightCol.push(img)
-        }
-      })
-      this.setData({ leftColImages: leftCol, rightColImages: rightCol })
-    }
+  splitColumns: function (images) {
+    // 全量构造左右两列并一次性 setData，避免使用路径 `arr[n]` 扩展数组时的异常。
+    // 对 20-40 张图片的场景，性能完全可接受。
+    const leftCol = []
+    const rightCol = []
+    images.forEach((img, index) => {
+      if (index % 2 === 0) {
+        leftCol.push(img)
+      } else {
+        rightCol.push(img)
+      }
+    })
+    this.setData({ leftColImages: leftCol, rightColImages: rightCol })
   },
 
   // ==================== 图片加载状态 ====================
 
   onImageLoad: function (e) {
     const id = e.currentTarget.dataset.id
+    const updates = {}
+
     const leftIndex = this.data.leftColImages.findIndex(img => img.id === id)
     if (leftIndex > -1) {
-      this.setData({ [`leftColImages[${leftIndex}].loaded`]: true })
-      return
+      updates[`leftColImages[${leftIndex}].loaded`] = true
+    } else {
+      const rightIndex = this.data.rightColImages.findIndex(img => img.id === id)
+      if (rightIndex > -1) {
+        updates[`rightColImages[${rightIndex}].loaded`] = true
+      }
     }
-    const rightIndex = this.data.rightColImages.findIndex(img => img.id === id)
-    if (rightIndex > -1) {
-      this.setData({ [`rightColImages[${rightIndex}].loaded`]: true })
+
+    // 同步更新 filteredImages 里对应图片的 loaded，
+    // 避免下次 loadMore 全量重建列时丢失已加载状态导致图片闪烁
+    const fIndex = this.data.filteredImages.findIndex(img => img.id === id)
+    if (fIndex > -1) {
+      updates[`filteredImages[${fIndex}].loaded`] = true
+    }
+
+    if (Object.keys(updates).length) {
+      this.setData(updates)
     }
   },
 
@@ -524,12 +527,76 @@ Page({
     const index = this.data.filteredImages.findIndex(img => img.id === id)
 
     if (index > -1) {
+      // swiper 在 WXML 使用 wx:if="{{showModal}}"，每次打开即重建，
+      // current 初始值直接为目标 index，不会产生从 0 滑动的动画
       this.setData({
         showModal: true,
         currentSwiperIndex: index,
-        initialSwiperIndex: index
+        initialSwiperIndex: index,
+        dragY: 0,
+        dragProgress: 0,
+        isDragging: false
       })
       this.resetControlsTimeout()
+    }
+  },
+
+  // ==================== 下滑退出预览 ====================
+
+  onPreviewDragStart: function (e) {
+    const t = e.touches && e.touches[0]
+    if (!t) return
+    this.data._dragStartX = t.clientX
+    this.data._dragStartY = t.clientY
+    this.data._dragMode = null
+  },
+
+  onPreviewDragMove: function (e) {
+    const t = e.touches && e.touches[0]
+    if (!t) return
+
+    const dx = t.clientX - this.data._dragStartX
+    const dy = t.clientY - this.data._dragStartY
+
+    // 首次移动时判定主导方向：横向给 swiper，纵向且向下由我们接管
+    if (this.data._dragMode === null) {
+      // 阈值 8px 避免抖动误判
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+      if (dy > 0 && Math.abs(dy) > Math.abs(dx) * 1.2) {
+        this.data._dragMode = 'vertical'
+        this.setData({ isDragging: true })
+      } else {
+        this.data._dragMode = 'horizontal'
+        return
+      }
+    }
+
+    if (this.data._dragMode !== 'vertical') return
+
+    // 跟手：图片移动 dy，背景 opacity 按 dy/500 逐渐衰减至最多 85%
+    const clampedDy = Math.max(0, dy)
+    const progress = Math.min(clampedDy / 500, 1)
+    this.setData({ dragY: clampedDy, dragProgress: progress })
+  },
+
+  onPreviewDragEnd: function () {
+    if (this.data._dragMode !== 'vertical') {
+      this.data._dragMode = null
+      return
+    }
+    this.data._dragMode = null
+
+    const { dragY } = this.data
+    // 超过 120rpx 阈值即关闭预览
+    if (dragY > 120) {
+      // 给出一个短暂的续动动画再关闭，体验更自然
+      this.setData({ dragY: 600, dragProgress: 1, isDragging: false })
+      setTimeout(() => {
+        this.onCloseModal()
+      }, 180)
+    } else {
+      // 回弹
+      this.setData({ dragY: 0, dragProgress: 0, isDragging: false })
     }
   },
 
@@ -537,7 +604,7 @@ Page({
     const { filteredImages, currentSwiperIndex, initialSwiperIndex } = this.data
     const currentImg = filteredImages[currentSwiperIndex]
 
-    this.setData({ showModal: false })
+    this.setData({ showModal: false, dragY: 0, dragProgress: 0, isDragging: false })
     this.clearControlsTimeout()
 
     if (currentImg && currentSwiperIndex !== initialSwiperIndex) {

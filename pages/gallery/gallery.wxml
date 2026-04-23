@@ -126,22 +126,32 @@
 </view>
 
 <!-- Fullscreen Image Modal -->
-<view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal" catchtouchmove="true">
-  <view class="modal-close" catchtap="onCloseModal">
+<view class="modal-overlay {{showModal ? 'visible' : ''}}" 
+      style="background-color: rgba(0,0,0,{{1 - dragProgress * 0.85}});"
+      bindtap="onCloseModal" catchtouchmove="noop">
+  <view class="modal-close" catchtap="onCloseModal" style="opacity: {{1 - dragProgress}};">
     <image class="icon-close" src="/images/toolbox/x.svg" mode="aspectFit"></image>
   </view>
 
-  <swiper class="modal-swiper" current="{{currentSwiperIndex}}" bindchange="onSwiperChange" duration="300" circular="{{false}}">
+  <swiper wx:if="{{showModal}}" 
+          class="modal-swiper {{isDragging ? '' : 'swiper-elastic'}}" 
+          style="transform: translateY({{dragY}}px); opacity: {{1 - dragProgress * 0.3}};"
+          current="{{currentSwiperIndex}}" bindchange="onSwiperChange" duration="300" circular="{{false}}">
     <block wx:for="{{filteredImages}}" wx:key="id">
       <swiper-item class="modal-swiper-item">
-        <view class="modal-image-wrap" catchtap="toggleModalControls">
+        <view class="modal-image-wrap" 
+              catchtap="toggleModalControls"
+              bindtouchstart="onPreviewDragStart"
+              bindtouchmove="onPreviewDragMove"
+              bindtouchend="onPreviewDragEnd"
+              bindtouchcancel="onPreviewDragEnd">
           <image class="modal-image" src="{{item.thumbUrl}}" mode="aspectFit" lazy-load></image>
         </view>
       </swiper-item>
     </block>
   </swiper>
 
-  <view class="modal-controls {{showControls ? 'visible' : ''}}" catchtap="true">
+  <view class="modal-controls {{showControls ? 'visible' : ''}}" style="opacity: {{showControls ? (1 - dragProgress) : 0}};" catchtap="noop">
     <view class="modal-actions">
       <view class="action-btn circle" catchtap="onToggleFavoriteCurrent">
         <image class="icon-heart-large" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[filteredImages[currentSwiperIndex].id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}}"></image>
