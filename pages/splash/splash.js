@@ -6,10 +6,10 @@ Page({
   onLoad() {
     wx.hideHomeButton && wx.hideHomeButton()
     
-    // 等待动画播放完成后跳转（3秒展示完整动画）
+    // 等待动画播放完成后跳转（5秒展示完整动画）
     setTimeout(() => {
       this.checkAndRedirect()
-    }, 3000)
+    }, 5000)
   },
 
   checkAndRedirect() {
