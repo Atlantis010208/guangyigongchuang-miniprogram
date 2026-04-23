@@ -1,0 +1,10 @@
+{
+  "name": "lighting_manual_config",
+  "version": "1.0.0",
+  "description": "灯光设计服务说明书页面配置（头像等）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

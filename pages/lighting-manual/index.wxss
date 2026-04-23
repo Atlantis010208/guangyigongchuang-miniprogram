@@ -183,6 +183,30 @@ page {
   margin-bottom: 40rpx;
 }
 
+.avatar-wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  margin-right: 24rpx;
+  background: #E4E5E7;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  background: #E4E5E7;
+}
+
+.avatar-name {
+  font-size: 28rpx;
+  color: #86868B;
+}
+
 .info-block {
   margin-bottom: 40rpx;
 }

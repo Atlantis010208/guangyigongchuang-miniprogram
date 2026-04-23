@@ -38,7 +38,8 @@
 
     <view class="about-card">
       <view class="avatar-wrap">
-        <view class="avatar"></view> <!-- 占位图 -->
+        <image class="avatar" src="{{avatarUrl}}" mode="aspectFill" wx:if="{{avatarUrl}}" />
+        <view class="avatar avatar-placeholder" wx:else></view>
         <text class="avatar-name">彭康华&二哥</text>
       </view>
       <view class="info-block">

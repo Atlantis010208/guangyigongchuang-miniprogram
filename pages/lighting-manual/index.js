@@ -5,9 +5,12 @@ Page({
 
     // 案例/评价详情弹窗
     detailVisible: false,
-    detailType: '', // 'case' | 'review'
+    detailType: '', // 'case' | 'review' | 'delivery'
     detailItem: null,
     detailSwiperIndex: 0,
+
+    // 二哥头像（由 lighting_manual_config 云函数动态拉取）
+    avatarUrl: '',
     
     // 原飞书文档数据 - 一字不落
     heroInfo: {
@@ -331,17 +334,19 @@ Page({
 
   async loadContent() {
     try {
-      const [casesRes, reviewsRes, deliveryRes] = await Promise.all([
+      const [casesRes, reviewsRes, deliveryRes, configRes] = await Promise.all([
         wx.cloud.callFunction({ name: 'lighting_cases_list', data: { limit: 20 } }),
         wx.cloud.callFunction({ name: 'lighting_reviews_list', data: { limit: 20 } }),
-        wx.cloud.callFunction({ name: 'lighting_delivery_list', data: { limit: 50 } })
+        wx.cloud.callFunction({ name: 'lighting_delivery_list', data: { limit: 50 } }),
+        wx.cloud.callFunction({ name: 'lighting_manual_config', data: { action: 'get' } })
       ]);
 
       const casesData = (casesRes && casesRes.result && casesRes.result.data && casesRes.result.data.items) || [];
       const reviewsData = (reviewsRes && reviewsRes.result && reviewsRes.result.data && reviewsRes.result.data.items) || [];
       const deliveryItems = (deliveryRes && deliveryRes.result && deliveryRes.result.data && deliveryRes.result.data.items) || [];
+      const avatarUrl = (configRes && configRes.result && configRes.result.data && configRes.result.data.avatarUrl) || '';
 
-      this.setData({ casesData, reviewsData, deliveryStandards: deliveryItems });
+      this.setData({ casesData, reviewsData, deliveryStandards: deliveryItems, avatarUrl });
     } catch (e) {
       console.error('[lighting-manual] 加载数据失败', e);
     }
