@@ -4,11 +4,11 @@ const util = require('../../../utils/util')
 Page({
   data:{
     // 表单字段
-    space:'', spaceOther:'',
-    service:'',
-    budget:'', budgetOther:'',
+    space:'住宅', spaceOther:'',
+    service:'整套灯光设计',
+    budget:'¥19/m²', budgetOther:'',
     area:'',
-    stage:'',
+    stage:'未开始',
     share:'愿意',
     coCreate:'愿意',
     submitting:false,
@@ -17,6 +17,7 @@ Page({
     keyboardHeight: 0,
     currentStep: 0,
     isNextValid: false,
+    areaFocus: false,
     steps: [
       {
         id: 'space',
@@ -30,7 +31,7 @@ Page({
         title: '02 需要什么服务？',
         subtitle: '根据个人需求选择',
         type: 'choice',
-        options: ['选灯配灯服务', '只深化灯光施工图', '整套灯光设计'],
+        options: ['整套灯光设计', '只深化灯光施工图', '选灯配灯服务'],
       },
       {
         id: 'budget',
@@ -147,10 +148,23 @@ Page({
     this.setData({ keyboardHeight: 0 })
   },
 
+  _applyStepSideEffects() {
+    const step = this.data.steps[this.data.currentStep]
+    if (step && step.type === 'input') {
+      // 切换到输入步骤时，自动聚焦弹出键盘
+      this.setData({ areaFocus: false }, () => {
+        setTimeout(() => this.setData({ areaFocus: true }), 50)
+      })
+    } else if (this.data.areaFocus) {
+      this.setData({ areaFocus: false })
+    }
+  },
+
   handlePrev() {
     if (this.data.currentStep > 0) {
       this.setData({ currentStep: this.data.currentStep - 1 }, () => {
         this.checkNextValid()
+        this._applyStepSideEffects()
       })
     }
   },
@@ -163,6 +177,7 @@ Page({
     if (this.data.currentStep < this.data.steps.length - 1) {
       this.setData({ currentStep: this.data.currentStep + 1 }, () => {
         this.checkNextValid()
+        this._applyStepSideEffects()
       })
     }
   },
@@ -279,6 +294,8 @@ Page({
     }catch(err){}
     wx.hideLoading()
     wx.showToast({ title:'已提交', icon:'success' })
+    // 标记订单管理页切换到"共创订单"tab
+    try { wx.setStorageSync('cart_switch_to_scheme', true) } catch(e) {}
     setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }); this._submitting = false; this.setData({ submitting:false }) }, 400)
   }
 })
