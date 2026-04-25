@@ -333,3 +333,78 @@ page {
   width: 40rpx;
   height: 40rpx;
 }
+
+/* ============ 九宫格背景轮播 ============ */
+/* 3x3 等分铺满 gallery-card 整个背景区域，0 间隙构成完整背景 */
+.grid-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0;
+  z-index: 1;
+}
+
+.grid-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 深色兑底：base 加载未完成时的过渡保护，避免首屏白底闪现 */
+  background-color: #1A1A1A;
+}
+
+/* 每格两层 image：base 永驻 + swap 单向淡入。
+   - base 层 opacity:1 永不变 → 真机切换瞬间永不会出现"画面空"的窗口
+   - swap 层 opacity 0→1 单向 transition → 中间任意一帧用户看到的是「base + 半透 swap」叠加
+                                            base 顶住完整画面，新图渐渐覆盖，无空帧风险 */
+.cell-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* base 层：永远 opacity:1，不参与任何 transition；切换时由 JS 在 swap 完全覆盖后悄悄换 src */
+.cell-img.cell-base {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* swap 层：默认 opacity:0；加上 .visible 触发 600ms 单向淡入 */
+.cell-img.cell-swap {
+  opacity: 0;
+  z-index: 2;
+  transition: opacity 600ms ease;
+  /* GPU 合成层 hints：保持 swap 层始终活跃，避免真机延迟绘制 */
+  will-change: opacity;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.cell-img.cell-swap.visible {
+  opacity: 1;
+}
+
+/* 交接瞬间用：暂时关掉 transition，让 swap 从 1 立即变 0（不可见，因为 base 已接管图像） */
+.cell-img.cell-swap.no-trans {
+  transition: none;
+}
+
+/* 底部加深，叠在 gallery-overlay 之上，强化标题/描述可读性 */
+.gallery-bottom-shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 200rpx;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
+  z-index: 2;
+  pointer-events: none;
+}

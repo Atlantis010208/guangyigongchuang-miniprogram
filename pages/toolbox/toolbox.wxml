@@ -31,8 +31,33 @@
 
     <!-- Large Square: 实景灯光图库 -->
     <view class="bento-card col-span-2 row-span-2 gallery-card hover-scale" bindtap="navigateToGallery">
-      <image wx:if="{{coverLoaded}}" class="gallery-bg" src="{{galleryCover}}" mode="aspectFill"></image>
+
+      <!-- 模式 A：九宫格背景轮播（图片池就绪时启用） -->
+      <!-- 单向 fade-in 架构：base 层 opacity:1 永驻顶住画面，swap 层 0→1 单向淡入；
+           淡入完成后把 swap 的图同步到 base，swap 瞬时归零等下次。
+           base 永不变 opacity → 真机切换瞬间永不会出现"画面空"窗口 → 根除闪光。 -->
+      <view wx:if="{{poolReady}}" class="grid-bg">
+        <block wx:for="{{gridImages}}" wx:key="index" wx:for-item="cell" wx:for-index="idx">
+          <view class="grid-cell">
+            <image class="cell-img cell-base"
+                   src="{{cell.base}}" mode="aspectFill" lazy-load
+                   bindload="onBaseLoaded"
+                   data-idx="{{idx}}"></image>
+            <image class="cell-img cell-swap {{cell.swapVisible ? 'visible' : ''}} {{cell.noTransition ? 'no-trans' : ''}}"
+                   src="{{cell.swap}}" mode="aspectFill" lazy-load
+                   bindload="onSwapLoaded"
+                   bindtransitionend="onSwapTransitionEnd"
+                   data-idx="{{idx}}"></image>
+          </view>
+        </block>
+      </view>
+
+      <!-- 模式 B：单图兜底（池未就绪 / 加载失败 / 池不足 9 张） -->
+      <image wx:elif="{{coverLoaded}}" class="gallery-bg" src="{{galleryCover}}" mode="aspectFill"></image>
+
       <view class="gallery-overlay"></view>
+      <!-- 底部加深层：保证白色文案在杂色九宫格背景上仍清晰可读 -->
+      <view class="gallery-bottom-shade"></view>
       <view class="gallery-content">
         <view class="gallery-text-wrap">
           <text class="gallery-title">实景灯光图库</text>
