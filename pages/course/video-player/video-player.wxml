@@ -29,14 +29,14 @@
       </view>
       
       <!-- 只在有视频URL时才渲染video组件，避免空URL导致错误 -->
-      <!-- 流量优化：添加 poster 封面图、custom-cache 缓存、延迟加载 -->
+      <!-- 不使用 poster：切换课时时避免把课程封面图作为视频海报闪现，统一由 buffering-overlay 提供加载反馈 -->
       <video
         wx:if="{{currentLesson && currentLesson.videoUrl}}"
         id="courseVideo"
         class="video-player"
         src="{{currentLesson.videoUrl}}"
         title="{{currentLesson.title || ''}}"
-        poster="{{currentLesson.poster || course.coverUrl || ''}}"
+        poster=""
         autoplay="{{autoplay}}"
         controls="{{true}}"
         show-center-play-btn="{{true}}"
