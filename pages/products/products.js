@@ -485,7 +485,10 @@ Page({
       // 二哥相关服务 → 灯光设计服务说明书
       selection: '/pages/lighting-manual/index',
       optimize: '/pages/flows/optimize/optimize',
-      full: '/pages/flows/publish/publish'
+      // 以下三项跳转到商品详情页（商品 ID 后续可在此处调整）
+      course: '/pages/mall/product-detail/product-detail?id=VP1774923792822',
+      consult: '/pages/mall/product-detail/product-detail?id=VP1773214611725',
+      full: '/pages/mall/product-detail/product-detail?id=VP1773217002986'
     }
     const url = map[service]
     if (url) {
@@ -497,6 +500,12 @@ Page({
 
   onCategoryTap(e) {
     const category = e.currentTarget.dataset.category
+    
+    // 共创设计 - 跳转到发布需求页
+    if (category === 'coCreate') {
+      wx.navigateTo({ url: '/pages/flows/publish/publish' })
+      return
+    }
     
     // 避坑指南 - 直接打开云存储中的 PDF 文件
     if (category === 'residential') {
@@ -518,8 +527,26 @@ Page({
       return
     }
     
-    // 酒店照明 - 功能开发中
+    // 色温选择 - 跳转到色温选择器
+    if (category === 'colorTemp') {
+      wx.navigateTo({ url: '/pages/color-temp/color-temp' })
+      return
+    }
+    
+    // 灯光灵感 - 功能开发中
+    if (category === 'inspiration') {
+      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      return
+    }
+    
+    // 灯光测试 - 功能开发中
     if (category === 'hotel') {
+      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      return
+    }
+    
+    // 案例展示 - 功能开发中
+    if (category === 'case') {
       wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
       return
     }
