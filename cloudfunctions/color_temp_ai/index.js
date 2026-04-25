@@ -85,8 +85,8 @@ async function buildPrompt(params) {
   return template
     .replace(/\$\{space\}/g, space || '未指定')
     .replace(/\$\{area\}/g, '未提供')
-    .replace(/\$\{suggestedTemp\}/g, suggestedTemp ? suggestedTemp + 'K' : '未提供')
-    .replace(/\$\{targetLux\}/g, suggestedTemp ? suggestedTemp + 'K' : '未提供')
+    .replace(/\$\{suggestedTemp\}/g, suggestedTemp ? (/[Kk]/.test(String(suggestedTemp)) ? String(suggestedTemp) : suggestedTemp + 'K') : '未提供')
+    .replace(/\$\{targetLux\}/g, suggestedTemp ? (/[Kk]/.test(String(suggestedTemp)) ? String(suggestedTemp) : suggestedTemp + 'K') : '未提供')
     .replace(/\$\{age\}/g, age || '未指定')
     .replace(/\$\{usage\}/g, usage || '日常起居')
     .replace(/\$\{fixtures\}/g, fixtures || '吸顶灯/筒灯')

@@ -11,24 +11,24 @@ Page({
     // ==================== 表单数据 ====================
     // 1. 空间类别
     spaceTypes: [
-      { id: 'living', name: '客厅', baseTemp: 3500, lux: 200, group: '起居' },
-      { id: 'dining', name: '餐厅', baseTemp: 3500, lux: 150, group: '起居' },
-      { id: 'master_bedroom', name: '主卧', baseTemp: 3500, lux: 100, group: '起居' },
-      { id: 'second_bedroom', name: '次卧', baseTemp: 3500, lux: 100, group: '起居' },
-      { id: 'kids_room', name: '儿童房', baseTemp: 4000, lux: 150, group: '起居' },
-      { id: 'elder_room', name: '老人房', baseTemp: 3000, lux: 150, group: '起居' },
-      { id: 'kitchen', name: '厨房', baseTemp: 4000, lux: 150, group: '功能' },
-      { id: 'bathroom', name: '卫生间', baseTemp: 4000, lux: 100, group: '功能' },
-      { id: 'cloakroom', name: '衣帽间', baseTemp: 4000, lux: 150, group: '功能' },
-      { id: 'study', name: '书房/办公', baseTemp: 4000, lux: 300, group: '功能' },
-      { id: 'balcony', name: '阳台', baseTemp: 3500, lux: 75, group: '功能' },
-      { id: 'hotel_lobby', name: '酒店大堂', baseTemp: 3500, lux: 200, group: '商业' },
-      { id: 'hotel_room', name: '酒店客房', baseTemp: 3500, lux: 100, group: '商业' },
-      { id: 'cafe', name: '咖啡厅/茶室', baseTemp: 3000, lux: 150, group: '商业' },
-      { id: 'restaurant', name: '餐饮空间', baseTemp: 3500, lux: 200, group: '商业' },
-      { id: 'retail', name: '零售店铺', baseTemp: 4000, lux: 300, group: '商业' },
-      { id: 'gallery', name: '展厅/画廊', baseTemp: 4000, lux: 300, group: '商业' },
-      { id: 'office', name: '办公室', baseTemp: 4000, lux: 300, group: '商业' }
+      { id: 'living', name: '客厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '起居' },
+      { id: 'dining', name: '餐厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 150, group: '起居' },
+      { id: 'master_bedroom', name: '主卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居' },
+      { id: 'second_bedroom', name: '次卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居' },
+      { id: 'kids_room', name: '儿童房', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '起居' },
+      { id: 'elder_room', name: '老人房', baseTemp: 3000, tempRange: [2700, 3500], lux: 150, group: '起居' },
+      { id: 'kitchen', name: '厨房', baseTemp: 4000, tempRange: [3500, 4500], lux: 150, group: '功能' },
+      { id: 'bathroom', name: '卫生间', baseTemp: 4000, tempRange: [3500, 4000], lux: 100, group: '功能' },
+      { id: 'cloakroom', name: '衣帽间', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '功能' },
+      { id: 'study', name: '书房/办公', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '功能' },
+      { id: 'balcony', name: '阳台', baseTemp: 3500, tempRange: [3000, 4000], lux: 75, group: '功能' },
+      { id: 'hotel_lobby', name: '酒店大堂', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业' },
+      { id: 'hotel_room', name: '酒店客房', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '商业' },
+      { id: 'cafe', name: '咖啡厅/茶室', baseTemp: 3000, tempRange: [2700, 3000], lux: 150, group: '商业' },
+      { id: 'restaurant', name: '餐饮空间', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业' },
+      { id: 'retail', name: '零售店铺', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业' },
+      { id: 'gallery', name: '展厅/画廊', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业' },
+      { id: 'office', name: '办公室', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '商业' }
     ],
     spaceIndex: -1,
     suggestedTemp: '',
@@ -126,7 +126,18 @@ Page({
       const { data } = await db.collection('color_temp_config').doc('global_config').get()
       if (data) {
         const updates = {}
-        if (data.spaceTypes && data.spaceTypes.length) updates.spaceTypes = data.spaceTypes
+        if (data.spaceTypes && data.spaceTypes.length) {
+          // 合并云端配置，保留本地的 tempRange 字段（云端通常不带）
+          const localMap = {}
+          this.data.spaceTypes.forEach(s => { if (s && s.id) localMap[s.id] = s })
+          updates.spaceTypes = data.spaceTypes.map(s => {
+            const local = s && s.id ? localMap[s.id] : null
+            if (s && !s.tempRange && local && local.tempRange) {
+              return Object.assign({}, s, { tempRange: local.tempRange })
+            }
+            return s
+          })
+        }
         if (data.ageGroups && data.ageGroups.length) updates.ageGroups = data.ageGroups
         if (data.usages && data.usages.length) updates.usages = data.usages
         if (data.fixtures && data.fixtures.length) {
@@ -160,8 +171,10 @@ Page({
     const space = this.data.spaceTypes[index]
     const updates = { spaceIndex: index }
     if (space && space.baseTemp) {
-      updates.suggestedTemp = String(space.baseTemp)
-      updates.suggestedTempSource = '基于「' + space.name + '」推荐，可手动修改'
+      updates.suggestedTemp = space.tempRange
+        ? `${space.tempRange[0]}K-${space.tempRange[1]}K`
+        : String(space.baseTemp) + 'K'
+      updates.suggestedTempSource = '基于「' + space.name + '」推荐区间，可手动修改'
     }
     this.setData(updates)
   },
