@@ -3,7 +3,7 @@
 <view class="gallery-root">
   <view class="content-wrapper">
     <!-- Header -->
-    <view class="header">
+    <view class="header" id="gallery-header">
       <view class="header-content">
         <view class="title">实景灯光图库</view>
         <view class="subtitle">高端照明设计灵感</view>
@@ -18,7 +18,24 @@
       </view>
     </view>
 
+    <!-- Sticky Horizontal Tags (Visible when scrolled down) -->
+    <!-- 因为配置的是原生导航栏，所以固定在 top: 0 即可。
+         stickyCategories 顺序根据当前 activeCategory 动态变化：选中的标签始终置顶在第一位 -->
+    <view class="sticky-tags-container {{showStickyTags ? 'visible' : ''}}">
+      <scroll-view class="sticky-scroll" scroll-x enable-flex enhanced show-scrollbar="{{false}}" scroll-with-animation>
+        <view class="sticky-tag {{activeCategory === item ? 'active' : ''}}" 
+              wx:for="{{stickyCategories}}" 
+              wx:key="*this"
+              bindtap="onCategorySelect" 
+              data-category="{{item}}">
+          {{item}}
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- Categories (Dynamic Infinite Cloud Layout via WXS) -->
+    <!-- categoryCloud 已经在 JS 层展开为多份副本（by 直接包含 row*torusHeight 偏移），
+         WXS 只需按 bx/by 摆放即可，任意 globalY 下视口都持续有标签 -->
     <view class="cloud-wrap" 
           bind:touchstart="{{cloud.touchStart}}" 
           catch:touchmove="{{cloud.touchMove}}" 
@@ -39,8 +56,7 @@
       
       <!-- 视口中心点，所有标签相对于此原点进行 2D 平移 -->
       <view class="cloud-viewport">
-        <block wx:for="{{categoryCloud}}" wx:key="name">
-          <!-- 标签外层包裹器：用于 WXS 获取 dataset 并应用内联样式 -->
+        <block wx:for="{{categoryCloud}}" wx:key="key">
           <view class="cloud-tag-wrap" 
                 data-bx="{{item.bx}}" 
                 data-by="{{item.by}}" 

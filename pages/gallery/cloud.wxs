@@ -40,19 +40,37 @@ function cancelAnimation(ownerInstance) {
   state.isSnapping = false
 }
 
+// 辅助：从 DOM 重新拉取节点列表（解决 init 时序问题 -
+// categoryCloud setData 后 wx:for 的 DOM 渲染是异步的，init 立即调 selectAllComponents
+// 只会拿到已挂载的节点，未挂载的在后续才出现——每次 render 重查可充分避免漏节点。
+function rebuildCacheFromDom(ownerInstance) {
+  var nodes = ownerInstance.selectAllComponents('.cloud-tag-wrap')
+  if (!nodes || nodes.length === 0) return false
+  state.nodesCache = []
+  for (var i = 0; i < nodes.length; i++) {
+    var ds = nodes[i].getDataset()
+    state.nodesCache.push({
+      instance: nodes[i],
+      name: ds.name || '',
+      bx: parseFloat(ds.bx) || 0,
+      by: parseFloat(ds.by) || 0
+    })
+  }
+  return true
+}
+
+// 辅助：将 globalY mod 到 [-h/2, h/2] 内，避免无限累积
+// 由于每个标签有多份副本（by = 原by + row*h），只要 globalY 保持在一个周期内，
+// 副本的 py = by + globalY 就会在视口内形成完整的覆盖。
+function normalizeGlobalY() {
+  var h = state.torusHeight
+  if (!h || h <= 0) return
+  state.globalY = ((state.globalY + h / 2) % h + h) % h - h / 2
+}
+
 function init(newValue, oldValue, ownerInstance, instance) {
   if (newValue && newValue.length > 0) {
-    var nodes = ownerInstance.selectAllComponents('.cloud-tag-wrap')
-    state.nodesCache = []
-    for (var i = 0; i < nodes.length; i++) {
-      var ds = nodes[i].getDataset()
-      state.nodesCache.push({
-        instance: nodes[i],
-        name: ds.name,
-        bx: parseFloat(ds.bx) || 0,
-        by: parseFloat(ds.by) || 0
-      })
-    }
+    rebuildCacheFromDom(ownerInstance)
     render(ownerInstance)
   }
 }
@@ -67,10 +85,11 @@ function onActiveChange(newValue, oldValue, ownerInstance, instance) {
       return
     }
 
-    // 否则，平滑滚动到新选中的节点
+    // 否则，平滑滚动到最接近中心的同名副本（避免滚到远端副本导致视觉跳远）
     if (state.nodesCache.length > 0) {
       var w = state.torusWidth
       var h = state.torusHeight
+      var minDist = Infinity
       var targetDx = 0
       var targetDy = 0
       var found = false
@@ -78,21 +97,22 @@ function onActiveChange(newValue, oldValue, ownerInstance, instance) {
       for (var i = 0; i < state.nodesCache.length; i++) {
         var node = state.nodesCache[i]
         if (node.name === newValue) {
-          var px = node.bx + state.globalX
+          // 水平 mod，垂直不 mod（副本的 by 已含偏移）
+          var px = ((node.bx + state.globalX + w/2) % w + w) % w - w/2
           var py = node.by + state.globalY
-
-          px = ((px + w/2) % w + w) % w - w/2
-          py = ((py + h/2) % h + h) % h - h/2
-          
-          targetDx = px
-          targetDy = py
-          found = true
-          break
+          var d = Math.sqrt(px*px + py*py)
+          if (d < minDist) {
+            minDist = d
+            targetDx = px
+            targetDy = py
+            found = true
+          }
         }
       }
       
       if (found) {
-        startSnapAnimation(ownerInstance, targetDx, targetDy)
+        // 统一走 startAnimation('snap', {dx, dy})，把目标位移交给动画函数自己换算
+        startAnimation(ownerInstance, 'snap', { dx: targetDx, dy: targetDy })
       } else {
         render(ownerInstance)
       }
@@ -104,6 +124,7 @@ function onConfigChange(newValue, oldValue, ownerInstance, instance) {
   if (newValue) {
     state.torusWidth = newValue.torusWidth || 1000
     state.torusHeight = newValue.torusHeight || 800
+    normalizeGlobalY()
     render(ownerInstance)
   }
 }
@@ -131,6 +152,7 @@ function touchMove(e, ownerInstance) {
 
   state.globalX = safeNum(state.globalX + dx * 2)
   state.globalY = safeNum(state.globalY + dy * 2)
+  normalizeGlobalY() // 保持 globalY 在一个周期内，标签副本自然无缝循环
   state.lastX = touch.clientX
   state.lastY = touch.clientY
   state.lastTime = e.timeStamp
@@ -160,6 +182,7 @@ function startAnimation(ownerInstance, type, params) {
       }
       state.globalX = safeNum(state.globalX + state.vx * 16 * 1.5)
       state.globalY = safeNum(state.globalY + state.vy * 16 * 1.5)
+      normalizeGlobalY() // 惯性滑动中也保证 globalY 不累积
       state.vx *= state.friction
       state.vy *= state.friction
       render(ownerInstance)
@@ -214,23 +237,11 @@ function snapToNearest(ownerInstance) {
 }
 
 function render(ownerInstance) {
-  // 1. 确保节点缓存有效
-  if (!state.nodesCache || state.nodesCache.length === 0) {
-    var nodes = ownerInstance.selectAllComponents('.cloud-tag-wrap')
-    if (!nodes || nodes.length === 0) return
-    state.nodesCache = []
-    for (var i = 0; i < nodes.length; i++) {
-      var ds = nodes[i].getDataset()
-      state.nodesCache.push({
-        instance: nodes[i],
-        name: ds.name || '',
-        bx: parseFloat(ds.bx) || 0,
-        by: parseFloat(ds.by) || 0
-      })
-    }
-  }
+  // 1. 每次重新查询 DOM，彻底解决 init 时序问题（文件顶部 rebuildCacheFromDom 有详解）
+  // 性能上 WXS selectAllComponents 开销很小，重查换来稳定性是值得的
+  if (!rebuildCacheFromDom(ownerInstance)) return
 
-  // 2. 核心数值兜底，防止全局变量被 NaN 污染
+  // 2. 核心数值兑底，防止全局变量被 NaN 污染
   state.globalX = safeNum(state.globalX, 0)
   state.globalY = safeNum(state.globalY, 0)
 
@@ -242,12 +253,12 @@ function render(ownerInstance) {
     var node = state.nodesCache[i]
     if (!node || !node.instance) continue
 
-    // 计算当前物理坐标 (含 Torus 映射)
-    var rawPx = node.bx + state.globalX
-    var rawPy = node.by + state.globalY
-    
-    var px = ((rawPx + w/2) % w + w) % w - w/2
-    var py = ((rawPy + h/2) % h + h) % h - h/2
+    // 水平方向：仍使用 mod，利用 torus 无限循环
+    var px = ((node.bx + state.globalX + w/2) % w + w) % w - w/2
+    // 垂直方向：不 mod，by 已包含副本偏移（由 JS buildCloud 生成），
+    // globalY 已被 normalizeGlobalY 保持在 [-h/2, h/2]——两者相加就是
+    // 各副本的真实视口坐标，副本之间只相差一个周期 h，密铺不重叠
+    var py = node.by + state.globalY
     
     // 再次校验 px/py，防止溢出
     px = safeNum(px, 0)

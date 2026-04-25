@@ -5,38 +5,37 @@ const app = getApp()
 
 Page({
   data: {
-    // 标签相关
-    categories: ['全部', '收藏'],
-    categoryCloud: [],
-    activeCategory: '全部',
-    activeTag: '',
-    searchQuery: '',
-
-    // 图片列表
-    filteredImages: [],
+    // 图片数据
+    filteredImages: [], // ★关键：WXML 里用 filteredImages.length 来判断是否渲染瀑布流
     leftColImages: [],
     rightColImages: [],
 
-    // 收藏（imageId -> boolean 的映射存在 favoritesMap 中）
-    favoritesMap: {},
+    // 标签与云图配置
+    categories: ['全部'],
+    stickyCategories: ['全部'], // 吸顶横向标签栏的顺序：当前 active 始终置顶
+    activeCategory: '全部',
+    activeTag: '',
+    categoryCloud: [],
+    categoryCloudConfig: {
+      torusWidth: 1000,
+      torusHeight: 800
+    },
 
-    // 分页
-    hasMore: true,
-
-    // 状态
+    // 交互状态
+    showStickyTags: false,
+    searchQuery: '',
     isFetching: false,
     isLoadingMore: false,
+    hasMore: true,
+    favoritesMap: {}, // id -> boolean
+
+    // 大图预览/轮播相关
     showModal: false,
     currentSwiperIndex: 0,
-    showControls: true,
-
-    // 下滑退出预览
+    initialSwiperIndex: 0,
     dragY: 0,
     dragProgress: 0,
     isDragging: false,
-    _dragStartX: 0,
-    _dragStartY: 0,
-    _dragMode: null, // null | 'vertical' | 'horizontal'
     isDownloading: false,
     controlsTimeout: null,
 
@@ -50,6 +49,17 @@ Page({
   onLoad: function () {
     this.loadTags()
     this.loadImages()
+    // 注：loadImages 内部会调用 batchCheckFavorites 自动补齐收藏状态，无需额外预加载
+  },
+
+  onPageScroll: function(e) {
+    // 当滚动超过云图区域时显示吸顶标签（大概在搜素框下方，取一个经验值）
+    const threshold = 280
+    if (e.scrollTop > threshold && !this.data.showStickyTags) {
+      this.setData({ showStickyTags: true })
+    } else if (e.scrollTop <= threshold && this.data.showStickyTags) {
+      this.setData({ showStickyTags: false })
+    }
   },
 
   onShow: function () {
@@ -100,9 +110,24 @@ Page({
     const cloudData = this.buildCloud(categories)
     this.setData({ 
       categories, 
+      stickyCategories: this.buildStickyCategories(categories, this.data.activeCategory),
       categoryCloud: cloudData.nodes,
       categoryCloudConfig: cloudData.config
     })
+  },
+
+  // 构建吸顶横向标签栏的顺序：当前 active 置顶，其他保持 categories 中的相对顺序
+  // 例：activeCategory='壁灯' → ['壁灯', '全部', '收藏', '吊灯', '射灯', ...]
+  // 选中"全部"或"收藏"时回到默认顺序
+  buildStickyCategories: function (categories, activeCategory) {
+    if (!categories || !categories.length) return []
+    if (!activeCategory) return categories.slice()
+    const idx = categories.indexOf(activeCategory)
+    if (idx <= 0) return categories.slice() // 已经是首位 / 不存在
+    const result = categories.slice()
+    result.splice(idx, 1)
+    result.unshift(activeCategory)
+    return result
   },
 
   buildCloud: function (categories) {
@@ -176,15 +201,45 @@ Page({
       maxY = Math.max(maxY, by)
     })
 
-    // Torus 边界优化：使用规整的跨度加上一个单元格的冗余
-    const torusWidth = (maxX - minX) + dx * 1.5
-    const torusHeight = (maxY - minY) + dy * 2.5
+    // Torus 边界：六边形螺旋的相邻行 y 值相差 rowStep = dy*√3/2，
+    // 相邻列 x 值相差 colStep = dx/2。要让 N 行/列在 mod 周期下
+    // 既互不重叠又首尾衔接，最小周期 = spanY + rowStep / spanX + colStep。
+    const rowStep = dy * Math.sqrt(3) / 2
+    const colStep = dx / 2
+    const spanX = (isFinite(maxX) && isFinite(minX)) ? (maxX - minX) : 0
+    const spanY = (isFinite(maxY) && isFinite(minY)) ? (maxY - minY) : 0
+    const torusWidth = Math.max(dx, spanX + colStep)
+    const torusHeight = Math.max(rowStep * 2, spanY + rowStep)
+
+    // ==========================================================
+    // 关键：垂直方向生成足够多的副本铺满视口 560rpx
+    //
+    // WXS 中 globalY 会被 mod 到 [-h/2, h/2]，标签 py = by + globalY，
+    // 所以每个副本的 py 范围 ≈ [by - h/2, by + h/2]。
+    // 为了让任意 globalY 下视口 [-280, +280]rpx 都有标签，
+    // 需要足够多的副本（row ∈ [-rowHalf, rowHalf]）覆盖这个范围。
+    // 即 rowHalf * torusHeight + spanY/2 + torusHeight/2 >= 280
+    // 取一个保险值，保证视口完全被副本的 py 包住：
+    const VIEWPORT_H = 560
+    const rowHalf = Math.max(1, Math.ceil((VIEWPORT_H / 2) / torusHeight) + 1)
+
+    const replicated = []
+    placedNodes.forEach((node, idx) => {
+      for (let r = -rowHalf; r <= rowHalf; r++) {
+        replicated.push({
+          name: node.name,
+          bx: node.bx,
+          by: node.by + r * torusHeight, // by 直接包含 row 偏移，WXS 无需再处理 row
+          key: r + '_' + idx + '_' + node.name
+        })
+      }
+    })
 
     return {
-      nodes: placedNodes,
+      nodes: replicated,
       config: {
-        torusWidth: Math.max(600, torusWidth),
-        torusHeight: Math.max(600, torusHeight)
+        torusWidth: torusWidth,
+        torusHeight: torusHeight
       }
     }
   },
@@ -228,6 +283,7 @@ Page({
     this.setData({
       activeCategory: category,
       activeTag: (category !== '全部' && category !== '收藏') ? category : '',
+      stickyCategories: this.buildStickyCategories(this.data.categories, category),
       filteredImages: [],
       leftColImages: [],
       rightColImages: [],
