@@ -482,20 +482,29 @@ Page({
     const service = e.currentTarget.dataset.service
     // 跳转映射
     const map = {
+      // 发布共创设计需求 → 直接进入需求发布页（点击大卡片或卡片内"发布"按钮均会冒泡触发）
+      full: '/pages/flows/publish/publish',
       // 二哥相关服务 → 灯光设计服务说明书
       selection: '/pages/lighting-manual/index',
-      optimize: '/pages/flows/optimize/optimize',
-      // 以下三项跳转到商品详情页（商品 ID 后续可在此处调整）
+      // 以下五项跳转到商品详情页（商品 ID 后续可在此处调整）
       course: '/pages/mall/product-detail/product-detail?id=VP1774923792822',
       consult: '/pages/mall/product-detail/product-detail?id=VP1773214611725',
-      full: '/pages/mall/product-detail/product-detail?id=VP1773217002986'
+      optimize: '/pages/mall/product-detail/product-detail?id=VP1773364009162',
+      noMainLight: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
+      lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986'
     }
     const url = map[service]
-    if (url) {
-      wx.navigateTo({ url })
-    } else {
+    if (!url) {
       wx.showToast({ title: '即将开放', icon: 'none' })
+      return
     }
+    wx.navigateTo({
+      url,
+      fail: (err) => {
+        console.error('[products] onServiceTap 跳转失败:', service, err)
+        wx.showToast({ title: '页面跳转失败，请稍后重试', icon: 'none' })
+      }
+    })
   },
 
   onCategoryTap(e) {
@@ -533,9 +542,15 @@ Page({
       return
     }
     
-    // 灯光灵感 - 功能开发中
+    // 灯光灵感 - 跳转到设计灵感库（实景灯光图库）
     if (category === 'inspiration') {
-      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      wx.navigateTo({
+        url: '/pages/gallery/gallery',
+        fail: (err) => {
+          console.error('[products] 跳转灯光灵感失败:', err)
+          wx.showToast({ title: '页面跳转失败，请稍后重试', icon: 'none' })
+        }
+      })
       return
     }
     

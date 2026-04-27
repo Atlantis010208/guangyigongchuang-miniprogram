@@ -83,7 +83,7 @@
         <view class="service-pill" bindtap="onAssistantTap" data-activity="video">
             <text class="service-pill-text">灯光工具包</text>
         </view>
-        <view class="service-pill" bindtap="onServiceTap" data-service="full">
+        <view class="service-pill" bindtap="onServiceTap" data-service="lightingDesign">
             <text class="service-pill-text">灯光设计</text>
         </view>
       </view>
