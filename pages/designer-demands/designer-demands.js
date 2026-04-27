@@ -21,6 +21,9 @@ Page({
 
   _pollTimer: null,
   _lastTotal: 0,
+  // 已加载列表中最新一条需求的 createdAt 时间戳；用于轮询时与服务端最新需求时间对比，
+  // 比单纯比较 total 更稳定（接单+新发布会让 total 互相抵消导致误判）。
+  _lastLatestCreatedAt: 0,
 
   onLoad(options) {
     this.loadDemands(true);
@@ -64,8 +67,11 @@ Page({
       success: (res) => {
         if (res.result && res.result.success) {
           const total = res.result.data.total || 0;
-          if (this._lastTotal > 0 && total > this._lastTotal) {
-            const diff = total - this._lastTotal;
+          const latestCreatedAt = res.result.data.latestCreatedAt || 0;
+          // 用最新需求 createdAt 比较：当服务端最新需求时间戳大于上次记录值，
+          // 即视为有新需求（避免接单+发布导致 total 不变的误判）。
+          if (this._lastLatestCreatedAt > 0 && latestCreatedAt > this._lastLatestCreatedAt) {
+            const diff = Math.max(1, total - this._lastTotal);
             this.setData({ newCount: diff, showNewTip: true });
           }
         }
@@ -103,6 +109,11 @@ Page({
           const { list, hasMore, total } = res.result.data;
           if (reset && total !== undefined) {
             this._lastTotal = total;
+          }
+          // 记录当前列表中最新一条的 createdAt（用于轮询时识别新需求）
+          // 由于云函数已按 createdAt desc 返回，第 1 条即为最新
+          if (reset && list && list.length > 0 && list[0].createdAt) {
+            this._lastLatestCreatedAt = list[0].createdAt;
           }
           this.setData({
             demands: reset ? (list || []) : [...this.data.demands, ...(list || [])],

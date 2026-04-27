@@ -14,6 +14,9 @@ Page({
 
   _pollTimer: null,
   _lastTotal: 0,
+  // 已加载列表中最新一条需求的 createdAt 时间戳；用于轮询时与服务端最新需求时间对比，
+  // 比单纯比较 total 更稳定（接单+新发布会让 total 互相抵消导致误判）。
+  _lastLatestCreatedAt: 0,
 
   onLoad(options) {
     // 隐藏返回首页按钮，因为这是设计师的首页
@@ -67,8 +70,12 @@ Page({
       success: (res) => {
         if (res.result && res.result.success) {
           const total = res.result.data.total || 0;
-          if (this._lastTotal > 0 && total > this._lastTotal) {
-            const diff = total - this._lastTotal;
+          const latestCreatedAt = res.result.data.latestCreatedAt || 0;
+          // 用最新需求 createdAt 比较：当服务端最新需求时间戳大于上次记录值，
+          // 即视为有新需求（避免接单+发布导致 total 不变的误判）。
+          if (this._lastLatestCreatedAt > 0 && latestCreatedAt > this._lastLatestCreatedAt) {
+            // newCount 仅做提示，按 total 增量估算；当抵消时退化为 1
+            const diff = Math.max(1, total - this._lastTotal);
             this.setData({ newCount: diff, showNewTip: true });
           }
         }
@@ -123,7 +130,13 @@ Page({
           if (total !== undefined) {
             this._lastTotal = total;
           }
-          this.setData({ demands: res.result.data.list || [], showNewTip: false, newCount: 0 });
+          const list = res.result.data.list || [];
+          // 记录当前列表中最新一条的 createdAt（用于轮询时识别新需求）
+          // 由于云函数已按 createdAt desc 返回，第 1 条即为最新
+          if (list.length > 0 && list[0].createdAt) {
+            this._lastLatestCreatedAt = list[0].createdAt;
+          }
+          this.setData({ demands: list, showNewTip: false, newCount: 0 });
         } else {
           console.warn('[designer-home] 加载需求失败:', res.result && res.result.message);
         }
