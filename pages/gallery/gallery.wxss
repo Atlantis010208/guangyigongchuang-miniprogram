@@ -93,6 +93,39 @@ page {
   color: #8E8E93;
 }
 
+/* 清空按钮：仅当 searchQuery 非空时显示，点击清空输入并恢复列表 */
+.search-clear {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background-color: #D1D1D6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  opacity: 0;
+  transform: scale(0.6);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.search-clear.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.search-clear-hover {
+  background-color: #A1A1A6;
+}
+
+.search-clear-icon {
+  width: 22rpx;
+  height: 22rpx;
+  filter: brightness(0) invert(1); /* 让 x.svg 显示为白色 */
+}
+
 /* Sticky Horizontal Tags */
 .sticky-tags-container {
   position: fixed;
@@ -166,7 +199,7 @@ page {
 .cloud-wrap {
   position: relative;
   width: 100%;
-  height: 560rpx; /* 固定视口高度，由 JS 生成足够多的标签副本铺满 */
+  height: 300rpx; /* 固定视口高度，由 JS 生成足够多的标签副本铺满。需与 gallery.js 的 VIEWPORT_H 保持一致 */
   margin-bottom: 50rpx;
   overflow: hidden;
   box-sizing: border-box;
@@ -228,7 +261,7 @@ page {
   top: 0;
   left: 0;
   right: 0;
-  height: 160rpx;
+  height: 112rpx; /* ≈ 视口高度 × 0.28，与 .cloud-wrap height 同步缩放 */
   background: linear-gradient(to bottom, #F2F2F7 0%, rgba(242, 242, 247, 0) 100%);
   pointer-events: none;
   z-index: 999;
@@ -239,7 +272,7 @@ page {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 160rpx;
+  height: 112rpx; /* ≈ 视口高度 × 0.28，与 .cloud-wrap height 同步缩放 */
   background: linear-gradient(to top, #F2F2F7 0%, rgba(242, 242, 247, 0) 100%);
   pointer-events: none;
   z-index: 999;
@@ -300,13 +333,11 @@ page {
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  object-fit: cover; /* 确保图片覆盖满容器且不溢出 */
-}
-
-.gallery-img.loaded {
+  /* 默认 opacity:1：image 在 src 加载前自然空白（露出 image-card 的灰底占位），
+     加载完成后由组件直接渲染像素。不再依赖 bindload 回调 setData 来切换 .loaded 类，
+     避免 wx:if 分支切换或网络异常时图片永远 opacity:0 的问题。 */
   opacity: 1;
+  object-fit: cover; /* 确保图片覆盖满容器且不溢出 */
 }
 
 .skeleton {

@@ -5,7 +5,7 @@
     <!-- Header -->
     <view class="header" id="gallery-header">
       <view class="header-content">
-        <view class="title">实景灯光图库</view>
+        <view class="title">设计灵感库</view>
         <view class="subtitle">高端照明设计灵感</view>
       </view>
     </view>
@@ -14,7 +14,10 @@
     <view class="search-container">
       <view class="search-box">
         <image class="search-icon" src="/images/toolbox/search.svg" mode="aspectFit"></image>
-        <input class="search-input" placeholder="搜索灯光场景..." placeholder-class="search-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" />
+        <input class="search-input" placeholder="搜索灯光场景，多个关键词用空格分隔" placeholder-class="search-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearchConfirm" />
+        <view class="search-clear {{searchQuery ? 'visible' : ''}}" catchtap="onClearSearch" hover-class="search-clear-hover">
+          <image class="search-clear-icon" src="/images/toolbox/x.svg" mode="aspectFit"></image>
+        </view>
       </view>
     </view>
 
@@ -98,7 +101,7 @@
             <block wx:for="{{leftColImages}}" wx:key="id">
               <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
-                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" bindload="onImageLoad" binderror="onImageError" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
                     <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[item.id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
                   </view>
@@ -111,7 +114,7 @@
             <block wx:for="{{rightColImages}}" wx:key="id">
               <view class="image-card hover-scale" bindtap="onImageSelect" data-id="{{item.id}}" id="img-{{item.id}}">
                 <view class="image-wrap {{item.aspect}}">
-                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" lazy-load bindload="onImageLoad" data-id="{{item.id}}"></image>
+                  <image class="gallery-img {{item.loaded ? 'loaded' : ''}}" src="{{item.thumbUrl}}" mode="aspectFill" bindload="onImageLoad" binderror="onImageError" data-id="{{item.id}}"></image>
                   <view class="favorite-btn" catchtap="onToggleFavorite" data-id="{{item.id}}">
                     <image class="icon-heart" src="/images/toolbox/heart.svg" mode="aspectFit" style="filter: {{favoritesMap[item.id] ? 'invert(29%) sepia(85%) saturate(7386%) hue-rotate(338deg) brightness(108%) contrast(105%)' : 'none'}};"></image>
                   </view>

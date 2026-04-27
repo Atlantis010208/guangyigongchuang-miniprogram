@@ -212,15 +212,15 @@ Page({
     const torusHeight = Math.max(rowStep * 2, spanY + rowStep)
 
     // ==========================================================
-    // 关键：垂直方向生成足够多的副本铺满视口 560rpx
+    // 关键：垂直方向生成足够多的副本铺满视口 VIEWPORT_H rpx
     //
     // WXS 中 globalY 会被 mod 到 [-h/2, h/2]，标签 py = by + globalY，
     // 所以每个副本的 py 范围 ≈ [by - h/2, by + h/2]。
-    // 为了让任意 globalY 下视口 [-280, +280]rpx 都有标签，
+    // 为了让任意 globalY 下视口 [-VIEWPORT_H/2, +VIEWPORT_H/2]rpx 都有标签，
     // 需要足够多的副本（row ∈ [-rowHalf, rowHalf]）覆盖这个范围。
-    // 即 rowHalf * torusHeight + spanY/2 + torusHeight/2 >= 280
-    // 取一个保险值，保证视口完全被副本的 py 包住：
-    const VIEWPORT_H = 560
+    //
+    // ⚠️ VIEWPORT_H 必须与 gallery.wxss 中 .cloud-wrap 的 height 保持一致
+    const VIEWPORT_H = 400
     const rowHalf = Math.max(1, Math.ceil((VIEWPORT_H / 2) / torusHeight) + 1)
 
     const replicated = []
@@ -301,25 +301,55 @@ Page({
   // ==================== 搜索 ====================
 
   onSearchInput: function (e) {
-    const value = e.detail.value
+    const value = e.detail.value || ''
+    const prevQuery = this.data.searchQuery || ''
     this.setData({ searchQuery: value })
 
-    // 防抖 500ms
+    // 仅去除首尾空白后的有效内容若未变化，不重复触发查询
+    // 例如用户在尾部多敲了一个空格，避免重复请求
+    if (value.trim() === prevQuery.trim()) return
+
+    // 防抖 400ms
     if (this._searchTimer) clearTimeout(this._searchTimer)
     this._searchTimer = setTimeout(() => {
-      this.setData({
-        filteredImages: [],
-        leftColImages: [],
-        rightColImages: [],
-        hasMore: true
-      })
+      this._reloadCurrentList()
+    }, 400)
+  },
 
-      if (this.data.activeCategory === '收藏') {
-        this.loadFavoritesList()
-      } else {
-        this.loadImages()
-      }
-    }, 500)
+  // 用户在键盘上点"搜索"键时立即触发，跳过防抖
+  onSearchConfirm: function () {
+    if (this._searchTimer) {
+      clearTimeout(this._searchTimer)
+      this._searchTimer = null
+    }
+    this._reloadCurrentList()
+  },
+
+  // 清空搜索词：恢复当前分类下的完整列表
+  onClearSearch: function () {
+    if (this._searchTimer) {
+      clearTimeout(this._searchTimer)
+      this._searchTimer = null
+    }
+    if (!this.data.searchQuery) return
+    this.setData({ searchQuery: '' })
+    this._reloadCurrentList()
+  },
+
+  // 重置分页并按当前分类/搜索词重新拉取列表
+  _reloadCurrentList: function () {
+    this.setData({
+      filteredImages: [],
+      leftColImages: [],
+      rightColImages: [],
+      hasMore: true
+    })
+
+    if (this.data.activeCategory === '收藏') {
+      this.loadFavoritesList()
+    } else {
+      this.loadImages()
+    }
   },
 
   // ==================== 图片列表 ====================
@@ -327,17 +357,18 @@ Page({
   loadImages: function () {
     const { activeTag, searchQuery, filteredImages } = this.data
     const offset = filteredImages.length
+    const trimmedKeyword = (searchQuery || '').trim()
 
     this.setData({ isFetching: offset === 0, isLoadingMore: offset > 0 })
 
     const params = {
-      action: searchQuery ? 'search' : 'list',
+      action: trimmedKeyword ? 'search' : 'list',
       pageSize: 20,
       offset: offset
     }
 
     if (activeTag) params.tag = activeTag
-    if (searchQuery) params.keyword = searchQuery
+    if (trimmedKeyword) params.keyword = trimmedKeyword
 
     wx.cloud.callFunction({
       name: 'gallery_list',
@@ -349,10 +380,13 @@ Page({
         return
       }
 
+      // loaded 默认为 true：image 组件在 src 真正加载完成前自然不可见，
+      // 加载完成后会自然显示。bindload/binderror 仅作为兜底确认（双保险）。
+      // 这样即使 wxml 分支切换导致 bindload 偶发不触发，也不会出现"图片永远 opacity:0"的灰色卡片现象。
       const newImages = (result.data.images || []).map(img => ({
         ...img,
         id: img._id,
-        loaded: false
+        loaded: true
       }))
 
       const prevImages = offset > 0 ? this.data.filteredImages : []
@@ -401,10 +435,11 @@ Page({
         return
       }
 
+      // 与 loadImages 一致：loaded 默认为 true，避免 bindload 偶发不触发导致灰底永久不消
       const newImages = (result.data.images || []).map(img => ({
         ...img,
         id: img._id,
-        loaded: false
+        loaded: true
       }))
 
       const prevImages = offset > 0 ? this.data.filteredImages : []
@@ -535,7 +570,18 @@ Page({
   // ==================== 图片加载状态 ====================
 
   onImageLoad: function (e) {
+    this._markImageLoaded(e.currentTarget.dataset.id)
+  },
+
+  // 加载失败兜底：避免 .gallery-img 永远停留在 opacity:0 → 用户看到一片灰色卡片
+  onImageError: function (e) {
     const id = e.currentTarget.dataset.id
+    console.warn('[gallery] 图片加载失败，强制显示占位:', id)
+    this._markImageLoaded(id)
+  },
+
+  _markImageLoaded: function (id) {
+    if (!id) return
     const updates = {}
 
     const leftIndex = this.data.leftColImages.findIndex(img => img.id === id)

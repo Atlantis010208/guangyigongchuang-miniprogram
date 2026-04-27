@@ -181,7 +181,14 @@ async function resolveTempFileURLs(images) {
 }
 
 /**
- * 关键词搜索（keywords 正则匹配 + 标签组合）
+ * 关键词模糊搜索（多 token AND + 多字段 OR + 正则特殊字符转义）
+ *
+ * 例子：
+ *   keyword="卧室 吊灯"
+ *   → 切分为 ["卧室", "吊灯"]
+ *   → 每个 token 在 keywords/title/description 任一字段命中即可（OR）
+ *   → 多个 token 之间必须都命中（AND）
+ *   → 故能匹配 title="主卧吊灯设计" 或 keywords 含"卧室 吊灯"的图片
  */
 async function searchImages(event) {
   const {
@@ -199,25 +206,47 @@ async function searchImages(event) {
 
   const limit = Math.min(Number(pageSize), 40)
 
-  // 构建查询条件
-  const query = { status: 1 }
+  // 1) 切分用户输入：按中英文空格、常见标点切分为多个 token
+  const tokens = String(keyword)
+    .trim()
+    .split(/[\s,，;；、|\/]+/)
+    .map(t => t.trim())
+    .filter(t => t.length > 0)
+    .slice(0, 5) // 最多 5 个 token，避免恶意超长输入
 
-  // 关键词搜索
-  query.keywords = db.RegExp({ regexp: keyword.trim(), options: 'i' })
+  // 2) 构建查询条件
+  const baseQuery = { status: 1 }
 
   // 标签筛选（与搜索组合 AND 逻辑）
   if (tag) {
-    query.tags = tag
+    baseQuery.tags = tag
   }
   if (tags && Array.isArray(tags) && tags.length > 0) {
-    query.tags = _.all(tags)
+    baseQuery.tags = _.all(tags)
   }
+
+  // 3) 每个 token 命中 keywords / title / description / tags 任意字段即可
+  //    多 token 之间 AND
+  const tokenConditions = tokens.map(token => {
+    const safe = escapeRegExp(token)
+    const re = db.RegExp({ regexp: safe, options: 'i' })
+    return _.or([
+      { keywords: re },
+      { title: re },
+      { description: re },
+      { tags: re } // 数组字段：任一元素匹配即命中
+    ])
+  })
+
+  const finalWhere = tokenConditions.length > 0
+    ? _.and([baseQuery, ...tokenConditions])
+    : baseQuery
 
   // 分页：使用 offset(skip) 方式
   const skip = Number(event.offset) || 0
 
   const listRes = await db.collection('gallery_images')
-    .where(query)
+    .where(finalWhere)
     .orderBy('sortOrder', 'desc')
     .orderBy('createdAt', 'desc')
     .skip(skip)
@@ -439,6 +468,15 @@ async function getGalleryCover() {
 }
 
 // ========== 工具函数 ==========
+
+/**
+ * 转义正则表达式特殊字符
+ * 防止用户输入 . * + ? ( ) [ ] { } 等符号时把搜索词当做有效正则解析。
+ */
+function escapeRegExp(str) {
+  if (!str) return ''
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
 /**
  * 批量转换缩略图的 cloud:// fileID 为临时 HTTPS URL

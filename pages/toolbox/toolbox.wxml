@@ -60,7 +60,7 @@
       <view class="gallery-bottom-shade"></view>
       <view class="gallery-content">
         <view class="gallery-text-wrap">
-          <text class="gallery-title">实景灯光图库</text>
+          <text class="gallery-title">设计灵感库</text>
           <text class="gallery-desc">探索高端照明设计灵感</text>
         </view>
         <view class="gallery-icon-wrap">
