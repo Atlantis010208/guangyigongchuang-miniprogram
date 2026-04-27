@@ -97,6 +97,9 @@
 }
 
 /* 缓冲提示层 */
+/* 真机上 video 组件 show-loading="{{false}}" 不一定生效，会出现原生 loading 转圈 */
+/* 这里用接近不透明的纯黑遮罩，把 video 的 poster 残影和原生 loading 都盖住 */
+/* 只暴露自定义 buffering-spinner 一个加载动效 */
 .buffering-overlay {
   position: absolute;
   top: 0;
@@ -107,7 +110,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: #000000;
   z-index: 10;
   pointer-events: none;
 }
@@ -224,7 +227,8 @@
 }
 
 .chapter-time {
-  width: 90rpx;
+  min-width: 140rpx;
+  flex-shrink: 0;
   margin-right: 16rpx;
   font-family: monospace;
   color: #007aff; /* 蓝色时间 */
@@ -233,6 +237,7 @@
 
 .chapter-name {
   flex: 1;
+  min-width: 0;
   color: rgba(255, 255, 255, 0.5); /* 恢复为辅助灰色 */
   white-space: nowrap;
   overflow: hidden;

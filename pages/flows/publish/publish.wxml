@@ -43,6 +43,7 @@
                  placeholder="{{step.inputPlaceholder}}" 
                  placeholder-class="huge-input-placeholder"
                  value="{{area}}" 
+                 focus="{{areaFocus}}"
                  bindinput="handleNumberInput" 
                  bindconfirm="handleNumberConfirm"
                  bindblur="handleNumberConfirm"

@@ -33,7 +33,97 @@ page {
   background: rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
+  margin-bottom: 21rpx;
   justify-content: center;
+}
+
+/* 顶部吸附式横向定位栏 —— 与 .nav-bar 无缝衔接的渐变毛玻璃 */
+.sticky-nav {
+  position: fixed;
+  top: 176rpx; /* 紧贴 nav-bar 下方 */
+  left: 0;
+  right: 0;
+  height: 80rpx; /* 减小整体高度：64(按钮)+16(间隙) */
+  z-index: 101;
+  display: flex;
+  align-items: flex-start; /* 顶部对齐，方便渐变延伸 */
+  padding: 0;
+  /* 从上到下：白色略透明 -> 完全透明的渐变背景 */
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 70%, rgba(255, 255, 255, 0) 100%);
+  /* 整体毛玻璃模糊，只在有背景色的部分显现效果 */
+  backdrop-filter: blur(12rpx);
+  -webkit-backdrop-filter: blur(12rpx);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-20rpx);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
+}
+
+.sticky-nav--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sticky-nav__scroll {
+  width: 100%;
+  height: 80rpx; /* 撑满容器高度 */
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding-top: 8rpx; /* 距离顶部 8rpx 间隙 */
+}
+
+.sticky-nav__track {
+  display: inline-flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 0 32rpx;
+}
+
+.sticky-nav__item {
+  flex: 0 0 auto;
+  height: 56rpx; /* 64 -> 56 */
+  padding: 0 28rpx;
+  border-radius: 28rpx;
+  /* 按钮自身变为半透明磨砂质感 */
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05), inset 0 0 0 1rpx rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10rpx);
+  -webkit-backdrop-filter: blur(10rpx);
+  font-size: 22rpx; /* 26 -> 22 */
+  font-weight: 500;
+  color: #1D1D1F;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.sticky-nav__item--hover {
+  background: rgba(240, 240, 240, 0.9);
+  transform: scale(0.96);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+
+/* 两端横向渐变遮罩，使按钮滚入边缘时自然消失 */
+.sticky-nav__fade {
+  position: absolute;
+  top: 0;
+  width: 48rpx;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sticky-nav__fade--left {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.sticky-nav__fade--right {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 100%);
 }
 
 .back-icon {
@@ -48,57 +138,63 @@ page {
 .nav-title {
   flex: 1;
   text-align: center;
-  font-size: 32rpx;
+  font-size: 26rpx; /* 24 -> 22 */
   font-weight: 600;
-  margin-right: 96rpx; /* 平衡返回按钮 */
-  transition: opacity 0.3s ease;
-}
-
-/* 通用 Fade Up 动画 */
-.fade-up {
-  opacity: 1; /* 暂时写死1，后续可由JS控制 */
-}
-
-/* Section 基础 */
-.section {
-  padding: 120rpx 40rpx;
-  position: relative;
-}
-
-.section-badge {
-  font-size: 24rpx;
-  color: #86868B;
-  letter-spacing: 2rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-  display: block;
-}
-
-.section-title {
-  font-size: 56rpx;
-  font-weight: 600;
-  line-height: 1.2;
+  margin-right: 96rpx;
+  margin-bottom: 30rpx;
   color: #1D1D1F;
-  margin-bottom: 40rpx;
-  display: block;
 }
 
-.section-desc {
-  font-size: 30rpx;
-  color: #86868B;
-  line-height: 1.6;
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 48rpx 5rpx;
+}
+
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #F5F5F7;
+  z-index: -1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.section-title-wrap {
   margin-bottom: 48rpx;
 }
 
-/* Hero Section */
-.hero {
-  min-height: auto;
+.section-desc {
+  font-size: 22rpx; /* 22 -> 20 */
+  color: #1D1D1F;
+  line-height: 1.6;
+  margin-top: 24rpx;
+  text-align: left;
+}
+
+
+
+.section-title {
+  font-size: 30rpx; /* 36 -> 32 */
+  font-weight: 600;
+  line-height: 1.2;
+  color: #1D1D1F;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   text-align: center;
-  padding-top: 200rpx;
+  padding-top: 100rpx;
   padding-bottom: 80rpx;
 }
 
@@ -114,22 +210,24 @@ page {
 }
 
 .hero-icon {
-  font-size: 80rpx;
+  font-size: 48rpx; /* 64 -> 48 */
   margin-bottom: 40rpx;
 }
 
 .hero-title {
-  font-size: 88rpx;
+  font-size: 48rpx; /* 52 -> 48 */
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -1rpx;
-  margin-bottom: 32rpx;
+  color: #1D1D1F;
+  margin-bottom: 40rpx;
   display: flex;
   flex-direction: column;
+  align-items: center; /* 居中对齐 */
+  text-align: center;  /* 居中对齐 */
 }
 
 .hero-subtitle {
-  font-size: 32rpx;
+  font-size: 22rpx; /* 24 -> 22 */
   color: #86868B;
   line-height: 1.5;
   max-width: 80%;
@@ -147,9 +245,13 @@ page {
   background: #F5F5F7;
   border-radius: 24rpx;
   padding: 32rpx;
-  font-size: 30rpx;
+  font-size: 24rpx; /* 26 -> 24 */
   font-weight: 500;
   transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .hero-nav-item:active {
@@ -157,16 +259,18 @@ page {
 }
 
 .hero-nav-tip {
-  font-size: 24rpx;
+  font-size: 18rpx; /* 20 -> 18 */
   color: #86868B;
   margin-top: 32rpx;
+  text-align: center;
 }
 
 .scroll-indicator {
   margin-top: 360rpx;
-  font-size: 24rpx;
+  font-size: 18rpx; /* 20 -> 18 */
   color: #C7C7CC;
   animation: bounce 2s infinite;
+  text-align: center;
 }
 
 @keyframes bounce {
@@ -203,7 +307,7 @@ page {
 }
 
 .avatar-name {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   color: #86868B;
 }
 
@@ -212,7 +316,7 @@ page {
 }
 
 .info-title {
-  font-size: 32rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   font-weight: 600;
   margin-bottom: 24rpx;
   color: #0071E3; /* Apple 蓝 */
@@ -225,7 +329,7 @@ page {
 }
 
 .info-item {
-  font-size: 28rpx;
+  font-size: 22rpx; /* 28 -> 22 */
   color: #1D1D1F;
   line-height: 1.6;
   position: relative;
@@ -255,9 +359,16 @@ page {
 
 .stat-num {
   font-family: "SF Pro Display", sans-serif;
-  font-size: 48rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 700;
   color: #0071E3;
+}
+
+.stat-label {
+  font-size: 20rpx; /* 24 -> 20 */
+  color: #1D1D1F;
+  font-weight: 600;
+  margin-top: 8rpx;
 }
 
 /* Promise Section */
@@ -280,7 +391,7 @@ page {
   background: #F5F5F7;
   border-radius: 32rpx;
   padding: 48rpx;
-  font-size: 32rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   line-height: 1.5;
   font-weight: 500;
   scroll-snap-align: center;
@@ -312,13 +423,13 @@ page {
 }
 
 .promise-title {
-  font-size: 36rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
   margin-bottom: 16rpx;
 }
 
 .promise-desc {
-  font-size: 28rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
   line-height: 1.5;
 }
@@ -364,20 +475,20 @@ page {
 }
 
 .timeline-step {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #0071E3;
   font-weight: 600;
   margin-bottom: 8rpx;
 }
 
 .timeline-head {
-  font-size: 36rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
   margin-bottom: 16rpx;
 }
 
 .timeline-desc {
-  font-size: 28rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
 }
 
@@ -417,7 +528,7 @@ page {
 
 .checklist-header .th {
   padding: 20rpx 24rpx;
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
   color: #646A73;
   font-weight: 500;
   display: flex;
@@ -431,7 +542,7 @@ page {
 }
 
 .icon-text {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   margin-right: 12rpx;
   color: #8F959E;
   font-family: monospace; /* 让 A≡ 显得更规范 */
@@ -448,7 +559,7 @@ page {
 
 .checklist-row .td {
   padding: 24rpx;
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
   color: #1F2329;
   line-height: 1.6;
   border-right: 1rpx solid #E4E5E7;
@@ -469,7 +580,7 @@ page {
 .phase-id {
   color: #8F959E;
   margin-right: 20rpx;
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
 }
 
 .phase-name {
@@ -538,12 +649,12 @@ page {
   align-items: center;
   justify-content: center;
   color: #C7C7CC;
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
 }
 
 .intro-quote {
   padding: 80rpx 60rpx;
-  font-size: 32rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   line-height: 1.6;
   color: #86868B;
   text-align: center;
@@ -552,9 +663,9 @@ page {
 
 /* Packages Section */
 .flow-title {
-  font-size: 32rpx;
+  font-size: 28rpx; /* 28 -> 24 */
   font-weight: 600;
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
   color: #0071E3;
 }
 
@@ -597,19 +708,19 @@ page {
 }
 
 .flow-head {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   font-weight: 600;
 }
 
 .flow-sub {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
   margin-top: 4rpx;
 }
 
 .flow-desc {
   flex: 1;
-  font-size: 26rpx;
+  font-size: 20rpx; /* 22 -> 20 */
   color: #1D1D1F;
   line-height: 1.5;
 }
@@ -666,13 +777,13 @@ page {
 }
 
 .pkg-name {
-  font-size: 36rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
 }
 
 .pkg-price {
-  font-size: 64rpx;
+  font-size: 36rpx; /* 40 -> 36 */
   font-family: "SF Pro Display", sans-serif;
   font-weight: 700;
   color: #0071E3;
@@ -706,7 +817,7 @@ page {
 }
 
 .pkg-features.two-col .feature-item {
-  font-size: 26rpx;
+  font-size: 20rpx; /* 22 -> 20 */
 }
 
 .pkg-features.two-col .f-icon {
@@ -716,7 +827,7 @@ page {
 .feature-item {
   display: flex;
   align-items: center;
-  font-size: 28rpx;
+  font-size: 20rpx; /* 22 -> 20 */
 }
 
 .feature-item.excluded {
@@ -740,7 +851,7 @@ page {
 }
 
 .meta-item {
-  font-size: 26rpx;
+  font-size: 20rpx; /* 18 -> 16 */
   color: #1D1D1F;
   line-height: 1.5;
 }
@@ -782,10 +893,13 @@ page {
 
 .case-title {
   padding: 20rpx 24rpx;
-  font-size: 26rpx;
+  font-size: 24rpx; 
   font-weight: 600;
   color: #1D1D1F;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .case-item {
@@ -796,7 +910,7 @@ page {
   align-items: center;
   justify-content: center;
   color: #C7C7CC;
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
 }
 
 .case-item.tall { height: 560rpx; }
@@ -882,7 +996,7 @@ page {
 }
 
 .review-title {
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
   font-weight: 600;
   color: #1D1D1F;
   margin-bottom: 16rpx;
@@ -895,7 +1009,7 @@ page {
 }
 
 .review-link, .review-meta, .review-desc-label, .review-link-row {
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   color: #86868B;
   margin-bottom: 10rpx;
   display: flex;
@@ -910,13 +1024,13 @@ page {
 }
 
 .review-link-val {
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   color: #0071E3;
   margin-bottom: 16rpx;
 }
 
 .review-link-text {
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   color: #0071E3;
   margin-bottom: 14rpx;
   text-decoration: underline;
@@ -931,7 +1045,7 @@ page {
 
 .link-icon, .meta-icon {
   margin-right: 8rpx;
-  font-size: 20rpx;
+  font-size: 16rpx; /* 20 -> 16 */
 }
 
 .tag-values {
@@ -950,7 +1064,7 @@ page {
   color: #1D1D1F;
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
-  font-size: 20rpx;
+  font-size: 16rpx; /* 20 -> 16 */
 }
 
 .tag-value.highlight {
@@ -959,7 +1073,7 @@ page {
 }
 
 .review-desc {
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   color: #1D1D1F;
   line-height: 1.5;
   margin-top: 8rpx;
@@ -977,13 +1091,13 @@ page {
 }
 
 .footer-like {
-  font-size: 32rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
   margin-bottom: 24rpx;
 }
 
 .footer-copy {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
 }
 
@@ -1006,12 +1120,12 @@ page {
 .cta-btn {
   background: #1D1D1F;
   color: #FFF;
-  height: 112rpx;
-  border-radius: 56rpx;
+  height: 104rpx; /* 112 -> 104 */
+  border-radius: 52rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34rpx;
+  font-size: 28rpx; /* 30 -> 28 */
   font-weight: 600;
   box-shadow: 0 16rpx 40rpx rgba(0,0,0,0.15);
   transition: transform 0.1s;
@@ -1065,12 +1179,12 @@ page {
 }
 
 .sheet-title {
-  font-size: 36rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
 }
 
 .sheet-close {
-  font-size: 48rpx;
+  font-size: 32rpx; /* 40 -> 32 */
   color: #86868B;
   width: 64rpx;
   height: 64rpx;
@@ -1093,13 +1207,13 @@ page {
 }
 
 .wechat-label {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   color: #86868B;
   margin-bottom: 16rpx;
 }
 
 .wechat-num {
-  font-size: 64rpx;
+  font-size: 40rpx; /* 48 -> 40 */
   font-family: "SF Pro Display", sans-serif;
   font-weight: 700;
   color: #1D1D1F;
@@ -1113,7 +1227,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 600;
   margin-bottom: 24rpx;
 }
@@ -1123,7 +1237,7 @@ page {
 }
 
 .wechat-note {
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
   color: #86868B;
 }
 
@@ -1147,7 +1261,7 @@ page {
 }
 
 .delivery-header-banner .title-text {
-  font-size: 36rpx;
+  font-size: 32rpx; /* 36 -> 32 */
   font-weight: 700;
   color: #005BB5;
   margin: 0 16rpx;
@@ -1157,10 +1271,11 @@ page {
 .delivery-header-banner .arrow {
   color: #0071E3;
   font-weight: bold;
+  font-size: 24rpx; /* 新增字号控制 */
 }
 
 .delivery-quote {
-  font-size: 26rpx;
+  font-size: 22rpx; /* 26 -> 22 */
   color: #86868B;
   line-height: 1.6;
   border-left: 6rpx solid #D2D2D7;
@@ -1169,7 +1284,7 @@ page {
 }
 
 .delivery-subtitle {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   font-weight: 600;
   color: #1D1D1F;
   display: flex;
@@ -1229,7 +1344,7 @@ page {
 }
 
 .delivery-title {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   font-weight: 600;
   color: #1D1D1F;
   margin-bottom: 20rpx;
@@ -1243,7 +1358,7 @@ page {
 }
 
 .delivery-meta-row .meta-label {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
   display: flex;
   align-items: center;
@@ -1251,19 +1366,19 @@ page {
 }
 
 .delivery-meta-row .meta-icon {
-  font-size: 20rpx;
+  font-size: 16rpx; /* 20 -> 16 */
   margin-right: 6rpx;
 }
 
 .delivery-meta-row .meta-tag {
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
   font-weight: 500;
 }
 
 .delivery-desc-label {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
   margin-top: 16rpx;
   margin-bottom: 8rpx;
@@ -1272,12 +1387,12 @@ page {
 }
 
 .delivery-desc-label .meta-icon {
-  font-size: 20rpx;
+  font-size: 16rpx; /* 20 -> 16 */
   margin-right: 6rpx;
 }
 
 .delivery-desc {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #1D1D1F;
   line-height: 1.5;
   overflow: hidden;
@@ -1293,7 +1408,7 @@ page {
 .review-more {
   margin-top: auto;
   padding-top: 16rpx;
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   color: #0071E3;
   font-weight: 500;
   text-align: right;
@@ -1364,7 +1479,7 @@ page {
 }
 
 .detail-header-title {
-  font-size: 30rpx;
+  font-size: 24rpx; /* 26 -> 24 */
   font-weight: 600;
   color: #1D1D1F;
   margin-top: 8rpx;
@@ -1380,7 +1495,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 44rpx;
+  font-size: 32rpx; /* 36 -> 32 */
   color: #86868B;
   line-height: 1;
 }
@@ -1414,7 +1529,7 @@ page {
   padding: 6rpx 16rpx;
   background: rgba(0, 0, 0, 0.55);
   color: #FFFFFF;
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
   border-radius: 999rpx;
 }
 
@@ -1446,7 +1561,7 @@ page {
 
 .detail-title {
   padding: 32rpx 40rpx 16rpx;
-  font-size: 36rpx;
+  font-size: 28rpx; /* 32 -> 28 */
   font-weight: 700;
   color: #1D1D1F;
   line-height: 1.4;
@@ -1457,7 +1572,7 @@ page {
 }
 
 .detail-section-label {
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
   color: #86868B;
   margin-bottom: 12rpx;
   display: flex;
@@ -1466,11 +1581,11 @@ page {
 
 .detail-section-label .meta-icon {
   margin-right: 8rpx;
-  font-size: 22rpx;
+  font-size: 18rpx; /* 22 -> 18 */
 }
 
 .detail-link {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   color: #0071E3;
   line-height: 1.6;
   text-decoration: underline;
@@ -1482,7 +1597,7 @@ page {
 }
 
 .detail-section-text {
-  font-size: 28rpx;
+  font-size: 24rpx; /* 28 -> 24 */
   color: #1D1D1F;
   line-height: 1.6;
 }
@@ -1503,5 +1618,5 @@ page {
   color: #1D1D1F;
   padding: 8rpx 20rpx;
   border-radius: 24rpx;
-  font-size: 24rpx;
+  font-size: 20rpx; /* 24 -> 20 */
 }

@@ -33,8 +33,8 @@
 
         <!-- 色温建议 -->
         <view class="v2-input-row">
-          <text class="v2-label">色温建议 <text class="v2-unit">(K)</text></text>
-          <input class="v2-input-box" type="number" value="{{suggestedTemp}}" data-field="suggestedTemp" bindinput="onFieldInput" placeholder="选择空间后自动推荐" placeholder-style="color:#C0C4CC"/>
+          <text class="v2-label">色温建议</text>
+          <input class="v2-input-box" type="text" value="{{suggestedTemp}}" data-field="suggestedTemp" bindinput="onFieldInput" placeholder="选择空间后自动推荐" placeholder-style="color:#C0C4CC"/>
         </view>
 
       </view>

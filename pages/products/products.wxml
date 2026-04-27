@@ -11,11 +11,11 @@
    <!-- 用户角度 · 需求入口（灯光空间分类） -->
    <view class="product-categories">
       <scroll-view class="categories-scroll" scroll-x="true" show-scrollbar="false">
-        <view class="category-card" bindtap="onCategoryTap" data-category="residential">
+        <view class="category-card" bindtap="onCategoryTap" data-category="coCreate">
           <view class="category-image-container">
-            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/避坑指南.png" mode="aspectFit"></image>
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/共创设计.jpeg" mode="aspectFit"></image>
           </view>
-          <text class="category-title">避坑指南</text>
+          <text class="category-title">共创设计</text>
         </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
           <view class="category-image-container">
@@ -29,6 +29,18 @@
           </view>
           <text class="category-title">照度计算</text>
         </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="colorTemp">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/色温选择.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">色温选择</text>
+        </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="inspiration">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/灯光灵感.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">灯光灵感</text>
+        </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="hotel">
           <view class="category-image-container">
             <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/灯光测试_最新.png" mode="aspectFit"></image>
@@ -41,6 +53,12 @@
           </view>
           <text class="category-title">案例展示</text>
         </view>
+        <view class="category-card" bindtap="onCategoryTap" data-category="residential">
+          <view class="category-image-container">
+            <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/避坑指南.png" mode="aspectFit"></image>
+          </view>
+          <text class="category-title">避坑指南</text>
+        </view>
       </scroll-view>
    </view>
 
@@ -50,17 +68,23 @@
     <text class="section-title">服务</text>
     <scroll-view class="assistant-scroller" scroll-x show-scrollbar="false" scroll-with-animation>
       <view class="assistant-track">
+        <view class="service-pill" bindtap="onServiceTap" data-service="course">
+            <text class="service-pill-text">二哥灯光课</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="noMainLight">
+            <text class="service-pill-text">无主灯设计</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="consult">
+            <text class="service-pill-text">设计咨询</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="optimize">
+            <text class="service-pill-text">灯位优化</text>
+        </view>
         <view class="service-pill" bindtap="onAssistantTap" data-activity="video">
             <text class="service-pill-text">灯光工具包</text>
         </view>
-        <view class="service-pill" bindtap="onAssistantTap" data-activity="photo">
-            <text class="service-pill-text">设计课程</text>
-        </view>
-        <view class="service-pill" bindtap="onMallTap">
-            <text class="service-pill-text">商城</text>
-        </view>
-        <view class="service-pill" bindtap="onServiceTap" data-service="full">
-            <text class="service-pill-text">设计服务</text>
+        <view class="service-pill" bindtap="onServiceTap" data-service="lightingDesign">
+            <text class="service-pill-text">灯光设计</text>
         </view>
       </view>
     </scroll-view>

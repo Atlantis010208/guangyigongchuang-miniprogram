@@ -9,6 +9,26 @@
     <view class="nav-title" style="opacity: {{navOpacity}}">{{heroInfo.docTitle}}</view>
   </view>
 
+  <!-- 顶部吸附式横向定位栏（hero-nav-grid 滑出视口后显示） -->
+  <view class="sticky-nav {{stickyNavVisible ? 'sticky-nav--visible' : ''}}">
+    <scroll-view class="sticky-nav__scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="sticky-nav__track">
+        <view
+          class="sticky-nav__item"
+          wx:for="{{navButtons}}"
+          wx:key="target"
+          bindtap="scrollTo"
+          data-target="{{item.target}}"
+          hover-class="sticky-nav__item--hover"
+        >
+          <text>{{item.text}}</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="sticky-nav__fade sticky-nav__fade--left"></view>
+    <view class="sticky-nav__fade sticky-nav__fade--right"></view>
+  </view>
+
   <!-- Section 1: Hero (封面) -->
   <view class="section hero fade-up" id="hero">
     <view class="hero-bg"></view>
@@ -32,7 +52,6 @@
   <!-- Section 2: About (关于二哥) -->
   <view class="section about fade-up" id="about">
     <view class="section-title-wrap">
-      <text class="section-badge">ABOUT</text>
       <text class="section-title">十年 · 只做一件事</text>
     </view>
 
@@ -76,7 +95,10 @@
     </scroll-view>
 
     <view class="section-title-wrap" style="margin-top: 80rpx;">
-      <text class="section-title">别人设计只画图，我们不仅设计灯光，更陪你从头走到入住。你将获得：</text>
+      <text class="section-title">我们的灯光设计，不只是画图</text>
+      <view class="section-desc">
+        <view>别人设计只画图，我们不仅设计灯光，更陪你从头走到入住。你将获得：</view>
+      </view>
     </view>
     <view class="promise-list">
       <view class="promise-card" wx:for="{{promises}}" wx:key="title">
@@ -92,7 +114,6 @@
   <!-- Section 4: Timeline (落地流程) -->
   <view class="section timeline fade-up" id="timeline">
     <view class="section-title-wrap">
-      <text class="section-badge">TIMELINE</text>
       <text class="section-title">灯光设计落地执行（完整流程图）</text>
     </view>
     <image
@@ -164,7 +185,6 @@
   <!-- Section 5: Packages 1 (二哥团队套餐) -->
   <view class="section packages fade-up" id="packages">
     <view class="section-title-wrap">
-      <text class="section-badge">TEAM PACKAGES</text>
       <text class="section-title">【关于二哥团队设计】</text>
       <view class="section-desc">
         <view>- 就是由二哥和二哥的团队亲自执笔完成灯光设计方案，全过程由二哥团队跟进；</view>
@@ -218,7 +238,6 @@
   <!-- Section 6: Packages 2 (共创平台) -->
   <view class="section packages platform fade-up" id="platform">
     <view class="section-title-wrap">
-      <text class="section-badge">CO-CREATE</text>
       <text class="section-title">「共创平台」灯光设计介绍</text>
       <view class="section-desc">
         <view><text style="font-weight: bold; color: #1D1D1F">共创设计平台是什么？</text></view>
@@ -276,7 +295,6 @@
   <!-- Section 6: Delivery Standards (设计交付标准) -->
   <view class="section fade-up" id="delivery">
     <view class="section-title-wrap">
-      <text class="section-badge">DELIVERY</text>
       <text class="section-title">设计服务交付的 · 内容清单</text>
       <view class="section-desc" style="margin-top: 24rpx;">
         设计交付的内容并不是一成不变的，我们会不停的更新迭代设计方案、设计的呈现方式、施工图的内容，所以就算交付的内容跟以下不太相同是正常的，我们只会越做越好，我们要追求落地效果而不是华而不实的图纸。
@@ -317,7 +335,6 @@
   <!-- Section 7: Cases & Reviews (案例口碑) -->
   <view class="section cases fade-up" id="cases">
     <view class="section-title-wrap">
-      <text class="section-badge">CASES</text>
       <text class="section-title">落地案例资料</text>
     </view>
     
@@ -348,7 +365,6 @@
     </view>
 
     <view class="section-title-wrap" style="margin-top: 80rpx;">
-      <text class="section-badge">REVIEWS</text>
       <text class="section-title">客户评价</text>
       <view class="section-desc" style="margin-top: 20rpx;">
         由于篇幅问题，只上传部分客户反馈截图，可以看看用户对我们落地想过的反馈。当然我们也有过用户差评，大部分都是因为我们有些时候设计项目太多怠慢了客户延迟了设计交付，我们也不停在完善。

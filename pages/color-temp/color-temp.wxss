@@ -259,6 +259,14 @@
   margin-left: 8rpx;
 }
 
+/* 色温建议只读展示 */
+.v2-input-readonly {
+  color: #333;
+}
+.v2-input-readonly.placeholder {
+  color: #C0C4CC;
+}
+
 /* 色温建议提示 */
 .v2-input-hint {
   padding: 4rpx 32rpx 16rpx;

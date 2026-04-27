@@ -41,7 +41,10 @@ function extractTagFilters(params) {
     }
   }
 
-  if (suggestedTemp) tags.push(`temp:${suggestedTemp}K`)
+  if (suggestedTemp) {
+    const t = String(suggestedTemp)
+    tags.push(/[Kk]/.test(t) ? `temp:${t}` : `temp:${t}K`)
+  }
 
   return Array.from(new Set(tags))
 }
@@ -56,7 +59,10 @@ function buildQueryText(params) {
   if (usageName) parts.push(`用途：${usageName}`)
   if (ageName) parts.push(`人群：${ageName}`)
   if (fixtureNames && fixtureNames.length > 0) parts.push(`灯具：${fixtureNames.join('、')}`)
-  if (suggestedTemp) parts.push(`色温：${suggestedTemp}K`)
+  if (suggestedTemp) {
+    const t = String(suggestedTemp)
+    parts.push(/[Kk]/.test(t) ? `色温：${t}` : `色温：${t}K`)
+  }
   return parts.join('，') || '色温选择建议'
 }
 

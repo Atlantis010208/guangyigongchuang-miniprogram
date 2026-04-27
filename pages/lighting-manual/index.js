@@ -2,6 +2,8 @@ Page({
   data: {
     navOpacity: 0,
     showContactSheet: false,
+    // 顶部吸附式横向定位栏：在原 hero-nav-grid 滑出视口后显示
+    stickyNavVisible: false,
 
     // 案例/评价详情弹窗
     detailVisible: false,
@@ -332,6 +334,54 @@ Page({
     this.loadContent();
   },
 
+  onReady() {
+    // 等首屏渲染完成后测量 hero-nav-grid 底部位置（基于 onPageScroll 阈值显示 sticky-nav）
+    this.measureHeroNavBottom();
+  },
+
+  onResize() {
+    this.measureHeroNavBottom();
+  },
+
+  /**
+   * 测量 .hero-nav-grid 在页面中的底部位置（page Y 坐标）
+   * 用于 onPageScroll 中判断是否需要显示顶部吸附式定位栏
+   */
+  measureHeroNavBottom(retry = 0) {
+    // 注意：Page 中不能使用 .in(this)，那是自定义组件的 API
+    const query = wx.createSelectorQuery();
+    query.select('.hero-nav-grid').boundingClientRect();
+    query.selectViewport().scrollOffset();
+    query.exec((res) => {
+      const rect = res && res[0];
+      const scroll = (res && res[1]) || { scrollTop: 0 };
+      if (!rect) {
+        // hero-nav-grid 还未渲染，最多重试 5 次
+        if (retry < 5) {
+          setTimeout(() => this.measureHeroNavBottom(retry + 1), 200);
+        } else {
+          console.warn('[lighting-manual] 测量 hero-nav-grid 失败，sticky-nav 将永远隐藏');
+        }
+        return;
+      }
+      // boundingClientRect 是基于视口的，加上当前 scrollTop 即为页面绝对 Y
+      this._heroNavBottomY = rect.bottom + scroll.scrollTop;
+      console.log('[lighting-manual] heroNavBottomY =', this._heroNavBottomY);
+      // 立刻基于当前 scrollTop 判定一次状态
+      this.updateStickyNavVisible(scroll.scrollTop);
+    });
+  },
+
+  updateStickyNavVisible(scrollTop) {
+    if (typeof this._heroNavBottomY !== 'number') return;
+    // 当前页面顶部下方 88px (≈ nav-bar 1/2 高度) 越过 hero-nav-grid 底部即显示
+    const threshold = this._heroNavBottomY - 88;
+    const visible = scrollTop > threshold;
+    if (this.data.stickyNavVisible !== visible) {
+      this.setData({ stickyNavVisible: visible });
+    }
+  },
+
   async loadContent() {
     try {
       const [casesRes, reviewsRes, deliveryRes, configRes] = await Promise.all([
@@ -422,6 +472,9 @@ Page({
   },
 
   onPageScroll(e) {
+    // 顶部吸附式横向定位栏显示控制
+    this.updateStickyNavVisible(e.scrollTop);
+
     let opacity = e.scrollTop / 100;
     if (opacity > 1) opacity = 1;
     if (opacity < 0) opacity = 0;

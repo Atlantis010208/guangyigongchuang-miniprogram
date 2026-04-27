@@ -184,7 +184,11 @@ function enrichDemand(item) {
 }
 
 /**
- * 轻量查询可接单需求总数（用于轮询检测新需求）
+ * 轻量查询可接单需求总数 + 最新一条 createdAt（用于轮询检测新需求）
+ *
+ * 说明：仅靠 total 比较会被"接单(total-1) + 新发布(total+1)"互相抵消，
+ * 必须额外返回 latestCreatedAt（当前最新一条 submitted 需求的创建时间），
+ * 客户端用此时间戳与本地缓存比较，才能稳定地检测出"是否有新需求出现"。
  */
 async function countDemands(openid, event) {
   const condition = {
@@ -192,11 +196,20 @@ async function countDemands(openid, event) {
     isDelete: _.neq(1),
     designerId: _.exists(false)
   }
-  const countRes = await db.collection('requests').where(condition).count()
+  const [countRes, latestRes] = await Promise.all([
+    db.collection('requests').where(condition).count(),
+    db.collection('requests')
+      .where(condition)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .field({ createdAt: true })
+      .get()
+  ])
+  const latestCreatedAt = (latestRes.data && latestRes.data[0] && latestRes.data[0].createdAt) || 0
   return {
     success: true,
     code: 'OK',
-    data: { total: countRes.total || 0 }
+    data: { total: countRes.total || 0, latestCreatedAt }
   }
 }
 
@@ -228,9 +241,12 @@ async function listDemands(openid, event) {
   const total = countRes.total || 0
 
   const skip = (page - 1) * pageSize
+  // 仅按 createdAt 降序：保证最新发布的需求始终置顶。
+  // 不再按 priority 排序：priority 仅是业主押金标识（布尔值），让其参与排序会
+  // 导致少量"已付押金"的旧需求长期霸占首页前位，新发布的非优先需求被埋没。
+  // 是否优先在 enrichDemand 中通过 tag 标签呈现即可。
   const res = await db.collection('requests')
     .where(condition)
-    .orderBy('priority', 'desc')
     .orderBy('createdAt', 'desc')
     .skip(skip)
     .limit(pageSize)

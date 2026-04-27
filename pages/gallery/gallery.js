@@ -5,38 +5,37 @@ const app = getApp()
 
 Page({
   data: {
-    // 标签相关
-    categories: ['全部', '收藏'],
-    categoryCloud: [],
-    activeCategory: '全部',
-    activeTag: '',
-    searchQuery: '',
-
-    // 图片列表
-    filteredImages: [],
+    // 图片数据
+    filteredImages: [], // ★关键：WXML 里用 filteredImages.length 来判断是否渲染瀑布流
     leftColImages: [],
     rightColImages: [],
 
-    // 收藏（imageId -> boolean 的映射存在 favoritesMap 中）
-    favoritesMap: {},
+    // 标签与云图配置
+    categories: ['全部'],
+    stickyCategories: ['全部'], // 吸顶横向标签栏的顺序：当前 active 始终置顶
+    activeCategory: '全部',
+    activeTag: '',
+    categoryCloud: [],
+    categoryCloudConfig: {
+      torusWidth: 1000,
+      torusHeight: 800
+    },
 
-    // 分页
-    hasMore: true,
-
-    // 状态
+    // 交互状态
+    showStickyTags: false,
+    searchQuery: '',
     isFetching: false,
     isLoadingMore: false,
+    hasMore: true,
+    favoritesMap: {}, // id -> boolean
+
+    // 大图预览/轮播相关
     showModal: false,
     currentSwiperIndex: 0,
-    showControls: true,
-
-    // 下滑退出预览
+    initialSwiperIndex: 0,
     dragY: 0,
     dragProgress: 0,
     isDragging: false,
-    _dragStartX: 0,
-    _dragStartY: 0,
-    _dragMode: null, // null | 'vertical' | 'horizontal'
     isDownloading: false,
     controlsTimeout: null,
 
@@ -50,6 +49,17 @@ Page({
   onLoad: function () {
     this.loadTags()
     this.loadImages()
+    // 注：loadImages 内部会调用 batchCheckFavorites 自动补齐收藏状态，无需额外预加载
+  },
+
+  onPageScroll: function(e) {
+    // 当滚动超过云图区域时显示吸顶标签（大概在搜素框下方，取一个经验值）
+    const threshold = 280
+    if (e.scrollTop > threshold && !this.data.showStickyTags) {
+      this.setData({ showStickyTags: true })
+    } else if (e.scrollTop <= threshold && this.data.showStickyTags) {
+      this.setData({ showStickyTags: false })
+    }
   },
 
   onShow: function () {
@@ -100,9 +110,24 @@ Page({
     const cloudData = this.buildCloud(categories)
     this.setData({ 
       categories, 
+      stickyCategories: this.buildStickyCategories(categories, this.data.activeCategory),
       categoryCloud: cloudData.nodes,
       categoryCloudConfig: cloudData.config
     })
+  },
+
+  // 构建吸顶横向标签栏的顺序：当前 active 置顶，其他保持 categories 中的相对顺序
+  // 例：activeCategory='壁灯' → ['壁灯', '全部', '收藏', '吊灯', '射灯', ...]
+  // 选中"全部"或"收藏"时回到默认顺序
+  buildStickyCategories: function (categories, activeCategory) {
+    if (!categories || !categories.length) return []
+    if (!activeCategory) return categories.slice()
+    const idx = categories.indexOf(activeCategory)
+    if (idx <= 0) return categories.slice() // 已经是首位 / 不存在
+    const result = categories.slice()
+    result.splice(idx, 1)
+    result.unshift(activeCategory)
+    return result
   },
 
   buildCloud: function (categories) {
@@ -176,15 +201,45 @@ Page({
       maxY = Math.max(maxY, by)
     })
 
-    // Torus 边界优化：使用规整的跨度加上一个单元格的冗余
-    const torusWidth = (maxX - minX) + dx * 1.5
-    const torusHeight = (maxY - minY) + dy * 2.5
+    // Torus 边界：六边形螺旋的相邻行 y 值相差 rowStep = dy*√3/2，
+    // 相邻列 x 值相差 colStep = dx/2。要让 N 行/列在 mod 周期下
+    // 既互不重叠又首尾衔接，最小周期 = spanY + rowStep / spanX + colStep。
+    const rowStep = dy * Math.sqrt(3) / 2
+    const colStep = dx / 2
+    const spanX = (isFinite(maxX) && isFinite(minX)) ? (maxX - minX) : 0
+    const spanY = (isFinite(maxY) && isFinite(minY)) ? (maxY - minY) : 0
+    const torusWidth = Math.max(dx, spanX + colStep)
+    const torusHeight = Math.max(rowStep * 2, spanY + rowStep)
+
+    // ==========================================================
+    // 关键：垂直方向生成足够多的副本铺满视口 VIEWPORT_H rpx
+    //
+    // WXS 中 globalY 会被 mod 到 [-h/2, h/2]，标签 py = by + globalY，
+    // 所以每个副本的 py 范围 ≈ [by - h/2, by + h/2]。
+    // 为了让任意 globalY 下视口 [-VIEWPORT_H/2, +VIEWPORT_H/2]rpx 都有标签，
+    // 需要足够多的副本（row ∈ [-rowHalf, rowHalf]）覆盖这个范围。
+    //
+    // ⚠️ VIEWPORT_H 必须与 gallery.wxss 中 .cloud-wrap 的 height 保持一致
+    const VIEWPORT_H = 400
+    const rowHalf = Math.max(1, Math.ceil((VIEWPORT_H / 2) / torusHeight) + 1)
+
+    const replicated = []
+    placedNodes.forEach((node, idx) => {
+      for (let r = -rowHalf; r <= rowHalf; r++) {
+        replicated.push({
+          name: node.name,
+          bx: node.bx,
+          by: node.by + r * torusHeight, // by 直接包含 row 偏移，WXS 无需再处理 row
+          key: r + '_' + idx + '_' + node.name
+        })
+      }
+    })
 
     return {
-      nodes: placedNodes,
+      nodes: replicated,
       config: {
-        torusWidth: Math.max(600, torusWidth),
-        torusHeight: Math.max(600, torusHeight)
+        torusWidth: torusWidth,
+        torusHeight: torusHeight
       }
     }
   },
@@ -228,6 +283,7 @@ Page({
     this.setData({
       activeCategory: category,
       activeTag: (category !== '全部' && category !== '收藏') ? category : '',
+      stickyCategories: this.buildStickyCategories(this.data.categories, category),
       filteredImages: [],
       leftColImages: [],
       rightColImages: [],
@@ -245,25 +301,55 @@ Page({
   // ==================== 搜索 ====================
 
   onSearchInput: function (e) {
-    const value = e.detail.value
+    const value = e.detail.value || ''
+    const prevQuery = this.data.searchQuery || ''
     this.setData({ searchQuery: value })
 
-    // 防抖 500ms
+    // 仅去除首尾空白后的有效内容若未变化，不重复触发查询
+    // 例如用户在尾部多敲了一个空格，避免重复请求
+    if (value.trim() === prevQuery.trim()) return
+
+    // 防抖 400ms
     if (this._searchTimer) clearTimeout(this._searchTimer)
     this._searchTimer = setTimeout(() => {
-      this.setData({
-        filteredImages: [],
-        leftColImages: [],
-        rightColImages: [],
-        hasMore: true
-      })
+      this._reloadCurrentList()
+    }, 400)
+  },
 
-      if (this.data.activeCategory === '收藏') {
-        this.loadFavoritesList()
-      } else {
-        this.loadImages()
-      }
-    }, 500)
+  // 用户在键盘上点"搜索"键时立即触发，跳过防抖
+  onSearchConfirm: function () {
+    if (this._searchTimer) {
+      clearTimeout(this._searchTimer)
+      this._searchTimer = null
+    }
+    this._reloadCurrentList()
+  },
+
+  // 清空搜索词：恢复当前分类下的完整列表
+  onClearSearch: function () {
+    if (this._searchTimer) {
+      clearTimeout(this._searchTimer)
+      this._searchTimer = null
+    }
+    if (!this.data.searchQuery) return
+    this.setData({ searchQuery: '' })
+    this._reloadCurrentList()
+  },
+
+  // 重置分页并按当前分类/搜索词重新拉取列表
+  _reloadCurrentList: function () {
+    this.setData({
+      filteredImages: [],
+      leftColImages: [],
+      rightColImages: [],
+      hasMore: true
+    })
+
+    if (this.data.activeCategory === '收藏') {
+      this.loadFavoritesList()
+    } else {
+      this.loadImages()
+    }
   },
 
   // ==================== 图片列表 ====================
@@ -271,17 +357,18 @@ Page({
   loadImages: function () {
     const { activeTag, searchQuery, filteredImages } = this.data
     const offset = filteredImages.length
+    const trimmedKeyword = (searchQuery || '').trim()
 
     this.setData({ isFetching: offset === 0, isLoadingMore: offset > 0 })
 
     const params = {
-      action: searchQuery ? 'search' : 'list',
+      action: trimmedKeyword ? 'search' : 'list',
       pageSize: 20,
       offset: offset
     }
 
     if (activeTag) params.tag = activeTag
-    if (searchQuery) params.keyword = searchQuery
+    if (trimmedKeyword) params.keyword = trimmedKeyword
 
     wx.cloud.callFunction({
       name: 'gallery_list',
@@ -293,10 +380,13 @@ Page({
         return
       }
 
+      // loaded 默认为 true：image 组件在 src 真正加载完成前自然不可见，
+      // 加载完成后会自然显示。bindload/binderror 仅作为兜底确认（双保险）。
+      // 这样即使 wxml 分支切换导致 bindload 偶发不触发，也不会出现"图片永远 opacity:0"的灰色卡片现象。
       const newImages = (result.data.images || []).map(img => ({
         ...img,
         id: img._id,
-        loaded: false
+        loaded: true
       }))
 
       const prevImages = offset > 0 ? this.data.filteredImages : []
@@ -345,10 +435,11 @@ Page({
         return
       }
 
+      // 与 loadImages 一致：loaded 默认为 true，避免 bindload 偶发不触发导致灰底永久不消
       const newImages = (result.data.images || []).map(img => ({
         ...img,
         id: img._id,
-        loaded: false
+        loaded: true
       }))
 
       const prevImages = offset > 0 ? this.data.filteredImages : []
@@ -479,7 +570,18 @@ Page({
   // ==================== 图片加载状态 ====================
 
   onImageLoad: function (e) {
+    this._markImageLoaded(e.currentTarget.dataset.id)
+  },
+
+  // 加载失败兜底：避免 .gallery-img 永远停留在 opacity:0 → 用户看到一片灰色卡片
+  onImageError: function (e) {
     const id = e.currentTarget.dataset.id
+    console.warn('[gallery] 图片加载失败，强制显示占位:', id)
+    this._markImageLoaded(id)
+  },
+
+  _markImageLoaded: function (id) {
+    if (!id) return
     const updates = {}
 
     const leftIndex = this.data.leftColImages.findIndex(img => img.id === id)
