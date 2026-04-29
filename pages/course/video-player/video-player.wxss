@@ -172,87 +172,87 @@
 .chapters-list {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-  margin-top: 16rpx;
-  padding: 20rpx;
-  background-color: rgba(255, 255, 255, 0.03);
-  border-radius: 16rpx;
-  transition: all 0.3s ease;
-}
-
-.chapters-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  padding: 10rpx 24rpx;
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 30rpx;
-  transition: all 0.2s ease;
-}
-
-.chapters-toggle-btn:active {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: scale(0.98);
-}
-
-.toggle-text {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.6);
-  margin-right: 8rpx;
-}
-
-.toggle-arrow {
-  width: 0;
-  height: 0;
-  border-left: 6rpx solid transparent;
-  border-right: 6rpx solid transparent;
-  transition: transform 0.3s ease;
-}
-
-.toggle-arrow.down {
-  border-top: 6rpx solid rgba(255, 255, 255, 0.6);
-  transform: translateY(2rpx);
-}
-
-.toggle-arrow.up {
-  border-bottom: 6rpx solid rgba(255, 255, 255, 0.6);
-  transform: translateY(-2rpx);
+  gap: 0; /* 更加紧凑 */
+  margin-top: 0;
+  padding: 0; /* 移除卡片内边距 */
+  background: none; /* 移除卡片背景 */
+  backdrop-filter: none; /* 移除毛玻璃 */
+  border-radius: 0; /* 移除圆角 */
+  transition: none;
+  border: none; /* 移除边框 */
 }
 
 .video-time-chapter-item {
   display: flex;
   align-items: center;
   font-size: 26rpx;
-  padding: 4rpx 0;
+  padding: 4rpx 0; /* 更加紧凑的间距 */
+  min-height: 32rpx;
 }
 
 .chapter-time {
-  min-width: 140rpx;
+  min-width: 110rpx;
   flex-shrink: 0;
-  margin-right: 16rpx;
-  font-family: monospace;
-  color: #007aff; /* 蓝色时间 */
+  margin-right: 20rpx;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, monospace;
+  color: #007aff; 
   font-weight: 500;
+  font-size: 24rpx;
 }
 
 .chapter-name {
   flex: 1;
   min-width: 0;
-  color: rgba(255, 255, 255, 0.5); /* 恢复为辅助灰色 */
+  color: rgba(255, 255, 255, 0.45);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 26rpx;
+  transition: color 0.3s ease;
 }
 
-/* 移除选中项高亮效果 */
+.chapters-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 4rpx;
+  padding: 8rpx 0;
+  background: none;
+  border: none;
+}
+
+.expand-text {
+  font-size: 24rpx;
+  color: #007aff; /* 改为蓝色文字按钮，更有交互感 */
+  letter-spacing: 0.5rpx;
+  font-weight: 500;
+  min-width: 110rpx; /* 确保按钮文字与上方时间宽度一致或对齐 */
+}
+
+.expand-icon {
+  width: 0;
+  height: 0;
+  border-left: 8rpx solid transparent;
+  border-right: 8rpx solid transparent;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-icon.down {
+  border-top: 8rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.expand-icon.up {
+  border-bottom: 8rpx solid rgba(255, 255, 255, 0.3);
+}
+
 .video-time-chapter-item.active .chapter-name {
-  color: rgba(255, 255, 255, 0.5); 
-  font-weight: normal;
+  color: #ffffff; 
+  font-weight: 500;
 }
 
 .video-time-chapter-item.active .chapter-time {
   color: #007aff;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .section-header {
@@ -267,7 +267,7 @@
   margin-bottom: 10rpx;
 }
 
-/* 🆕 左右布局：当前播放 + 观看人数 */
+/* 左右布局：当前播放 + 观看人数 */
 .section-subtitle-row {
   display: flex;
   justify-content: space-between;
@@ -283,7 +283,7 @@
   white-space: nowrap;
 }
 
-/* 🆕 观看人数样式 */
+/* 观看人数样式 */
 .viewer-info {
   display: flex;
   align-items: center;
@@ -318,20 +318,26 @@
   margin-bottom: 60rpx; /* 最后一组增加底部间距，确保能滚动到底部 */
 }
 
+.chapter-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .chapter-title {
   color: rgba(255, 255, 255, 0.7);
   font-size: 28rpx;
   font-weight: 500;
   padding: 16rpx 0;
   display: block;
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+  flex: 1;
 }
 
 .lesson-item {
   display: flex;
   align-items: center;
   padding: 24rpx 0;
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06); /* 恢复底部分割线 */
 }
 
 .lesson-item.active {
@@ -416,6 +422,24 @@
 
 .lesson-progress.not-started {
   color: rgba(255, 255, 255, 0.4); /* Gray - 未开始 */
+}
+
+/* 🆕 作业课时徽章 */
+.lesson-quiz-badge {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.55);
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 999rpx;
+  padding: 4rpx 14rpx;
+  letter-spacing: 0.5rpx;
+}
+
+/* 🆕 作业课时通过标识 */
+.lesson-quiz-passed {
+  font-size: 22rpx;
+  color: #34c759;
+  font-weight: 500;
+  margin-left: 12rpx;
 }
 
 /* 课后作业按钮 - 苹果风格 */
@@ -592,4 +616,189 @@
 .quality-item:active {
   opacity: 0.7;
   transform: scale(0.98);
+}
+
+/* ==========================================================================
+   资料下载弹窗（复用课程详情页"课程包下载"样式）
+   ========================================================================== */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.modal-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  width: 620rpx;
+  background-color: #ffffff;
+  border-radius: 40rpx;
+  padding: 48rpx 0 0 0;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 0 48rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5rpx;
+}
+
+.modal-body {
+  min-height: 320rpx;
+  transition: all 0.3s;
+}
+
+.link-section {
+  padding: 24rpx 40rpx 32rpx 40rpx;
+}
+
+.modal-body .info-card {
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  background-color: transparent;
+  display: block;
+}
+
+.modal-body .info-row {
+  margin-bottom: 32rpx;
+}
+
+.modal-body .info-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.modal-body .info-value-box {
+  background-color: #f5f5f7;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: auto;
+}
+
+.modal-body .info-text {
+  font-size: 28rpx;
+  color: #1d1d1f;
+  line-height: 1.6;
+  word-break: break-all;
+  flex: 1;
+  margin-right: 24rpx;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.modal-body .info-code {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: 4rpx;
+  font-family: -apple-system-monospaced, "SF Mono", Menlo, monospace;
+}
+
+.modal-body .copy-icon-btn {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.modal-body .icon-copy {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #007aff;
+  border-radius: 6rpx;
+  position: relative;
+  background-color: transparent;
+}
+
+.modal-body .icon-copy::after {
+  content: '';
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #007aff;
+  border-radius: 6rpx;
+  background-color: #f5f5f7;
+  z-index: 1;
+}
+
+.modal-body .btn-group {
+  margin-top: 40rpx;
+  padding: 0;
+}
+
+.black-btn {
+  background-color: #1d1d1f;
+  color: #ffffff;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  height: 88rpx;
+  line-height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.black-btn::after {
+  border: none;
+}
+
+.black-btn:active {
+  background-color: #3a3a3c;
+  transform: scale(0.98);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.modal-footer {
+  border-top: 1rpx solid #e5e5ea;
+  padding: 32rpx 0;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-footer text {
+  font-size: 32rpx;
+  color: #000;
+  font-weight: 400;
 }

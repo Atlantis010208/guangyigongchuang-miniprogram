@@ -137,6 +137,7 @@ exports.main = async (event) => {
     
     // 查询用户的学习进度
     let userProgress = {}
+    let lastLessonId = null
     try {
       const progressRes = await db.collection('course_progress').where({
         userId: OPENID,
@@ -144,24 +145,31 @@ exports.main = async (event) => {
       }).limit(1).get()
       
       if (progressRes.data && progressRes.data.length > 0) {
-        userProgress = progressRes.data[0].lessonProgress || {}
+        const progressDoc = progressRes.data[0]
+        userProgress = progressDoc.lessonProgress || {}
+        lastLessonId = progressDoc.lastLessonId || null
+        console.log('[course_videos] 用户进度: lastLessonId=', lastLessonId)
       }
     } catch (err) {
       console.warn('[course_videos] 查询学习进度失败:', err)
     }
     
+    // 【记忆功能】未指定课时时，优先使用 lastLessonId 作为有效课时 ID
+    // 这样即使是延迟加载模式，云函数也会优先返回上次观看课时的视频链接
+    const effectiveLessonId = lessonId || lastLessonId || null
+    
     // 处理章节数据
     // lazyLoad = true 时：只获取当前课时的视频链接，其他课时不获取（节省流量）
     // lazyLoad = false 时：获取所有课时的视频链接（兼容旧版）
-    const chapters = await processChapters(course.chapters || [], lessonId, userProgress, lazyLoad)
+    const chapters = await processChapters(course.chapters || [], effectiveLessonId, userProgress, lazyLoad)
     
     // 定位当前课时
     let currentLesson = null
-    if (lessonId) {
-      currentLesson = findLessonById(chapters, lessonId)
+    if (effectiveLessonId) {
+      currentLesson = findLessonById(chapters, effectiveLessonId)
     }
     
-    // 如果没有指定课时，默认第一个视频
+    // 如果没有指定课时（或指定的课时不存在），默认第一个视频
     if (!currentLesson) {
       currentLesson = findFirstVideoLesson(chapters)
     }

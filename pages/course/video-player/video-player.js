@@ -63,7 +63,15 @@ Page({
     currentChapterIndex: -1,
     
     // 🆕 视频内章节列表展开状态
-    isChaptersExpanded: false
+    isChaptersExpanded: false,
+
+    // 资料下载弹窗（第三章 · 灯光实操课）
+    showMaterialModal: false,
+    materialPackage: {
+      title: '第3课、灯光实操课-资料包',
+      link: 'https://ug.link/DXP8800PRO-D50E/filemgr/share-download/?id=a8e641299e594068ac4c11e37df78931',
+      password: '2580'
+    }
   },
 
   // 实例属性（不触发渲染）
@@ -291,6 +299,8 @@ Page({
         setTimeout(() => {
           this.getViewerCount();
           this.getLearnedCount();
+          // 🆕 批量查询作业课时的通过状态，回填 lesson.quizPassed
+          this._fetchQuizPassedStates();
         }, 100);
 
       } else {
@@ -350,6 +360,55 @@ Page({
   onRetry() {
     if (this.courseId) {
       this.loadCourseVideos(this.courseId, this.lessonId);
+    }
+  },
+
+  /**
+   * 批量查询作业课时（quiz）的通过状态
+   * - 收集所有 type=quiz && quizId 的课时
+   * - 并行调用 quiz_attempt_get 取得 best attempt
+   * - 把 passed=true 回填到 chapters[ci].lessons[li].quizPassed
+   * - 任何失败都静默吞掉，不影响主流程（只是少一个 ✓）
+   */
+  async _fetchQuizPassedStates() {
+    const chapters = this.data.chapters || [];
+    if (chapters.length === 0) return;
+
+    const quizLessons = [];
+    chapters.forEach((ch, ci) => {
+      (ch.lessons || []).forEach((l, li) => {
+        if (l && l.type === 'quiz' && l.quizId) {
+          quizLessons.push({ ci, li, quizId: l.quizId });
+        }
+      });
+    });
+    if (quizLessons.length === 0) return;
+
+    try {
+      const results = await Promise.all(
+        quizLessons.map(({ quizId }) =>
+          wx.cloud.callFunction({
+            name: 'quiz_attempt_get',
+            data: { quizId, bestOnly: true }
+          }).catch(err => {
+            console.warn('[video-player] quiz_attempt_get error:', err);
+            return null;
+          })
+        )
+      );
+
+      const updates = {};
+      quizLessons.forEach(({ ci, li }, i) => {
+        const r = results[i] && results[i].result;
+        if (r && r.success && r.data && r.data.attempt && r.data.attempt.passed) {
+          updates[`chapters[${ci}].lessons[${li}].quizPassed`] = true;
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        this.setData(updates);
+      }
+    } catch (e) {
+      console.warn('[video-player] _fetchQuizPassedStates error:', e);
     }
   },
 
@@ -774,6 +833,21 @@ Page({
     
     if (!lesson) return;
     
+    // 🆕 作业课时：跳转到答题页
+    if (lesson.type === 'quiz') {
+      if (!lesson.quizId) {
+        wx.showToast({ title: '该作业尚未配置题目', icon: 'none' });
+        return;
+      }
+      const params = [
+        `quizId=${encodeURIComponent(lesson.quizId)}`,
+        this.courseId ? `courseId=${encodeURIComponent(this.courseId)}` : '',
+        `lessonId=${encodeURIComponent(lesson.id || '')}`
+      ].filter(Boolean).join('&');
+      wx.navigateTo({ url: `/pages/quiz/detail/detail?${params}` });
+      return;
+    }
+
     // 检查是否是视频类型
     if (lesson.type !== 'video') {
       wx.showToast({ title: '该章节非视频内容', icon: 'none' });
@@ -1693,6 +1767,90 @@ Page({
         confirmText: '知道了'
       });
     }
+  },
+
+  /**
+   * 资料下载按钮点击事件（章节级别）
+   * 第三章（chapterIndex === 3）打开资料下载弹窗
+   */
+  onMaterialDownloadTap(e) {
+    const chapterIndex = e.currentTarget.dataset.chapterIndex;
+    console.log('[material] 点击资料下载按钮, chapterIndex:', chapterIndex);
+    this.setData({ showMaterialModal: true });
+  },
+
+  /**
+   * 关闭资料下载弹窗
+   */
+  onCloseMaterialModal() {
+    this.setData({ showMaterialModal: false });
+  },
+
+  /**
+   * 阻止冒泡（点击弹窗内部不关闭）
+   */
+  stopMaterialPropagation() {
+    // 空函数，配合 catchtap 阻止冒泡到 mask
+  },
+
+  /**
+   * 复制资料分享链接
+   */
+  onCopyMaterialLink() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.link) return;
+
+    wx.setClipboardData({
+      data: materialPackage.link,
+      success: () => {
+        wx.showToast({
+          title: '链接已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制资料访问密码
+   */
+  onCopyMaterialPassword() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.password) return;
+
+    wx.setClipboardData({
+      data: materialPackage.password,
+      success: () => {
+        wx.showToast({
+          title: '密码已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制资料链接和密码
+   */
+  onCopyMaterialAll() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.link) return;
+
+    const lines = [`分享内容：${materialPackage.title}`, `分享链接：${materialPackage.link}`];
+    if (materialPackage.password) {
+      lines.push(`访问密码：${materialPackage.password}`);
+    }
+    const content = lines.join('\n');
+
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '已复制到剪贴板',
+          icon: 'success'
+        });
+      }
+    });
   },
 
   // ==================== 【流量优化】延迟加载相关方法 ====================

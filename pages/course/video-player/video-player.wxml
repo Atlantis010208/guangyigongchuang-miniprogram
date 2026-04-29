@@ -152,30 +152,36 @@
 
         <!-- 🆕 视频内章节列表（融入简介模式） -->
         <view class="video-time-chapters" wx:if="{{currentLesson.timeChapters && currentLesson.timeChapters.length > 0}}">
-          <!-- 展开/折叠按钮 - 放在列表上方或作为入口 -->
-          <view class="chapters-toggle-btn" bindtap="toggleChapters">
-            <text class="toggle-text">{{isChaptersExpanded ? '收起本节章节' : '查看本节章节'}}</text>
-            <view class="toggle-arrow {{isChaptersExpanded ? 'up' : 'down'}}"></view>
-          </view>
-
-          <view class="chapters-list" wx:if="{{isChaptersExpanded}}">
+          <view class="chapters-list {{isChaptersExpanded ? 'expanded' : ''}}">
             <view 
               class="video-time-chapter-item {{currentChapterIndex === index ? 'active' : ''}}" 
               wx:for="{{currentLesson.timeChapters}}" 
               wx:key="time"
               bindtap="onChapterTap"
               data-time="{{item.time}}"
+              wx:if="{{index < 3 || isChaptersExpanded}}"
             >
               <text class="chapter-time">{{item.timeStr}}</text>
               <text class="chapter-name">{{item.title}}</text>
+            </view>
+            
+            <!-- 展开/收起文字按钮 -->
+            <view class="chapters-expand-btn" bindtap="toggleChapters" wx:if="{{currentLesson.timeChapters.length > 3}}">
+              <text class="expand-text">{{isChaptersExpanded ? '收起' : '展开全部'}}</text>
             </view>
           </view>
         </view>
       </view>
 
-      <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter">
+      <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter" wx:for-index="chapterIndex">
         <view class="chapter-group">
-          <text class="chapter-title">{{chapter.title}}</text>
+          <view class="chapter-title-row">
+            <text class="chapter-title">{{chapter.title}}</text>
+            <!-- 第三章节右侧资料下载按钮（索引为 3，因首个分组为"课程介绍"） -->
+            <view class="homework-btn" wx:if="{{chapterIndex === 3}}" catchtap="onMaterialDownloadTap" data-chapter-index="{{chapterIndex}}">
+              <text class="homework-text">资料下载</text>
+            </view>
+          </view>
           <block wx:for="{{chapter.lessons}}" wx:key="id" wx:for-item="lesson">
             <view
               class="lesson-item {{lesson.id === currentLesson.id ? 'active' : ''}}"
@@ -188,18 +194,31 @@
               <view class="lesson-info">
                 <text class="lesson-title {{lesson.id === currentLesson.id ? 'active-text' : ''}}">{{lesson.title}}</text>
                 <view class="lesson-meta">
-                  <text class="lesson-duration">{{lesson.duration}}</text>
-                  <!-- 学习进度状态 -->
+                  <!-- 视频课时：时长 + 学习进度 -->
                   <block wx:if="{{lesson.type === 'video'}}">
+                    <text class="lesson-duration">{{lesson.duration}}</text>
                     <text class="lesson-progress completed" wx:if="{{lesson.isCompleted}}">· 已学习</text>
                     <text class="lesson-progress learning" wx:elif="{{lesson.progress > 0}}">· 已学习 {{lesson.progress}}%</text>
                     <text class="lesson-progress not-started" wx:else>· 未学习</text>
                   </block>
+                  <!-- 🆕 作业课时：题量徽章 + 通过状态 -->
+                  <block wx:elif="{{lesson.type === 'quiz'}}">
+                    <text class="lesson-quiz-badge">作业 · {{lesson.questionCount || 0}} 题</text>
+                    <text class="lesson-quiz-passed" wx:if="{{lesson.quizPassed}}">✓ 已通过</text>
+                  </block>
+                  <!-- 其他类型（file 等） -->
+                  <block wx:else>
+                    <text class="lesson-duration" wx:if="{{lesson.duration}}">{{lesson.duration}}</text>
+                  </block>
                 </view>
               </view>
-              
-              <!-- 课后作业按钮 - 垂直居中在右侧 -->
-              <view class="homework-btn" wx:if="{{lesson.id === 'l1-1'}}" catchtap="onHomeworkTap" data-lesson-id="{{lesson.id}}">
+              <!-- 课后作业 PDF 按钮（仅"1.1 灯光设计基础"特例，PDF 资源） -->
+              <view
+                class="homework-btn"
+                wx:if="{{lesson.id === 'l1-1'}}"
+                catchtap="onHomeworkTap"
+                data-lesson-id="{{lesson.id}}"
+              >
                 <text class="homework-text">课后作业</text>
               </view>
             </view>
@@ -207,5 +226,50 @@
         </view>
       </block>
     </scroll-view>
+
+    <!-- 资料下载弹窗 - 复用课程详情页"课程包下载"样式 -->
+    <view class="modal-mask {{showMaterialModal ? 'show' : ''}}" wx:if="{{showMaterialModal}}" bindtap="onCloseMaterialModal" catchtouchmove="true">
+      <view class="modal-container" catchtap="stopMaterialPropagation">
+        <view class="modal-header">
+          <text class="modal-title">{{materialPackage.title}}</text>
+        </view>
+
+        <scroll-view scroll-y class="modal-body">
+          <view class="link-section">
+            <view class="info-card">
+              <!-- 链接行 -->
+              <view class="info-row">
+                <text class="info-label">分享链接</text>
+                <view class="info-value-box" bindtap="onCopyMaterialLink">
+                  <text class="info-text">{{materialPackage.link}}</text>
+                  <view class="copy-icon-btn">
+                    <view class="icon-copy"></view>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 提取码行 -->
+              <view class="info-row" wx:if="{{materialPackage.password}}">
+                <text class="info-label">访问密码</text>
+                <view class="info-value-box" bindtap="onCopyMaterialPassword">
+                  <text class="info-code">{{materialPackage.password}}</text>
+                  <view class="copy-icon-btn">
+                    <view class="icon-copy"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="btn-group">
+              <button class="black-btn full-width" bindtap="onCopyMaterialAll">一键复制链接和密码</button>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="modal-footer" bindtap="onCloseMaterialModal">
+          <text>关闭</text>
+        </view>
+      </view>
+    </view>
   </block>
 </view>

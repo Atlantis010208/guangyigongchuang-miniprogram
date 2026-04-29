@@ -175,7 +175,10 @@ Page({
   },
 
   /**
-   * 点击课程卡片
+   * 点击课程卡片（卡片整体区域）
+   * 统一跳转到课程详情页：
+   * - 已购买：进入详情页的目录 Tab，方便选择具体课时观看
+   * - 未购买：进入详情页的介绍 Tab，方便用户先了解课程
    */
   onCourseTap(e) {
     const id = e.currentTarget.dataset.id;
@@ -185,6 +188,26 @@ Page({
         ? `/pages/course/course-detail/course-detail?id=${id}&tab=1`
         : `/pages/course/course-detail/course-detail?id=${id}`,
     });
+  },
+
+  /**
+   * 点击「立即观看」按钮（catchtap 已阻止冒泡到 onCourseTap）
+   * - 已购买：直接进视频播放页，由云函数和 video-player 内部恢复进度
+   * - 未购买：跳详情页让用户先了解/购买
+   */
+  onWatchTap(e) {
+    const id = e.currentTarget.dataset.id;
+    const purchased = e.currentTarget.dataset.purchased === true;
+
+    if (purchased) {
+      wx.navigateTo({
+        url: `/pages/course/video-player/video-player?courseId=${id}`,
+      });
+    } else {
+      wx.navigateTo({
+        url: `/pages/course/course-detail/course-detail?id=${id}`,
+      });
+    }
   },
 
   /**
