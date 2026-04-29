@@ -1,4 +1,4 @@
-.page{min-height:100vh;background:#f2f2f7;padding-bottom:120rpx}
+.page{min-height:100vh;background:#f2f2f7;padding-bottom:calc(200rpx + env(safe-area-inset-bottom))}
 .header{padding:30rpx}.title{font-size:44rpx;font-weight:700}
 
 /* 顶部步骤条样式 */
@@ -84,12 +84,13 @@
 }
 
 /* 底部操作区 */
-.actions{display:flex;align-items:center;padding:30rpx;position:fixed;bottom:0;left:0;right:0;margin:0;border-radius:30rpx 30rpx 0 0;box-shadow:0 -4rpx 16rpx rgba(0,0,0,0.05);z-index:100;padding-bottom:calc(30rpx + env(safe-area-inset-bottom));}
-.btn{flex:1;border-radius:50rpx;padding:24rpx 0;font-size:28rpx;font-weight:600;border:2rpx solid transparent;background:#fff;color:#000}
-.actions .btn + .btn{margin-left:16rpx}
+.actions{display:flex;align-items:center;gap:24rpx;padding:16rpx 30rpx;position:fixed;bottom:0;left:0;right:0;margin:0;background:#fff;border-radius:30rpx 30rpx 0 0;box-shadow:0 -4rpx 16rpx rgba(0,0,0,0.05);z-index:100;padding-bottom:calc(16rpx + env(safe-area-inset-bottom));}
+.btn{flex:1;height:80rpx !important;line-height:76rpx !important;border-radius:40rpx;padding:0 !important;margin:0 !important;font-size:28rpx;font-weight:600;border:2rpx solid transparent;background:#fff;color:#000;text-align:center;}
 .btn.primary{background:#135bec;color:#fff}
 .btn.ghost{border:2rpx solid #e2e8f0;background:#fff;color:#334155}
 .btn[disabled]{background:#e2e8f0;color:#94a3b8}
+/* 主按钮加大宽度，但不增加高度，保持整体精致 */
+.btn.btn-lg{flex:2;font-size:30rpx;font-weight:600}
 
 /* 长按复制样式 */
 .val.phone{
@@ -108,4 +109,115 @@
 }
 .longpress-copy:active {
   background: #f1f5f9;
+}
+
+/* ============================================================
+   客户上传资料 section（与业主端 progress.wxss 保持类名/样式一致）
+   ============================================================ */
+.attachments-section {
+  /* 沿用 .section 的整体卡片留白，无需额外 padding */
+}
+
+.empty-hint {
+  padding: 48rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #86868B;
+}
+
+/* 图片九宫格：3 列等宽，1:1 方形 */
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8rpx;
+  margin-top: 24rpx;
+}
+
+.img-cell {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* 1:1 */
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #F5F5F7;
+}
+
+.img-cell image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.img-cell:active {
+  opacity: 0.85;
+}
+
+.img-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  color: #86868B;
+}
+
+/* 文件列表（设计师端原本无这些样式，从业主端 progress.wxss 复制一份） */
+.files-section {
+  margin-top: 24rpx;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #f2f2f7;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:active {
+  background: #F5F5F7;
+}
+
+.file-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  overflow: hidden;
+}
+
+.file-name {
+  font-size: 26rpx;
+  color: #1c1c1e;
+  word-break: break-all;
+}
+
+.file-size {
+  font-size: 22rpx;
+  color: #8e8e93;
+}
+
+.file-action {
+  flex-shrink: 0;
+  font-size: 32rpx;
+  color: #C7C7CC;
+  margin-left: 12rpx;
+}
+
+/* 小屏降级：iPhone SE / 其他窄屏自动 2 列 */
+@media screen and (max-width: 374px) {
+  .img-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

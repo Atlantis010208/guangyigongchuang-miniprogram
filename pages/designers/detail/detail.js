@@ -8,16 +8,24 @@ Page({
     // Tab 状态
     activeTab: 'works',
     // 从订单列表预选的需求
-    preselectedRequestId: ''
+    preselectedRequestId: '',
+    // 是否从已接单订单进入（from=order）：隐藏邀请抢单，改为联系设计师
+    fromOrder: false
   },
 
   onLoad(options) {
-    const { id, requestId } = options
+    const { id, requestId, from } = options
     
     // 保存预选需求信息
     if (requestId) {
       this.setData({ preselectedRequestId: requestId })
       console.log('[designer/detail] 预选需求ID:', requestId)
+    }
+    
+    // 识别“来自订单详情页”场景
+    if (from === 'order') {
+      this.setData({ fromOrder: true })
+      console.log('[designer/detail] 来源: 已接单订单，隐藏邀请抢单按钮')
     }
     
     if (id) {
@@ -182,12 +190,61 @@ Page({
     util.hapticFeedback('light')
   },
 
-  // 联系设计师
+  // 联系客服（预留，当前页面底部不再使用）
   onContact() {
     wx.makePhoneCall({
       phoneNumber: '400-888-8888',
       fail: () => {
         util.showToast('无法拨打电话')
+      }
+    })
+  },
+
+  // 联系设计师本人（从订单进入时使用）
+  onContactDesigner() {
+    const d = this.data.designer
+    if (!d) {
+      util.showToast('设计师信息不完整')
+      return
+    }
+    util.hapticFeedback('light')
+
+    const items = []
+    const handlers = []
+
+    if (d.phone) {
+      items.push('拨打电话 ' + d.phone)
+      handlers.push(() => {
+        wx.makePhoneCall({
+          phoneNumber: String(d.phone),
+          fail: () => util.showToast('拨号已取消')
+        })
+      })
+    }
+    if (d.wechat) {
+      items.push('复制微信号 ' + d.wechat)
+      handlers.push(() => {
+        wx.setClipboardData({
+          data: String(d.wechat),
+          success: () => wx.showToast({ title: '微信号已复制', icon: 'success' })
+        })
+      })
+    }
+
+    if (items.length === 0) {
+      util.showToast('设计师未填写联系方式')
+      return
+    }
+    if (items.length === 1) {
+      handlers[0]()
+      return
+    }
+    wx.showActionSheet({
+      itemList: items,
+      success: (res) => {
+        if (typeof res.tapIndex === 'number' && handlers[res.tapIndex]) {
+          handlers[res.tapIndex]()
+        }
       }
     })
   },

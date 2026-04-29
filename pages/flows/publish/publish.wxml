@@ -51,6 +51,66 @@
                  adjust-position="{{false}}"
                  data-id="{{step.id}}" />
         </view>
+
+        <!-- 上传组件 (Upload) -->
+        <view class="upload-container" wx:if="{{step.type === 'upload'}}">
+          <!-- 图片上传区 -->
+          <view class="upload-section">
+            <view class="upload-section-head">
+              <text class="upload-section-title">户型图片</text>
+              <text class="upload-section-count">{{images.length}}/9</text>
+            </view>
+            <view class="upload-grid">
+              <block wx:for="{{images}}" wx:key="tempPath" wx:for-item="img" wx:for-index="imgIdx">
+                <view class="upload-thumb">
+                  <image class="upload-thumb-image" src="{{img.tempPath}}" mode="aspectFill"></image>
+                  <view class="upload-thumb-mask uploading" wx:if="{{!img.uploaded && !img.error}}">
+                    <view class="upload-spinner"></view>
+                    <text class="upload-mask-text">上传中</text>
+                  </view>
+                  <view class="upload-thumb-mask error" wx:if="{{img.error}}" catchtap="onRetryImage" data-index="{{imgIdx}}">
+                    <text class="upload-mask-text">重试</text>
+                  </view>
+                  <view class="upload-thumb-remove" catchtap="onRemoveImage" data-index="{{imgIdx}}">×</view>
+                </view>
+              </block>
+              <view class="upload-add" wx:if="{{images.length < 9}}" bindtap="onChooseImages">
+                <view class="upload-add-icon">+</view>
+                <view class="upload-add-text">添加图片</view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 文件上传区 -->
+          <view class="upload-section">
+            <view class="upload-section-head">
+              <text class="upload-section-title">图纸文件</text>
+              <text class="upload-section-count">{{files.length}}/5</text>
+            </view>
+            <view class="upload-section-tip">支持 pdf / dwg / dxf / doc / docx / xlsx；dwg 等文件需先发送到微信（如文件传输助手）后再选择</view>
+            <view class="upload-file-list">
+              <block wx:for="{{files}}" wx:key="path" wx:for-item="file" wx:for-index="fileIdx">
+                <view class="upload-file-card">
+                  <view class="upload-file-icon ext-{{file.ext}}">{{file.ext}}</view>
+                  <view class="upload-file-info">
+                    <view class="upload-file-name">{{file.name}}</view>
+                    <view class="upload-file-meta">
+                      <text class="upload-file-size">{{file.sizeText}}</text>
+                      <text class="upload-file-status uploading" wx:if="{{!file.uploaded && !file.error}}">上传中…</text>
+                      <text class="upload-file-status uploaded" wx:if="{{file.uploaded}}">已上传</text>
+                      <text class="upload-file-status error" wx:if="{{file.error}}" catchtap="onRetryFile" data-index="{{fileIdx}}">上传失败 · 点击重试</text>
+                    </view>
+                  </view>
+                  <view class="upload-file-remove" catchtap="onRemoveFile" data-index="{{fileIdx}}">×</view>
+                </view>
+              </block>
+              <view class="upload-file-add" wx:if="{{files.length < 5}}" bindtap="onChooseFiles">
+                <view class="upload-add-icon">+</view>
+                <view class="upload-add-text">添加文件</view>
+              </view>
+            </view>
+          </view>
+        </view>
       </view>
     </block>
   </view>

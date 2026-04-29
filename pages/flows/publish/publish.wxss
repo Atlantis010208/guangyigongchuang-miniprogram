@@ -241,3 +241,273 @@ page {
   border: none;
 }
 
+/* ========== 上传组件 ========== */
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 48rpx;
+}
+
+.upload-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.upload-section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #000;
+  letter-spacing: 0;
+}
+
+.upload-section-count {
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #a0a5ab;
+  font-feature-settings: 'tnum';
+}
+
+.upload-section-tip {
+  font-size: 24rpx;
+  color: #a0a5ab;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+  font-weight: 300;
+}
+
+/* 图片九宫格 */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.upload-thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.upload-thumb-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-thumb-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.upload-thumb-mask.error {
+  background-color: rgba(220, 53, 69, 0.78);
+}
+
+.upload-mask-text {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #fff;
+}
+
+.upload-spinner {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: upload-spin 0.8s linear infinite;
+}
+
+@keyframes upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+.upload-thumb-remove {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  text-align: center;
+  font-weight: 300;
+}
+
+.upload-add {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  border-radius: 16rpx;
+  background-color: #fff;
+  border: 2rpx dashed #d8d8d8;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.upload-add:active {
+  transform: scale(0.97);
+  background-color: #fafafa;
+}
+
+.upload-add-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% - 14rpx));
+  font-size: 56rpx;
+  font-weight: 200;
+  color: #b8b8b8;
+  line-height: 1;
+}
+
+.upload-add-text {
+  position: absolute;
+  bottom: 22%;
+  left: 0;
+  right: 0;
+  font-size: 22rpx;
+  color: #a0a5ab;
+  text-align: center;
+  font-weight: 400;
+}
+
+/* 文件列表 */
+.upload-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.upload-file-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 24rpx 24rpx 24rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  position: relative;
+}
+
+.upload-file-icon {
+  flex-shrink: 0;
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 14rpx;
+  background-color: #f0f2f5;
+  color: #555;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5rpx;
+}
+
+.upload-file-icon.ext-pdf { background-color: #ffe9e6; color: #d93025; }
+.upload-file-icon.ext-dwg,
+.upload-file-icon.ext-dxf { background-color: #e6f0ff; color: #1a73e8; }
+.upload-file-icon.ext-doc,
+.upload-file-icon.ext-docx { background-color: #e3effb; color: #2b6cb0; }
+.upload-file-icon.ext-xlsx { background-color: #e6f4ea; color: #137333; }
+
+.upload-file-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.upload-file-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #000;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-file-meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 22rpx;
+  color: #a0a5ab;
+}
+
+.upload-file-status {
+  font-size: 22rpx;
+}
+
+.upload-file-status.uploading { color: #888; }
+.upload-file-status.uploaded { color: #137333; }
+.upload-file-status.error { color: #d93025; }
+
+.upload-file-remove {
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background-color: #f5f5f5;
+  color: #888;
+  font-size: 32rpx;
+  line-height: 48rpx;
+  text-align: center;
+  font-weight: 300;
+}
+
+.upload-file-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+  background-color: #fff;
+  border: 2rpx dashed #d8d8d8;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.upload-file-add:active {
+  transform: scale(0.99);
+  background-color: #fafafa;
+}
+
+.upload-file-add .upload-add-icon {
+  position: static;
+  transform: none;
+  font-size: 40rpx;
+}
+
+.upload-file-add .upload-add-text {
+  position: static;
+  font-size: 26rpx;
+  color: #888;
+  font-weight: 400;
+}
+
