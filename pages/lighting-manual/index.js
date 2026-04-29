@@ -5,6 +5,18 @@ Page({
     // 顶部吸附式横向定位栏：在原 hero-nav-grid 滑出视口后显示
     stickyNavVisible: false,
 
+    // ==== 四个横向卡片轮播的 translateX（view+transform 严格翻页，类似 Apple 商店）====
+    // translateX 单位 px，向左翻页时为负值
+    philosophyTranslateX: 0,
+    teamTranslateX: 0,
+    platformTranslateX: 0,
+    checklistTranslateX: 0,
+    // transitioning 控制是否启用 transform 缓动（拖拽中关，松手后开）
+    philosophyTransitioning: false,
+    teamTransitioning: false,
+    platformTransitioning: false,
+    checklistTransitioning: false,
+
     // 案例/评价详情弹窗
     detailVisible: false,
     detailType: '', // 'case' | 'review' | 'delivery'
@@ -18,7 +30,7 @@ Page({
     heroInfo: {
       title: "灯光 让家 / 有温度",
       docTitle: "灯光设计服务说明书",
-      subtitle: "👋 Hi！我是“二哥”。这是我的灯光设计说明书，你可以在这里快速了解我们的服务内容、服务流程、核心竞争力。"
+      subtitle: "👋 Hi！我是二哥，这是我的灯光设计说明书；跟我一起，用专业力量，帮助3亿家庭远离光污染。"
     },
 
     navButtons: [
@@ -29,7 +41,7 @@ Page({
     ],
 
     aboutInfo: {
-      tags: ["10年", "2家", "1件事"],
+      tags: ["专注灯光", "长期主义", "持续学习"],
       details: [
         "我是二哥（彭康华），生于广东汕尾、现定居广州。",
         "灯光设计讲师、灯光博主，B端做装修公司 设计公司的灯光设计讲师及顾问，C端专注为高端住宅和商业空间提供专业灯光设计、亮化工程及灯具配套。",
@@ -337,10 +349,32 @@ Page({
   onReady() {
     // 等首屏渲染完成后测量 hero-nav-grid 底部位置（基于 onPageScroll 阈值显示 sticky-nav）
     this.measureHeroNavBottom();
+    // 同时测量 nav-bar + sticky-nav 的真实像素高度，用于 scrollTo 的 offsetTop
+    this._measureScrollOffsetTop();
   },
 
   onResize() {
     this.measureHeroNavBottom();
+    this._measureScrollOffsetTop();
+  },
+
+  /**
+   * 测量顶部遮挡总高度（.nav-bar + .sticky-nav）的真实像素值，
+   * 供 scrollTo 的 offsetTop 使用。避免写死为某个机型的估计值，
+   * 避免 rpx 与 px 单位错配导致不同机型偏移不一致。
+   */
+  _measureScrollOffsetTop() {
+    // 注意：Page 中不能使用 .in(this)，那是自定义组件的 API
+    const query = wx.createSelectorQuery();
+    query.select('.nav-bar').boundingClientRect();
+    query.select('.sticky-nav').boundingClientRect();
+    query.exec((res) => {
+      const navH = (res && res[0] && res[0].height) || 88;
+      const stickyH = (res && res[1] && res[1].height) || 60;
+      // 额外加 12px 呼吸距离；section 自身的 padding-top 会提供进一步松弛感
+      this._scrollOffsetTop = navH + stickyH + 12;
+      console.log('[lighting-manual] scrollOffsetTop =', this._scrollOffsetTop, '(nav', navH, '+ sticky', stickyH, '+ 12)');
+    });
   },
 
   /**
@@ -406,6 +440,122 @@ Page({
     const { urls, current } = e.currentTarget.dataset;
     if (!urls || !urls.length) return;
     wx.previewImage({ urls, current: current || urls[0] });
+  },
+
+  // ============================================================
+  // 横向卡片严格翻页（philosophy / team / platform）
+  // 实现思路：view + transform translateX，跟手拖拽（无惯性），
+  // 松手按规则翻一张并伴随轻微回弹动画；越界拖拽 1/3 阻尼。
+  // ============================================================
+  onPkgTouchStart(e) {
+    const key = e.currentTarget.dataset.key;
+    if (!key) return;
+    if (!this._pkgIndex) this._pkgIndex = { philosophy: 0, team: 0, platform: 0, checklist: 0 };
+    const startTranslateX = this.data[`${key}TranslateX`] || 0;
+    this._pkgTouch = {
+      key,
+      startX: e.touches[0].clientX,
+      startY: e.touches[0].clientY,
+      startTranslateX,
+      startTime: Date.now(),
+      axis: undefined, // 未确定主滑动方向
+    };
+    // 拖拽期间关闭 transition，让 translateX 实时跟手
+    this.setData({ [`${key}Transitioning`]: false });
+  },
+
+  onPkgTouchMove(e) {
+    const state = this._pkgTouch;
+    if (!state) return;
+    const t = e.touches[0];
+    const dx = t.clientX - state.startX;
+    const dy = t.clientY - state.startY;
+
+    // 第一次显著位移时锁定主方向，避免横向卡片影响纵向页面滚动
+    if (state.axis === undefined) {
+      const ax = Math.abs(dx);
+      const ay = Math.abs(dy);
+      if (ax < 6 && ay < 6) return; // 太小不判定
+      state.axis = ax > ay ? 'x' : 'y';
+    }
+    if (state.axis !== 'x') return; // 纵向滑动让页面滚动，不处理 transform
+
+    const total = this._getPkgTotal(state.key);
+    const stepPx = this._getPkgStepPx(state.key);
+    const minTranslateX = -(total - 1) * stepPx; // 最后一张
+    const maxTranslateX = 0; // 第 0 张
+
+    let newTranslateX = state.startTranslateX + dx;
+    // 边界阻尼：超出范围按 1/3 阻力跟手
+    if (newTranslateX > maxTranslateX) {
+      newTranslateX = maxTranslateX + (newTranslateX - maxTranslateX) / 3;
+    } else if (newTranslateX < minTranslateX) {
+      newTranslateX = minTranslateX + (newTranslateX - minTranslateX) / 3;
+    }
+
+    this.setData({ [`${state.key}TranslateX`]: newTranslateX });
+  },
+
+  onPkgTouchEnd(e) {
+    const state = this._pkgTouch;
+    if (!state) return;
+    this._pkgTouch = null;
+
+    // 如果整个手势都是纵向，没碰过水平 transform，不需要 snap
+    if (state.axis === 'y') return;
+
+    let dx = 0;
+    if (e.changedTouches && e.changedTouches[0]) {
+      dx = e.changedTouches[0].clientX - state.startX;
+    }
+    const dt = Date.now() - state.startTime;
+
+    // 触发翻页规则：水平位移 > 40px 或 快速划（>0.5px/ms 且 >12px）
+    const distOK = Math.abs(dx) > 40;
+    const fastOK = dt > 0 && Math.abs(dx) / dt > 0.5 && Math.abs(dx) > 12;
+    let direction = 0;
+    if (distOK || fastOK) {
+      direction = dx < 0 ? 1 : -1;
+    }
+
+    if (!this._pkgIndex) this._pkgIndex = { philosophy: 0, team: 0, platform: 0, checklist: 0 };
+    const currentIdx = this._pkgIndex[state.key] || 0;
+    const total = this._getPkgTotal(state.key);
+    let newIdx = currentIdx + direction;
+    newIdx = Math.max(0, Math.min(total - 1, newIdx));
+
+    this._snapPkgToIndex(state.key, newIdx);
+  },
+
+  _getPkgTotal(key) {
+    if (key === 'philosophy') return (this.data.philosophy || []).length;
+    if (key === 'team') return (this.data.teamPackages || []).length;
+    if (key === 'platform') return (this.data.platformPackages || []).length;
+    if (key === 'checklist') return (this.data.serviceChecklist || []).length;
+    return 0;
+  },
+
+  _getPkgStepPx(key) {
+    // 卡片步长 (rpx)：philosophy = 560 + 24；package = 600 + 24
+    const stepRpx = key === 'philosophy' ? 584 : 624;
+    // 缓存 windowWidth，避免高频 touchmove 重复调用 API
+    if (!this._windowWidth) {
+      // 优先使用 wx.getWindowInfo（基础库 2.20.1+），降级到旧 API
+      this._windowWidth = (wx.getWindowInfo ? wx.getWindowInfo().windowWidth : wx.getSystemInfoSync().windowWidth);
+    }
+    return stepRpx * this._windowWidth / 750;
+  },
+
+  _snapPkgToIndex(key, idx) {
+    if (!this._pkgIndex) this._pkgIndex = { philosophy: 0, team: 0, platform: 0, checklist: 0 };
+    this._pkgIndex[key] = idx;
+    const stepPx = this._getPkgStepPx(key);
+    const targetTranslateX = -idx * stepPx;
+    // 启用 transition 让位移有 ease-out 缓动 + 轻微回弹感
+    this.setData({
+      [`${key}TranslateX`]: targetTranslateX,
+      [`${key}Transitioning`]: true,
+    });
   },
 
   // 跳转公众号文章（wx.openOfficialAccountArticle）
@@ -522,10 +672,12 @@ Page({
 
   scrollTo(e) {
     const target = e.currentTarget.dataset.target;
+    // 使用实测缓存值；onReady 未测量完时使用兑底（约常见机型 nav176rpx + sticky120rpx 在 375px 宽下的 px 值）
+    const offset = this._scrollOffsetTop || 148;
     wx.pageScrollTo({
       selector: `#${target}`,
       duration: 300,
-      offsetTop: -80 // 留出顶部导航栏的空间
+      offsetTop: -offset
     });
   },
 
