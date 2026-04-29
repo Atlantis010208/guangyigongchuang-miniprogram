@@ -303,6 +303,11 @@ Page({
   getCoverForRequest(r){
     const fallback = 'https://images.pexels.com/photos/45072/pexels-photo-45072.jpeg'
     if(!r) return fallback
+    // 优先使用用户在发布需求时上传的第一张图片（fileID 或 https URL）
+    if (Array.isArray(r.images) && r.images.length > 0) {
+      const first = r.images[0]
+      if (typeof first === 'string' && first) return first
+    }
     if(r.source === 'scheme'){
       switch(r.category){
         case 'residential': return 'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg'
@@ -618,6 +623,9 @@ Page({
         designerId: doc.designerId || '',
         designerName: doc.designerName || '',
         designerStatus: designerStatus,  // 🔥 新增：设计师分配状态
+        // 🔥 用户上传的附件（发布需求第八题）
+        images: Array.isArray(params.images) ? params.images.filter((s) => typeof s === 'string' && s) : [],
+        files: Array.isArray(params.files) ? params.files : [],
         // 🔥 个性需求定制字段
         area: params.area || '',
         budget: params.budgetTotal || params.budget || '',
