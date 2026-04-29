@@ -3,7 +3,7 @@
 Page({
   data: {
     // UI 控制
-    headerBgFileId: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/color-temp-bg.png',
+    headerBgFileId: '',
     headerTitle: '色温调节器',
     headerSubtitle: '专业分层色温建议',
     headerDesc: '基于空间、人群和氛围智能推荐照明方案',
