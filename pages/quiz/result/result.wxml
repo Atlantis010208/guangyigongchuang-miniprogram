@@ -1,0 +1,138 @@
+<!-- 答题结果页：得分总览 + 题目回顾 -->
+<view class="page">
+
+  <!-- 加载态 -->
+  <view class="state-block" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="state-text">成绩加载中...</text>
+  </view>
+
+  <!-- 加载失败 -->
+  <view class="state-block" wx:elif="{{loadError}}">
+    <view class="state-icon">!</view>
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-actions">
+      <button class="btn-prev" bindtap="onBackToCourse">返回课程</button>
+    </view>
+  </view>
+
+  <!-- 主内容 -->
+  <block wx:elif="{{attempt && quiz}}">
+
+    <!-- 滚动容器 -->
+    <scroll-view scroll-y="true" class="main-content" enhanced="true" show-scrollbar="{{false}}">
+
+      <!-- 得分总览卡 -->
+      <view class="score-card">
+
+        <!-- 大圆环得分 -->
+        <view class="score-ring {{passed ? 'passed' : 'failed'}}"
+              style="background: conic-gradient({{ringColor}} {{scorePercent}}%, #f0f0f0 0);">
+          <view class="score-ring-inner">
+            <view class="score-number">{{attempt.score}}</view>
+            <view class="score-divider"></view>
+            <view class="score-total">/ {{attempt.totalScore}}</view>
+          </view>
+        </view>
+
+        <!-- 状态徽章 -->
+        <view class="pass-badge {{passed ? 'passed' : 'failed'}}">
+          <text class="pass-icon">{{passed ? '✓' : '✕'}}</text>
+          <text class="pass-text">{{passText}}</text>
+        </view>
+
+        <!-- 元信息 -->
+        <view class="meta-row">
+          <view class="meta-item">
+            <view class="meta-num">{{correctCount}}</view>
+            <view class="meta-label">答对题数</view>
+          </view>
+          <view class="meta-divider"></view>
+          <view class="meta-item">
+            <view class="meta-num">{{quiz.questions.length}}</view>
+            <view class="meta-label">总题数</view>
+          </view>
+          <view class="meta-divider"></view>
+          <view class="meta-item">
+            <view class="meta-num">{{durationText}}</view>
+            <view class="meta-label">用时</view>
+          </view>
+        </view>
+
+      </view>
+
+      <!-- 题目回顾标题 -->
+      <view class="review-section-header">
+        <text class="review-section-title">题目回顾</text>
+      </view>
+
+      <!-- 题目回顾列表 -->
+      <view class="review-list">
+        <block wx:for="{{reviewItems}}" wx:key="questionId" wx:for-item="item" wx:for-index="rIdx">
+          <view class="review-card {{item.isCorrect ? 'correct' : 'incorrect'}}">
+
+            <!-- 题号 + 对错 + 得分 -->
+            <view class="review-head">
+              <view class="review-num {{item.isCorrect ? 'correct' : 'incorrect'}}">
+                <text class="review-num-mark">{{item.isCorrect ? '✓' : '✕'}}</text>
+                <text class="review-num-text">第 {{rIdx + 1}} 题</text>
+              </view>
+              <view class="review-score {{item.isCorrect ? 'correct' : 'incorrect'}}">
+                {{item.earned}} / {{item.score}} 分
+              </view>
+            </view>
+
+            <!-- 题型标签 -->
+            <view class="review-type-tag type-{{item.type}}">{{typeLabels[item.type]}}</view>
+
+            <!-- 题干 -->
+            <view class="review-stem">{{item.stem}}</view>
+
+            <!-- 选项展示（高亮用户答案 + 正确答案） -->
+            <view class="review-options">
+              <block wx:for="{{item.options}}" wx:key="key" wx:for-item="opt">
+                <view class="review-option {{ item.userSelectedSet[opt.key] ? 'user-selected' : '' }} {{ item.correctSet[opt.key] ? 'correct-key' : '' }} {{ item.userSelectedSet[opt.key] && !item.correctSet[opt.key] ? 'wrong-key' : '' }}">
+                  <view class="review-option-key">{{opt.key}}</view>
+                  <text class="review-option-text">{{opt.text}}</text>
+                  <view class="review-option-tag" wx:if="{{item.correctSet[opt.key]}}">正确答案</view>
+                  <view class="review-option-tag user-tag" wx:if="{{item.userSelectedSet[opt.key] && !item.correctSet[opt.key]}}">你的答案</view>
+                </view>
+              </block>
+            </view>
+
+            <!-- 用户答案/正确答案行（紧凑展示） -->
+            <view class="review-answer-row">
+              <view class="answer-line">
+                <text class="answer-label">你的答案：</text>
+                <text class="answer-value {{item.isCorrect ? 'correct' : 'incorrect'}}">{{item.userAnswerText || '未作答'}}</text>
+              </view>
+              <view class="answer-line" wx:if="{{!item.isCorrect}}">
+                <text class="answer-label">正确答案：</text>
+                <text class="answer-value correct">{{item.correctAnswerText}}</text>
+              </view>
+            </view>
+
+            <!-- 解析 -->
+            <view class="review-explanation" wx:if="{{item.explanation}}">
+              <text class="review-explanation-label">解析</text>
+              <text class="review-explanation-text">{{item.explanation}}</text>
+            </view>
+
+          </view>
+        </block>
+      </view>
+
+      <!-- 底部空白占位（让滚动到底也不被 footer 挡住） -->
+      <view class="bottom-spacer"></view>
+    </scroll-view>
+
+    <!-- 底部双按钮 -->
+    <view class="footer-bar">
+      <view class="footer-content">
+        <button class="btn-prev" bindtap="onRetake">重做</button>
+        <button class="btn-next" bindtap="onBackToCourse">返回课程</button>
+      </view>
+    </view>
+
+  </block>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "quiz_detail",
+  "version": "1.0.0",
+  "description": "获取题目集（去答案版，供小程序端答题用）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

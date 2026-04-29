@@ -145,6 +145,13 @@
         "list/list",
         "detail/detail"
       ]
+    },
+    {
+      "root": "pages/quiz/",
+      "pages": [
+        "detail/detail",
+        "result/result"
+      ]
     }
   ],
   "window": {
