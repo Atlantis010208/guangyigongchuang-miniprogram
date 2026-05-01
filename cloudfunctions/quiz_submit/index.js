@@ -75,17 +75,29 @@ exports.main = async (event) => {
       return { success: false, code: 'INVALID_PARAMS', errorMessage: '答题数据格式错误' }
     }
 
-    // 读 quiz
-    let quizRes
+    // 读 quiz：先按 _id 查；失败时回退按业务 quizId 字段查
+    // 兼容业主端「灯光测试」用稳定业务 ID 调用的场景
+    let quiz = null
     try {
-      quizRes = await db.collection('quizzes').doc(quizId).get()
+      const docRes = await db.collection('quizzes').doc(quizId).get()
+      quiz = docRes && docRes.data
     } catch (err) {
-      console.warn('[quiz_submit] quiz not found:', err.message)
-      return { success: false, code: 'QUIZ_NOT_FOUND', errorMessage: '题目集不存在' }
+      try {
+        const _ = db.command
+        const wRes = await db.collection('quizzes')
+          .where({ quizId, isDelete: _.neq(1) })
+          .limit(1)
+          .get()
+        if (wRes.data && wRes.data.length > 0) {
+          quiz = wRes.data[0]
+        }
+      } catch (e2) {
+        console.warn('[quiz_submit] fallback query failed:', e2.message)
+      }
     }
 
-    const quiz = quizRes && quizRes.data
     if (!quiz || quiz.isDelete === 1) {
+      console.warn('[quiz_submit] quiz not found:', quizId)
       return { success: false, code: 'QUIZ_NOT_FOUND', errorMessage: '题目集不存在' }
     }
 
@@ -129,9 +141,14 @@ exports.main = async (event) => {
       ? startedAt
       : now
 
+    // 解析 quiz 的真实 _id（兼容前端传业务 quizId 的场景）
+    const realQuizDocId = quiz._id || quizId
+
     const attemptDoc = {
       userId: openid,             // 与 _openid 一致，便于业务查询
-      quizId,
+      quizId: realQuizDocId,      // 始终写入 quizzes 集合的 _id，便于结果页通过 attempt.quizId 直接 doc(...).get()
+      quizBusinessId: quiz.quizId || '',     // 同时保留业务侧稳定 ID（如 lighting-cognition-final-v1），便于离线分析
+      quizCategory: quiz.category || '',     // 业务类型快照，便于后续按类目统计
       courseId: courseId || quiz.courseId || '',
       lessonRef: lessonRef || quiz.lessonRef || '',
       answers: detail,

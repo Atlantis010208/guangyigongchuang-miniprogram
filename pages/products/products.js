@@ -554,9 +554,15 @@ Page({
       return
     }
     
-    // 灯光测试 - 功能开发中
+    // 灯光测试 - 跳转到业主端灯光设计认知测试介绍页
     if (category === 'hotel') {
-      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      wx.navigateTo({
+        url: '/pages/quiz/lighting-intro/lighting-intro',
+        fail: (err) => {
+          console.error('[products] 跳转灯光测试失败:', err)
+          wx.showToast({ title: '页面跳转失败，请稍后重试', icon: 'none' })
+        }
+      })
       return
     }
     

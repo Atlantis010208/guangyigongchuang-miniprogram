@@ -35,6 +35,7 @@ function buildQuizForResult(quiz) {
   return {
     _id: quiz._id,
     quizId: quiz.quizId,
+    category: quiz.category || '',           // 业务类型，结果页按此分流（'' = 课程作业 / 'lighting-cognition' = 业主灯光测试）
     title: quiz.title || '',
     description: quiz.description || '',
     passScore: quiz.passScore || 60,

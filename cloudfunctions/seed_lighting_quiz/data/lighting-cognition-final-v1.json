@@ -1,0 +1,445 @@
+{
+  "quizId": "lighting-cognition-final-v1",
+  "category": "lighting-cognition",
+  "title": "灯光设计认知与判断力测试",
+  "description": "灯光设计不是堆参数、拼效果图，而是一种对空间、生活与人的判断能力。本测试将从「道·术·标准」三个层面，评估你当前所处的灯光设计认知阶段。请根据你的真实理解作答，不要查资料、不迎合「看起来正确」的答案。",
+  "passScore": 60,
+  "totalScore": 100,
+  "status": "published",
+  "shuffleQuestions": false,
+  "shuffleOptions": true,
+  "questions": [
+    {
+      "id": "d-01",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "你认为灯光设计的第一目标是？",
+      "options": [
+        { "key": "A", "text": "让空间足够亮" },
+        { "key": "B", "text": "满足规范与参数" },
+        { "key": "C", "text": "服务人的生活方式与使用感受" },
+        { "key": "D", "text": "做出有视觉冲击力的效果" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "灯光的第一目标是服务人的长期生活，亮度与效果都只是手段。"
+    },
+    {
+      "id": "d-02",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "灯光设计的核心逻辑中，「道」与「术」的正确顺序是？",
+      "options": [
+        { "key": "A", "text": "先确定用什么灯（术），再确定哪里需要光（道）" },
+        { "key": "B", "text": "先确定哪里需要光（道），再确定用什么灯（术）" },
+        { "key": "C", "text": "道与术没有顺序，同时进行" },
+        { "key": "D", "text": "先做美感设计，再考虑功能需求" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "先回答「哪里需要光」，再回答「用什么灯」，避免本末倒置。"
+    },
+    {
+      "id": "d-03",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "灯光设计中，以下哪一项最不应被优先考虑？",
+      "options": [
+        { "key": "A", "text": "居住者的作息" },
+        { "key": "B", "text": "空间功能变化" },
+        { "key": "C", "text": "灯具品牌知名度" },
+        { "key": "D", "text": "家具与材质反射" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "品牌只是结果，决策应该回到使用者与空间本身。"
+    },
+    {
+      "id": "d-04",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "对于层高不足的矮空间，想要避免压抑感，最科学的做法是？",
+      "options": [
+        { "key": "A", "text": "把天花照亮，突出天花存在感" },
+        { "key": "B", "text": "把地面的低位灯光做亮，引导视线往下" },
+        { "key": "C", "text": "整个空间都用冷白光显得亮" },
+        { "key": "D", "text": "整个空间都用暖光显得温馨" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "压低视觉重心比强调天花更能化解层高带来的压迫感。"
+    },
+    {
+      "id": "d-05",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "当业主说「我想要亮一点」时，设计师最正确的第一反应是？",
+      "options": [
+        { "key": "A", "text": "直接提高照度" },
+        { "key": "B", "text": "增加主灯" },
+        { "key": "C", "text": "追问具体使用场景与不安来源" },
+        { "key": "D", "text": "推荐更亮的灯具" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "「亮一点」是症状不是答案，先弄清楚业主真正缺的是什么。"
+    },
+    {
+      "id": "d-06",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "在工作或学习区域（如书房），最合适的色温建议是？",
+      "options": [
+        { "key": "A", "text": "2700K 暖光" },
+        { "key": "B", "text": "3000K 暖灯" },
+        { "key": "C", "text": "4000K 中性光（既清醒又不刺眼）" },
+        { "key": "D", "text": "6000K 冷白光" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "4000K 兼顾清醒与舒适，长时间用眼不易疲劳。"
+    },
+    {
+      "id": "d-07",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "灯光设计是否应该「有风格」？",
+      "options": [
+        { "key": "A", "text": "必须有强烈个人风格" },
+        { "key": "B", "text": "跟随流行趋势" },
+        { "key": "C", "text": "风格应让位于空间与人本身" },
+        { "key": "D", "text": "越独特越好" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "风格服务于空间与人，而不是凌驾其上。"
+    },
+    {
+      "id": "d-08",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "以下哪一种最接近「灯光的秩序感」？",
+      "options": [
+        { "key": "A", "text": "灯具排列整齐" },
+        { "key": "B", "text": "明暗有逻辑、主次清晰、不过度打扰" },
+        { "key": "C", "text": "灯越多层次越好" },
+        { "key": "D", "text": "每个角落都有光" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "秩序感不是排列整齐，而是明暗主次有逻辑、不打扰。"
+    },
+    {
+      "id": "d-09",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "灯光设计中「克制」指的是？",
+      "options": [
+        { "key": "A", "text": "少花钱" },
+        { "key": "B", "text": "少用灯" },
+        { "key": "C", "text": "在恰当的位置停下来" },
+        { "key": "D", "text": "不做复杂设计" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "克制不是省钱或省灯，而是知道何时该停手。"
+    },
+    {
+      "id": "d-10",
+      "module": "dao",
+      "type": "single",
+      "score": 3,
+      "stem": "你认为灯光设计最终要解决的是？",
+      "options": [
+        { "key": "A", "text": "空间问题" },
+        { "key": "B", "text": "审美问题" },
+        { "key": "C", "text": "情绪与长期生活舒适度问题" },
+        { "key": "D", "text": "销售问题" }
+      ],
+      "correctAnswer": ["C"],
+      "explanation": "灯光最终影响的是人的情绪与长期居住感受。"
+    },
+
+    {
+      "id": "s-01",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "以下哪些属于「非必要照明」？",
+      "options": [
+        { "key": "A", "text": "玄关基础照明" },
+        { "key": "B", "text": "过道夜间引导照明" },
+        { "key": "C", "text": "装饰性灯带但无使用价值" },
+        { "key": "D", "text": "为了好看而加的洗墙灯" }
+      ],
+      "correctAnswer": ["C", "D"],
+      "explanation": "玄关与过道引导属于功能必需；缺乏使用价值的装饰光才是「非必要」。"
+    },
+    {
+      "id": "s-02",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "一个卧室灯光设计应重点避免哪些问题？",
+      "options": [
+        { "key": "A", "text": "光源直射眼睛（如床头直射射灯）" },
+        { "key": "B", "text": "色温过高" },
+        { "key": "C", "text": "缺乏可调节性" },
+        { "key": "D", "text": "显色指数低于 80" }
+      ],
+      "correctAnswer": ["A", "B", "C"],
+      "explanation": "卧室核心是放松：避免直射眩光、过高色温和不可调，是底线。"
+    },
+    {
+      "id": "s-03",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "关于色温与照度的搭配，以下哪些理解是正确的？",
+      "options": [
+        { "key": "A", "text": "低照度应搭配低色温（2500-3000K）才舒适" },
+        { "key": "B", "text": "同一空间色温差应控制在 500K 以内，避免割裂" },
+        { "key": "C", "text": "色温应随空间功能变化而逻辑过渡" },
+        { "key": "D", "text": "色温越高越高级" }
+      ],
+      "correctAnswer": ["A", "B", "C"],
+      "explanation": "色温有逻辑、不割裂、与照度匹配；高色温≠高级。"
+    },
+    {
+      "id": "s-04",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "传统木工反灯槽设计中，哪些细节是「完美出光」的关键？",
+      "options": [
+        { "key": "A", "text": "离墙尺寸建议在 120-150mm" },
+        { "key": "B", "text": "灯槽内部必须刷白处理" },
+        { "key": "C", "text": "灯带应搭配铝型材安装以利于散热和平直度" },
+        { "key": "D", "text": "吊顶下调高度建议在 150mm 以上" }
+      ],
+      "correctAnswer": ["A", "B", "C", "D"],
+      "explanation": "尺寸、白漆、铝型材、下调高度，四者缺一会出现暗带或眩光。"
+    },
+    {
+      "id": "s-05",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "关于预埋型材（线性灯）的施工，正确的要求包括？",
+      "options": [
+        { "key": "A", "text": "优先选择封板款以避免开裂" },
+        { "key": "B", "text": "批灰款必须贴防裂网" },
+        { "key": "C", "text": "预埋时应同步装灯带并盖好面罩保护" },
+        { "key": "D", "text": "转角处做 45 度斜切以保证对齐" }
+      ],
+      "correctAnswer": ["A", "B", "C", "D"],
+      "explanation": "封板/防裂网/同步预埋/45度切角，是线性灯不翻车的标准动作。"
+    },
+    {
+      "id": "s-06",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "以下哪些空间更需要「低照度 + 局部重点光」？",
+      "options": [
+        { "key": "A", "text": "卧室" },
+        { "key": "B", "text": "餐厅" },
+        { "key": "C", "text": "展厅" },
+        { "key": "D", "text": "客厅休闲状态" }
+      ],
+      "correctAnswer": ["A", "B", "D"],
+      "explanation": "家居休憩场景需要低环境光+焦点光；展厅需高均匀度。"
+    },
+    {
+      "id": "s-07",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "判断一个方案是否「过度设计」，可以看哪些信号？",
+      "options": [
+        { "key": "A", "text": "灯位数量远超实际需求" },
+        { "key": "B", "text": "每个区域都想强行表达" },
+        { "key": "C", "text": "使用者无法直观理解如何控灯" },
+        { "key": "D", "text": "灯控逻辑混乱繁琐" }
+      ],
+      "correctAnswer": ["A", "B", "C", "D"],
+      "explanation": "数量多、表达多、控不会、逻辑乱，都是过度设计的典型信号。"
+    },
+    {
+      "id": "s-08",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "以下哪些是「灯光服务生活」的具体体现？",
+      "options": [
+        { "key": "A", "text": "夜起不刺眼的路径引导光" },
+        { "key": "B", "text": "观影模式下屏幕无反光干扰" },
+        { "key": "C", "text": "可随作息变化调节的色温氛围" },
+        { "key": "D", "text": "床头阅读区照度达到 150 lx 左右" }
+      ],
+      "correctAnswer": ["A", "B", "C", "D"],
+      "explanation": "灯光服务生活，体现在夜起、观影、作息、阅读等具体使用场景。"
+    },
+    {
+      "id": "s-09",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "对于长灯带（5-10米）或智能灯带，哪些技术参数是必要的？",
+      "options": [
+        { "key": "A", "text": "超长灯带应两端接电或使用无压降款" },
+        { "key": "B", "text": "调光调色智能灯带需预留 3 芯跳线" },
+        { "key": "C", "text": "变压器应放在检修口或筒灯口而非直接塞进灯槽" },
+        { "key": "D", "text": "功率越大越好" }
+      ],
+      "correctAnswer": ["A", "B", "C"],
+      "explanation": "解决压降、信号传输与维护是关键，盲目增大功率反而风险更高。"
+    },
+    {
+      "id": "s-10",
+      "module": "shu",
+      "type": "multiple",
+      "score": 4,
+      "stem": "为了避免「翻车」，家居空间应尽量避免购买哪些灯具？",
+      "options": [
+        { "key": "A", "text": "没有深度防眩的筒射灯" },
+        { "key": "B", "text": "价格极低（如低于 50 元）的劣质流通灯具" },
+        { "key": "C", "text": "光斑生硬、边缘有锯齿的「小山丘」射灯" },
+        { "key": "D", "text": "五颜六色的幻彩装饰灯" }
+      ],
+      "correctAnswer": ["A", "B", "C", "D"],
+      "explanation": "无防眩、低质流通、光斑差、幻彩饰灯，都是家居翻车高发区。"
+    },
+
+    {
+      "id": "j-01",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "灯光设计的顺序，永远应该是先解决功能需求，再做美感设计。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "先功能后美感，是避免本末倒置的基本顺序。"
+    },
+    {
+      "id": "j-02",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "主灯并不等于落后，关键在于应用是否合理。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "形式不重要，是否服务于使用者的真实需求才重要。"
+    },
+    {
+      "id": "j-03",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "低压灯带可以直接用背胶贴在木工灯槽内，不需要铝型材辅助。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "铝型材有助散热与固定，省略后易脱落、暗带与寿命衰减。"
+    },
+    {
+      "id": "j-04",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "好的灯光设计，白天与夜晚都应逻辑成立。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "灯光是空间的一部分，白天与夜晚必须共同成立。"
+    },
+    {
+      "id": "j-05",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "为了美观，所有的家居空间都应该做「平均布灯」以保证亮度均匀。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "家居按需布灯，公共空间才追求均匀；死板平均反而失去层次。"
+    },
+    {
+      "id": "j-06",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "灯光设计应优先考虑长期居住感受，而非短期的视觉冲击。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "短期冲击与长期居住，永远应优先选择后者。"
+    },
+    {
+      "id": "j-07",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "灯控逻辑混乱会直接降低居住幸福感，甚至导致灯具被弃用。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "用不会就不会用，控制是灯光体验的最后一公里。"
+    },
+    {
+      "id": "j-08",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "灯带变压器放在吊顶内部不需要维护，坏了直接换灯带即可。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["B"],
+      "explanation": "变压器故障率高于灯带，必须预留检修空间。"
+    },
+    {
+      "id": "j-09",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "餐吊灯的最佳安装高度，是底部离桌面 75-85 cm。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "75-85cm 是兼顾视线、用餐与社交的经验区间。"
+    },
+    {
+      "id": "j-10",
+      "module": "biaozhun",
+      "type": "judge",
+      "score": 3,
+      "stem": "一个好的灯光方案，必须能经得起「长期生活」的各种场景检验。",
+      "options": [
+        { "key": "A", "text": "正确" },
+        { "key": "B", "text": "错误" }
+      ],
+      "correctAnswer": ["A"],
+      "explanation": "长期使用是灯光方案的最终考官，效果图只是中场。"
+    }
+  ]
+}

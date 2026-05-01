@@ -150,7 +150,9 @@
       "root": "pages/quiz/",
       "pages": [
         "detail/detail",
-        "result/result"
+        "result/result",
+        "lighting-intro/lighting-intro",
+        "lighting-result/lighting-result"
       ]
     }
   ],
@@ -213,5 +215,14 @@
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
-  "cloud": true
+  "cloud": true,
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于在地图上选择收货地址"
+    }
+  },
+  "requiredPrivateInfos": [
+    "chooseAddress",
+    "chooseLocation"
+  ]
 }

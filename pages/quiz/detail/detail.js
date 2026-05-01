@@ -5,6 +5,8 @@
  * - 服务端判分：交卷调用 quiz_submit；前端不直接读 correctAnswer
  */
 
+const { shuffleQuizOptions } = require('../../../utils/lighting-quiz-constants')
+
 const TYPE_LABELS = {
   single: '单选题',
   multiple: '多选题',
@@ -17,6 +19,7 @@ Page({
     quizId: '',
     courseId: '',
     lessonId: '',
+    routeCategory: '',     // 路由透传的业务类型，与 quiz.category 共同决定提交后跳转哪个结果页
 
     // 加载态
     loading: true,
@@ -51,7 +54,7 @@ Page({
   // ============== 生命周期 ==============
 
   onLoad(options) {
-    const { quizId = '', courseId = '', lessonId = '' } = options || {}
+    const { quizId = '', courseId = '', lessonId = '', category = '' } = options || {}
     if (!quizId) {
       this.setData({
         loading: false,
@@ -60,7 +63,7 @@ Page({
       })
       return
     }
-    this.setData({ quizId, courseId, lessonId })
+    this.setData({ quizId, courseId, lessonId, routeCategory: category })
     this._fetchQuiz()
   },
 
@@ -118,7 +121,13 @@ Page({
       }
 
       const quiz = result.data || {}
-      const questions = Array.isArray(quiz.questions) ? quiz.questions : []
+      // 业主端「灯光测试」启用了 shuffleOptions：每次进入答题页就对单选/多选题选项 Fisher-Yates 洗牌一次
+      // 1. 同一次答题内顺序固定（不会切题时变）；2. 重测时顺序会重新洗牌；3. 判断题豁免（保持 A=正确/B=错误）
+      // 4. 不影响课程作业 quiz（它们 shuffleOptions 缺省或为 false）
+      const rawQuestions = Array.isArray(quiz.questions) ? quiz.questions : []
+      const questions = quiz.shuffleOptions === true
+        ? shuffleQuizOptions(rawQuestions)
+        : rawQuestions
 
       if (questions.length === 0) {
         this.setData({
@@ -329,12 +338,22 @@ Page({
       // 提交成功后，关闭返回拦截
       try { if (wx.disableAlertBeforeUnload) wx.disableAlertBeforeUnload() } catch (e) {}
 
+      // 按 quiz.category 分流跳转结果页：业主端「灯光测试」用专属结果页
+      // - quiz.category 优先（来自 quiz_detail 返回值），routeCategory 兜底（来自 URL 参数）
+      const isLightingCognition =
+        (this.data.quiz && this.data.quiz.category === 'lighting-cognition') ||
+        this.data.routeCategory === 'lighting-cognition'
+
+      const resultUrl = isLightingCognition
+        ? `/pages/quiz/lighting-result/lighting-result?attemptId=${attemptId}`
+        : `/pages/quiz/result/result?attemptId=${attemptId}`
+
       // redirectTo 防止用户返回到答题页
       wx.redirectTo({
-        url: `/pages/quiz/result/result?attemptId=${attemptId}`,
+        url: resultUrl,
         fail: () => {
           // 如果当前在子包入口被限制，兜底用 navigateTo
-          wx.navigateTo({ url: `/pages/quiz/result/result?attemptId=${attemptId}` })
+          wx.navigateTo({ url: resultUrl })
         }
       })
     } catch (err) {

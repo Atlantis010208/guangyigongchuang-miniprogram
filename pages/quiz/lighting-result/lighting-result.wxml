@@ -1,0 +1,185 @@
+<!--
+  业主端「灯光设计认知与判断力测试」结果页
+  - 顶部 等级概览卡（圆环 + 等级徽章 + meta）
+  - 中段 等级解读卡 + 模块得分卡
+  - 下段 题目回顾（默认折叠）
+  - 底部 重做 / 查看灯光课程
+-->
+<view class="page">
+
+  <!-- 加载态 -->
+  <view class="state-block" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="state-text">成绩加载中...</text>
+  </view>
+
+  <!-- 加载失败 -->
+  <view class="state-block" wx:elif="{{loadError}}">
+    <view class="state-icon">!</view>
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-actions">
+      <button class="btn-prev" bindtap="onBackHome">返回首页</button>
+    </view>
+  </view>
+
+  <!-- 主内容 -->
+  <block wx:elif="{{attempt && quiz && level}}">
+
+    <scroll-view scroll-y="true" class="main-content" enhanced="true" show-scrollbar="{{false}}">
+
+      <!-- A. 等级概览卡 -->
+      <view class="level-card" style="--level-bg: {{level.bgColor}}; --level-main: {{level.mainColor}};">
+
+        <!-- 大圆环 -->
+        <view class="score-ring" style="background: conic-gradient({{level.mainColor}} {{scorePercent}}%, #f0f0f0 0);">
+          <view class="score-ring-inner">
+            <view class="score-number">{{attempt.score}}</view>
+            <view class="score-divider"></view>
+            <view class="score-total">/ 100</view>
+          </view>
+        </view>
+
+        <!-- 等级徽章 -->
+        <view class="level-badge">
+          <text class="level-emoji">{{level.emoji}}</text>
+          <text class="level-name">{{level.name}}</text>
+        </view>
+
+        <view class="level-summary">{{level.summary}}</view>
+
+        <!-- meta 元信息 -->
+        <view class="meta-row">
+          <view class="meta-item">
+            <view class="meta-num">{{correctCount}}</view>
+            <view class="meta-label">答对题数</view>
+          </view>
+          <view class="meta-divider"></view>
+          <view class="meta-item">
+            <view class="meta-num">{{quiz.questions.length}}</view>
+            <view class="meta-label">总题数</view>
+          </view>
+          <view class="meta-divider"></view>
+          <view class="meta-item">
+            <view class="meta-num">{{durationText}}</view>
+            <view class="meta-label">用时</view>
+          </view>
+        </view>
+
+      </view>
+
+      <!-- B. 等级解读卡 -->
+      <view class="interpretation-card" style="--level-main: {{level.mainColor}};">
+        <view class="interpretation-title">认知阶段解读</view>
+        <view class="interpretation-text">{{level.interpretation}}</view>
+      </view>
+
+      <!-- C. 模块得分卡（按模块题数自适应：fewSamples 弱化，empty 隐藏） -->
+      <view class="module-card">
+        <view class="module-card-title">三个维度的得分</view>
+
+        <block wx:for="{{moduleScores}}" wx:key="code" wx:for-item="mod">
+          <view class="module-row {{mod.fewSamples ? 'few-samples' : ''}}" wx:if="{{!mod.empty}}">
+            <view class="module-head">
+              <text class="module-name">{{mod.name}}</text>
+              <text class="module-status best" wx:if="{{mod.status === 'best'}}">优势</text>
+              <text class="module-status worst" wx:if="{{mod.status === 'worst'}}">短板</text>
+              <text class="module-status few" wx:if="{{mod.fewSamples}}">仅 {{mod.questionCount}} 题</text>
+            </view>
+
+            <!-- 进度条仅在样本充足（≥ 2 题）时显示，避免 1 题模块的二元结果造成误导 -->
+            <view class="module-bar" wx:if="{{!mod.fewSamples}}">
+              <view class="module-bar-fill {{mod.status}}" style="width: {{mod.percent}}%;"></view>
+            </view>
+
+            <!-- 样本不足提示行：替代进度条位置，保持卡片高度一致 -->
+            <view class="module-bar-hint" wx:if="{{mod.fewSamples}}">
+              <text class="module-bar-hint-text">该维度题量较少，仅供参考</text>
+            </view>
+
+            <view class="module-tail">
+              <text class="module-score">{{mod.earned}} / {{mod.total}}</text>
+              <text class="module-percent">{{mod.percent}}%</text>
+            </view>
+          </view>
+        </block>
+
+        <view class="module-summary">{{reviewSummary}}</view>
+      </view>
+
+      <!-- D. 题目回顾折叠面板 -->
+      <view class="review-toggle" bindtap="toggleReview">
+        <text class="review-toggle-text">
+          {{reviewExpanded ? '收起题目回顾' : '展开题目回顾（' + quiz.questions.length + ' 题）'}}
+        </text>
+        <text class="review-toggle-arrow {{reviewExpanded ? 'expanded' : ''}}">›</text>
+      </view>
+
+      <view class="review-list" wx:if="{{reviewExpanded}}">
+        <block wx:for="{{reviewItems}}" wx:key="questionId" wx:for-item="item" wx:for-index="rIdx">
+          <view class="review-card {{item.isCorrect ? 'correct' : 'incorrect'}}">
+
+            <!-- 题号 + 对错 + 得分 -->
+            <view class="review-head">
+              <view class="review-num {{item.isCorrect ? 'correct' : 'incorrect'}}">
+                <text class="review-num-mark">{{item.isCorrect ? '✓' : '✕'}}</text>
+                <text class="review-num-text">第 {{rIdx + 1}} 题</text>
+              </view>
+              <view class="review-score {{item.isCorrect ? 'correct' : 'incorrect'}}">
+                {{item.earned}} / {{item.score}} 分
+              </view>
+            </view>
+
+            <!-- 题型标签 -->
+            <view class="review-type-tag type-{{item.type}}">{{typeLabels[item.type]}}</view>
+
+            <!-- 题干 -->
+            <view class="review-stem">{{item.stem}}</view>
+
+            <!-- 选项展示（高亮用户答案 + 正确答案） -->
+            <view class="review-options">
+              <block wx:for="{{item.options}}" wx:key="key" wx:for-item="opt">
+                <view class="review-option {{ item.userSelectedSet[opt.key] ? 'user-selected' : '' }} {{ item.correctSet[opt.key] ? 'correct-key' : '' }}">
+                  <view class="review-option-key">{{opt.key}}</view>
+                  <text class="review-option-text">{{opt.text}}</text>
+                  <view class="review-option-tag" wx:if="{{item.correctSet[opt.key]}}">正确答案</view>
+                  <view class="review-option-tag user-tag" wx:if="{{item.userSelectedSet[opt.key] && !item.correctSet[opt.key]}}">你的答案</view>
+                </view>
+              </block>
+            </view>
+
+            <!-- 用户答案 / 正确答案行 -->
+            <view class="review-answer-row">
+              <view class="answer-line">
+                <text class="answer-label">你的答案：</text>
+                <text class="answer-value {{item.isCorrect ? 'correct' : 'incorrect'}}">{{item.userAnswerText || '未作答'}}</text>
+              </view>
+              <view class="answer-line" wx:if="{{!item.isCorrect}}">
+                <text class="answer-label">正确答案：</text>
+                <text class="answer-value correct">{{item.correctAnswerText}}</text>
+              </view>
+            </view>
+
+            <!-- 解析 -->
+            <view class="review-explanation" wx:if="{{item.explanation}}">
+              <text class="review-explanation-label">解析</text>
+              <text class="review-explanation-text">{{item.explanation}}</text>
+            </view>
+
+          </view>
+        </block>
+      </view>
+
+      <!-- 底部空白占位（避开 footer-bar） -->
+      <view class="bottom-spacer"></view>
+    </scroll-view>
+
+    <!-- 底部按钮：仅保留「重新测试」 -->
+    <!-- 移除「查看灯光课程」是因为它会 switchTab 清空页面栈，导致用户看完课程无法返回结果页 -->
+    <view class="footer-bar">
+      <view class="footer-content">
+        <button class="btn-next" bindtap="onRetake">重新测试</button>
+      </view>
+    </view>
+
+  </block>
+</view>
