@@ -58,7 +58,7 @@
               <view class="icon-box {{lesson.type === 'video' ? 'bg-blue' : 'bg-green'}}">
                  <!-- Simple Shapes for Icons -->
                  <view class="play-triangle" wx:if="{{lesson.type === 'video'}}"></view>
-                 <view class="file-rect" wx:if="{{lesson.type === 'file'}}"></view>
+                 <image class="file-icon-img" src="/images/测试.png" mode="aspectFit" wx:if="{{lesson.type === 'file'}}"></image>
               </view>
               <view class="flex-column flex-1 margin-left-medium">
                 <view class="flex-row align-center">

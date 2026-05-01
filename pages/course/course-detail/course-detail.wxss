@@ -344,7 +344,7 @@
 }
 
 .bg-green { 
-  background-color: #e8f5e9; /* 保持文件图标的淡绿色，或者也可以统一成灰色 */
+  background-color: #eff0f2; /* 与视频课时图标统一为苹果风格高级灰 */
 }
 
 .play-triangle {
@@ -362,6 +362,11 @@
   height: 32rpx;
   background-color: #34c759;
   border-radius: 4rpx;
+}
+
+.file-icon-img {
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .action-icon {

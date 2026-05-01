@@ -257,6 +257,25 @@ Page({
           });
         }
 
+        // 🆕 注入"1.2 课程作业" PDF 虚拟课时（紧跟在 1.1 之后，简答题作业）
+        if (chapters && chapters.length > 0) {
+          for (const chapter of chapters) {
+            const lessons = chapter.lessons || [];
+            const idx = lessons.findIndex(l => l && l.id === 'l1-1');
+            if (idx >= 0) {
+              const exists = lessons.some(l => l && l.id === 'l1-2-homework-pdf');
+              if (!exists) {
+                lessons.splice(idx + 1, 0, {
+                  id: 'l1-2-homework-pdf',
+                  title: '1.2 课程作业',
+                  type: 'homework-pdf'
+                });
+              }
+              break;
+            }
+          }
+        }
+
         // 🆕 处理当前课时（如果是独立对象）
         if (currentLesson) {
           this._processLessonChapters(currentLesson);
@@ -832,7 +851,13 @@ Page({
     const lesson = e.currentTarget.dataset.lesson;
     
     if (!lesson) return;
-    
+
+    // 🆕 PDF 课程作业（简答题）：直接下载 PDF，无需跳转作业页
+    if (lesson.type === 'homework-pdf') {
+      this.onHomeworkTap({ currentTarget: { dataset: { lessonId: lesson.id } } });
+      return;
+    }
+
     // 🆕 作业课时：跳转到答题页
     if (lesson.type === 'quiz') {
       if (!lesson.quizId) {
@@ -1647,7 +1672,9 @@ Page({
     
     // 课后作业PDF的云存储地址映射
     const homeworkFileMap = {
-      'l1-1': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课后作业/课后作业｜灯光设计基本原则.pdf'
+      'l1-1': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课后作业/课后作业｜灯光设计基本原则.pdf',
+      // 1.2 课程作业（简答题）—— 由 onLessonTap 在 type=homework-pdf 时转发触发
+      'l1-2-homework-pdf': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课程作业/课程作业｜灯光设计基本原则.pdf'
     };
     
     const fileID = homeworkFileMap[lessonId];

@@ -206,20 +206,15 @@
                     <text class="lesson-quiz-badge">作业 · {{lesson.questionCount || 0}} 题</text>
                     <text class="lesson-quiz-passed" wx:if="{{lesson.quizPassed}}">✓ 已通过</text>
                   </block>
+                  <!-- 🆕 PDF 课程作业（简答题）：点击下载 PDF -->
+                  <block wx:elif="{{lesson.type === 'homework-pdf'}}">
+                    <text class="lesson-quiz-badge">作业 · PDF · 简答题</text>
+                  </block>
                   <!-- 其他类型（file 等） -->
                   <block wx:else>
                     <text class="lesson-duration" wx:if="{{lesson.duration}}">{{lesson.duration}}</text>
                   </block>
                 </view>
-              </view>
-              <!-- 课后作业 PDF 按钮（仅"1.1 灯光设计基础"特例，PDF 资源） -->
-              <view
-                class="homework-btn"
-                wx:if="{{lesson.id === 'l1-1'}}"
-                catchtap="onHomeworkTap"
-                data-lesson-id="{{lesson.id}}"
-              >
-                <text class="homework-text">课后作业</text>
               </view>
             </view>
           </block>
