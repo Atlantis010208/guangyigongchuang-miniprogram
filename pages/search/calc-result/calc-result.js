@@ -3,6 +3,15 @@
  * 用于展示计算结果的详细信息，支持 CSV 导出
  */
 
+// 5 张照度参考图的云存储 fileID（与 illustrationList 顺序一一对应）
+const ILLUSTRATION_FILE_IDS = [
+  'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-50.jpg',
+  'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-100.jpg',
+  'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-150.jpg',
+  'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-200.jpg',
+  'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-300.jpg'
+]
+
 Page({
   data: {
     // 计算模式
@@ -46,14 +55,27 @@ Page({
       luxValue: 0,
       markerLeft: 38,
       currentBrightness: 1.0,
+      activeIndex: 2,
       ranges: [
         { range: '0–80 lx', state: '昏暗区', scene: '酒吧 / 情绪氛围', colorClass: 'dot-dark', active: false },
         { range: '80–150 lx', state: '偏暗区', scene: '夜间休闲', colorClass: 'dot-dim', active: false },
         { range: '150–300 lx', state: '舒适区', scene: '客厅日常活动', colorClass: 'dot-comfort', active: true },
-        { range: '300–500 lx', state: '偏亮区', scene: '阅读 / 精细活动', colorClass: 'dot-bright', active: false },
+        { range: '300–500 lx', state: '偏亮区', scene: '酒吧 / 精细活动', colorClass: 'dot-bright', active: false },
         { range: '>500 lx', state: '过亮区', scene: '商业空间', colorClass: 'dot-over', active: false }
       ]
     },
+
+    // P3: 5 张照度参考图（与 ranges 一一对应，顺序与索引一致）
+    // 图片存放在云存储 lighting-ref/ 目录下，src 初始为云 fileID，
+    // 在 onLoad 中通过 wx.cloud.getTempFileURL 转换为 https 临时链接以确保兼容性
+    illustrationIndex: 2,
+    illustrationList: [
+      { key: 'dark', src: ILLUSTRATION_FILE_IDS[0], state: '昏暗区', range: '0–80 lx', colorClass: 'dot-dark' },
+      { key: 'dim', src: ILLUSTRATION_FILE_IDS[1], state: '偏暗区', range: '80–150 lx', colorClass: 'dot-dim' },
+      { key: 'comfort', src: ILLUSTRATION_FILE_IDS[2], state: '舒适区', range: '150–300 lx', colorClass: 'dot-comfort' },
+      { key: 'bright', src: ILLUSTRATION_FILE_IDS[3], state: '偏亮区', range: '300–500 lx', colorClass: 'dot-bright' },
+      { key: 'over', src: ILLUSTRATION_FILE_IDS[4], state: '过亮区', range: '>500 lx', colorClass: 'dot-over' }
+    ],
 
     // P4: 详细数据
     detailData: {
@@ -115,6 +137,9 @@ Page({
   onLoad(options) {
     console.log('[calc-result] onLoad, options:', options)
 
+    // 异步加载云存储照度参考图的临时 https URL（与下方业务数据加载并行，不阻塞主流程）
+    this._loadIllustrationUrls()
+
     // 方式1：从页面栈读取后端返回的完整报告数据（正常计算流程）
     const pages = getCurrentPages()
     const prevPage = pages[pages.length - 2]
@@ -145,6 +170,33 @@ Page({
   },
 
   /**
+   * 把照度参考图的云存储 fileID 批量转换为 https 临时 URL，并写回 illustrationList.src
+   * - 临时链接默认 2 小时有效，每次进入页面拉取一次足够使用
+   * - 失败时保留 fileID，原生 image 组件在云开发已 init 的情况下也能加载
+   */
+  _loadIllustrationUrls() {
+    if (!wx.cloud || typeof wx.cloud.getTempFileURL !== 'function') return
+    wx.cloud.getTempFileURL({
+      fileList: ILLUSTRATION_FILE_IDS,
+      success: (res) => {
+        const urlMap = {}
+        ;(res.fileList || []).forEach(f => {
+          if (f && f.fileID && f.tempFileURL) urlMap[f.fileID] = f.tempFileURL
+        })
+        const list = (this.data.illustrationList || []).map((item, idx) => {
+          const fileID = ILLUSTRATION_FILE_IDS[idx]
+          const url = urlMap[fileID]
+          return url ? Object.assign({}, item, { src: url }) : item
+        })
+        this.setData({ illustrationList: list })
+      },
+      fail: (err) => {
+        console.error('[calc-result] 获取云存储照度参考图 URL 失败:', err)
+      }
+    })
+  },
+
+  /**
    * 应用后端云函数返回的完整报告数据
    */
   _applyCloudReportData(cloudData) {
@@ -155,13 +207,18 @@ Page({
       this._applyResultData(resultData)
     }
 
+    // 兼容老版本云函数没有返回 activeIndex 的情况，按 ranges 找出当前激活的索引
+    const incomingRangeData = (reportData && reportData.rangeData) ? reportData.rangeData : this.data.rangeData
+    const normalizedRangeData = this._normalizeRangeData(incomingRangeData)
+
     // 直接使用后端生成的报告数据渲染
     this.setData({
       calcId: calcId || '',
       csvData: csvData || null,
       coverParams: (reportData && reportData.coverParams) || [],
       coreResult: (reportData && reportData.coreResult) || this.data.coreResult,
-      rangeData: (reportData && reportData.rangeData) || this.data.rangeData,
+      rangeData: normalizedRangeData,
+      illustrationIndex: normalizedRangeData.activeIndex,
       detailData: (reportData && reportData.detailData) || this.data.detailData,
       riskData: (reportData && reportData.riskData) || this.data.riskData,
       comfortData: (reportData && reportData.comfortData) || this.data.comfortData,
@@ -180,6 +237,21 @@ Page({
         }, 50)
       }
     })
+  },
+
+  /**
+   * 标准化 rangeData：保证 activeIndex 字段存在
+   * 兼容老版本云函数返回的数据中没有 activeIndex 的情况
+   */
+  _normalizeRangeData(rangeData) {
+    if (!rangeData) return this.data.rangeData
+    const cloned = Object.assign({}, rangeData)
+    if (typeof cloned.activeIndex !== 'number') {
+      const ranges = cloned.ranges || []
+      const idx = ranges.findIndex(r => r && r.active)
+      cloned.activeIndex = idx >= 0 ? idx : 2
+    }
+    return cloned
   },
 
   /**
@@ -244,6 +316,13 @@ Page({
       setTimeout(() => {
         this.setData({ animatedMarkerLeft: this.data.rangeData.markerLeft })
       }, 50)
+      // 进入 P3 时把照度参考图重置回用户实际所在区间
+      const targetIdx = (this.data.rangeData && typeof this.data.rangeData.activeIndex === 'number')
+        ? this.data.rangeData.activeIndex
+        : 2
+      if (this.data.illustrationIndex !== targetIdx) {
+        this.setData({ illustrationIndex: targetIdx })
+      }
     } else {
       if (this.data.animatedMarkerLeft !== 0) {
         this.setData({ animatedMarkerLeft: 0 })
@@ -259,6 +338,27 @@ Page({
       if (this.data.animatedScoreWidth) {
         this.setData({ animatedScoreWidth: false })
       }
+    }
+  },
+
+  /**
+   * 照度参考图水平 swiper 切换事件
+   */
+  onIllustrationChange(e) {
+    const idx = e.detail.current
+    if (idx !== this.data.illustrationIndex) {
+      this.setData({ illustrationIndex: idx })
+    }
+  },
+
+  /**
+   * 点击区间列表项：切换上方图片 swiper 到对应区间的参考图
+   */
+  onRangeTap(e) {
+    const idx = parseInt(e.currentTarget.dataset.idx, 10)
+    if (isNaN(idx) || idx < 0 || idx > 4) return
+    if (idx !== this.data.illustrationIndex) {
+      this.setData({ illustrationIndex: idx })
     }
   },
 
@@ -486,8 +586,10 @@ Page({
         luxValue: Math.round(luxValue),
         markerLeft: Math.round(markerLeft),
         currentBrightness: currentBrightness,
+        activeIndex: activeIndex,
         ranges: ranges
       },
+      illustrationIndex: activeIndex,
       detailData: {
         inputParams: inputParams,
         calcResults: calcResults

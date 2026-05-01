@@ -159,6 +159,25 @@ Page({
       const params = selectedHistory.params
       if (params) {
         console.log('[search] 回填历史记录:', params)
+
+        // 兼容旧记录：旧记录里没有 lampPower / lampEfficacy 字段，
+        // 但能通过公式 光通量 = 功率 × 发光效率 反推出功率
+        const lampEfficacy = params.lampEfficacy != null && params.lampEfficacy !== ''
+          ? params.lampEfficacy
+          : 80
+        let lampPower = params.lampPower
+        if (lampPower == null || lampPower === '') {
+          const fluxNum = parseFloat(params.lampFlux)
+          const efficacyNum = parseFloat(lampEfficacy)
+          if (Number.isFinite(fluxNum) && fluxNum > 0
+              && Number.isFinite(efficacyNum) && efficacyNum > 0) {
+            // 反推单灯功率，四舍五入到整数（与界面录入习惯一致）
+            lampPower = Math.round(fluxNum / efficacyNum)
+          } else {
+            lampPower = ''
+          }
+        }
+
         // 恢复参数
         this.setData({
            activeTab: params.activeTab || 'count',
@@ -171,6 +190,8 @@ Page({
            maintenanceFactor: params.maintenanceFactor,
            utilFactor: params.utilFactor,
            lampFlux: params.lampFlux,
+           lampPower,
+           lampEfficacy,
            lampCount: params.lampCount,
            selectedLamps: params.selectedLamps || []
         }, () => {
@@ -1291,7 +1312,9 @@ Page({
            
            // count mode
            lampFlux: this.data.lampFlux,
-           
+           lampPower: this.data.lampPower,
+           lampEfficacy: this.data.lampEfficacy,
+
            // quantity mode
            lampCount: this.data.lampCount,
            

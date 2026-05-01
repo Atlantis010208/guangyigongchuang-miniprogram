@@ -306,7 +306,7 @@ function buildRangeData(luxValue) {
   ]
   ranges[activeIndex].active = true
 
-  return { luxValue: Math.round(luxValue), markerLeft, ranges, currentBrightness }
+  return { luxValue: Math.round(luxValue), markerLeft, ranges, currentBrightness, activeIndex }
 }
 
 /**

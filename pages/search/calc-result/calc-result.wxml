@@ -107,22 +107,38 @@
           </view>
         </view>
 
-        <!-- 示意图展示区域 (5分亮度阶梯) -->
+        <!-- 示意图展示区域 (可滑动 swiper, 5 个照度区间参考图) -->
         <view class="range-illustration">
-          <image class="illustration-img" src="/images/04102248_14.jpg" mode="aspectFill"></image>
-          <!-- 5个亮度分区的遮罩 (宽度与上方进度条对齐: 16%, 14%, 30%, 20%, 20%) -->
-          <view class="illu-masks">
-            <view class="illu-mask mask-dark {{rangeData.ranges[0].active ? 'mask-active' : 'mask-inactive'}}" style="width: 16%;"></view>
-            <view class="illu-mask mask-dim {{rangeData.ranges[1].active ? 'mask-active' : 'mask-inactive'}}" style="width: 14%;"></view>
-            <view class="illu-mask mask-comfort {{rangeData.ranges[2].active ? 'mask-active' : 'mask-inactive'}}" style="width: 30%;"></view>
-            <view class="illu-mask mask-bright {{rangeData.ranges[3].active ? 'mask-active' : 'mask-inactive'}}" style="width: 20%;"></view>
-            <view class="illu-mask mask-over {{rangeData.ranges[4].active ? 'mask-active' : 'mask-inactive'}}" style="width: 20%;"></view>
+          <swiper class="illustration-swiper"
+            current="{{illustrationIndex}}"
+            bindchange="onIllustrationChange"
+            duration="{{300}}"
+            easing-function="easeInOutCubic"
+            circular="{{false}}">
+            <swiper-item wx:for="{{illustrationList}}" wx:key="key" class="illustration-item">
+              <image class="illustration-img" src="{{item.src}}" mode="aspectFit"></image>
+            </swiper-item>
+          </swiper>
+
+          <!-- 底部 5 个圆点指示器 -->
+          <view class="illu-dots">
+            <view wx:for="{{illustrationList}}" wx:key="key"
+              class="illu-dot {{illustrationIndex === index ? 'illu-dot-active' : ''}} {{rangeData.activeIndex === index ? 'illu-dot-current' : ''}}"></view>
           </view>
         </view>
 
-        <!-- 区间列表 -->
+        <!-- 双状态提示：默认引导用户点击下方区间；查看非当前区间时变为参考说明 -->
+        <view wx:if="{{illustrationIndex === rangeData.activeIndex}}" class="illu-ref-hint illu-ref-hint--guide">*点击下方区间，可查看不同亮度效果</view>
+        <view wx:else class="illu-ref-hint illu-ref-hint--warn">*此为参考亮度  非<text class="ref-hint-highlight">计算结果</text></view>
+
+        <!-- 区间列表（点击切换上方图片到对应区间） -->
         <view class="range-list">
-          <view class="range-row {{item.active ? 'range-active' : ''}}" wx:for="{{rangeData.ranges}}" wx:key="state">
+          <view class="range-row {{item.active ? 'range-active' : ''}} {{illustrationIndex === index ? 'range-viewing' : ''}}"
+            wx:for="{{rangeData.ranges}}" wx:key="state"
+            data-idx="{{index}}"
+            bindtap="onRangeTap"
+            hover-class="range-row-hover"
+            hover-stay-time="80">
             <view class="range-dot {{item.colorClass}}"></view>
             <view class="range-info">
               <text class="range-state">{{item.state}}</text>

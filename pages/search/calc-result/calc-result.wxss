@@ -115,8 +115,8 @@ page {
   color: #94A3B8;
   letter-spacing: 6rpx;
   text-align: center;
-  margin-top: 100rpx;
-  margin-bottom: 50rpx;
+  margin-top: 40rpx;
+  margin-bottom: 24rpx;
 }
 
 /* ================================================
@@ -356,9 +356,9 @@ page {
 .range-bar-area {
   position: relative;
   width: 100%;
-  margin-top: 16rpx;
-  margin-bottom: 20rpx;
-  padding-top: 70rpx;
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+  padding-top: 56rpx;
 }
 
 /* 当前值标记 */
@@ -431,81 +431,137 @@ page {
 .scale-num:first-child { transform: translateX(0); }
 .scale-num:last-child { transform: translateX(-100%); }
 
-/* 示意图区域 */
+/* 示意图区域（可滑动 swiper 容器）
+ * 用 padding-bottom 锁定容器宽高比 = 图片真实比例 1080:603（≈55.83%），
+ * 这样无论屏幕多宽，容器都精确匹配图片比例，配合 aspectFit 模式完全无裁剪、不压缩。
+ */
 .range-illustration {
   width: 100%;
-  height: 200rpx;
+  height: 0;
+  padding-bottom: 55.83%;
   border-radius: 32rpx;
   overflow: hidden;
-  margin-bottom: 20rpx;
-  background: #FFFFFF;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+  margin-bottom: 12rpx;
+  background: #0F172A;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   position: relative;
 }
 
-.illustration-img {
-  width: 100%;
-  height: 100%;
-  opacity: 1;
-  display: block;
-}
-
-.illu-masks {
+/* swiper 用绝对定位铺满父容器（因为父容器高度由 padding 撑出，本身 height:0） */
+.illustration-swiper {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
 }
 
-.illu-mask {
-  flex: 1;
+.illustration-item {
+  width: 100%;
   height: 100%;
-  transition: all 0.3s ease;
-  position: relative;
-  box-sizing: border-box;
 }
 
-/* 用半透明黑色和白色来模拟亮暗程度，原图作为舒适区基准 */
-.mask-dark { background: rgba(0, 0, 0, 0.65); }
-.mask-dim { background: rgba(0, 0, 0, 0.35); }
-.mask-comfort { background: rgba(0, 0, 0, 0); }
-.mask-bright { background: rgba(255, 255, 255, 0.25); }
-.mask-over { background: rgba(255, 255, 255, 0.55); }
+.illustration-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
-/* 当前高亮选中的区间，非选中区间适当变暗以突出选中区间 */
-.illu-mask.mask-active {
-  border: 4rpx solid #1a2234;
+/* 底部圆点指示器：5 个 */
+.illu-dots {
+  position: absolute;
+  bottom: 18rpx;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10rpx;
   z-index: 2;
-  box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.2);
 }
 
-.illu-masks:has(.mask-active) .illu-mask:not(.mask-active) {
-  opacity: 0.8; /* 其他区块变暗点 */
+.illu-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.25s ease;
+}
+
+/* 当前查看的页：圆点变长 */
+.illu-dot.illu-dot-active {
+  width: 28rpx;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* 用户照度实际所在区间：白色描边小光环 */
+.illu-dot.illu-dot-current {
+  box-shadow: 0 0 0 3rpx rgba(255, 255, 255, 0.5);
+}
+
+/* 图片与区间列表之间的双状态提示行（始终显示，颜色随状态切换） */
+.illu-ref-hint {
+  height: 28rpx;
+  line-height: 28rpx;
+  text-align: center;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+  transition: color 0.25s ease;
+}
+
+/* 默认：引导用户点击下方区间（中灰，更醒目） */
+.illu-ref-hint--guide {
+  color: #64748B;
+}
+
+/* 已点击/滑动到非当前区间：参考亮度说明（浅灰，弱化） */
+.illu-ref-hint--warn {
+  color: #94A3B8;
+}
+
+/* 警告态文案中的"计算结果"四字高亮：与 500+ 过亮区彩条同色（#FB7185） */
+.ref-hint-highlight {
+  color: #FB7185;
+  font-weight: 600;
 }
 
 /* 区间列表 */
 .range-list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 140rpx;
+  gap: 6rpx;
+  margin-top: 20rpx;
+  /* 100rpx 底部保护区：仅避开 page-footer(底部 ~116rpx) 顶端区域，让整页视觉更紧凑不空旷 */
+  margin-bottom: 100rpx;
 }
 
 .range-row {
   display: flex;
   align-items: center;
-  padding: 20rpx 40rpx;
+  padding: 14rpx 32rpx;
   border-radius: 40rpx;
   background: transparent;
   transition: all 0.3s ease;
+}
+
+/* 点击反馈 */
+.range-row-hover {
+  background: rgba(241, 245, 249, 0.6);
+  transform: scale(0.985);
 }
 
 .range-active {
   background: #FFFFFF;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.05);
   border: 1rpx solid rgba(241, 245, 249, 0.8);
+}
+
+/* 当前正在上方查看的区间（与 swiper 联动） */
+.range-row.range-viewing:not(.range-active) {
+  background: rgba(241, 245, 249, 0.5);
+  border: 1rpx dashed rgba(148, 163, 184, 0.5);
 }
 
 .range-dot {
@@ -529,18 +585,18 @@ page {
 }
 
 .range-state {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #64748B;
 }
 
 .range-active .range-state {
   color: #1a2234;
-  font-size: 32rpx;
+  font-size: 36rpx;
 }
 
 .range-scene {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: #94A3B8;
   margin-top: 6rpx;
   font-weight: 400;
@@ -551,7 +607,7 @@ page {
 }
 
 .range-val {
-  font-size: 26rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #94A3B8;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
@@ -560,7 +616,7 @@ page {
 .range-active .range-val {
   color: #1a2234;
   font-weight: 800;
-  font-size: 28rpx;
+  font-size: 32rpx;
 }
 
 /* ================================================
