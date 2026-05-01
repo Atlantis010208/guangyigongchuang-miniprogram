@@ -54,7 +54,8 @@ Page({
       { id: 'work', name: '读书办公', offset: 300 },
       { id: 'cook', name: '做饭家务', offset: 400 }
     ],
-    usageIndex: -1,
+    selectedUsages: [],
+    usageSelectedMap: {},
 
     // 4. 灯具选择（具体灯具名称，替代照明层术语）
     fixtures: [
@@ -64,8 +65,7 @@ Page({
       { id: 'task', name: '台灯 / 镜前灯 / 橱柜灯', layer: 'task' }
     ],
     selectedFixtures: [],
-    fixtureAddOptions: ['请选择灯具'],
-    fixtureAddValue: 0,
+    fixtureSelectedMap: {}
 
   },
 
@@ -92,10 +92,13 @@ Page({
           suggestedTemp: p.suggestedTemp || p.targetLux || '',
           suggestedTempSource: '',
           ageIndex: p.ageIndex,
-          usageIndex: p.usageIndex,
+          selectedUsages: this._restoreSelectedUsages(p),
           selectedFixtures: p.selectedFixtures || (p.primaryFixtureIndex >= 0 ? [this.data.fixtures[p.primaryFixtureIndex]] : [])
         })
-        this.setData({ fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, this.data.selectedFixtures) })
+        this.setData({
+          usageSelectedMap: this._buildSelectedMap(this.data.selectedUsages),
+          fixtureSelectedMap: this._buildSelectedMap(this.data.selectedFixtures)
+        })
         // 将历史结果写入缓存，参数不变时可秒跳
         if (selected.result) {
           this._cachedResult = { paramsKey: this._getParamsKey(), resultData: selected.result }
@@ -139,10 +142,11 @@ Page({
           })
         }
         if (data.ageGroups && data.ageGroups.length) updates.ageGroups = data.ageGroups
-        if (data.usages && data.usages.length) updates.usages = data.usages
+        if (data.usages && data.usages.length) {
+          updates.usages = data.usages
+        }
         if (data.fixtures && data.fixtures.length) {
           updates.fixtures = data.fixtures
-          updates.fixtureAddOptions = this._buildFixtureAddOptions(data.fixtures, this.data.selectedFixtures)
         }
         if (data.pageConfig) {
           if (data.pageConfig.bgImage) updates.headerBgFileId = data.pageConfig.bgImage
@@ -192,51 +196,75 @@ Page({
     this.setData({ ageIndex: Number(e.detail.value) })
   },
 
-  onUsageChange(e) {
-    this.setData({ usageIndex: Number(e.detail.value) })
-  },
-
-  onAddFixture(e) {
-    const pickIndex = Number(e.detail.value)
-    if (pickIndex <= 0) {
-      this.setData({ fixtureAddValue: 0 })
-      return
-    }
-    // 从可选列表中找到对应灯具（排除已选的）
-    const available = this.data.fixtures.filter(f => !this.data.selectedFixtures.some(s => s.id === f.id))
-    const fixture = available[pickIndex - 1]
-    if (!fixture) {
-      this.setData({ fixtureAddValue: 0 })
-      return
-    }
-    const newSelected = [...this.data.selectedFixtures, fixture]
-    this.setData({
-      selectedFixtures: newSelected,
-      fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, newSelected),
-      fixtureAddValue: 0
-    })
-  },
-
-  onRemoveFixture(e) {
+  // 点击 chip 切换"主要用途"选中状态
+  onToggleUsage(e) {
     const id = e.currentTarget.dataset.id
-    const newSelected = this.data.selectedFixtures.filter(f => f.id !== id)
+    if (!id) return
+    const isSelected = !!this.data.usageSelectedMap[id]
+    let newSelected
+    if (isSelected) {
+      newSelected = this.data.selectedUsages.filter(u => u.id !== id)
+    } else {
+      const usage = this.data.usages.find(u => u.id === id)
+      if (!usage) return
+      newSelected = [...this.data.selectedUsages, usage]
+    }
     this.setData({
-      selectedFixtures: newSelected,
-      fixtureAddOptions: this._buildFixtureAddOptions(this.data.fixtures, newSelected)
+      selectedUsages: newSelected,
+      usageSelectedMap: this._buildSelectedMap(newSelected)
     })
   },
 
-  _buildFixtureAddOptions(fixtures, selected) {
-    const available = (fixtures || []).filter(f => !(selected || []).some(s => s.id === f.id))
-    return ['请选择灯具', ...available.map(f => f.name)]
+  // 通用：从选中数组生成 { id: true } 查找表，供 chip 选中样式使用
+  _buildSelectedMap(selected) {
+    const map = {}
+    ;(selected || []).forEach(item => {
+      if (item && item.id) map[item.id] = true
+    })
+    return map
+  },
+
+  _restoreSelectedUsages(params) {
+    if (!params) return []
+    // 优先使用新版字段 selectedUsages
+    if (Array.isArray(params.selectedUsages) && params.selectedUsages.length) {
+      return params.selectedUsages
+        .map(u => (u && u.id ? (this.data.usages.find(x => x.id === u.id) || u) : null))
+        .filter(Boolean)
+    }
+    // 兼容老版字段 usageIndex（单选）
+    if (params.usageIndex >= 0 && this.data.usages[params.usageIndex]) {
+      return [this.data.usages[params.usageIndex]]
+    }
+    return []
+  },
+
+  // 点击 chip 切换"添加灯具"选中状态
+  onToggleFixture(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const isSelected = !!this.data.fixtureSelectedMap[id]
+    let newSelected
+    if (isSelected) {
+      newSelected = this.data.selectedFixtures.filter(f => f.id !== id)
+    } else {
+      const fixture = this.data.fixtures.find(f => f.id === id)
+      if (!fixture) return
+      newSelected = [...this.data.selectedFixtures, fixture]
+    }
+    this.setData({
+      selectedFixtures: newSelected,
+      fixtureSelectedMap: this._buildSelectedMap(newSelected)
+    })
   },
 
   // ========== 计算逻辑 ==========
 
   _getParamsKey() {
     const fixtureIds = this.data.selectedFixtures.map(f => f.id).sort().join(',')
+    const usageIds = this.data.selectedUsages.map(u => u.id).sort().join(',')
     return [this.data.spaceIndex, this.data.suggestedTemp || '',
-      this.data.ageIndex, this.data.usageIndex,
+      this.data.ageIndex, usageIds,
       fixtureIds].join('|')
   },
 
@@ -274,7 +302,7 @@ Page({
     // 收集参数
     const space = this.data.spaceTypes[this.data.spaceIndex]
     const age = this.data.ageIndex >= 0 ? this.data.ageGroups[this.data.ageIndex] : null
-    const usage = this.data.usageIndex >= 0 ? this.data.usages[this.data.usageIndex] : null
+    const usageNames = this.data.selectedUsages.map(u => u.name)
     const fixtureNames = this.data.selectedFixtures.map(f => f.name)
 
     const promise = wx.cloud.callFunction({
@@ -284,7 +312,8 @@ Page({
         spaceName: space.name,
         suggestedTemp: this.data.suggestedTemp,
         ageName: age ? age.name : '',
-        usageName: usage ? usage.name : '',
+        usageName: usageNames.join('、'),
+        usageNames: usageNames,
         fixtureNames: fixtureNames
       }
     })
@@ -341,10 +370,15 @@ Page({
   doCalculate() {
     const space = this.data.spaceTypes[this.data.spaceIndex]
     const age = this.data.ageIndex >= 0 ? this.data.ageGroups[this.data.ageIndex] : { offset: 0, id: 'youth' }
-    const usage = this.data.usageIndex >= 0 ? this.data.usages[this.data.usageIndex] : { offset: 0, id: 'daily' }
-    
+    // 多用途时取 offset 算术平均，作为本地降级的简化处理
+    const usagesForCalc = this.data.selectedUsages.length > 0
+      ? this.data.selectedUsages
+      : [{ offset: 0, id: 'daily' }]
+    const usageIds = usagesForCalc.map(u => u.id)
+    const avgUsageOffset = usagesForCalc.reduce((sum, u) => sum + (u.offset || 0), 0) / usagesForCalc.length
+
     // 1. 用途偏移根据空间动态调整（避免儿童房/老人房色温过于极端）
-    let usageOffset = usage.offset
+    let usageOffset = avgUsageOffset
     if (space.id === 'kids_room' && usageOffset < -300) {
       usageOffset = -300  // 儿童房"休息睡觉"偏移限制为 -300K
     }
@@ -422,11 +456,11 @@ Page({
       tips.push('儿童日常活动和学习时，建议将主灯切换到 4000K 中性光，有助于保护视力。')
     }
 
-    if (usage.id === 'sleep' && standardTemp >= 3000) {
+    if (usageIds.includes('sleep') && standardTemp >= 3000) {
       tips.push('虽然推荐色温为 ' + standardTemp + 'K，但入睡前可将灯光调暗或切换到 2700K 暖光助眠。')
     }
 
-    if (usage.id === 'cook' && selectedLayerIds.includes('task')) {
+    if (usageIds.includes('cook') && selectedLayerIds.includes('task')) {
       tips.push('厨房操作台上方的橱柜灯建议用偏白光(4000K以上)，切菜更安全。')
     }
 
@@ -455,6 +489,7 @@ Page({
     const app = getApp()
     app.globalData = app.globalData || {}
     app.globalData.colorTempResult = resultData
+    const usageNames = this.data.selectedUsages.map(u => u.name)
     // 保存输入参数，供结果页写入历史记录
     app.globalData.colorTempParams = {
       spaceIndex: this.data.spaceIndex,
@@ -463,8 +498,9 @@ Page({
       suggestedTemp: this.data.suggestedTemp,
       ageIndex: this.data.ageIndex,
       ageName: this.data.ageIndex >= 0 ? this.data.ageGroups[this.data.ageIndex].name : '',
-      usageIndex: this.data.usageIndex,
-      usageName: this.data.usageIndex >= 0 ? this.data.usages[this.data.usageIndex].name : '',
+      selectedUsages: this.data.selectedUsages,
+      usageNames: usageNames,
+      usageName: usageNames.join('、'),  // 兼容旧字段，结果页 summary 仍可使用
       selectedFixtures: this.data.selectedFixtures,
       fixtureNames: this.data.selectedFixtures.map(f => f.name)
     }

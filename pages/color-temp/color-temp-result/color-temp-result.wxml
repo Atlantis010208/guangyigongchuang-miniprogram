@@ -3,24 +3,70 @@
   <view class="v2-content">
     <view class="result-container">
       
-      <!-- 核心结果卡片 -->
+      <!-- 核心结果卡片：胶囊场景图 -->
       <view class="v2-card group-card result-hero">
-        <view class="result-hero-header">
-          <view class="temp-display">
-            <text class="temp-val">{{result.standardTemp}}</text>
-            <text class="temp-unit">K</text>
-          </view>
-          <view class="temp-tag">{{result.desc}}</view>
-        </view>
-        
-        <!-- 色温条 -->
+        <!-- 当前档位的场景对比图（点击全屏预览；左右滑动可切换上一/下一档） -->
         <view class="color-scale">
-          <view class="scale-bar">
-            <view class="scale-marker" style="left: {{(result.standardTemp - 2700) / 3800 * 100}}%"></view>
-          </view>
-          <view class="scale-labels">
-            <text>2700K</text>
-            <text>6500K</text>
+          <view
+            class="scale-bar-img"
+            bindtouchstart="onSceneTouchStart"
+            catch:touchmove="onSceneTouchMove"
+            bindtouchend="onSceneTouchEnd"
+          >
+            <!-- 包裹层：overflow:hidden 限制 slide 横向溢出（箭头 absolute 在 .scale-bar-img 上不受影响） -->
+            <view class="image-wrapper">
+              <!-- 6 张完整 slide（图 + 渐变蒙版 + 底座 + 胶囊）横排，translateX 整体平移 -->
+              <view class="scene-track" style="{{trackStyle}}">
+                <view class="scene-slide" style="background: rgb({{item.color}})" wx:for="{{sceneList}}" wx:key="temp" wx:for-index="idx">
+                  <!-- 图片 + 该 slide 自己的边界蒙版 -->
+                  <view class="slide-image">
+                    <image
+                      class="scale-img"
+                      src="{{item.url}}"
+                      mode="aspectFill"
+                      lazy-load="{{true}}"
+                      data-temp="{{item.temp}}"
+                      bindtap="onPreviewScaleImage"
+                    ></image>
+                    <view class="slide-mask" style="background: linear-gradient(to bottom, rgba({{item.color}}, 0) 0%, rgba({{item.color}}, 1) 75%)"></view>
+                  </view>
+
+                  <!-- 该 slide 的纯色底座 + 胶囊 + 本 slide 专属的一对箭头（仅当前可见 slide 渲染箭头，避免相邻 slide 箭头在边界错向叠加） -->
+                  <view class="slide-strip" style="background: rgb({{item.color}})">
+                    <!-- 左箭头：仅当前可见 slide 且非首张时渲染；首张完全不出现左箭头 -->
+                    <view
+                      wx:if="{{idx === displayedIndex && idx !== 0}}"
+                      class="temp-summary-arrow temp-summary-arrow--left"
+                      hover-class="temp-summary-arrow--hover"
+                      hover-stay-time="80"
+                      bindtap="onPrevTemp"
+                      aria-label="上一档色温"
+                    >
+                      <image src="/images/arrow-left.png" mode="aspectFit" class="arrow-icon"></image>
+                    </view>
+
+                    <!-- 仅 AI 推荐档位的 slide 有 item.desc（AI 生成的专业小字描述）；
+                         其余档位 desc 为空：大字改为「{temp}K 色温参考效果」并水平居中（slide-bubble--center），无小字 -->
+                    <view class="slide-bubble {{item.desc ? '' : 'slide-bubble--center'}}">
+                      <text class="temp-summary-prefix">{{item.desc ? ('建议整体色温：' + item.temp + 'K。') : (item.temp + 'K 色温参考效果')}}</text>
+                      <text wx:if="{{item.desc}}" class="temp-summary-desc">{{item.desc}}</text>
+                    </view>
+
+                    <!-- 右箭头：仅当前可见 slide 且非末张时渲染；末张完全不出现右箭头 -->
+                    <view
+                      wx:if="{{idx === displayedIndex && idx !== sceneList.length - 1}}"
+                      class="temp-summary-arrow temp-summary-arrow--right"
+                      hover-class="temp-summary-arrow--hover"
+                      hover-stay-time="80"
+                      bindtap="onNextTemp"
+                      aria-label="下一档色温"
+                    >
+                      <image src="/images/arrow-right.png" mode="aspectFit" class="arrow-icon"></image>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -31,9 +77,10 @@
         <view class="reasoning-text">{{result.reasoning}}</view>
       </view>
 
-      <!-- 分层建议卡片 -->
-      <view class="v2-card group-card">
+      <!-- 分层建议卡片：按各灯具列出推荐色温 -->
+      <view class="v2-card group-card" wx:if="{{result.layers && result.layers.length > 0}}">
         <view class="card-title">分层色温建议</view>
+        <view class="advice-subtitle">以下为各灯具的具体推荐色温</view>
         <view class="advice-list">
           <view class="advice-item" wx:for="{{result.layers}}" wx:key="index">
             <view class="advice-content">
