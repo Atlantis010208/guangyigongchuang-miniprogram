@@ -106,6 +106,16 @@ Page({
     })
   },
 
+  navigateToLightingQuiz: function () {
+    wx.navigateTo({
+      url: '/pages/quiz/lighting-intro/lighting-intro',
+      fail: (err) => {
+        console.error('[toolbox] 跳转灯光测试失败:', err)
+        wx.showToast({ title: '页面跳转失败，请稍后重试', icon: 'none' })
+      }
+    })
+  },
+
   loadCtBgImage: function () {
     const db = wx.cloud.database()
     db.collection('color_temp_config').doc('global_config').get().then(res => {
