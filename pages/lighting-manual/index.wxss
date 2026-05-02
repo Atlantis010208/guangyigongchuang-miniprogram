@@ -802,6 +802,11 @@ page {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+  /* 当卡片自身被 features 撑成 swiper 内最高的卡片时，
+     .pkg-divider-bottom 的 margin-top: auto 会失效退化为 0，
+     导致最后一行内容紧贴下方分割线。通过底部 padding 兜底，
+     保证任何套餐卡片都能维持舒适的视觉间距。 */
+  padding-bottom: 24rpx;
 }
 
 /* 双列布局，用于项目较多的套餐（如全屋智能） */
@@ -1247,21 +1252,18 @@ page {
 .wechat-box {
   background: #F5F5F7;
   border-radius: 32rpx;
-  padding: 48rpx;
+  padding: 40rpx;
   margin-bottom: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.wechat-label {
-  font-size: 24rpx; /* 28 -> 24 */
-  color: #86868B;
-  margin-bottom: 16rpx;
-}
-
-.wechat-num {
-  font-size: 40rpx; /* 48 -> 40 */
-  font-family: "SF Pro Display", sans-serif;
-  font-weight: 700;
-  color: #1D1D1F;
+.wechat-qrcode {
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 16rpx;
+  background: #FFFFFF;
 }
 
 .copy-btn {

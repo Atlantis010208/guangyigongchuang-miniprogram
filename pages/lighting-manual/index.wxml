@@ -450,8 +450,7 @@
     </view>
     <view class="sheet-content">
       <view class="wechat-box">
-        <view class="wechat-label">微信号</view>
-        <view class="wechat-num">17728117703</view>
+        <image class="wechat-qrcode" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-manual/wechat-qrcode-7703.png" mode="aspectFit" show-menu-by-longpress="{{true}}" />
       </view>
       <view class="copy-btn" bindtap="copyWechat">一键复制微信号</view>
       <view class="wechat-note">添加时请备注：小程序咨询</view>
