@@ -11,6 +11,50 @@
     />
   </view>
 
+  <!-- 🔥 设计师卡片：进入"进行中"之后展示（紧随进度条下方） -->
+  <view class="section designer-section" wx:if="{{progressActive >= 1 && (req.hasDesignerAssigned || req.hasCustomContact)}}">
+    <view class="block-title">设计师</view>
+
+    <!-- 系统分配的设计师：可点击查看主页 -->
+    <view class="designer-head" wx:if="{{req.hasDesignerAssigned}}" bindtap="onGoDesignerHome" data-id="{{req.designerId}}">
+      <image class="designer-avatar" src="{{req.designerInfo.avatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
+      <view class="designer-meta">
+        <view class="designer-name-row">
+          <text class="designer-name">{{req.designerInfo.name || '设计师'}}</text>
+          <view class="designer-tag accepted">已接单</view>
+        </view>
+        <text class="designer-sub" wx:if="{{req.designerInfo.title}}">{{req.designerInfo.title}}</text>
+      </view>
+      <view class="designer-arrow">
+        <text class="designer-arrow-text">主页</text>
+        <text class="designer-arrow-icon">›</text>
+      </view>
+    </view>
+
+    <!-- 自定义联系方式（用户自填）：仅展示标题，无主页入口 -->
+    <view class="designer-head custom" wx:elif="{{req.hasCustomContact}}">
+      <view class="designer-avatar custom-avatar"><text class="custom-avatar-icon">人</text></view>
+      <view class="designer-meta">
+        <text class="designer-name">{{req.designerInfo.name || '指定联系人'}}</text>
+        <text class="designer-sub">业主自定义联系人</text>
+      </view>
+    </view>
+
+    <!-- 联系方式列表（手机号已在订单信息卡片中展示，此处只保留微信/邮箱） -->
+    <view class="contact-list" wx:if="{{req.designerInfo.wechat || req.designerInfo.email}}">
+      <view class="contact-row" wx:if="{{req.designerInfo.wechat}}">
+        <text class="contact-label">微信</text>
+        <text class="contact-val wechat longpress-copy" bindlongpress="onLongPressWechat" data-wechat="{{req.designerInfo.wechat}}">{{req.designerInfo.wechat}}</text>
+        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.wechat}}" data-label="微信号">复制</view>
+      </view>
+      <view class="contact-row" wx:if="{{req.designerInfo.email}}">
+        <text class="contact-label">邮箱</text>
+        <text class="contact-val longpress-copy" bindlongpress="onLongPressEmail" data-email="{{req.designerInfo.email}}">{{req.designerInfo.email}}</text>
+        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.email}}" data-label="邮箱">复制</view>
+      </view>
+    </view>
+  </view>
+
   <view class="section">
     <view class="info">
       <view class="block-title">订单信息</view>
@@ -108,50 +152,6 @@
           <text class="file-size">{{item.sizeText}}</text>
         </view>
         <text class="file-action">›</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 🔥 设计师卡片：进入"进行中"之后展示 -->
-  <view class="section designer-section" wx:if="{{progressActive >= 1 && (req.hasDesignerAssigned || req.hasCustomContact)}}">
-    <view class="block-title">设计师</view>
-
-    <!-- 系统分配的设计师：可点击查看主页 -->
-    <view class="designer-head" wx:if="{{req.hasDesignerAssigned}}" bindtap="onGoDesignerHome" data-id="{{req.designerId}}">
-      <image class="designer-avatar" src="{{req.designerInfo.avatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
-      <view class="designer-meta">
-        <view class="designer-name-row">
-          <text class="designer-name">{{req.designerInfo.name || '设计师'}}</text>
-          <view class="designer-tag accepted">已接单</view>
-        </view>
-        <text class="designer-sub" wx:if="{{req.designerInfo.title}}">{{req.designerInfo.title}}</text>
-      </view>
-      <view class="designer-arrow">
-        <text class="designer-arrow-text">主页</text>
-        <text class="designer-arrow-icon">›</text>
-      </view>
-    </view>
-
-    <!-- 自定义联系方式（用户自填）：仅展示标题，无主页入口 -->
-    <view class="designer-head custom" wx:elif="{{req.hasCustomContact}}">
-      <view class="designer-avatar custom-avatar"><text class="custom-avatar-icon">人</text></view>
-      <view class="designer-meta">
-        <text class="designer-name">{{req.designerInfo.name || '指定联系人'}}</text>
-        <text class="designer-sub">业主自定义联系人</text>
-      </view>
-    </view>
-
-    <!-- 联系方式列表（手机号已在订单信息卡片中展示，此处只保留微信/邮箱） -->
-    <view class="contact-list" wx:if="{{req.designerInfo.wechat || req.designerInfo.email}}">
-      <view class="contact-row" wx:if="{{req.designerInfo.wechat}}">
-        <text class="contact-label">微信</text>
-        <text class="contact-val wechat longpress-copy" bindlongpress="onLongPressWechat" data-wechat="{{req.designerInfo.wechat}}">{{req.designerInfo.wechat}}</text>
-        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.wechat}}" data-label="微信号">复制</view>
-      </view>
-      <view class="contact-row" wx:if="{{req.designerInfo.email}}">
-        <text class="contact-label">邮箱</text>
-        <text class="contact-val longpress-copy" bindlongpress="onLongPressEmail" data-email="{{req.designerInfo.email}}">{{req.designerInfo.email}}</text>
-        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.email}}" data-label="邮箱">复制</view>
       </view>
     </view>
   </view>
