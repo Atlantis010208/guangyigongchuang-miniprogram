@@ -144,6 +144,47 @@
   </view>
 </view>
 
+<view wx:if="{{showPaywallModal}}" class="paywall-modal" catchtap="onClosePaywall">
+  <view class="paywall-card" catchtap="noop">
+    <view class="paywall-card__head">
+      <text class="paywall-card__title">高清灵感图库</text>
+      <view class="paywall-card__close" bindtap="onClosePaywall">×</view>
+    </view>
+    <text class="paywall-card__hint">普通用户和普通会员可浏览缩略图，邀请新用户可获得 7 天会员试用</text>
+
+    <view class="paywall-option">
+      <text class="paywall-option__title">邀请好友 · 免费试用</text>
+      <text class="paywall-option__desc">每邀 2 位新用户注册，得 7 天会员试用</text>
+      <view class="paywall-progress">
+        <view class="paywall-progress__bar">
+          <view class="paywall-progress__fill" style="width: {{paywallInviteProgress.percent}}%;"></view>
+        </view>
+        <text class="paywall-progress__text">{{paywallInviteProgress.inCycle}} / 2 人</text>
+      </view>
+      <text class="paywall-option__stats" wx:if="{{paywallInvitedTotal > 0}}">已邀 {{paywallInvitedTotal}} 人 · 累计获 {{paywallTrialGranted}} 天试用</text>
+      <button wx:if="{{membership.isLoggedIn}}"
+              class="paywall-btn"
+              open-type="share"
+              hover-class="paywall-btn--hover"
+              bindtap="onPaywallInviteTap">邀请好友</button>
+      <view wx:else
+            class="paywall-btn"
+            hover-class="paywall-btn--hover"
+            bindtap="onPaywallInviteTap">登录后邀请</view>
+    </view>
+
+    <view class="paywall-option">
+      <text class="paywall-option__title">升级高级会员 · 解锁图库</text>
+      <text class="paywall-option__desc">支持高清大图预览、原图保存，灵感图库不限次使用</text>
+      <view class="paywall-btn"
+            hover-class="paywall-btn--hover"
+            bindtap="onPaywallUpgradeTap">{{membership.isLoggedIn ? '升级高级会员' : '登录后升级'}}</view>
+    </view>
+
+    <view class="paywall-card__cancel" bindtap="onClosePaywall">继续浏览缩略图</view>
+  </view>
+</view>
+
 <!-- Fullscreen Image Modal -->
 <view class="modal-overlay {{showModal ? 'visible' : ''}}" 
       style="background-color: rgba(0,0,0,{{1 - dragProgress * 0.85}});"
@@ -164,7 +205,7 @@
               bindtouchmove="onPreviewDragMove"
               bindtouchend="onPreviewDragEnd"
               bindtouchcancel="onPreviewDragEnd">
-          <image class="modal-image" src="{{item.thumbUrl}}" mode="aspectFit" lazy-load></image>
+          <image class="modal-image" src="{{item.previewUrl || item.thumbUrl}}" mode="aspectFit" lazy-load></image>
         </view>
       </swiper-item>
     </block>

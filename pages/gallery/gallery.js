@@ -2,6 +2,7 @@
 // 灯光实景图库 - 接入云函数真实数据
 
 const app = getApp()
+const membershipUtil = require('../../utils/membership.js')
 
 Page({
   data: {
@@ -38,6 +39,11 @@ Page({
     isDragging: false,
     isDownloading: false,
     controlsTimeout: null,
+    membership: membershipUtil.getFallbackStatus(false),
+    showPaywallModal: false,
+    paywallInviteProgress: { inCycle: 0, needed: 2, percent: 0, nextRewardDays: 7 },
+    paywallInvitedTotal: 0,
+    paywallTrialGranted: 0,
 
     // 搜索防抖
     _searchTimer: null
@@ -47,6 +53,7 @@ Page({
   noop: function () {},
 
   onLoad: function () {
+    this._fetchMembership()
     this.loadTags()
     this.loadImages()
     // 注：loadImages 内部会调用 batchCheckFavorites 自动补齐收藏状态，无需额外预加载
@@ -63,9 +70,92 @@ Page({
   },
 
   onShow: function () {
+    this._fetchMembership()
     // 每次显示时静默刷新收藏状态（如果已有图片）
     if (this.data.filteredImages.length > 0) {
       this.batchCheckFavorites(this.data.filteredImages)
+    }
+  },
+
+  _fetchMembership: function () {
+    membershipUtil.fetchMembershipStatus().then(status => {
+      this.setData({ membership: status })
+      this._refreshPaywallInviteProgress()
+    }).catch(err => {
+      console.warn('[gallery] 会员状态拉取失败:', err)
+      this.setData({ membership: membershipUtil.getFallbackStatus(false) })
+      this._refreshPaywallInviteProgress()
+    })
+  },
+
+  _refreshPaywallInviteProgress: function () {
+    const stats = (this.data.membership && this.data.membership.inviteStats) || {}
+    const invitedCount = Number(stats.invitedCount) || 0
+    this.setData({
+      paywallInviteProgress: membershipUtil.getInviteProgress(invitedCount),
+      paywallInvitedTotal: invitedCount,
+      paywallTrialGranted: Number(stats.trialDaysGranted) || 0
+    })
+  },
+
+  _hasGalleryAccess: function () {
+    const membership = this.data.membership || {}
+    const galleryTrialExpireAt = Number(membership.galleryTrialExpireAt) || 0
+    return membership.effectiveLevel === 'premium' || galleryTrialExpireAt > Date.now()
+  },
+
+  _showGalleryPaywall: function () {
+    this.clearControlsTimeout()
+    this._refreshPaywallInviteProgress()
+    this.setData({
+      showPaywallModal: true,
+      showModal: false,
+      dragY: 0,
+      dragProgress: 0,
+      isDragging: false,
+      isDownloading: false
+    })
+  },
+
+  onClosePaywall: function () {
+    this.setData({ showPaywallModal: false })
+  },
+
+  onPaywallInviteTap: function () {
+    if (!this.data.membership || !this.data.membership.isLoggedIn) {
+      this.setData({ showPaywallModal: false })
+      if (app.requireLogin) {
+        app.requireLogin({ redirectUrl: '/pages/gallery/gallery' })
+      } else {
+        wx.navigateTo({ url: '/pages/auth/login/login' })
+      }
+      return
+    }
+    console.log('[gallery] 点击邀请好友，调起转发面板')
+  },
+
+  onPaywallUpgradeTap: function () {
+    this.setData({ showPaywallModal: false })
+    if (!this.data.membership || !this.data.membership.isLoggedIn) {
+      if (app.requireLogin) {
+        app.requireLogin({ redirectUrl: '/pages/profile/membership/upgrade/upgrade?target=premium&from=gallery' })
+      } else {
+        wx.navigateTo({ url: '/pages/auth/login/login' })
+      }
+      return
+    }
+    wx.navigateTo({ url: '/pages/profile/membership/upgrade/upgrade?target=premium&from=gallery' })
+  },
+
+  onShareAppMessage: function () {
+    const code = (this.data.membership && this.data.membership.inviteCode) || ''
+    const sharePath = code
+      ? `/pages/products/products?inviteCode=${encodeURIComponent(code)}`
+      : '/pages/products/products'
+    return {
+      title: '光乙共创：邀你一起体验专业灯光设计工具',
+      path: sharePath,
+      imageUrl: ''
     }
   },
 
@@ -625,6 +715,11 @@ Page({
   // ==================== 全屏预览 Modal ====================
 
   onImageSelect: function (e) {
+    if (!this._hasGalleryAccess()) {
+      this._showGalleryPaywall()
+      return
+    }
+
     const id = e.currentTarget.dataset.id
     const index = this.data.filteredImages.findIndex(img => img.id === id)
 
@@ -639,8 +734,57 @@ Page({
         dragProgress: 0,
         isDragging: false
       })
+      this._loadImageDetailForIndex(index)
       this.resetControlsTimeout()
     }
+  },
+
+  _loadImageDetailForIndex: function (index) {
+    const img = this.data.filteredImages[index]
+    if (!img) return Promise.resolve(null)
+    if (img.fileUrl) return Promise.resolve(img)
+
+    const imageId = img.id || img._id
+    if (!imageId) return Promise.resolve(img)
+
+    this.setData({ [`filteredImages[${index}]._loadingDetail`]: true })
+
+    return wx.cloud.callFunction({
+      name: 'gallery_list',
+      data: { action: 'detail', imageId }
+    }).then(res => {
+      const result = res.result
+      const currentIndex = this.data.filteredImages.findIndex(item => (item.id || item._id) === imageId)
+      if (currentIndex < 0) return null
+
+      if (!result || !result.success || !result.data) {
+        this.setData({ [`filteredImages[${currentIndex}]._loadingDetail`]: false })
+        if (result && result.code === 'PREMIUM_REQUIRED') {
+          this._showGalleryPaywall()
+        }
+        return null
+      }
+
+      const previewUrl = result.data.fileUrl || result.data.thumbUrl || img.thumbUrl
+      this.setData({
+        [`filteredImages[${currentIndex}]._loadingDetail`]: false,
+        [`filteredImages[${currentIndex}].fileUrl`]: result.data.fileUrl || '',
+        [`filteredImages[${currentIndex}].previewUrl`]: previewUrl
+      })
+
+      return {
+        ...this.data.filteredImages[currentIndex],
+        fileUrl: result.data.fileUrl || '',
+        previewUrl
+      }
+    }).catch(err => {
+      console.warn('[gallery] 加载图片详情失败:', err)
+      const currentIndex = this.data.filteredImages.findIndex(item => (item.id || item._id) === imageId)
+      if (currentIndex > -1) {
+        this.setData({ [`filteredImages[${currentIndex}]._loadingDetail`]: false })
+      }
+      return null
+    })
   },
 
   // ==================== 下滑退出预览 ====================
@@ -721,7 +865,11 @@ Page({
   },
 
   onSwiperChange: function (e) {
-    this.setData({ currentSwiperIndex: e.detail.current })
+    const current = e.detail.current
+    this.setData({ currentSwiperIndex: current })
+    if (this._hasGalleryAccess()) {
+      this._loadImageDetailForIndex(current)
+    }
     this.resetControlsTimeout()
   },
 
@@ -757,6 +905,11 @@ Page({
   onDownloadCurrent: function () {
     if (this.data.isDownloading) return
 
+    if (!this._hasGalleryAccess()) {
+      this._showGalleryPaywall()
+      return
+    }
+
     const currentImg = this.data.filteredImages[this.data.currentSwiperIndex]
     if (!currentImg) return
 
@@ -765,20 +918,16 @@ Page({
 
     wx.showLoading({ title: '准备下载...' })
 
-    // 先获取高清原图 URL
-    wx.cloud.callFunction({
-      name: 'gallery_list',
-      data: { action: 'detail', imageId: currentImg.id }
-    }).then(res => {
-      const result = res.result
-      if (!result || !result.success || !result.data.fileUrl) {
+    this._loadImageDetailForIndex(this.data.currentSwiperIndex).then(detailImg => {
+      const latestImg = detailImg || this.data.filteredImages[this.data.currentSwiperIndex]
+      const fileUrl = latestImg && latestImg.fileUrl
+      if (!fileUrl) {
         wx.hideLoading()
         wx.showToast({ title: '获取原图失败', icon: 'none' })
         this.setData({ isDownloading: false })
         return
       }
 
-      const fileUrl = result.data.fileUrl
       wx.downloadFile({
         url: fileUrl,
         success: (dlRes) => {

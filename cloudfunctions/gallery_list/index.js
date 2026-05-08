@@ -18,6 +18,37 @@ cloud.init({
 const db = cloud.database()
 const _ = db.command
 
+function computeEffectiveLevel(vipLevel, vipExpireAt) {
+  if (!vipExpireAt || vipExpireAt < Date.now()) return 'free'
+  if (vipLevel === 'premium') return 'premium'
+  if (vipLevel === 'normal') return 'normal'
+  return 'free'
+}
+
+async function assertPremiumMember() {
+  const wxContext = cloud.getWXContext()
+  const openid = wxContext.OPENID || wxContext.openid
+
+  if (!openid) {
+    return { allowed: false, code: 'UNAUTHORIZED', errorMessage: '请先登录后再使用高清图库' }
+  }
+
+  const userRes = await db.collection('users')
+    .where({ _openid: openid })
+    .limit(1)
+    .get()
+
+  const user = userRes.data && userRes.data[0]
+  const level = user ? computeEffectiveLevel(user.vipLevel, user.vipExpireAt) : 'free'
+  const galleryTrialExpireAt = user ? Number(user.galleryTrialExpireAt) || 0 : 0
+
+  if (level !== 'premium' && galleryTrialExpireAt <= Date.now()) {
+    return { allowed: false, code: 'PREMIUM_REQUIRED', errorMessage: '高清预览和原图保存需要高级会员或有效试用权益' }
+  }
+
+  return { allowed: true }
+}
+
 // 云函数入口
 exports.main = async (event, context) => {
   try {
@@ -354,6 +385,16 @@ async function getImageDetail(event) {
       success: false,
       code: 'INVALID_PARAMS',
       errorMessage: '缺少图片ID(imageId)',
+      timestamp: Date.now()
+    }
+  }
+
+  const auth = await assertPremiumMember()
+  if (!auth.allowed) {
+    return {
+      success: false,
+      code: auth.code,
+      errorMessage: auth.errorMessage,
       timestamp: Date.now()
     }
   }
