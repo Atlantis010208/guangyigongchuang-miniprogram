@@ -23,7 +23,6 @@
     "pages/auth/designer-denied/designer-denied",
     "pages/course/course-detail/course-detail",
     "pages/course/video-player/video-player",
-    "pages/identity/identity",
     "pages/designer-home/designer-home",
     "pages/designer-profile/designer-profile",
     "pages/designer-profile-edit/designer-profile-edit",
@@ -136,7 +135,10 @@
         "receipts/receipts",
         "feedback/feedback",
         "settings/settings",
-        "invitations/invitations"
+        "invitations/invitations",
+        "membership/membership",
+        "membership/upgrade/upgrade",
+        "membership/invite-history/invite-history"
       ]
     },
     {

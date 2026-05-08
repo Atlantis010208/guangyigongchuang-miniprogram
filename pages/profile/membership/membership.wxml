@@ -1,0 +1,97 @@
+<scroll-view class="page" scroll-y>
+
+  <!-- 未登录占位卡片 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-prompt-card">
+    <image class="login-prompt-avatar" src="/images/个人中心.png" mode="aspectFill"></image>
+    <view class="login-prompt-info">
+      <text class="login-prompt-title">登录后查看会员信息</text>
+      <text class="login-prompt-desc">登录后可开通会员、邀请好友、查看购买记录</text>
+    </view>
+    <button class="login-prompt-btn" bindtap="onGoLogin">登录</button>
+  </view>
+
+  <!-- 已登录内容 -->
+  <block wx:if="{{isLoggedIn}}">
+
+    <!-- 区块 1：用户状态卡片 -->
+    <view class="m-card status-card">
+      <view class="status-row">
+        <image class="status-avatar" src="{{user.avatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
+        <view class="status-info">
+          <text class="status-name">{{user.name || '点击个人中心完善资料'}}</text>
+          <text class="status-label">{{statusLabel}}</text>
+          <text wx:if="{{statusSubtitle}}" class="status-sub">{{statusSubtitle}}</text>
+          <text wx:if="{{showToolkitNote}}" class="status-toolkit-note">含工具包永久权益</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 区块 2：邀请卡片 -->
+    <view class="m-card invite-card">
+      <text class="invite-title">邀请好友 · 免费试用</text>
+      <text class="invite-desc">每邀请 2 位好友注册，获 7 天普通会员试用，无上限叠加</text>
+
+      <view class="invite-code-row">
+        <view class="invite-code-box">
+          <text class="invite-code-label">我的邀请码</text>
+          <text class="invite-code-value">{{membership.inviteCode || '生成中…'}}</text>
+        </view>
+        <button class="invite-copy-btn" bindtap="onCopyInviteCode" hover-class="btn-hover">复制</button>
+      </view>
+
+      <view class="invite-progress-row">
+        <view class="invite-progress-bar">
+          <view class="invite-progress-fill" style="width: {{inviteProgress.percent}}%;"></view>
+        </view>
+        <text class="invite-progress-text">{{inviteProgress.inCycle}} / 2 人</text>
+      </view>
+
+      <text class="invite-stats">累计邀请 {{membership.inviteStats.invitedCount}} 人 · 已得 {{membership.inviteStats.trialDaysGranted}} 天试用</text>
+      <text class="invite-stats">再邀 {{inviteProgress.needed}} 人即可再得 {{inviteProgress.nextRewardDays}} 天</text>
+
+      <button class="invite-share-btn" open-type="share" hover-class="btn-hover-primary">邀请好友</button>
+
+      <view class="invite-link" bindtap="onGoInvitations" hover-class="link-hover">
+        <text>查看邀请记录</text>
+        <text class="arrow">〉</text>
+      </view>
+    </view>
+
+    <!-- 区块 3-A：升级入口卡片（免费用户 / 普通会员） -->
+    <view wx:if="{{showUpgradeEntry}}" class="m-card upgrade-card" bindtap="onGoUpgrade" hover-class="card-hover">
+      <view class="upgrade-info">
+        <text class="upgrade-title">{{upgradeTitle}}</text>
+        <text class="upgrade-sub">{{upgradeSubtitle}}</text>
+      </view>
+      <text class="arrow upgrade-arrow">〉</text>
+    </view>
+
+    <!-- 区块 3-B：续费简版（高级会员） -->
+    <view wx:if="{{showRenewalSimple}}" class="m-card renewal-card" bindtap="onGoRenewal" hover-class="card-hover">
+      <view class="upgrade-info">
+        <text class="upgrade-title">{{renewalText}}</text>
+        <text class="upgrade-sub">点击续费</text>
+      </view>
+      <text class="arrow upgrade-arrow">〉</text>
+    </view>
+
+    <!-- 区块 4：购买记录 -->
+    <view wx:if="{{hasMembershipOrders}}" class="m-card history-card">
+      <text class="history-title">我的购买记录</text>
+      <view class="history-list">
+        <view wx:for="{{history}}" wx:key="orderNo" class="history-item">
+          <text class="history-name">{{item.skuName}}</text>
+          <text class="history-time">{{item.createdLabel}}</text>
+        </view>
+      </view>
+      <view wx:if="{{hasMoreHistory}}" class="history-more" bindtap="onGoOrders" hover-class="link-hover">
+        <text>查看全部</text>
+        <text class="arrow">〉</text>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- 底部留白 -->
+  <view class="page-bottom-spacer"></view>
+</scroll-view>

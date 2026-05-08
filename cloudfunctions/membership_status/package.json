@@ -1,0 +1,9 @@
+{
+  "name": "membership_status",
+  "version": "1.0.0",
+  "description": "查询会员状态 + 首次调用时生成唯一邀请码",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

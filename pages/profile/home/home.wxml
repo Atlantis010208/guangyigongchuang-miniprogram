@@ -24,6 +24,7 @@
       </view>
 
       <view class="cells inline">
+        <view class="cell" bindtap="go" data-url="/pages/profile/membership/membership" hover-class="cell-hover"><text>我的会员</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/cart/cart" hover-class="cell-hover"><text>订单</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/profile/invitations/invitations" hover-class="cell-hover"><text>我的邀请</text><text class="arrow">〉</text></view>
         <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart" hover-class="cell-hover"><text>购物车</text><text class="arrow">〉</text></view>
