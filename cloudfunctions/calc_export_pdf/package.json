@@ -1,0 +1,10 @@
+{
+  "name": "calc_export_pdf",
+  "version": "1.0.0",
+  "description": "把前端 Canvas 报告 PNG 包装成 PDF 文件",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "pdfkit": "^0.13.0"
+  }
+}

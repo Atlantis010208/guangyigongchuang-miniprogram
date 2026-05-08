@@ -3,6 +3,8 @@
  * 用于展示计算结果的详细信息，支持 CSV 导出
  */
 
+const membershipUtil = require('../../../utils/membership.js')
+
 // 5 张照度参考图的云存储 fileID（与 illustrationList 顺序一一对应）
 const ILLUSTRATION_FILE_IDS = [
   'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/lighting-ref/lux-50.jpg',
@@ -131,7 +133,37 @@ Page({
       '计算过程未考虑墙面反射率、家具遮挡、灯具实际光衰等复杂物理因素。',
       '评估结果不代表最终实际落地效果，可能存在一定偏差。',
       '本报告仅作为灯光设计与选型的参考依据，不作为任何法律或商业承诺。'
-    ]
+    ],
+
+    // ====== 导出报告功能状态 ======
+    // 会员状态（用户点击导出按钮时验证）
+    membership: {
+      effectiveLevel: 'free',
+      vipLevel: null,
+      vipExpireAt: null,
+      remainingDays: 0,
+      isLoggedIn: false
+    },
+    // 署名输入弹窗
+    showSignatureModal: false,
+    signatureName: '',      // 设计师姓名
+    signatureStudio: '',    // 工作室 / 公司（可选）
+    // 会员门槛 (paywall) 弹窗 —— 免费用户点「导出报告」时出现
+    showPaywallModal: false,
+    paywallInviteProgress: { inCycle: 0, needed: 2, percent: 0, nextRewardDays: 7 },
+    paywallInvitedTotal: 0,
+    paywallTrialGranted: 0,
+    // 导出后预览弹窗状态
+    showPreviewModal: false,
+    // PDF 临时文件路径（本地，wx.env.USER_DATA_PATH 下）
+    exportedPdfPath: '',
+    // PDF 文件名（含后缀，用于分享消息中显示）
+    exportedPdfFileName: '',
+    // PDF 文件大小的可读文本（如 "512 KB"）
+    exportedPdfSizeText: '',
+    // 导出进行中 Loading
+    exporting: false,
+    exportingText: ''
   },
 
   onLoad(options) {
@@ -304,6 +336,77 @@ Page({
       frontColor: '#000000',
       backgroundColor: '#F8FAFC'
     })
+    // 拉取会员状态（用于导出报告验证）。不阻塞主流程，只需点击时该字段已准备好
+    this._fetchMembership()
+  },
+
+  /**
+   * 拉取当前用户会员状态（仅用于导出权限检查）
+   */
+  _fetchMembership() {
+    membershipUtil.fetchMembershipStatus().then(status => {
+      this.setData({ membership: status })
+      this._refreshPaywallInviteProgress()
+    }).catch(err => {
+      console.warn('[calc-result] 会员状态拉取失败:', err)
+      this.setData({ membership: membershipUtil.getFallbackStatus(false) })
+      this._refreshPaywallInviteProgress()
+    })
+  },
+
+  /**
+   * 同步计算 paywall 弹窗内邀请进度（每次会员状态变化后调用）
+   */
+  _refreshPaywallInviteProgress() {
+    const stats = (this.data.membership && this.data.membership.inviteStats) || {}
+    const invitedCount = Number(stats.invitedCount) || 0
+    this.setData({
+      paywallInviteProgress: membershipUtil.getInviteProgress(invitedCount),
+      paywallInvitedTotal: invitedCount,
+      paywallTrialGranted: Number(stats.trialDaysGranted) || 0
+    })
+  },
+
+  /** 关闭 paywall 弹窗 */
+  onClosePaywall() {
+    this.setData({ showPaywallModal: false })
+  },
+
+  /**
+   * 点击「邀请好友」：button open-type=share 会自动调起微信转发面板，这里仅负责封闭弹窗、提示用户。
+   * 实际分享内容由 onShareAppMessage 返回。
+   */
+  onPaywallInviteTap() {
+    // 需要登录才能获得邀请码，未登录不应出现在这里（但双保险）
+    if (!this.data.membership || !this.data.membership.isLoggedIn) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    // open-type=share 由微信原生接管，这里不需要 navigateTo。
+    // 仅在弹窗关闭后让用户看到当前页面（不主动关闭，避免遮住转发面板）
+    console.log('[calc-result] 点击邀请好友，调起转发面板')
+  },
+
+  /** 点击「开通会员」：关闭弹窗 + 跳转升级页 */
+  onPaywallUpgradeTap() {
+    this.setData({ showPaywallModal: false })
+    wx.navigateTo({ url: '/pages/profile/membership/upgrade/upgrade' })
+  },
+
+  /**
+   * 微信转发面板内容（右上角胶囊菜单 / button open-type=share 都会调这里）
+   * 包含当前用户邀请码参数，好友点击后能被识别为被邀请用户
+   */
+  onShareAppMessage() {
+    const code = (this.data.membership && this.data.membership.inviteCode) || ''
+    const sharePath = code
+      ? `/pages/index/index?inviteCode=${encodeURIComponent(code)}`
+      : '/pages/index/index'
+    return {
+      title: '光乙共创：邀你一起体验专业灯光设计工具',
+      path: sharePath,
+      imageUrl: ''
+    }
   },
 
   // ========== Swiper 切换 ==========
@@ -851,6 +954,937 @@ Page({
   onRecalculate() {
     wx.navigateBack({
       delta: 1
+    })
+  },
+
+  // ============================================================
+  // 导出报告功能
+  // ============================================================
+
+  /**
+   * 点击右上角「导出报告」按钮
+   * 流程：未登录 → 登录引导；免费用户 → 开通会员引导；会员 → ActionSheet 选择「署名 / 直接」
+   */
+  onExportReportTap() {
+    const m = this.data.membership || {}
+
+    // 1. 未登录
+    if (!m.isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '导出报告需要先登录账号',
+        confirmText: '去登录',
+        cancelText: '稍后',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/login/login' })
+          }
+        }
+      })
+      return
+    }
+
+    // 2. 免费用户 → 弹 paywall弹窗（邀请好友 / 开通会员 二选一）
+    if (m.effectiveLevel === 'free') {
+      this._refreshPaywallInviteProgress()
+      this.setData({ showPaywallModal: true })
+      return
+    }
+
+    // 3. 会员 → 选择导出方式
+    wx.showActionSheet({
+      itemList: ['添加署名导出', '直接导出（无署名）'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this.setData({ showSignatureModal: true })
+        } else if (res.tapIndex === 1) {
+          this._exportReport({ signature: null })
+        }
+      }
+    })
+  },
+
+  /** 署名输入：姓名 */
+  onSignatureNameInput(e) {
+    this.setData({ signatureName: (e.detail && e.detail.value) || '' })
+  },
+
+  /** 署名输入：工作室/公司 */
+  onSignatureStudioInput(e) {
+    this.setData({ signatureStudio: (e.detail && e.detail.value) || '' })
+  },
+
+  /** 关闭署名弹窗 */
+  onCloseSignatureModal() {
+    this.setData({ showSignatureModal: false })
+  },
+
+  /** 确认署名导出 */
+  onConfirmSignature() {
+    const name = (this.data.signatureName || '').trim()
+    if (!name) {
+      wx.showToast({ title: '请输入设计师姓名', icon: 'none' })
+      return
+    }
+    const studio = (this.data.signatureStudio || '').trim()
+    this.setData({ showSignatureModal: false })
+    this._exportReport({ signature: { name, studio } })
+  },
+
+  /** 防止点击卡片穿透关闭遮罩 */
+  noop() {},
+
+  /** 关闭预览弹窗 */
+  onClosePreviewModal() {
+    this.setData({ showPreviewModal: false })
+  },
+
+  /**
+   * 主入口：
+   * 流程完整是「Canvas 绘制 PNG → 上传云存储 → 调用云函数包装为 PDF → 下载 PDF 临时文件」
+   * 最终弹出预览弹窗（包含「打开预览」/「分享给好友」两个动作）
+   */
+  _exportReport({ signature }) {
+    console.log('[calc-result] _exportReport 入参 signature =', JSON.stringify(signature))
+    this.setData({ exporting: true, exportingText: '正在绘制报告...' })
+    // 等下一帧确保 Loading 渲染出来
+    setTimeout(() => {
+      this._renderReportCanvas({ signature })
+        .then(pngTempPath => {
+          this.setData({ exportingText: '正在生成 PDF...' })
+          return this._convertPngToPdf(pngTempPath)
+        })
+        .then((pdfInfo) => {
+          this.setData({
+            exporting: false,
+            exportedPdfPath: pdfInfo.localPath,
+            exportedPdfFileName: pdfInfo.fileName,
+            exportedPdfSizeText: pdfInfo.sizeText,
+            showPreviewModal: true
+          })
+        })
+        .catch(err => {
+          console.error('[calc-result] 导出报告失败:', err)
+          this.setData({ exporting: false })
+          const msg = (err && (err.errMsg || err.message)) || '未知错误'
+          wx.showToast({
+            title: '导出失败：' + msg,
+            icon: 'none',
+            duration: 3000
+          })
+        })
+    }, 80)
+  },
+
+  /**
+   * PNG 临时文件 → 上传云存储 → 调用 calc_export_pdf 云函数 → 下载 PDF 临时文件
+   * 返回 { localPath, fileName, sizeText, sizeBytes }
+   */
+  _convertPngToPdf(pngLocalPath) {
+    if (!wx.cloud || !wx.cloud.callFunction) {
+      return Promise.reject(new Error('当前环境不支持云开发'))
+    }
+
+    const dateStr = this._formatDateCompact(new Date())
+    const baseName = `照度评估报告_${dateStr}`
+    const cloudPng = `calc-reports/png/${Date.now()}_${baseName}.png`
+
+    return new Promise((resolve, reject) => {
+      // 1. 上传 PNG 到云存储
+      wx.cloud.uploadFile({
+        cloudPath: cloudPng,
+        filePath: pngLocalPath,
+        success: (uploadRes) => {
+          const imageFileID = uploadRes.fileID
+          // 2. 调用云函数包装为 PDF
+          wx.cloud.callFunction({
+            name: 'calc_export_pdf',
+            data: {
+              imageFileID: imageFileID,
+              fileName: baseName
+            },
+            success: (cfRes) => {
+              const r = cfRes && cfRes.result
+              if (!r || !r.success || !r.data || !r.data.pdfFileID) {
+                reject(new Error((r && r.errorMessage) || 'PDF 生成失败'))
+                return
+              }
+              // 3. 下载 PDF 到本地临时文件
+              wx.cloud.downloadFile({
+                fileID: r.data.pdfFileID,
+                success: (dlRes) => {
+                  const localPath = dlRes.tempFilePath
+                  resolve({
+                    localPath: localPath,
+                    fileName: r.data.fileName || (baseName + '.pdf'),
+                    sizeBytes: r.data.size || 0,
+                    sizeText: this._formatFileSize(r.data.size || 0)
+                  })
+                },
+                fail: (err) => reject(err)
+              })
+            },
+            fail: (err) => reject(err)
+          })
+        },
+        fail: (err) => reject(err)
+      })
+    })
+  },
+
+  /** 将字节数转为可读文本（KB / MB） */
+  _formatFileSize(bytes) {
+    if (!bytes || bytes <= 0) return '0 KB'
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB'
+  },
+
+  /**
+   * 调用 SelectorQuery 拿到 canvas 节点 → 绘制 → 输出临时图片
+   */
+  _renderReportCanvas({ signature }) {
+    return new Promise((resolve, reject) => {
+      const query = wx.createSelectorQuery()
+      query.select('#reportCanvas')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (!res || !res[0] || !res[0].node) {
+            reject(new Error('canvas 节点获取失败'))
+            return
+          }
+
+          const canvas = res[0].node
+          const ctx = canvas.getContext('2d')
+          // 关键：限制 dpr 最大为 2，避免高端 iPhone（dpr=3）导致 native buffer 超过 ~100MB 限制
+          // 1080 * 2 * 4500 * 2 * 4 ≈ 78MB（安全）
+          const rawDpr = (wx.getSystemInfoSync && wx.getSystemInfoSync().pixelRatio) || 2
+          const dpr = Math.min(rawDpr, 2)
+          const designWidth = 1080
+          // 足够大的缓冲高度（实测含署名版本 actualHeight 可达 ~3930），4500 留 ~570 余量
+          const designHeight = 4500
+
+          canvas.width = designWidth * dpr
+          canvas.height = designHeight * dpr
+          ctx.scale(dpr, dpr)
+          console.log('[calc-result] canvas size:', canvas.width, 'x', canvas.height, ', dpr=', dpr, '(raw=', rawDpr, '), designHeight=', designHeight)
+
+          let actualHeight
+          try {
+            actualHeight = this._drawReport(ctx, designWidth, signature)
+          } catch (err) {
+            console.error('[calc-result] _drawReport 异常:', err)
+            reject(err)
+            return
+          }
+
+          console.log('[calc-result] _drawReport 完成，actualHeight =', actualHeight)
+          if (actualHeight > designHeight) {
+            console.warn('[calc-result] ⚠️ actualHeight(', actualHeight, ') 超出 designHeight(', designHeight, ')，底部内容会被截断！')
+          }
+
+          // 输出 PNG 临时文件：仅截取实际绘制的高度
+          // 后续会被 _convertPngToPdf 上传到云存储 → 云函数包装为 PDF
+          wx.canvasToTempFilePath({
+            canvas: canvas,
+            x: 0,
+            y: 0,
+            width: designWidth,
+            height: actualHeight,
+            destWidth: designWidth * dpr,
+            destHeight: actualHeight * dpr,
+            fileType: 'png',
+            quality: 1,
+            success: (r) => resolve(r.tempFilePath),
+            fail: (err) => reject(err)
+          })
+        })
+    })
+  },
+
+  /**
+   * 主绘制函数：按段落逐步绘制，返回最终 y 坐标（即图片实际高度）
+   */
+  _drawReport(ctx, W, signature) {
+    const {
+      coverParams,
+      coreResult,
+      detailData,
+      riskData,
+      energyData,
+      disclaimerItems
+    } = this.data
+
+    // 背景
+    ctx.fillStyle = '#F8FAFC'
+    ctx.fillRect(0, 0, W, 3500)
+
+    let y = 80
+
+    y = this._drawTopBrand(ctx, W, y)
+    y = this._drawHeroTitle(ctx, W, y)
+    y = this._drawCoreConclusion(ctx, W, y, coreResult)
+    y = this._drawInfoCard(ctx, W, y, coverParams)
+    y = this._drawDetailData(ctx, W, y, detailData)
+    y = this._drawRiskSection(ctx, W, y, riskData)
+    y = this._drawEnergySection(ctx, W, y, energyData)
+    y = this._drawDisclaimer(ctx, W, y, disclaimerItems)
+    y = this._drawSignature(ctx, W, y, signature)
+    y = this._drawFooter(ctx, W, y)
+
+    return Math.ceil(y + 40) // 底部留白
+  },
+
+  // ====== Canvas 工具方法 ======
+
+  /** 圆角矩形路径（不 fill / stroke，调用方自决） */
+  _roundRect(ctx, x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2
+    if (h < 2 * r) r = h / 2
+    ctx.beginPath()
+    ctx.moveTo(x + r, y)
+    ctx.arcTo(x + w, y, x + w, y + h, r)
+    ctx.arcTo(x + w, y + h, x, y + h, r)
+    ctx.arcTo(x, y + h, x, y, r)
+    ctx.arcTo(x, y, x + w, y, r)
+    ctx.closePath()
+  },
+
+  /** 简单换行：按容器宽度切分中文 / 英文混合文本 */
+  _wrapTextLines(ctx, text, maxWidth) {
+    const lines = []
+    let line = ''
+    const str = String(text || '')
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i]
+      const test = line + ch
+      const w = ctx.measureText(test).width
+      if (w > maxWidth && line) {
+        lines.push(line)
+        line = ch
+      } else {
+        line = test
+      }
+    }
+    if (line) lines.push(line)
+    return lines
+  },
+
+  // ====== 各 section 绘制（返回新的 y 坐标） ======
+
+  _drawTopBrand(ctx, W, y) {
+    const PADDING = 60
+    // 左侧：品牌名
+    ctx.fillStyle = '#1E293B'
+    ctx.font = 'bold 32px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('光乙照明', PADDING, y + 16)
+    // 副标
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '20px PingFang SC, system-ui, sans-serif'
+    ctx.fillText('GUANGYI · 长期居住光环境研究', PADDING, y + 50)
+
+    // 右侧：报告类型 tag
+    const tagText = '照度评估'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    const tagW = ctx.measureText(tagText).width + 32
+    const tagX = W - PADDING - tagW
+    const tagY = y + 4
+    ctx.fillStyle = '#1E293B'
+    this._roundRect(ctx, tagX, tagY, tagW, 36, 18)
+    ctx.fill()
+    ctx.fillStyle = '#FFFFFF'
+    ctx.textAlign = 'center'
+    ctx.fillText(tagText, tagX + tagW / 2, tagY + 18)
+
+    return y + 90
+  },
+
+  _drawHeroTitle(ctx, W, y) {
+    const PADDING = 60
+    y += 30
+    ctx.fillStyle = '#0F172A'
+    ctx.font = 'bold 84px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
+    ctx.fillText('住宅空间', PADDING, y)
+    y += 100
+    ctx.fillText('照度评估报告', PADDING, y)
+    y += 110
+
+    ctx.fillStyle = '#64748B'
+    ctx.font = '28px PingFang SC, system-ui, sans-serif'
+    ctx.fillText('基于国家建筑照明设计标准自动生成', PADDING, y)
+    y += 60
+    return y
+  },
+
+  _drawCoreConclusion(ctx, W, y, coreResult) {
+    if (!coreResult) return y
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const cardH = 320
+    const cardX = PADDING
+
+    ctx.fillStyle = '#FFFFFF'
+    this._roundRect(ctx, cardX, y, cardW, cardH, 24)
+    ctx.fill()
+
+    const isQualified = !!coreResult.isQualified
+    const accentColor = isQualified ? '#10B981' : '#F59E0B'
+
+    // 左侧状态条
+    ctx.fillStyle = accentColor
+    this._roundRect(ctx, cardX, y, 8, cardH, 4)
+    ctx.fill()
+
+    // 标题（左上）
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
+    ctx.fillText('核心结论', cardX + 50, y + 36)
+
+    // 大数字 + 单位
+    const luxValue = coreResult.luxValue || 0
+    const luxText = String(luxValue)
+    ctx.fillStyle = '#0F172A'
+    ctx.font = 'bold 130px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    const luxX = cardX + 50
+    const luxY = y + 130
+    ctx.fillText(luxText, luxX, luxY)
+    const luxW = ctx.measureText(luxText).width
+
+    ctx.fillStyle = '#64748B'
+    ctx.font = '36px PingFang SC, system-ui, sans-serif'
+    ctx.fillText('lx', luxX + luxW + 12, luxY + 28)
+
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.fillText('平均照度 (Eavg)', luxX, y + 200)
+
+    // 状态标签
+    const statusText = coreResult.statusText || ''
+    if (statusText) {
+      const tagY = y + 240
+      ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+      const tagW = ctx.measureText(statusText).width + 56
+      ctx.fillStyle = isQualified ? 'rgba(16, 185, 129, 0.10)' : 'rgba(245, 158, 11, 0.12)'
+      this._roundRect(ctx, luxX, tagY, tagW, 56, 28)
+      ctx.fill()
+      ctx.fillStyle = accentColor
+      ctx.textBaseline = 'middle'
+      ctx.fillText(statusText, luxX + 28, tagY + 28)
+    }
+
+    // 国标区间（右上）
+    const stdText = coreResult.standardText || ''
+    if (stdText) {
+      ctx.fillStyle = '#94A3B8'
+      ctx.font = '22px PingFang SC, system-ui, sans-serif'
+      ctx.textBaseline = 'top'
+      ctx.textAlign = 'right'
+      ctx.fillText('国家建议标准', cardX + cardW - 40, y + 36)
+      ctx.fillStyle = '#1E293B'
+      ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+      ctx.fillText(stdText, cardX + cardW - 40, y + 70)
+    }
+
+    return y + cardH + 40
+  },
+
+  _drawInfoCard(ctx, W, y, coverParams) {
+    if (!coverParams || coverParams.length === 0) return y
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const rowH = 70
+    const headerH = 70
+    const cardH = headerH + coverParams.length * rowH + 30
+    const cardX = PADDING
+
+    ctx.fillStyle = '#FFFFFF'
+    this._roundRect(ctx, cardX, y, cardW, cardH, 24)
+    ctx.fill()
+
+    // 标题
+    ctx.fillStyle = '#1E293B'
+    ctx.font = 'bold 28px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('项目信息', cardX + 40, y + 38)
+
+    // 行
+    let rowY = y + headerH
+    coverParams.forEach((item, idx) => {
+      if (idx > 0) {
+        ctx.strokeStyle = '#F1F5F9'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(cardX + 40, rowY)
+        ctx.lineTo(cardX + cardW - 40, rowY)
+        ctx.stroke()
+      }
+      // label
+      ctx.fillStyle = '#64748B'
+      ctx.font = '26px PingFang SC, system-ui, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText(item.label || '', cardX + 40, rowY + rowH / 2)
+      // value
+      ctx.fillStyle = '#0F172A'
+      ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+      ctx.textAlign = 'right'
+      ctx.fillText(item.value || '', cardX + cardW - 40, rowY + rowH / 2)
+      rowY += rowH
+    })
+
+    return y + cardH + 40
+  },
+
+  _drawDetailData(ctx, W, y, detailData) {
+    if (!detailData) return y
+    const inputs = detailData.inputParams || []
+    const calcs = detailData.calcResults || []
+    if (!inputs.length && !calcs.length) return y
+
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const cardX = PADDING
+    const headerH = 70
+    const subTitleH = 40
+    const rowH = 64
+    const innerPad = 30
+    const cardH = headerH +
+      (inputs.length > 0 ? (subTitleH + inputs.length * rowH) : 0) +
+      (calcs.length > 0 ? (subTitleH + calcs.length * rowH) : 0) +
+      innerPad
+
+    ctx.fillStyle = '#FFFFFF'
+    this._roundRect(ctx, cardX, y, cardW, cardH, 24)
+    ctx.fill()
+
+    ctx.fillStyle = '#1E293B'
+    ctx.font = 'bold 28px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('详细计算数据', cardX + 40, y + 38)
+
+    let rowY = y + headerH
+
+    if (inputs.length > 0) {
+      ctx.fillStyle = '#3B82F6'
+      ctx.font = 'bold 22px PingFang SC, system-ui, sans-serif'
+      ctx.fillText('● 输入参数', cardX + 40, rowY + 16)
+      rowY += subTitleH
+
+      inputs.forEach((item) => {
+        ctx.fillStyle = '#64748B'
+        ctx.font = '26px PingFang SC, system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        ctx.fillText(item.label || '', cardX + 60, rowY + rowH / 2)
+        ctx.fillStyle = '#0F172A'
+        ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+        ctx.textAlign = 'right'
+        ctx.fillText(item.value || '', cardX + cardW - 40, rowY + rowH / 2)
+        rowY += rowH
+      })
+    }
+
+    if (calcs.length > 0) {
+      ctx.fillStyle = '#10B981'
+      ctx.font = 'bold 22px PingFang SC, system-ui, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText('● 计算结果', cardX + 40, rowY + 16)
+      rowY += subTitleH
+
+      calcs.forEach((item) => {
+        ctx.fillStyle = '#64748B'
+        ctx.font = '26px PingFang SC, system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        ctx.fillText(item.label || '', cardX + 60, rowY + rowH / 2)
+        ctx.fillStyle = item.highlight ? '#10B981' : '#0F172A'
+        ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+        ctx.textAlign = 'right'
+        ctx.fillText(item.value || '', cardX + cardW - 40, rowY + rowH / 2)
+        rowY += rowH
+      })
+    }
+
+    return y + cardH + 40
+  },
+
+  _drawRiskSection(ctx, W, y, riskData) {
+    if (!riskData) return y
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const cardX = PADDING
+    const headerH = 110
+    const subTitleH = 40
+    const itemLineH = 36
+    const itemGap = 12
+    const lineMaxWidth = cardW - 100
+
+    const impacts = riskData.impacts || []
+    const suggestions = riskData.suggestions || []
+
+    // 估算高度
+    ctx.font = '24px PingFang SC, system-ui, sans-serif'
+    let estH = headerH
+    estH += subTitleH
+    impacts.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      estH += lines.length * itemLineH + itemGap
+    })
+    estH += subTitleH
+    suggestions.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      estH += lines.length * itemLineH + itemGap
+    })
+    estH += 30
+
+    // 卡片
+    ctx.fillStyle = '#FFFFFF'
+    this._roundRect(ctx, cardX, y, cardW, estH, 24)
+    ctx.fill()
+
+    const isQualified = !!riskData.isQualified
+    const accentColor = isQualified ? '#10B981' : '#F59E0B'
+    ctx.fillStyle = accentColor
+    this._roundRect(ctx, cardX, y, 8, estH, 4)
+    ctx.fill()
+
+    ctx.fillStyle = '#1E293B'
+    ctx.font = 'bold 28px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('风险与舒适度分析', cardX + 40, y + 38)
+
+    const statusLabel = riskData.statusLabel || ''
+    if (statusLabel) {
+      ctx.fillStyle = accentColor
+      ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+      ctx.fillText('状态：' + statusLabel, cardX + 40, y + 80)
+    }
+
+    let rowY = y + headerH
+
+    // 长期影响
+    ctx.fillStyle = '#3B82F6'
+    ctx.font = 'bold 22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('● 长期影响', cardX + 40, rowY + 16)
+    rowY += subTitleH
+
+    impacts.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      lines.forEach(line => {
+        ctx.fillStyle = '#475569'
+        ctx.font = '24px PingFang SC, system-ui, sans-serif'
+        ctx.textBaseline = 'top'
+        ctx.fillText(line, cardX + 60, rowY)
+        rowY += itemLineH
+      })
+      rowY += itemGap
+    })
+
+    // 优化建议
+    ctx.fillStyle = '#10B981'
+    ctx.font = 'bold 22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('● 优化建议', cardX + 40, rowY + 16)
+    rowY += subTitleH
+
+    suggestions.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      lines.forEach(line => {
+        ctx.fillStyle = '#475569'
+        ctx.font = '24px PingFang SC, system-ui, sans-serif'
+        ctx.textBaseline = 'top'
+        ctx.fillText(line, cardX + 60, rowY)
+        rowY += itemLineH
+      })
+      rowY += itemGap
+    })
+
+    return y + estH + 40
+  },
+
+  _drawEnergySection(ctx, W, y, energyData) {
+    if (!energyData) return y
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const cardX = PADDING
+    const cardH = 280
+
+    ctx.fillStyle = '#FFFFFF'
+    this._roundRect(ctx, cardX, y, cardW, cardH, 24)
+    ctx.fill()
+
+    ctx.fillStyle = '#1E293B'
+    ctx.font = 'bold 28px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('节能与能耗参考', cardX + 40, y + 38)
+
+    // 当前 vs 国标
+    const halfW = (cardW - 80) / 2
+    const dataY = y + 100
+
+    // 当前
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
+    ctx.fillText('当前功率密度', cardX + 40, dataY)
+
+    ctx.fillStyle = '#0F172A'
+    ctx.font = 'bold 56px PingFang SC, system-ui, sans-serif'
+    const curText = String(energyData.currentDensity || '0')
+    ctx.fillText(curText, cardX + 40, dataY + 36)
+    const curW = ctx.measureText(curText).width
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '24px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'alphabetic'
+    ctx.fillText('W/㎡', cardX + 40 + curW + 12, dataY + 36 + 50)
+
+    // 国标
+    const stdX = cardX + 40 + halfW
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.fillText('国家标准上限', stdX, dataY)
+
+    ctx.fillStyle = '#10B981'
+    ctx.font = 'bold 56px PingFang SC, system-ui, sans-serif'
+    const stdLabel = '≤ ' + (energyData.standardDensity || '0')
+    ctx.fillText(stdLabel, stdX, dataY + 36)
+
+    // 评估描述
+    if (energyData.assessTitle) {
+      ctx.fillStyle = '#475569'
+      ctx.font = 'bold 24px PingFang SC, system-ui, sans-serif'
+      ctx.textBaseline = 'top'
+      ctx.fillText(energyData.assessTitle, cardX + 40, y + cardH - 60)
+    }
+
+    return y + cardH + 40
+  },
+
+  _drawDisclaimer(ctx, W, y, items) {
+    if (!items || items.length === 0) return y
+    const PADDING = 60
+    const cardW = W - PADDING * 2
+    const cardX = PADDING
+    const headerH = 60
+    const lineH = 32
+    const itemGap = 8
+    const lineMaxWidth = cardW - 80
+
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    let estH = headerH
+    items.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      estH += lines.length * lineH + itemGap
+    })
+    estH += 20
+
+    ctx.fillStyle = '#F1F5F9'
+    this._roundRect(ctx, cardX, y, cardW, estH, 16)
+    ctx.fill()
+
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = 'bold 24px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'left'
+    ctx.fillText('免责声明', cardX + 40, y + 30)
+
+    let rowY = y + headerH
+    items.forEach(item => {
+      const lines = this._wrapTextLines(ctx, '· ' + item, lineMaxWidth)
+      lines.forEach(line => {
+        ctx.fillStyle = '#94A3B8'
+        ctx.font = '22px PingFang SC, system-ui, sans-serif'
+        ctx.textBaseline = 'top'
+        ctx.textAlign = 'left'
+        ctx.fillText(line, cardX + 40, rowY)
+        rowY += lineH
+      })
+      rowY += itemGap
+    })
+
+    return y + estH + 40
+  },
+
+  /**
+   * 署名区域：居中、专业、大号
+   * 有署名时输出：
+   *   ── 装饰短线 ──
+   *   —— 报告出具：xxx 工作室   （大号粗体居中）
+   *   设计师 · 张三              （可选，仅当同时有 name 和 studio）
+   *   2026 年 05 月 07 日        （中文日期居中）
+   * 无署名时直接跳过此区域，由 _drawFooter 统一展示「报告编号 / 生成时间」
+   */
+  _drawSignature(ctx, W, y, signature) {
+    console.log('[calc-result] _drawSignature 调用，signature =', JSON.stringify(signature), ', 当前 y =', y)
+    if (!signature || !signature.name) {
+      console.log('[calc-result] _drawSignature 跳过（无署名）')
+      return y
+    }
+
+    // 顶部留白
+    y += 40
+
+    // 装饰短线（居中、细线，模拟「——」分隔感）
+    ctx.strokeStyle = '#CBD5E1'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(W / 2 - 70, y)
+    ctx.lineTo(W / 2 + 70, y)
+    ctx.stroke()
+    y += 56
+
+    // 主标题：「—— 报告出具：xxx」
+    // 显示优先级：studio > name（用户给的样例「张先生工作室」是 studio）
+    const mainText = signature.studio || signature.name
+    ctx.fillStyle = '#0F172A'
+    ctx.font = 'bold 44px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'center'
+    ctx.fillText('—— 报告出具：' + mainText, W / 2, y)
+    y += 70
+
+    // 副标题：如果同时有 name 和 studio，附带显示「设计师 · 张三」
+    if (signature.studio && signature.name) {
+      ctx.fillStyle = '#64748B'
+      ctx.font = '26px PingFang SC, system-ui, sans-serif'
+      ctx.fillText('设计师 · ' + signature.name, W / 2, y)
+      y += 50
+    }
+
+    // 日期（中文格式：2026 年 05 月 07 日）
+    ctx.fillStyle = '#475569'
+    ctx.font = '28px PingFang SC, system-ui, sans-serif'
+    ctx.fillText(this._formatTodayCN(), W / 2, y)
+    y += 60
+
+    return y
+  },
+
+  /**
+   * 页脚：品牌讯 + 报告编号 + 生成时间
+   * 不论是否有署名，统一在底部展示这块信息（视觉一致性）
+   */
+  _drawFooter(ctx, W, y) {
+    const PADDING = 60
+    y += 30
+
+    // 长分割线
+    ctx.strokeStyle = '#E2E8F0'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(PADDING, y)
+    ctx.lineTo(W - PADDING, y)
+    ctx.stroke()
+    y += 36
+
+    // 品牌名（中等字号、居中）
+    ctx.fillStyle = '#475569'
+    ctx.font = 'bold 26px PingFang SC, system-ui, sans-serif'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'center'
+    ctx.fillText('光乙照明研究系统', W / 2, y)
+    y += 40
+
+    // 副标（小字、居中）
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.fillText('二哥灯光设计 · 专注长期居住的光环境研究', W / 2, y)
+    y += 50
+
+    // 报告编号（左）+ 生成时间（右）—— 小字、灰色
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '22px PingFang SC, system-ui, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.fillText('报告编号：' + this._getReportNo(), PADDING, y)
+    ctx.textAlign = 'right'
+    ctx.fillText('生成时间：' + this._formatToday(), W - PADDING, y)
+    y += 40
+
+    return y
+  },
+
+  /** 取报告号（优先取 coverParams 里现成的，否则按当前时间生成） */
+  _getReportNo() {
+    const cps = this.data.coverParams || []
+    const hit = cps.find(c => c && c.label && c.label.indexOf('报告') !== -1)
+    if (hit && hit.value) return hit.value
+    const now = new Date()
+    const d = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+    return 'REP-' + d + '-' + String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')
+  },
+
+  /** 取当日日期 'YYYY.MM.DD' */
+  _formatToday() {
+    const now = new Date()
+    return `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
+  },
+
+  /** 取当日日期中文格式 '2026 年 05 月 07 日' */
+  _formatTodayCN() {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+    return `${y} 年 ${m} 月 ${d} 日`
+  },
+
+  // ========== PDF 预览 / 分享 ==========
+
+  /**
+   * 打开 PDF 预览（调起微信内置 PDF 查看器）
+   */
+  onOpenPdf() {
+    const filePath = this.data.exportedPdfPath
+    if (!filePath) return
+    wx.showLoading({ title: '打开中...' })
+    wx.openDocument({
+      filePath: filePath,
+      fileType: 'pdf',
+      showMenu: true,
+      success: () => {
+        wx.hideLoading()
+      },
+      fail: (err) => {
+        wx.hideLoading()
+        console.error('[calc-result] 打开 PDF 失败:', err)
+        wx.showToast({ title: '打开失败，请重试', icon: 'none' })
+      }
+    })
+  },
+
+  /**
+   * 分享 PDF 给好友（作为文件发送，接收方可保存到聊天/邮箱/电脑）
+   */
+  onSharePdf() {
+    const filePath = this.data.exportedPdfPath
+    const fileName = this.data.exportedPdfFileName || '照度评估报告.pdf'
+    if (!filePath) return
+
+    wx.shareFileMessage({
+      filePath: filePath,
+      fileName: fileName,
+      success: () => {
+        wx.showToast({ title: '已发送', icon: 'success' })
+      },
+      fail: (err) => {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') !== -1) return
+        console.error('[calc-result] 分享文件失败:', err)
+        wx.showToast({ title: '分享失败，请重试', icon: 'none' })
+      }
     })
   }
 })
