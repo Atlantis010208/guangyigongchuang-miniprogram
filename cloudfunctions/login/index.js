@@ -24,6 +24,218 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const INVITE_REWARD_EVERY = 2
+const INVITE_REWARD_DAYS = 7
+// 注意：现有 invitations 集合已被设计师邀请工单系统占用，会员邀请奖励单独使用 member_invitations 集合
+const INVITATIONS_COLLECTION = 'member_invitations'
+
+function normalizeInviteCode(code) {
+  return String(code || '').trim().toUpperCase()
+}
+
+/**
+ * 判断错误是否为唯一索引冲突（DB 唯一索引或 Mongo dup key）
+ */
+function isDuplicateKeyError(e) {
+  if (!e) return false
+  const code = e.errCode || e.code
+  if (code === -502002 || code === 11000) return true
+  const msg = String(e.message || '').toLowerCase()
+  return msg.includes('dup key') || msg.includes('duplicate key')
+}
+
+/**
+ * 构造 invitations 集合写入的初始文档（不含 _id）
+ */
+function buildInvitationDoc({ inviterUserId, inviterOpenid, inviteCode, invitedUserId, invitedOpenid, invitedSnapshot, now }) {
+  const snap = invitedSnapshot || {}
+  return {
+    inviterUserId,
+    inviterOpenid,
+    inviteCode,
+    invitedUserId,
+    invitedOpenid,
+    invitedNickname: snap.nickname || '',
+    invitedAvatarUrl: snap.avatarUrl || '',
+    createdAt: now,
+    rewardGranted: false,
+    rewardDays: 0,
+    // 初始空对象。事务 update 时云开发数据库会把嵌套对象按点号路径合并；
+    // 若初始为 null，则会因 PathNotViable 拒绝在 null 上创建子字段，事务整体回滚。
+    rewardSnapshot: {},
+    errorCode: '',
+    errorMessage: ''
+  }
+}
+
+/**
+ * 邀请奖励发放（重构：事务 + 唯一索引幂等）
+ *
+ * 步骤：
+ *   1. 归一化邀请码，校验邀请人存在 / 非自邀
+ *   2. 写入 invitations 记录（依赖 idx_invitedUserId_unique 保证幂等）
+ *   3. 在事务内重新读取邀请人 → 计算阈值 → 同步更新邀请人字段与邀请记录奖励快照
+ *   4. 事务外更新被邀请人 invitedBy/invitedByUserId/inviteCodeUsed/invitedAt
+ *
+ * 任意失败都不会让 login 失败，仅返回 inviteReward.code 体现失败原因。
+ *
+ * @param {*} db cloud.database()
+ * @param {string} inviteCode 邀请码（来源：分享路径透传 → pendingInviteCode）
+ * @param {string} invitedOpenid 被邀请人 openid
+ * @param {string} invitedUserId 被邀请人 users._id
+ * @param {{ nickname?: string, avatarUrl?: string }} invitedSnapshot 被邀请人快照（用于审计与列表展示）
+ * @param {number} now 当前时间戳
+ * @returns {{ applied: boolean, code: string, rewardDays?: number, inviterId?: string, message?: string }}
+ */
+async function applyInviteReward(db, inviteCode, invitedOpenid, invitedUserId, invitedSnapshot, now) {
+  const code = normalizeInviteCode(inviteCode)
+  if (!code || !invitedOpenid || !invitedUserId) {
+    return { applied: false, code: 'INVALID_PARAMS' }
+  }
+
+  // Step 1: 查邀请人 + 自邀检查
+  let inviter = null
+  try {
+    const inviterRes = await db.collection('users').where({ inviteCode: code }).limit(1).get()
+    inviter = inviterRes.data && inviterRes.data[0]
+  } catch (e) {
+    console.warn('[login][invite] 查询邀请人失败:', e.message)
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: e.message }
+  }
+
+  if (!inviter) {
+    return { applied: false, code: 'INVITE_CODE_NOT_FOUND' }
+  }
+  if (inviter._openid === invitedOpenid || inviter._id === invitedUserId) {
+    return { applied: false, code: 'INVITE_SELF_FORBIDDEN' }
+  }
+
+  // Step 2: 写 invitations 记录（依赖 idx_invitedUserId_unique 唯一索引）
+  let invitationId = ''
+  try {
+    const addRes = await db.collection(INVITATIONS_COLLECTION).add({
+      data: buildInvitationDoc({
+        inviterUserId: inviter._id,
+        inviterOpenid: inviter._openid,
+        inviteCode: code,
+        invitedUserId,
+        invitedOpenid,
+        invitedSnapshot,
+        now
+      })
+    })
+    invitationId = addRes && addRes._id ? addRes._id : ''
+  } catch (e) {
+    if (isDuplicateKeyError(e)) {
+      return { applied: false, code: 'INVITE_ALREADY_BOUND' }
+    }
+    console.warn('[login][invite] 写入 invitations 失败:', e.message)
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: e.message }
+  }
+
+  if (!invitationId) {
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: '邀请记录写入未返回 _id' }
+  }
+
+  // Step 3: 事务内同步更新邀请人 + 邀请记录奖励快照
+  const result = { applied: true, code: 'OK', rewardDays: 0, inviterId: inviter._id }
+  try {
+    await db.runTransaction(async (tx) => {
+      const inviterRef = tx.collection('users').doc(inviter._id)
+      const fresh = await inviterRef.get()
+      if (!fresh || !fresh.data) {
+        const err = new Error('inviter gone')
+        err.code = 'INVITE_INVITER_GONE'
+        throw err
+      }
+
+      const u = fresh.data
+      const stats = u.inviteStats || {}
+      const beforeCount = Number(stats.invitedCount) || 0
+      const beforeLastReward = Number(stats.lastRewardCount) || 0
+      const beforeTrialDays = Number(stats.trialDaysGranted) || 0
+      const newCount = beforeCount + 1
+      const shouldGrant =
+        Math.floor(newCount / INVITE_REWARD_EVERY) >
+        Math.floor(beforeLastReward / INVITE_REWARD_EVERY)
+
+      const updateInviter = {
+        'inviteStats.invitedCount': newCount,
+        updatedAt: now
+      }
+
+      let rewardSnapshot = null
+      if (shouldGrant) {
+        const beforeVip = Number(u.vipExpireAt) || 0
+        const beforeGallery = Number(u.galleryTrialExpireAt) || 0
+        const vipBase = beforeVip > now ? beforeVip : now
+        const galleryBase = beforeGallery > now ? beforeGallery : now
+        const afterVip = vipBase + INVITE_REWARD_DAYS * ONE_DAY_MS
+        const afterGallery = galleryBase + INVITE_REWARD_DAYS * ONE_DAY_MS
+
+        updateInviter['inviteStats.trialDaysGranted'] = beforeTrialDays + INVITE_REWARD_DAYS
+        updateInviter['inviteStats.lastRewardCount'] = newCount
+        updateInviter.vipExpireAt = afterVip
+        updateInviter.galleryTrialExpireAt = afterGallery
+        updateInviter.vipUpdatedAt = now
+        // 等级保护：仅未过期的 premium 保持 premium，否则降到 normal（普通会员试用）
+        if (!(u.vipLevel === 'premium' && beforeVip > now)) {
+          updateInviter.vipLevel = 'normal'
+        }
+        result.rewardDays = INVITE_REWARD_DAYS
+        rewardSnapshot = {
+          beforeInvitedCount: beforeCount,
+          afterInvitedCount: newCount,
+          beforeVipExpireAt: beforeVip,
+          afterVipExpireAt: afterVip,
+          beforeGalleryTrialExpireAt: beforeGallery,
+          afterGalleryTrialExpireAt: afterGallery
+        }
+      }
+
+      await inviterRef.update({ data: updateInviter })
+      await tx.collection(INVITATIONS_COLLECTION).doc(invitationId).update({
+        data: {
+          rewardGranted: shouldGrant,
+          rewardDays: shouldGrant ? INVITE_REWARD_DAYS : 0,
+          rewardSnapshot
+        }
+      })
+    })
+  } catch (e) {
+    const errCode = e && e.code === 'INVITE_INVITER_GONE' ? 'INVITE_INVITER_GONE' : 'INVITE_REWARD_FAILED'
+    console.warn('[login][invite] 事务执行失败:', errCode, e && e.message)
+    try {
+      await db.collection(INVITATIONS_COLLECTION).doc(invitationId).update({
+        data: {
+          errorCode: errCode,
+          errorMessage: (e && e.message) || ''
+        }
+      })
+    } catch (markErr) {
+      console.warn('[login][invite] 标记失败 invitations 记录失败:', markErr && markErr.message)
+    }
+    return { applied: false, code: errCode, message: e && e.message }
+  }
+
+  // Step 4: 更新被邀请人字段（事务外，失败仅记日志）
+  try {
+    await db.collection('users').doc(invitedUserId).update({
+      data: {
+        invitedBy: inviter._openid,
+        invitedByUserId: inviter._id,
+        inviteCodeUsed: code,
+        invitedAt: now,
+        updatedAt: now
+      }
+    })
+  } catch (e) {
+    console.warn('[login][invite] 更新被邀请人字段失败:', e && e.message)
+  }
+
+  return result
+}
 
 /**
  * 生成订单号
@@ -563,6 +775,7 @@ exports.main = async (event) => {
     let user
     let whitelistResult = null
     let toolkitWhitelistResult = null
+    let inviteRewardResult = null
 
     // 仅验证模式：检查用户是否存在且登录未过期
     if (verifyOnly) {
@@ -738,6 +951,25 @@ exports.main = async (event) => {
       console.log('新用户创建成功，docId:', docId)
       
       if (docId) {
+        if (event && event.inviteCode) {
+          try {
+            inviteRewardResult = await applyInviteReward(
+              db,
+              event.inviteCode,
+              openid,
+              docId,
+              { nickname, avatarUrl },
+              now
+            )
+          } catch (inviteErr) {
+            console.warn('[login][invite] 邀请奖励处理失败（兜底）:', inviteErr && inviteErr.message)
+            inviteRewardResult = {
+              applied: false,
+              code: 'INVITE_REWARD_FAILED',
+              message: inviteErr && inviteErr.message
+            }
+          }
+        }
         const docRes = await col.doc(docId).get()
         user = docRes && docRes.data ? { ...docRes.data, _id: docId } : { _id: docId, _openid: openid, ...newUserData }
       } else {
@@ -758,7 +990,8 @@ exports.main = async (event) => {
       whitelistActivated: whitelistResult ? whitelistResult.activated : false,
       whitelistInfo: whitelistResult,
       toolkitWhitelistActivated: toolkitWhitelistResult ? toolkitWhitelistResult.activated : false,
-      toolkitWhitelistInfo: toolkitWhitelistResult
+      toolkitWhitelistInfo: toolkitWhitelistResult,
+      inviteReward: inviteRewardResult
     }
   } catch (err) {
     console.error('登录云函数执行失败:', err)

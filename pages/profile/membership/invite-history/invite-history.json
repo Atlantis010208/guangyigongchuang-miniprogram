@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "邀请记录",
+  "navigationBarBackgroundColor": "#f2f2f7",
+  "navigationBarTextStyle": "black",
+  "enablePullDownRefresh": true,
+  "usingComponents": {}
+}

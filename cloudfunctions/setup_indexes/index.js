@@ -39,6 +39,7 @@ exports.main = async () => {
   await ensure('users')
   await ensure('orders')
   await ensure('requests')
+  await ensure('member_invitations')
 
   const token = process.env.CLOUDBASE_ACCESS_TOKEN || ''
   const envId = process.env.ENV_ID || 'cloud1-5gb9c5u2c58ad6d7'
@@ -71,7 +72,8 @@ exports.main = async () => {
       collection_name: 'users',
       create_indexes: [
         { name: 'idx_openid', unique: false, keys: [{ name: '_openid', direction: '1' }] },
-        { name: 'idx_updatedAt', unique: false, keys: [{ name: 'updatedAt', direction: '-1' }] }
+        { name: 'idx_updatedAt', unique: false, keys: [{ name: 'updatedAt', direction: '-1' }] },
+        { name: 'idx_inviteCode_unique', unique: true, keys: [{ name: 'inviteCode', direction: '1' }] }
       ],
       drop_indexes: []
     }))
@@ -91,6 +93,16 @@ exports.main = async () => {
       create_indexes: [
         { name: 'idx_userId_createdAt', unique: false, keys: [{ name: 'userId', direction: '1' }, { name: 'createdAt', direction: '-1' }] },
         { name: 'idx_isDelete_createdAt', unique: false, keys: [{ name: 'isDelete', direction: '1' }, { name: 'createdAt', direction: '-1' }] }
+      ],
+      drop_indexes: []
+    }))
+    intents.push(postJson(`https://${host}${endpoint}`, {
+      env: envId,
+      collection_name: 'member_invitations',
+      create_indexes: [
+        { name: 'idx_invitedUserId_unique', unique: true, keys: [{ name: 'invitedUserId', direction: '1' }] },
+        { name: 'idx_inviter_createdAt', unique: false, keys: [{ name: 'inviterUserId', direction: '1' }, { name: 'createdAt', direction: '-1' }] },
+        { name: 'idx_createdAt_desc', unique: false, keys: [{ name: 'createdAt', direction: '-1' }] }
       ],
       drop_indexes: []
     }))

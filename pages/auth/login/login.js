@@ -36,9 +36,45 @@ Page({
     this.redirectUrl = options.redirect ? decodeURIComponent(options.redirect) : ''
     // 保存来源标识（如 designer 表示从身份选择页选择设计师进入）
     this.fromSource = options.from || ''
+    this._captureInviteCode(options)
     
     // 检查是否已登录且未过期
     this.checkLoginStatus()
+  },
+
+  _captureInviteCode(options = {}) {
+    const rawCode = options.inviteCode || options.invite_code || ''
+    const inviteCode = String(rawCode || '').trim().toUpperCase()
+    if (!inviteCode) return
+    try {
+      wx.setStorageSync('pendingInviteCode', inviteCode)
+      const app = getApp()
+      if (app && app.globalData) {
+        app.globalData.pendingInviteCode = inviteCode
+      }
+    } catch (e) {
+      console.warn('保存邀请码失败', e)
+    }
+  },
+
+  _getPendingInviteCode() {
+    try {
+      const app = getApp()
+      const code = (app && app.globalData && app.globalData.pendingInviteCode) || wx.getStorageSync('pendingInviteCode') || ''
+      return String(code || '').trim().toUpperCase()
+    } catch (e) {
+      return ''
+    }
+  },
+
+  _clearPendingInviteCode() {
+    try {
+      wx.removeStorageSync('pendingInviteCode')
+      const app = getApp()
+      if (app && app.globalData) {
+        app.globalData.pendingInviteCode = ''
+      }
+    } catch (e) {}
   },
 
   /**
@@ -93,9 +129,11 @@ Page({
       return
     }
 
-    // 已有设计师角色的老用户，每次登录静默重新校验白名单状态
+    // 所有已绑定手机号的用户，每次登录都静默校验后台「设计师白名单」
+    // - 命中且原本不是设计师/管理员 → 自动升级为 roles=2
+    // - 原本是 roles=2 但白名单已失效 → 自动降级为 roles=1（云函数侧已实现）
     const doc = userDoc || wx.getStorageSync('userDoc') || {}
-    if (doc.roles === 2 && doc.phoneNumber) {
+    if (doc.phoneNumber) {
       this.revalidateDesignerStatus(doc)
       // 不阻塞跳转，静默校验
     }
@@ -179,9 +217,11 @@ Page({
   },
 
   /**
-   * 静默重新校验设计师白名单状态
-   * 用于已有设计师角色(roles=2)的老用户每次登录时后台校验
-   * 如果白名单已被移除/停用，自动降级为普通用户并提示
+   * 静默校验设计师白名单状态（双向）
+   * - 后台「设计师白名单」是设计师身份的唯一校验来源（管理员在后台设置）
+   * - 命中白名单且当前不是设计师/管理员 → 自动升级 roles=2（云函数侧写库）
+   * - 原本是 roles=2 但白名单已失效 → 自动降级 roles=1（云函数侧写库）
+   * 默认进入业主端首页，设计师身份用户可在「个人中心 → 设计师工作台」切换。
    * @param {object} userDoc 用户文档
    */
   async revalidateDesignerStatus(userDoc) {
@@ -191,25 +231,44 @@ Page({
         data: { phone: userDoc.phoneNumber, revalidate: true }
       })
 
-      if (res.result && res.result.success && !res.result.isDesigner) {
-        // 白名单已失效，云函数已降级角色，同步本地缓存
-        console.warn('[revalidate] 设计师白名单已失效，角色已降级')
-        const app = getApp()
-        const updatedDoc = { ...userDoc, roles: 1, identitySelected: false }
-        if (app) {
+      if (!res || !res.result || !res.result.success) return
+
+      const isDesigner = !!res.result.isDesigner
+      const currentRoles = userDoc.roles
+      const app = getApp()
+
+      // 命中白名单：仅升级业主用户(roles=1 或缺失)，不动管理员(roles=0)
+      if (isDesigner && currentRoles !== 2 && currentRoles !== 0) {
+        console.log('[revalidate] 后台白名单命中，已自动升级为设计师角色')
+        const updatedDoc = { ...userDoc, roles: 2, identitySelected: true }
+        if (app && app.globalData) {
           app.globalData.userDoc = updatedDoc
         }
         wx.setStorageSync('userDoc', updatedDoc)
+        // 注意：不主动设置 userRole='designer'，保持默认进入业主端，
+        // 用户可在「个人中心 → 设计师工作台」入口主动切换。
+        return
+      }
 
-        // 提示用户
+      // 未命中白名单：仅对原本是设计师(roles=2)的用户做降级提示
+      if (!isDesigner && currentRoles === 2) {
+        console.warn('[revalidate] 后台白名单已失效，设计师权限已降级')
+        const updatedDoc = { ...userDoc, roles: 1, identitySelected: false }
+        if (app && app.globalData) {
+          app.globalData.userDoc = updatedDoc
+          app.globalData.userRole = 'owner'
+        }
+        wx.setStorageSync('userDoc', updatedDoc)
+        wx.setStorageSync('userRole', 'owner')
+
         wx.showModal({
           title: '设计师权限变更',
           content: '您的设计师权限已被管理员调整，如有疑问请联系管理员。',
           showCancel: false,
           confirmText: '知道了',
           success: () => {
-            // 跳转到身份选择页重新选择
-            wx.reLaunch({ url: '/pages/identity/identity' })
+            // 已移除身份选择页，统一回到业主端首页
+            wx.reLaunch({ url: '/pages/products/products' })
           }
         })
       }
@@ -555,6 +614,7 @@ Page({
       } else {
         // 新用户：调用 login 云函数创建用户记录
         console.log('新用户，调用 login 云函数创建用户记录')
+        const inviteCode = this._getPendingInviteCode()
 
         const cfRes = await wx.cloud.callFunction({ 
           name: 'login', 
@@ -562,7 +622,8 @@ Page({
             profile: { 
               nickName: nickname, 
               avatarUrl: (finalAvatarUrl && finalAvatarUrl.startsWith('cloud://')) ? finalAvatarUrl : ''
-            } 
+            },
+            inviteCode
           } 
         })
         
@@ -575,6 +636,9 @@ Page({
         const { user, loginTime } = result
         newDoc = user
         userId = user && user._id ? user._id : ''
+        if (inviteCode) {
+          this._clearPendingInviteCode()
+        }
 
         console.log('用户记录创建成功:', { userId, user })
 
