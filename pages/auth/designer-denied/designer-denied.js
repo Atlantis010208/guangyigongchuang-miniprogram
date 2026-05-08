@@ -44,9 +44,9 @@ Page({
   },
 
   switchIdentity() {
-    // 跳转回身份选择页并清除所有页面栈
+    // 已移除身份选择页，统一回到业主端首页
     wx.reLaunch({
-      url: '/pages/identity/identity'
+      url: '/pages/products/products'
     })
   }
 })

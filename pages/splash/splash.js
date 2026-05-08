@@ -68,8 +68,12 @@ Page({
       return
     }
 
-    // 3. 完全没有角色信息（首次用户）-> 跳转身份选择页
-    console.log('[splash] 未选择身份，跳转身份选择页')
-    wx.redirectTo({ url: '/pages/identity/identity' })
+    // 3. 完全没有角色信息（首次用户）-> 默认进入业主端首页
+    // 注：身份选择页已下线，所有新用户默认走业主端，设计师可在个人中心切换。
+    console.log('[splash] 未选择身份，默认进入业主端首页')
+    wx.switchTab({
+      url: '/pages/products/products',
+      fail: () => wx.reLaunch({ url: '/pages/products/products' })
+    })
   }
 })

@@ -96,9 +96,13 @@ Page({
             data: { action: 'logout' },
             complete: () => {
               wx.clearStorageSync();
-              if (app.globalData) app.globalData.userDoc = null;
+              if (app.globalData) {
+                app.globalData.userDoc = null;
+                app.globalData.userRole = 'owner';
+              }
               wx.hideLoading();
-              wx.reLaunch({ url: '/pages/splash/splash' });
+              // 已移除启动页/身份选择页，退出后直接回业主端首页
+              wx.reLaunch({ url: '/pages/products/products' });
             }
           });
         }
