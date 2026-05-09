@@ -185,8 +185,35 @@
 
 ## 七、已知遗留
 
+> **2026-05-09 补充修复**：本次会话定位并修复了 3 项遗留问题（见 7.1）；原"已知遗留"清单已迁至 7.2 并保持成立。
+
+### 7.1 已补充修复（2026-05-09 会话）
+
+#### 7.1.1 唯一索引刷奖漏洞（高危 · 已修复）
+
+- **症状**：`member_invitations` 唯一索引建在 `invitedUserId`（即 `users._id`）。被邀请人 `users` 文档被删除后用同一微信号重新注册时，新生成的 `_id` 与历史索引值不冲突 → `applyInviteReward` 再次触发 → 邀请人 `inviteStats.invitedCount` 重复 +1，跨阈值时还会再发 7 天奖励。
+- **攻击/误操作面**：客服误删用户 / 用户自助注销账号后重注册 / 数据清理脚本误删；本期未对外暴露注销账号入口，**生产环境暂未被触发**。
+- **修复**：
+  - 数据库索引：`idx_invitedUserId_unique` → `idx_invitedOpenid_unique`（先建新、后删旧；当前 `member_invitations` 数据为空，零数据风险）
+  - 代码：`cloudfunctions/setup_indexes/index.js` 索引声明同步改为 `invitedOpenid`
+  - 代码：`cloudfunctions/login/index.js` 内 `applyInviteReward` JSDoc 步骤说明与 Step 2 行内注释同步更新，明确"以微信 openid 锚定，不受 users._id 重建影响"的语义
+- **后续验证**：建议在真机回归 5（边缘场景）补充一项"先删被邀请人 users 文档，再重新注册同微信号 → 期望 `INVITE_ALREADY_BOUND`"。
+
+#### 7.1.2 邀请分享路径指向不存在的页面（中危 · 已修复）
+
+- **症状**：`calc-result` / `color-temp-result` 两个结果页的 `onShareAppMessage` 返回的 sharePath 为 `/pages/index/index?inviteCode=XXX`，而 `app.json` 的 `pages` 列表中**没有** `pages/index/index`。好友点击分享卡片时小程序会无法定位落地页或降级到默认首页，`inviteCode` 参数随之丢失，邀请链路断裂。
+- **顺带发现**：`pages/mall/cart/cart.js` 的 `goMall()` 也用了同一无效路径作为 `wx.switchTab` 目标。
+- **修复**：3 处全部改为真实存在的 tabBar 首页 `/pages/products/products`，与 `pages/gallery/gallery.js` 的实现保持一致。
+- **影响范围**：本期前端代码尚未发布到正式版，线上老用户暂未感知；新版本发版前已闭环。
+
+#### 7.1.3 邀请历史页占位注释清理（低危 · 已修复）
+
+`pages/profile/membership/invite-history/invite-history.js` 第 24 行残留 `// 本期为空数组（待 D 系列需求实施后填充）` 注释。`tasks.md` 任务 8 第 77 行明确要求清理，且 `records` 已通过 `loadAll()` → `_fetchInviteRecords()` 接入 `invitations_query`，注释属于字面意义的代码碎片，已删除。
+
+### 7.2 仍然遗留
+
 - **存量数据未回填**：之前 `applyInviteReward` 已运行过的用户，已有 `users.invitedBy` 但没有 `member_invitations` 记录。如运营要展示历史，可后续单独写一次性运维脚本
-- **`setup_indexes` 索引部署降级**：当前环境没有 `CLOUDBASE_ACCESS_TOKEN`，`setup_indexes` 自动建索引未生效；改用 cloudbase MCP `writeNoSqlDatabaseStructure` 已直接建好。如需迁移环境，需要在新环境补 token 并跑一次 `setup_indexes`
+- **`setup_indexes` 索引部署降级**：当前环境没有 `CLOUDBASE_ACCESS_TOKEN`，`setup_indexes` 自动建索引未生效；改用 cloudbase MCP `writeNoSqlDatabaseStructure` 已直接建好（含本次 7.1.1 索引切换）。如需迁移环境，需要在新环境补 token 并跑一次 `setup_indexes`
 - **`@cloudbase/node-sdk` 依赖**：`admin_invitations_list` 需要该包；首次部署后 `installDependency: true` 已自动装好
 
 ## 八、回滚方式
