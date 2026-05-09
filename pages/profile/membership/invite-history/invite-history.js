@@ -21,7 +21,7 @@ Page({
     isLoggedIn: false,
     membership: getFallbackStatus(false),
     inviteProgress: { inCycle: 0, needed: 2, percent: 0, nextRewardDays: 7 },
-    records: [],          // 本期为空数组（待 D 系列需求实施后填充）
+    records: [],
     hasRecords: false,
     isLoading: true
   },
