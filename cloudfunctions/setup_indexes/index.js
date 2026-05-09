@@ -100,7 +100,7 @@ exports.main = async () => {
       env: envId,
       collection_name: 'member_invitations',
       create_indexes: [
-        { name: 'idx_invitedUserId_unique', unique: true, keys: [{ name: 'invitedUserId', direction: '1' }] },
+        { name: 'idx_invitedOpenid_unique', unique: true, keys: [{ name: 'invitedOpenid', direction: '1' }] },
         { name: 'idx_inviter_createdAt', unique: false, keys: [{ name: 'inviterUserId', direction: '1' }, { name: 'createdAt', direction: '-1' }] },
         { name: 'idx_createdAt_desc', unique: false, keys: [{ name: 'createdAt', direction: '-1' }] }
       ],

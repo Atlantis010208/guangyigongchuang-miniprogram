@@ -74,7 +74,7 @@ function buildInvitationDoc({ inviterUserId, inviterOpenid, inviteCode, invitedU
  *
  * 步骤：
  *   1. 归一化邀请码，校验邀请人存在 / 非自邀
- *   2. 写入 invitations 记录（依赖 idx_invitedUserId_unique 保证幂等）
+ *   2. 写入 invitations 记录（依赖 idx_invitedOpenid_unique 保证幂等：以微信 openid 锚定，不受 users._id 重建影响）
  *   3. 在事务内重新读取邀请人 → 计算阈值 → 同步更新邀请人字段与邀请记录奖励快照
  *   4. 事务外更新被邀请人 invitedBy/invitedByUserId/inviteCodeUsed/invitedAt
  *
@@ -111,7 +111,7 @@ async function applyInviteReward(db, inviteCode, invitedOpenid, invitedUserId, i
     return { applied: false, code: 'INVITE_SELF_FORBIDDEN' }
   }
 
-  // Step 2: 写 invitations 记录（依赖 idx_invitedUserId_unique 唯一索引）
+  // Step 2: 写 invitations 记录（依赖 idx_invitedOpenid_unique 唯一索引：以稳定的 invitedOpenid 兜底，删号重注册仍幂等）
   let invitationId = ''
   try {
     const addRes = await db.collection(INVITATIONS_COLLECTION).add({
