@@ -381,7 +381,7 @@ Page({
    */
   goMall() {
     wx.switchTab({
-      url: '/pages/index/index' // 假设首页是 index
+      url: '/pages/products/products'
     }).catch(() => {
       wx.navigateTo({
         url: '/pages/mall/mall'

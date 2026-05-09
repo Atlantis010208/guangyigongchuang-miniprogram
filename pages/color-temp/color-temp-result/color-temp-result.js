@@ -417,8 +417,8 @@ Page({
   onShareAppMessage() {
     const code = (this.data.membership && this.data.membership.inviteCode) || ''
     const sharePath = code
-      ? `/pages/index/index?inviteCode=${encodeURIComponent(code)}`
-      : '/pages/index/index'
+      ? `/pages/products/products?inviteCode=${encodeURIComponent(code)}`
+      : '/pages/products/products'
     return {
       title: '光乙共创：邀你一起体验专业灯光设计工具',
       path: sharePath,
