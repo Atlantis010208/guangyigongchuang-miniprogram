@@ -31,13 +31,12 @@ const SKU_META = {
 
 // 权益对比表（共 7 行，与 design.md §2.2.3 对比表一致）
 const BENEFITS = [
-  { name: '计算器免费版',     free: true,  normal: true,  premium: true,  premiumOnly: false },
   { name: '计算器 Pro UI',    free: false, normal: true,  premium: true,  premiumOnly: false },
   { name: '工具包资料下载',   free: false, normal: true,  premium: true,  premiumOnly: false },
   { name: 'PDF 报告导出',     free: false, normal: true,  premium: true,  premiumOnly: false },
   { name: '报告自定义署名',   free: false, normal: true,  premium: true,  premiumOnly: false },
   { name: '灵感图库下载',     free: false, normal: false, premium: true,  premiumOnly: true  },
-  { name: '课程畅看',         free: false, normal: false, premium: true,  premiumOnly: true  }
+  { name: '灯光课程免费看',   free: false, normal: false, premium: true,  premiumOnly: true  }
 ]
 
 // 轮询订单状态配置
@@ -81,13 +80,6 @@ Page({
     const membership = await fetchMembershipStatus()
     const effectiveLevel = membership.effectiveLevel || 'free'
 
-    // 高级会员进入此页：劝退（toast 提示后返回）
-    if (effectiveLevel === 'premium') {
-      wx.showToast({ title: '您已是高级会员', icon: 'none', duration: 1500 })
-      setTimeout(() => { wx.navigateBack() }, 1500)
-      return
-    }
-
     const preferredTab = this.data.preferredTab
     const recommendedTab = (preferredTab === 'normal' || preferredTab === 'premium')
       ? preferredTab
@@ -112,7 +104,7 @@ Page({
       .filter((b) => tab === 'premium' || !b.premiumOnly)
       .map((b) => ({
         name: b.name,
-        free: b.free,
+        free: tab === 'premium' ? b.normal : b.free,
         current: !!b[tab]
       }))
 
@@ -124,8 +116,8 @@ Page({
     let ctaText = `${sku.ctaText} ${sku.priceText} ${sku.unit}`
 
     if (isAlreadyOwned) {
-      ctaState = 'opened'
-      ctaText = '已开通'
+      ctaState = 'renew'
+      ctaText = `续费${sku.priceText} ${sku.unit}`
     }
 
     this.setData({
@@ -157,10 +149,6 @@ Page({
    * 点击 CTA 主按钮
    */
   onTapCta() {
-    if (this.data.ctaState === 'opened') {
-      wx.showToast({ title: '您已开通此档位', icon: 'none' })
-      return
-    }
     this.startPayment()
   },
 
@@ -243,7 +231,7 @@ Page({
       wx.hideLoading()
 
       if (paid) {
-        wx.showToast({ title: '开通成功', icon: 'success', duration: 1500 })
+        wx.showToast({ title: this.data.ctaState === 'renew' ? '续费成功' : '开通成功', icon: 'success', duration: 1500 })
         setTimeout(() => {
           this.setData({ isPaying: false })
           wx.navigateBack()

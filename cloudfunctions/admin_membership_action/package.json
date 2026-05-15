@@ -1,0 +1,10 @@
+{
+  "name": "admin_membership_action",
+  "version": "1.0.0",
+  "description": "后台管理端会员等级写操作（grant/revoke）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

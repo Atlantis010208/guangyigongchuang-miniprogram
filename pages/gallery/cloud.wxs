@@ -269,20 +269,20 @@ function render(ownerInstance) {
     
     // Apple Watch 真实 "穹顶" (Dome) 3D 透视曲线：
     // 中心 120rpx 内保持 1.0 大小，形成平坦焦点区
-    // 超过后迅速且非线性地衰减至极小 (0.3)，模拟球面的边缘曲率
+    // 衰减曲率放缓，边缘最小只缩小到 0.65，保证填充感
     var scale = 1.0
     if (dist > 120) {
-      scale = 1.0 - Math.pow((dist - 120) / 450, 1.8)
+      scale = 1.0 - Math.pow((dist - 120) / 500, 1.4)
     }
-    scale = Math.max(0.3, Math.min(1.0, safeNum(scale, 0.3)))
+    scale = Math.max(0.65, Math.min(1.0, safeNum(scale, 0.65)))
 
     // 透明度曲线：
-    // 中心 150rpx 完全不透明，之后快速隐没进背景，营造纵深感
+    // 让周边的标签也保持较高的可见度（最低0.4），彻底消除留白的错觉
     var opacity = 1.0
     if (dist > 150) {
-      opacity = 1.0 - Math.pow((dist - 150) / 350, 1.5)
+      opacity = 1.0 - Math.pow((dist - 150) / 450, 1.2)
     }
-    opacity = Math.max(0.05, Math.min(1.0, safeNum(opacity, 0.05)))
+    opacity = Math.max(0.4, Math.min(1.0, safeNum(opacity, 0.4)))
 
     // 层级计算：中心节点永远在上层
     var zIndex = Math.floor(1000 - dist)
@@ -310,5 +310,6 @@ module.exports = {
   touchMove: touchMove,
   touchEnd: touchEnd,
   init: init,
-  onActiveChange: onActiveChange
+  onActiveChange: onActiveChange,
+  onConfigChange: onConfigChange
 }

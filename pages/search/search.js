@@ -23,6 +23,13 @@ import {
 const CACHE_KEY = 'toolkit_purchase_cache'
 const CACHE_DURATION = 5 * 60 * 1000  // 5 分钟
 
+// 表单草稿配置：用户参数自动暂存，避免跳转购买/激活流程后丢失
+const DRAFT_KEY = 'calc_form_draft'
+const DRAFT_TTL = 24 * 60 * 60 * 1000  // 草稿有效期 24 小时
+
+// 购买后待复查权限标记：跳转购买前置位，onShow 时检测到则强制重查权限
+const PENDING_CHECK_KEY = 'calc_pending_purchase_check'
+
 Page({
   data: {
     // ========== 权限状态 ==========
@@ -59,8 +66,15 @@ Page({
     // ========== 付费版专用 ==========
     selectedLamps: [],             // 用户已选灯具列表（动态添加）
     focusedLampId: '',
-    lampAddOptions: ['请选择灯具'],
+    lampAddOptions: ['请选择灯具'], // 兼容字段（旧 picker 已替换为多选弹窗，仍保留以防异常）
     lampAddValue: 0,
+
+    // 灯具多选弹窗
+    showLampSelectModal: false,    // 是否显示弹窗
+    lampSelectChecked: {},         // 当前勾选状态：{ [lampTypeRows 的 index]: true }
+    lampSelectExisting: {},        // 当前已加入数量：{ [index]: 已添加的同类型数量 }，用于显示"已有 N 个"
+    lampSelectCount: 0,            // 当前勾选项数量（驱动按钮启用状态）
+
     headerBgFileId: '',
     headerBgLoaded: false,
     headerBgReady: false,
@@ -93,7 +107,7 @@ Page({
       { name: '细腻深色', factor: 0.5 },
       { name: '粗糙深色', factor: 0.2 }
     ],
-    colorIndex: -1,
+    colorIndex: 0,
 
     // 维护系数选择器
     maintenanceOptions: [
@@ -101,7 +115,7 @@ Page({
       { name: '一般', value: 0.7 },
       { name: '污染', value: 0.6 }
     ],
-    maintenanceIndex: -1,
+    maintenanceIndex: 0,
   },
 
   // ========== 生命周期 ==========
@@ -124,6 +138,7 @@ Page({
       lampAddOptions: this.buildLampAddOptions(lampTypeRows),
       lampAddValue: 0
     })
+    this._updateGroupedLampTypes(lampTypeRows)
     
     // 2. 检查权限
     const isPurchased = await this.checkPurchaseStatus()
@@ -134,8 +149,16 @@ Page({
       isPro: isPurchased, 
       checkingPermission: false 
     })
-    
-    // 4. 如果是免费版且带有 showUpgrade 参数，显示升级弹窗
+
+    // 4. 恢复本地草稿（用户可能上次填到一半就跳去购买了）
+    //   注意：onShow 中的历史记录回填优先级更高，会覆盖草稿
+    const draft = this._loadDraft()
+    if (draft && this._hasMeaningfulDraft(draft)) {
+      console.log('[search] 恢复本地草稿:', draft)
+      this._applyDraft(draft)
+    }
+
+    // 5. 如果是免费版且带有 showUpgrade 参数，显示升级弹窗
     if (!isPurchased && options.showUpgrade === '1') {
       console.log('[search] 显示升级弹窗')
       setTimeout(() => {
@@ -151,6 +174,9 @@ Page({
       this.getTabBar().setData({ selected: 2 })
     }
     console.log('[search] onShow')
+
+    // 用户可能刚走完购买流程返回，强制复查权限并提示
+    this._refreshPermissionIfPending()
     
     // 检查是否有历史记录回填
     const selectedHistory = wx.getStorageSync('calc_history_selected')
@@ -227,7 +253,65 @@ Page({
   },
 
   onHide() {
-    console.log('[search] onHide')
+    console.log('[search] onHide，保存当前表单草稿')
+    // 用户离开页面（被 navigateTo 覆盖、tabBar 切走等）时自动暂存
+    // 防止跳转购买/激活流程或被 switchTab 销毁后参数丢失
+    this._saveDraft()
+  },
+
+  onUnload() {
+    console.log('[search] onUnload，保存当前表单草稿')
+    // 页面被销毁前再保存一次（switchTab 触发的销毁也会走这里）
+    this._saveDraft()
+  },
+
+  /**
+   * 跳转购买/激活相关页面前调用：保存草稿 + 标记权限待复查
+   * 配合 onShow 中的 _refreshPermissionIfPending，实现"购买完回来直接计算"
+   */
+  _markPendingPurchaseCheck() {
+    try {
+      this._saveDraft()
+      wx.setStorageSync(PENDING_CHECK_KEY, true)
+    } catch (e) {
+      console.warn('[search] 标记购买待检查失败:', e)
+    }
+  },
+
+  /**
+   * 如果用户刚跳转过购买/激活流程，回到页面时强制复查权限
+   * 避免因权限缓存（5 分钟）导致激活后仍被判断为非 Pro
+   */
+  async _refreshPermissionIfPending() {
+    let pending = false
+    try {
+      pending = !!wx.getStorageSync(PENDING_CHECK_KEY)
+    } catch (e) {}
+    if (!pending) return
+
+    try {
+      wx.removeStorageSync(PENDING_CHECK_KEY)
+      // 清除权限缓存，强制走云函数最新结果
+      wx.removeStorageSync(CACHE_KEY)
+    } catch (e) {}
+
+    const wasPro = this.data.isPro
+    try {
+      const isPurchased = await this.checkPurchaseStatus()
+      if (this.data.isPro !== isPurchased) {
+        this.setData({ isPro: isPurchased })
+      }
+      if (!wasPro && isPurchased) {
+        // 由非 Pro 变 Pro：用户刚激活成功，提示并保留参数
+        wx.showToast({
+          title: '已激活，可直接计算',
+          icon: 'success',
+          duration: 2000
+        })
+      }
+    } catch (err) {
+      console.warn('[search] 复查权限失败:', err)
+    }
   },
 
   onHeaderBgLoad() {
@@ -296,22 +380,24 @@ Page({
     let headerBgFileId = this.data.headerBgFileId
     if (pageConfig && pageConfig.modes && pageConfig.modes[activeTab]) {
       const modeBg = pageConfig.modes[activeTab].bgImage
-      if (modeBg) {
+      if (modeBg && modeBg !== headerBgFileId) {
         headerBgFileId = modeBg
       }
     }
-    
-    const resetUpdates = {
+
+    this.setData({
       activeTab,
-      headerBgFileId,
+      area: '',
+      roomTypeIndex: -1,
+      targetLux: '',
+      floorHeight: '',
+      colorIndex: -1,
+      maintenanceIndex: 0,
+      maintenanceFactor: 0.8,
+      utilFactor: '',
       lampFlux: '',
       lampPower: '',
       lampEfficacy: 80,
-      area: '',
-      utilFactor: '',
-      maintenanceFactor: 0.8,
-      maintenanceIndex: -1,
-      targetLux: '',
       lampCount: '',
 
       avgLux: 0,
@@ -329,20 +415,137 @@ Page({
       editingLamp: null,
       showResult: false,
       resultData: null,
-
-      roomTypeIndex: -1,
-      floorHeight: '',
-      colorIndex: -1
-    }
-    if (headerBgFileId !== this.data.headerBgFileId) {
-      resetUpdates.headerBgReady = false
-    }
-    this.setData(resetUpdates)
+      headerBgFileId
+    })
+    
+    this._updateGroupedLampTypes(lampTypeRows)
   },
 
   buildLampAddOptions(rows) {
     const list = Array.isArray(rows) ? rows : []
     return ['请选择灯具', ...list.map((it) => it.displayName || it.name || '灯具')]
+  },
+
+  // ========== 表单草稿（防止跳转购买流程后参数丢失） ==========
+
+  /**
+   * 保存当前表单参数到本地草稿
+   * 在 onHide / 跳转购买流程前调用，确保用户回来后能恢复
+   */
+  _saveDraft() {
+    try {
+      const draft = {
+        activeTab: this.data.activeTab,
+        area: this.data.area,
+        roomTypeIndex: this.data.roomTypeIndex,
+        targetLux: this.data.targetLux,
+        floorHeight: this.data.floorHeight,
+        colorIndex: this.data.colorIndex,
+        maintenanceIndex: this.data.maintenanceIndex,
+        maintenanceFactor: this.data.maintenanceFactor,
+        utilFactor: this.data.utilFactor,
+        lampFlux: this.data.lampFlux,
+        lampPower: this.data.lampPower,
+        lampEfficacy: this.data.lampEfficacy,
+        lampCount: this.data.lampCount,
+        selectedLamps: this.data.selectedLamps || [],
+        savedAt: Date.now()
+      }
+      wx.setStorageSync(DRAFT_KEY, draft)
+    } catch (e) {
+      console.warn('[search] 保存草稿失败:', e)
+    }
+  },
+
+  /**
+   * 读取本地草稿（自动过滤过期数据）
+   * @returns {object|null}
+   */
+  _loadDraft() {
+    try {
+      const draft = wx.getStorageSync(DRAFT_KEY)
+      if (!draft || typeof draft !== 'object' || !draft.savedAt) return null
+      if (Date.now() - draft.savedAt > DRAFT_TTL) {
+        wx.removeStorageSync(DRAFT_KEY)
+        return null
+      }
+      return draft
+    } catch (e) {
+      return null
+    }
+  },
+
+  /**
+   * 清除本地草稿
+   */
+  _clearDraft() {
+    try {
+      wx.removeStorageSync(DRAFT_KEY)
+    } catch (e) {}
+  },
+
+  /**
+   * 判断草稿是否包含有意义的输入（避免拿空草稿覆盖默认值）
+   */
+  _hasMeaningfulDraft(draft) {
+    if (!draft) return false
+    const nonEmpty = (v) => v !== '' && v !== null && v !== undefined
+    if (nonEmpty(draft.area) && parseFloat(draft.area) > 0) return true
+    if (nonEmpty(draft.targetLux) && parseFloat(draft.targetLux) > 0) return true
+    if (nonEmpty(draft.floorHeight) && parseFloat(draft.floorHeight) > 0) return true
+    if (nonEmpty(draft.lampPower) && parseFloat(draft.lampPower) > 0) return true
+    if (nonEmpty(draft.lampFlux) && parseFloat(draft.lampFlux) > 0) return true
+    if (nonEmpty(draft.lampCount) && parseFloat(draft.lampCount) > 0) return true
+    if (Array.isArray(draft.selectedLamps) && draft.selectedLamps.length > 0) return true
+    if (Number(draft.roomTypeIndex) >= 0) return true
+    if (Number(draft.colorIndex) >= 0) return true
+    if (Number(draft.maintenanceIndex) >= 0) return true
+    return false
+  },
+
+  /**
+   * 将草稿应用到当前页面 data，并触发联动计算
+   */
+  _applyDraft(draft) {
+    if (!this._hasMeaningfulDraft(draft)) return false
+
+    const { pageConfig } = this.data
+    const activeTab = draft.activeTab || 'count'
+
+    // 草稿带的 Tab 可能与初始 Tab 不同，同步切换对应背景图
+    let headerBgFileId = this.data.headerBgFileId
+    let headerBgReady = this.data.headerBgReady
+    if (pageConfig && pageConfig.modes && pageConfig.modes[activeTab]) {
+      const modeBg = pageConfig.modes[activeTab].bgImage
+      if (modeBg && modeBg !== headerBgFileId) {
+        headerBgFileId = modeBg
+        headerBgReady = false
+      }
+    }
+
+    const updates = {
+      activeTab,
+      headerBgFileId,
+      headerBgReady,
+      area: draft.area != null ? draft.area : '',
+      roomTypeIndex: Number.isFinite(Number(draft.roomTypeIndex)) ? Number(draft.roomTypeIndex) : -1,
+      targetLux: draft.targetLux != null ? draft.targetLux : '',
+      floorHeight: draft.floorHeight != null ? draft.floorHeight : '',
+      colorIndex: Number.isFinite(Number(draft.colorIndex)) ? Number(draft.colorIndex) : -1,
+      maintenanceIndex: Number.isFinite(Number(draft.maintenanceIndex)) ? Number(draft.maintenanceIndex) : -1,
+      maintenanceFactor: draft.maintenanceFactor != null ? draft.maintenanceFactor : 0.8,
+      utilFactor: draft.utilFactor != null ? draft.utilFactor : '',
+      lampFlux: draft.lampFlux != null ? draft.lampFlux : '',
+      lampPower: draft.lampPower != null ? draft.lampPower : '',
+      lampEfficacy: draft.lampEfficacy != null && draft.lampEfficacy !== '' ? draft.lampEfficacy : 80,
+      lampCount: draft.lampCount != null ? draft.lampCount : '',
+      selectedLamps: Array.isArray(draft.selectedLamps) ? draft.selectedLamps : []
+    }
+
+    this.setData(updates, () => {
+      this.recalc()
+    })
+    return true
   },
 
   /**
@@ -353,9 +556,12 @@ Page({
     console.log('[search] 🔄 下拉刷新开始')
     
     try {
-      // 1. 清除权限缓存
+      // 1. 清除权限缓存 + 表单草稿 + 购买待检查标记
+      //    用户下拉刷新视为主动重置，避免清空后又被旧草稿覆盖
       wx.removeStorageSync(CACHE_KEY)
-      console.log('[search] 缓存已清除')
+      this._clearDraft()
+      try { wx.removeStorageSync(PENDING_CHECK_KEY) } catch (e) {}
+      console.log('[search] 缓存与草稿已清除')
       
       // 2. 显示加载状态
       this.setData({ checkingPermission: true })
@@ -478,6 +684,8 @@ Page({
       specs: { version: '标准版' }
     }
     const query = encodeURIComponent(JSON.stringify(item))
+    // 跳转购买前：保存草稿 + 标记权限待复查（购买完回来自动恢复参数并刷新权限）
+    this._markPendingPurchaseCheck()
     wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
   },
 
@@ -570,17 +778,84 @@ Page({
   convertLampTypesFromConfig(lampTypes) {
     if (!Array.isArray(lampTypes)) return getDefaultLampTypes()
     
+    // 精确名称映射（涵盖云端数据库中的所有实际灯具名称及变体）
+    const exactMap = {
+      // 直射重点照明
+      '射灯': '直射重点照明', '磁吸射灯': '直射重点照明',
+      '格栅灯': '直射重点照明', '磁吸格栅': '直射重点照明',
+      // 直接基础照明
+      '筒灯': '直接基础照明', '吸顶灯': '直接基础照明',
+      '平板灯': '直接基础照明', '面板灯': '直接基础照明',
+      // 间接基础照明
+      '正灯槽': '间接基础照明', '正灯槽灯带': '间接基础照明',
+      '下发光灯槽': '间接基础照明', '双眼皮灯带': '间接基础照明',
+      '线性灯': '间接基础照明',
+      // 间接氛围照明
+      '反灯槽': '间接氛围照明', '反灯槽灯带': '间接氛围照明',
+      '悬浮灯带': '间接氛围照明', '窗帘灯带': '间接氛围照明',
+      '踢脚线灯带': '间接氛围照明',
+      // 近距离任务照明
+      '柜体灯': '近距离任务照明', '层板灯': '近距离任务照明', '书桌灯': '近距离任务照明',
+      // 装饰类直接照明
+      '长条吊灯': '装饰类直接照明', '小吊灯': '装饰类直接照明',
+      '吊灯': '装饰类直接照明', '装饰灯': '装饰类直接照明',
+      '壁灯': '装饰类直接照明', '镜前灯': '装饰类直接照明',
+      // 柔光漫射照明
+      '软膜天花': '柔光漫射照明', '洗墙射灯': '柔光漫射照明',
+      '线性洗墙灯': '柔光漫射照明', '磁吸泛光': '柔光漫射照明'
+    }
+
+    // 关键词模糊匹配兜底：精确匹配失败时按名字中的关键词推断分类
+    const keywordRules = [
+      { keywords: ['射灯', '格栅'], category: '直射重点照明' },
+      { keywords: ['筒灯', '吸顶', '平板', '面板'], category: '直接基础照明' },
+      { keywords: ['正灯槽', '下发光', '双眼皮', '线性灯'], category: '间接基础照明' },
+      { keywords: ['反灯槽', '悬浮', '窗帘', '踢脚'], category: '间接氛围照明' },
+      { keywords: ['柜体', '层板', '书桌', '书台'], category: '近距离任务照明' },
+      { keywords: ['吊灯', '壁灯', '镜前', '装饰灯'], category: '装饰类直接照明' },
+      { keywords: ['软膜', '洗墙', '泛光'], category: '柔光漫射照明' }
+    ]
+
+    const resolveCategory = (name) => {
+      if (!name) return '其他'
+      // 精确匹配
+      if (exactMap[name]) return exactMap[name]
+      // 关键词模糊匹配
+      for (const rule of keywordRules) {
+        if (rule.keywords.some(kw => name.indexOf(kw) !== -1)) {
+          return rule.category
+        }
+      }
+      return '其他'
+    }
+
+    // 各照明类型的默认光源利用率（与图片标准对应）
+    const categoryDefaultUtil = {
+      '直射重点照明': 0.75,
+      '直接基础照明': 0.70,
+      '间接基础照明': 0.35,
+      '间接氛围照明': 0.20,
+      '近距离任务照明': 0.85,
+      '装饰类直接照明': 0.75,
+      '柔光漫射照明': 0.60
+    }
+
     return lampTypes
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(item => ({
-        name: item.name,
-        displayName: item.displayName || item.name,
-        powerW: item.powerW || 10,
-        efficacy: item.efficacy || 80,
-        lengthQty: '',
-        sourceUtil: item.sourceUtil || 0.8,
-        flux: 0
-      }))
+      .map(item => {
+        const category = item.category || resolveCategory(item.name)
+        const defaultUtil = categoryDefaultUtil[category] || 0.7
+        return {
+          category,
+          name: item.name,
+          displayName: item.displayName || item.name,
+          powerW: item.powerW || 10,
+          efficacy: item.efficacy || 80,
+          lengthQty: '',
+          sourceUtil: item.sourceUtil != null ? item.sourceUtil : defaultUtil,
+          flux: 0
+        }
+      })
   },
 
   // ========== 通用方法 ==========
@@ -706,6 +981,7 @@ Page({
       lampAddOptions: this.buildLampAddOptions(lampTypeRows),
       lampAddValue: 0
     })
+    this._updateGroupedLampTypes(lampTypeRows)
     this.recalc()
   },
   
@@ -908,6 +1184,183 @@ Page({
     this.recalc()
   },
 
+  // ========== 灯具多选弹窗 ==========
+
+  /**
+   * 计算每种 lampTypeRows 当前已加入 selectedLamps 的数量
+   * 用于多选弹窗显示"已有 N 个"标签
+   */
+  _calcLampExistingMap() {
+    const map = {}
+    const types = this.data.lampTypeRows || []
+    const selected = this.data.selectedLamps || []
+    types.forEach((type, index) => {
+      const baseName = type.displayName || type.name
+      if (!baseName) return
+      const escaped = baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      // 匹配同名或同名+数字后缀
+      const regex = new RegExp(`^${escaped}\\d*$`)
+      let count = 0
+      selected.forEach((lamp) => {
+        const lampName = lamp.displayName || lamp.name
+        if (lampName && regex.test(lampName)) count += 1
+      })
+      if (count > 0) map[index] = count
+    })
+    return map
+  },
+
+  /**
+   * 打开多选弹窗：重置勾选状态，统计已加入数量
+   */
+  openLampSelectModal() {
+    // 每次打开弹窗时都实时重算分组数据，确保分类始终最新
+    this._updateGroupedLampTypes(this.data.lampTypeRows || [])
+    this.setData({
+      showLampSelectModal: true,
+      lampSelectChecked: {},
+      lampSelectExisting: this._calcLampExistingMap(),
+      lampSelectCount: 0
+    })
+  },
+
+  closeLampSelectModal() {
+    this.setData({
+      showLampSelectModal: false,
+      lampSelectChecked: {},
+      lampSelectCount: 0
+    })
+  },
+
+  // 监听数据变化时，更新分组的灯具类型供弹窗使用
+  _updateGroupedLampTypes(lampTypeRows) {
+    const groupedMap = {}
+    lampTypeRows.forEach((lamp, index) => {
+      const category = lamp.category || '其他'
+      if (!groupedMap[category]) {
+        groupedMap[category] = []
+      }
+      groupedMap[category].push({ ...lamp, originalIndex: index })
+    })
+
+    const order = [
+      '直射重点照明',
+      '直接基础照明',
+      '间接基础照明',
+      '间接氛围照明',
+      '近距离任务照明',
+      '装饰类直接照明',
+      '柔光漫射照明',
+      '其他'
+    ]
+
+    const groupedLampTypes = []
+    order.forEach(cate => {
+      if (groupedMap[cate] && groupedMap[cate].length > 0) {
+        groupedLampTypes.push({
+          categoryName: cate,
+          lamps: groupedMap[cate]
+        })
+      }
+    })
+
+    Object.keys(groupedMap).forEach(cate => {
+      if (!order.includes(cate) && groupedMap[cate].length > 0) {
+        groupedLampTypes.push({
+          categoryName: cate,
+          lamps: groupedMap[cate]
+        })
+      }
+    })
+
+    this.setData({ groupedLampTypes })
+  },
+
+  /**
+   * 切换某项勾选状态
+   */
+  onToggleLampSelect(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isFinite(index) || index < 0) return
+    const prev = this.data.lampSelectChecked || {}
+    const next = { ...prev }
+    if (next[index]) {
+      delete next[index]
+    } else {
+      next[index] = true
+    }
+    this.setData({
+      lampSelectChecked: next,
+      lampSelectCount: Object.keys(next).length
+    })
+  },
+
+  /**
+   * 确认选择：批量添加灯具到 selectedLamps（一次 setData 完成）
+   */
+  onConfirmLampSelect() {
+    const checked = this.data.lampSelectChecked || {}
+    const indices = Object.keys(checked)
+      .filter((k) => checked[k])
+      .map((k) => Number(k))
+      .filter((n) => Number.isFinite(n) && n >= 0)
+
+    if (indices.length === 0) {
+      this.closeLampSelectModal()
+      return
+    }
+
+    const types = this.data.lampTypeRows || []
+    const newList = [...(this.data.selectedLamps || [])]
+    const seenIds = new Set(newList.map((l) => l.lampId).filter(Boolean))
+
+    indices.forEach((idx) => {
+      const baseLamp = types[idx]
+      if (!baseLamp) return
+
+      // 基于"持续累积"的 newList 做重名编号，确保多次同种类型勾选时也能正确编号
+      let newName = baseLamp.displayName || baseLamp.name
+      const existingNames = newList.map((l) => l.displayName || l.name)
+      const escapedName = newName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`^${escapedName}(\\d*)$`)
+      let maxSuffix = -1
+      let hasMatch = false
+      existingNames.forEach((name) => {
+        const match = name && name.match(regex)
+        if (match) {
+          hasMatch = true
+          const suffix = match[1]
+          const num = suffix ? parseInt(suffix) : 0
+          if (num > maxSuffix) maxSuffix = num
+        }
+      })
+      if (hasMatch) newName = newName + (maxSuffix + 1)
+
+      // 生成不重复 lampId（极端情况下毫秒级冲突）
+      let lampId
+      do {
+        lampId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+      } while (seenIds.has(lampId))
+      seenIds.add(lampId)
+
+      newList.push({
+        ...baseLamp,
+        lampId,
+        displayName: newName,
+        lengthQty: ''
+      })
+    })
+
+    this.setData({
+      selectedLamps: newList,
+      showLampSelectModal: false,
+      lampSelectChecked: {},
+      lampSelectExisting: {},
+      lampSelectCount: 0
+    })
+    this.recalc()
+  },
+
   onSelectedLampFocus(e) {
     const lampId = e.currentTarget.dataset.lampid
     if (!lampId) return
@@ -1085,6 +1538,9 @@ Page({
               specs: { version: '标准版' }
             }
             const query = encodeURIComponent(JSON.stringify(item))
+            // 跳转购买前：保存当前已填参数 + 标记权限待复查
+            // 这样用户购买/激活完成回到本页，参数会自动恢复且能直接计算
+            this._markPendingPurchaseCheck()
             wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
           }
         }

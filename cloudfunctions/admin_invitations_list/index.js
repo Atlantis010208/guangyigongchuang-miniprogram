@@ -88,6 +88,31 @@ async function lookupUserIds(role, keyword) {
 }
 
 /**
+ * 批量加载 admin_accounts 摘要（为补发/撤销操作人昵称展示用）。
+ */
+async function batchLoadAdmins(adminIds) {
+  const ids = Array.from(new Set((adminIds || []).filter(Boolean)))
+  if (ids.length === 0) return {}
+  const map = {}
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100)
+    try {
+      const res = await db.collection('admin_accounts')
+        .where({ _id: _.in(chunk) })
+        .field({ _id: true, username: true, name: true })
+        .limit(100)
+        .get()
+      for (const a of res.data || []) {
+        map[a._id] = a
+      }
+    } catch (e) {
+      console.warn('[admin_invitations_list] 批量加载 admin_accounts 摘要失败:', e && e.message)
+    }
+  }
+  return map
+}
+
+/**
  * 批量加载 users 摘要：避免 N+1
  */
 async function batchLoadUsers(userIds) {
@@ -121,9 +146,11 @@ async function batchLoadUsers(userIds) {
   return map
 }
 
-function decorate(record, userMap) {
+function decorate(record, userMap, adminMap) {
   const inviter = userMap[record.inviterUserId] || {}
   const invited = userMap[record.invitedUserId] || {}
+  const grantedAdmin = record.grantedBy ? (adminMap && adminMap[record.grantedBy]) || {} : {}
+  const revokedAdmin = record.revokedBy ? (adminMap && adminMap[record.revokedBy]) || {} : {}
   return {
     _id: record._id,
     createdAt: Number(record.createdAt) || 0,
@@ -147,7 +174,15 @@ function decorate(record, userMap) {
       nickname: invited.nickname || record.invitedNickname || '',
       phoneNumber: invited.phoneNumber || '',
       avatarUrl: invited.avatarUrl || record.invitedAvatarUrl || ''
-    }
+    },
+    // 审计字段（补发/撤销记录，invite_management spec 需求 9）
+    grantedBy: record.grantedBy || '',
+    grantedAt: Number(record.grantedAt) || 0,
+    grantedByName: record.grantedBy ? (grantedAdmin.name || grantedAdmin.username || '') : '',
+    revokedBy: record.revokedBy || '',
+    revokedAt: Number(record.revokedAt) || 0,
+    revokedByName: record.revokedBy ? (revokedAdmin.name || revokedAdmin.username || '') : '',
+    operatorNote: record.operatorNote || ''
   }
 }
 
@@ -206,7 +241,15 @@ exports.main = async (event) => {
     const built = await buildWhere(event || {})
     if (!built.hit) {
       // 关键词没匹配到任何 user → 直接返回空
-      return resp(true, 'OK', { total: 0, pageNum, pageSize, list: [] })
+      return {
+        success: true,
+        code: 'OK',
+        data: [],
+        total: 0,
+        pageNum,
+        pageSize,
+        timestamp: Date.now()
+      }
     }
 
     const totalRes = await db.collection(COLLECTION).where(built.where).count()
@@ -229,8 +272,24 @@ exports.main = async (event) => {
     }
     const userMap = await batchLoadUsers(userIds)
 
-    const list = records.map(r => decorate(r, userMap))
-    return resp(true, 'OK', { total, pageNum, pageSize, list })
+    // 批量拉 admin_accounts 摘要（补发/撤销操作人昵称）
+    const adminIds = []
+    for (const r of records) {
+      if (r.grantedBy) adminIds.push(r.grantedBy)
+      if (r.revokedBy) adminIds.push(r.revokedBy)
+    }
+    const adminMap = await batchLoadAdmins(adminIds)
+
+    const list = records.map(r => decorate(r, userMap, adminMap))
+    return {
+      success: true,
+      code: 'OK',
+      data: list,
+      total,
+      pageNum,
+      pageSize,
+      timestamp: Date.now()
+    }
   } catch (err) {
     console.error('[admin_invitations_list] 异常:', err)
     return resp(false, 'SERVER_ERROR', null, (err && err.message) || '查询邀请记录失败')

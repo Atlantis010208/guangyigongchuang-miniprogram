@@ -1323,3 +1323,198 @@ page {
 .highlight {
   color: #000; 
 }
+
+/* ==================== 添加灯具按钮（替代旧 picker） ==================== */
+/* 沿用 v2-add-btn 的尺寸/圆角 token，但改为白底黑字 + 蓝色 dashed 边框 */
+.v2-add-lamp-btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #367BE6;
+  border-radius: 12rpx;
+  background: #fff;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+.v2-add-lamp-btn:active {
+  background: #F2F2F7;
+}
+.v2-add-lamp-text {
+  font-size: 30rpx;
+  color: #8E8E93;
+}
+
+/* ==================== 灯具多选弹窗 ==================== */
+/* 外壳复用 util-modal-content 视觉 token；内部交互元素跟随 #367BE6 主蓝体系 */
+/* 关键：所有带 padding 的子容器都用 box-sizing: border-box，避免被外层 overflow: hidden 截断 */
+
+.lamp-select-modal {
+  width: 100%;
+  max-height: 82vh;
+  background: #ffffff;
+  border-radius: 32rpx;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 40rpx 80rpx rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lamp-select-body {
+  max-height: calc(82vh - 320rpx); /* 82vh - header(~160rpx) - footer(~120rpx) - 余量 */
+  padding: 12rpx 32rpx 32rpx 32rpx;
+  box-sizing: border-box;
+}
+
+/* 类别大框 */
+.lamp-select-category {
+  margin-bottom: 32rpx;
+}
+
+/* 分类标题 */
+.lamp-category-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 20rpx;
+  letter-spacing: 0.02em;
+  padding-left: 4rpx;
+  position: relative;
+}
+
+/* 3 列网格容器（替代原单列 flex 列表） */
+.lamp-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+/* 单个网格块样式 */
+.lamp-select-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24rpx 16rpx;
+  background-color: #f8f8fa;
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+}
+
+.lamp-select-item:active {
+  transform: scale(0.96);
+  background-color: #f0f0f5;
+}
+
+/* 选中状态 */
+.lamp-select-item.checked {
+  border-color: #367BE6;
+}
+
+.lamp-select-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.lamp-select-name {
+  font-size: 24rpx;
+  color: #333333;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.lamp-select-item.checked .lamp-select-name {
+  color: #333333;
+  font-weight: 500;
+}
+
+.lamp-select-tag {
+  display: inline-block;
+  margin-top: 10rpx;
+  padding: 4rpx 12rpx;
+  font-size: 20rpx;
+  color: #8E8E93;
+  background: #fff;
+  border-radius: 999rpx;
+  border: 1rpx solid #E5E5EA;
+}
+
+.lamp-select-footer {
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1rpx solid #F2F2F7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  box-sizing: border-box;
+}
+
+.lamp-select-count {
+  font-size: 26rpx;
+  color: #8E8E93;
+  flex-shrink: 0;
+}
+
+.lamp-select-actions {
+  display: flex;
+  gap: 16rpx;
+  flex-shrink: 0;
+}
+
+.lamp-select-cancel,
+.lamp-select-confirm {
+  height: 80rpx;
+  min-width: 140rpx;
+  padding: 0 32rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.lamp-select-cancel::after,
+.lamp-select-confirm::after {
+  border: none;
+}
+
+.lamp-select-cancel {
+  background: #F2F2F7;
+  color: #1C1C1E;
+}
+.lamp-select-cancel:active {
+  background: #E5E5EA;
+}
+
+/* 主按钮跟随 v2-btn-calculate：#367BE6 + 主蓝阴影 + opacity/translateY active */
+.lamp-select-confirm {
+  background: #367BE6;
+  color: #fff;
+  box-shadow: 0 8rpx 20rpx rgba(54, 123, 230, 0.25);
+  transition: all 0.2s;
+}
+.lamp-select-confirm:active {
+  opacity: 0.9;
+  transform: translateY(2rpx);
+}
+.lamp-select-confirm.disabled,
+.lamp-select-confirm[disabled] {
+  background: #C7C7CC;
+  color: #fff;
+  box-shadow: none;
+}

@@ -244,8 +244,8 @@ page {
   font-weight: 500;
   pointer-events: auto;
   
-  /* 严格控制宽度，匹配 dx=200 的网格限制 */
-  max-width: 160rpx;
+  /* 折中控制宽度，匹配 dx=250 的网格限制 */
+  max-width: 230rpx;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -600,6 +600,10 @@ page {
 
 .paywall-btn::after {
   border: none;
+}
+
+.paywall-btn--invite {
+  background: #2563EB;
 }
 
 .paywall-btn--hover {

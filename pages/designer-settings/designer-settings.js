@@ -101,8 +101,10 @@ Page({
                 app.globalData.userRole = 'owner';
               }
               wx.hideLoading();
-              // 已移除启动页/身份选择页，退出后直接回业主端首页
-              wx.reLaunch({ url: '/pages/products/products' });
+              wx.navigateTo({
+                url: '/pages/identity/identity',
+                fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
+              });
             }
           });
         }

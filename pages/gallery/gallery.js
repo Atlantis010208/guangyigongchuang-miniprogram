@@ -237,78 +237,51 @@ Page({
 
     const tagsToPlace = [anchorAll.name, anchorFav.name, ...interleavedTags]
 
-    // 六边形螺旋网格生成器 (Hexagonal Spiral)
-    // q, r 是轴向坐标，保证每个节点周围正好有 6 个邻居
-    const hexSpiral = [ {q:0, r:0} ] // 中心点
-    let radius = 1
+    // =========================================================
+    // 采用密铺的交错网格 (Staggered Grid) 算法，彻底解决留白与重叠
+    // =========================================================
     
-    // 预生成足够多的网格坐标 (最多支持 200 个标签)
-    while (hexSpiral.length < Math.max(50, tagsToPlace.length + 10)) {
-      let q = radius
-      let r = 0
-      // 遍历 6 个方向的边
-      const directions = [
-        {dq: 0, dr: -1}, {dq: -1, dr: 0}, {dq: -1, dr: 1},
-        {dq: 0, dr: 1}, {dq: 1, dr: 0}, {dq: 1, dr: -1}
-      ]
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < radius; j++) {
-          hexSpiral.push({ q, r })
-          q += directions[i].dq
-          r += directions[i].dr
-        }
-      }
-      radius++
-    }
-
-    // 映射到物理像素 (长方形六边形网格)
-    // 考虑到中文标签普遍较宽，dx 必须显著大于 dy
-    // dx=200, dy=80 使得每个单元格最大容纳约 180rpx 宽度的标签
-    const dx = 200 
+    // dx=220, dy=80 紧凑而安全，完全匹配 max-width: 230rpx 的标签
+    const dx = 220 
     const dy = 80  
 
+    // 固定一个虚拟画板（Torus）的大小：6列 x 8行
+    // 这样 6 * 220 = 1320 (横向), 8 * 80 = 640 (纵向)，完全覆盖并超出屏幕，保证无死角
+    const COLS = 6
+    const ROWS = 8
+    
+    const torusWidth = COLS * dx
+    const torusHeight = ROWS * dy
+
+    // 当标签太少时，重复使用 tagsToPlace 填满这 48 个格子
+    const totalCells = COLS * ROWS
+    const filledTags = []
+    let tagIndex = 0
+    for(let i = 0; i < totalCells; i++) {
+        filledTags.push(tagsToPlace[tagIndex % tagsToPlace.length])
+        tagIndex++
+    }
+
     const placedNodes = []
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    let cellIndex = 0
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        // 偶数行左移半个格宽，形成砖块式的交错排列
+        const offsetX = (r % 2 === 0) ? -(dx / 2) : 0
+        const bx = c * dx + offsetX
+        const by = r * dy
 
-    tagsToPlace.forEach((tagName, index) => {
-      if (index >= hexSpiral.length) return
-      
-      const { q, r } = hexSpiral[index]
-      
-      // 标准的六边形转笛卡尔坐标公式
-      const bx = dx * (q + r / 2)
-      const by = dy * r * Math.sqrt(3) / 2
-
-      placedNodes.push({
-        name: tagName,
-        bx: bx,
-        by: by
-      })
-
-      minX = Math.min(minX, bx)
-      maxX = Math.max(maxX, bx)
-      minY = Math.min(minY, by)
-      maxY = Math.max(maxY, by)
-    })
-
-    // Torus 边界：六边形螺旋的相邻行 y 值相差 rowStep = dy*√3/2，
-    // 相邻列 x 值相差 colStep = dx/2。要让 N 行/列在 mod 周期下
-    // 既互不重叠又首尾衔接，最小周期 = spanY + rowStep / spanX + colStep。
-    const rowStep = dy * Math.sqrt(3) / 2
-    const colStep = dx / 2
-    const spanX = (isFinite(maxX) && isFinite(minX)) ? (maxX - minX) : 0
-    const spanY = (isFinite(maxY) && isFinite(minY)) ? (maxY - minY) : 0
-    const torusWidth = Math.max(dx, spanX + colStep)
-    const torusHeight = Math.max(rowStep * 2, spanY + rowStep)
+        placedNodes.push({
+          name: filledTags[cellIndex],
+          bx: bx,
+          by: by
+        })
+        cellIndex++
+      }
+    }
 
     // ==========================================================
-    // 关键：垂直方向生成足够多的副本铺满视口 VIEWPORT_H rpx
-    //
-    // WXS 中 globalY 会被 mod 到 [-h/2, h/2]，标签 py = by + globalY，
-    // 所以每个副本的 py 范围 ≈ [by - h/2, by + h/2]。
-    // 为了让任意 globalY 下视口 [-VIEWPORT_H/2, +VIEWPORT_H/2]rpx 都有标签，
-    // 需要足够多的副本（row ∈ [-rowHalf, rowHalf]）覆盖这个范围。
-    //
+    // 垂直方向生成足够多的副本铺满视口 VIEWPORT_H rpx
     // ⚠️ VIEWPORT_H 必须与 gallery.wxss 中 .cloud-wrap 的 height 保持一致
     const VIEWPORT_H = 400
     const rowHalf = Math.max(1, Math.ceil((VIEWPORT_H / 2) / torusHeight) + 1)

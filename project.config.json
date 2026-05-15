@@ -153,6 +153,22 @@
       {
         "value": "images/RESOURCES_NEEDED.md",
         "type": "file"
+      },
+      {
+        "value": "images/full-flow.png",
+        "type": "file"
+      },
+      {
+        "value": "images/19518f21745e6bf849c1619610efb5f.png",
+        "type": "file"
+      },
+      {
+        "value": "images/808ad744fcc2793a3e5712e7f57cdfa.png",
+        "type": "file"
+      },
+      {
+        "value": "xhs_order_sync",
+        "type": "folder"
       }
     ],
     "include": []

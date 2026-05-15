@@ -2,7 +2,7 @@
   "pages": [
     "pages/splash/splash",
     "pages/products/products",
-    "pages/lighting-manual/index",
+    
     "pages/course/index/index",
     "pages/search/search",
     "pages/color-temp/color-temp",
@@ -17,6 +17,7 @@
     "pages/search/help/help-lux-to-params/help-lux-to-params",
     "pages/search/history/history",
     "pages/cart/cart",
+    "pages/identity/identity",
     "pages/auth/login/login",
     "pages/auth/profile-edit/profile-edit",
     "pages/auth/agreement/agreement",
@@ -117,6 +118,12 @@
       "root": "pages/features/",
       "pages": [
         "detail/detail"
+      ]
+    },
+    {
+      "root": "pages/lighting-manual/",
+      "pages": [
+        "index"
       ]
     },
     {

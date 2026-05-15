@@ -160,79 +160,49 @@ export function calcTotalFlux(lampTypeRows) {
 
 /**
  * 获取默认灯具参数
- * 返回一组预设的灯具类型及其参数
+ * 根据《建筑照明设计标准》及实际经验分类
  * 
  * @returns {Array} 灯具类型数组
- * 
- * @example
- * const lamps = getDefaultLampTypes()
- * // 返回 7 种灯具类型
  */
 export function getDefaultLampTypes() {
   return [
-    { 
-      name: '反灯槽灯带', 
-      displayName: '反灯槽灯带',
-      powerW: 10, 
-      efficacy: 80,  // 发光效率：80 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.15,  // 光源利用率：15%（经过2次反射）
-      flux: 0 
-    },
-    { 
-      name: '正灯槽灯带', 
-      displayName: '正灯槽灯带',
-      powerW: 10, 
-      efficacy: 80,  // 发光效率：80 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.30,  // 光源利用率：30%（经过1次反射）
-      flux: 0 
-    },
-    { 
-      name: '线性灯', 
-      displayName: '线性灯',
-      powerW: 10, 
-      efficacy: 80,  // 发光效率：80 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.80,  // 光源利用率：80%（直接照明带灯罩）
-      flux: 0 
-    },
-    { 
-      name: '射灯', 
-      displayName: '射灯', 
-      powerW: 3, 
-      efficacy: 65,  // 发光效率：65 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.95,  // 光源利用率：95%（直接照明无灯罩）
-      flux: 0 
-    },
-    { 
-      name: '筒灯', 
-      displayName: '筒灯', 
-      powerW: 7, 
-      efficacy: 65,  // 发光效率：65 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.95,  // 光源利用率：95%（直接照明无灯罩）
-      flux: 0 
-    },
-    { 
-      name: '吊灯', 
-      displayName: '吊灯',
-      powerW: 25, 
-      efficacy: 80,  // 发光效率：80 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.90,  // 光源利用率：90%（直接照明带灯罩）
-      flux: 0 
-    },
-    { 
-      name: '装饰灯', 
-      displayName: '装饰灯',
-      powerW: 10, 
-      efficacy: 80,  // 发光效率：80 lm/W
-      lengthQty: '', 
-      sourceUtil: 0.90,  // 光源利用率：90%（直接照明带灯罩）
-      flux: 0 
-    }
+    // 直射重点照明 (75%)
+    { category: '直射重点照明', name: '射灯', displayName: '射灯', powerW: 7, efficacy: 65, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    { category: '直射重点照明', name: '磁吸射灯', displayName: '磁吸射灯', powerW: 7, efficacy: 65, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    { category: '直射重点照明', name: '格栅灯', displayName: '格栅灯', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    
+    // 直接基础照明 (70%)
+    { category: '直接基础照明', name: '筒灯', displayName: '筒灯', powerW: 7, efficacy: 65, lengthQty: '', sourceUtil: 0.70, flux: 0 },
+    { category: '直接基础照明', name: '吸顶灯', displayName: '吸顶灯', powerW: 24, efficacy: 80, lengthQty: '', sourceUtil: 0.70, flux: 0 },
+    { category: '直接基础照明', name: '平板灯', displayName: '平板灯', powerW: 24, efficacy: 80, lengthQty: '', sourceUtil: 0.70, flux: 0 },
+    { category: '直接基础照明', name: '面板灯', displayName: '面板灯', powerW: 24, efficacy: 80, lengthQty: '', sourceUtil: 0.70, flux: 0 },
+    
+    // 间接基础照明 (35%)
+    { category: '间接基础照明', name: '正灯槽', displayName: '正灯槽', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.35, flux: 0 },
+    { category: '间接基础照明', name: '下发光灯槽', displayName: '下发光灯槽', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.35, flux: 0 },
+    { category: '间接基础照明', name: '双眼皮灯带', displayName: '双眼皮灯带', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.35, flux: 0 },
+    
+    // 间接氛围照明 (20%)
+    { category: '间接氛围照明', name: '反灯槽', displayName: '反灯槽', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.20, flux: 0 },
+    { category: '间接氛围照明', name: '悬浮灯带', displayName: '悬浮灯带', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.20, flux: 0 },
+    { category: '间接氛围照明', name: '窗帘灯带', displayName: '窗帘灯带', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.20, flux: 0 },
+    { category: '间接氛围照明', name: '踢脚线灯带', displayName: '踢脚线灯带', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.20, flux: 0 },
+    
+    // 近距离任务照明 (85%)
+    { category: '近距离任务照明', name: '柜体灯', displayName: '柜体灯', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.85, flux: 0 },
+    { category: '近距离任务照明', name: '层板灯', displayName: '层板灯', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.85, flux: 0 },
+    { category: '近距离任务照明', name: '书桌灯', displayName: '书桌灯', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.85, flux: 0 },
+    
+    // 装饰类直接照明 (75%)
+    { category: '装饰类直接照明', name: '长条吊灯', displayName: '长条吊灯', powerW: 20, efficacy: 80, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    { category: '装饰类直接照明', name: '小吊灯', displayName: '小吊灯', powerW: 7, efficacy: 80, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    { category: '装饰类直接照明', name: '壁灯', displayName: '壁灯', powerW: 7, efficacy: 80, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    { category: '装饰类直接照明', name: '镜前灯', displayName: '镜前灯', powerW: 10, efficacy: 80, lengthQty: '', sourceUtil: 0.75, flux: 0 },
+    
+    // 柔光漫射照明 (60%)
+    { category: '柔光漫射照明', name: '软膜天花', displayName: '软膜天花', powerW: 24, efficacy: 80, lengthQty: '', sourceUtil: 0.60, flux: 0 },
+    { category: '柔光漫射照明', name: '洗墙射灯', displayName: '洗墙射灯', powerW: 7, efficacy: 65, lengthQty: '', sourceUtil: 0.60, flux: 0 },
+    { category: '柔光漫射照明', name: '线性洗墙灯', displayName: '线性洗墙灯', powerW: 15, efficacy: 80, lengthQty: '', sourceUtil: 0.60, flux: 0 }
   ]
 }
 

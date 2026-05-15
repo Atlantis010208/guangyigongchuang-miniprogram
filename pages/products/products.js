@@ -139,12 +139,23 @@ Page({
   },
 
   /**
-   * 检查用户是否已选择身份（已废弃）
-   * 现在默认所有用户进入业主端首页，设计师需通过个人中心 → 设计师工作台切换。
-   * 保留空函数避免影响其他调用点。
+   * 检查用户是否已选择身份
+   * 未选择身份的首次用户跳转到身份选择页
    */
   checkIdentitySelection() {
-    return
+    try {
+      const userDoc = wx.getStorageSync('userDoc')
+      const userRole = wx.getStorageSync('userRole')
+      // 已有角色缓存或已选择身份，无需跳转
+      if (userRole || (userDoc && userDoc.identitySelected)) return
+      // 首次用户，跳转身份选择页
+      wx.navigateTo({
+        url: '/pages/identity/identity',
+        fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
+      })
+    } catch (e) {
+      console.warn('[products] 检查身份选择失败', e)
+    }
   },
 
   /**

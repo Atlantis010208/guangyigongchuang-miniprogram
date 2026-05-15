@@ -1,0 +1,10 @@
+{
+  "name": "admin_membership_batch_grant",
+  "version": "1.0.0",
+  "description": "后台管理端会员批量赠送（preview/execute 两阶段）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

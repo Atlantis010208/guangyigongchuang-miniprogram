@@ -294,12 +294,9 @@
                     <text class="v2-label">添加灯具</text>
                     <image class="v2-info-icon" src="/images/使用说明.png"></image>
                   </view>
-                  <picker class="v2-input-box picker" mode="selector" range="{{lampAddOptions}}" value="{{lampAddValue}}" bindchange="onAddLampChange">
-                    <view class="picker-text {{lampAddValue===0 ? 'placeholder' : ''}}">
-                      {{lampAddOptions[lampAddValue]}}
-                      <text class="v2-picker-arrow">▼</text>
-                    </view>
-                  </picker>
+                  <view class="v2-add-lamp-btn" bindtap="openLampSelectModal">
+                    <text class="v2-add-lamp-text">+ 选择灯具</text>
+                  </view>
                 </view>
                 <view class="v2-lamp-item" wx:for="{{selectedLamps}}" wx:key="lampId">
                    <view class="v2-lamp-header">
@@ -903,6 +900,50 @@
     
     <view class="util-modal-footer">
       <button class="util-btn-confirm" bindtap="closeTargetLuxInfo">我知道了</button>
+    </view>
+  </view>
+</view>
+
+<!-- 灯具多选弹窗（一次性勾选多种灯具，确认后批量加入列表） -->
+<view wx:if="{{showLampSelectModal}}" class="util-modal-mask" bindtap="closeLampSelectModal" catchtouchmove="noop">
+  <view class="lamp-select-modal" catchtap="stopPropagation">
+    <view class="util-modal-close" bindtap="closeLampSelectModal">×</view>
+
+    <view class="util-modal-header">
+      <text class="util-modal-title">选择灯具</text>
+      <text class="util-modal-subtitle">勾选所需灯具类型，确认后再分别填写参数</text>
+    </view>
+
+    <scroll-view scroll-y enhanced="{{true}}" show-scrollbar="{{false}}" class="lamp-select-body">
+      <view class="lamp-select-category" wx:for="{{groupedLampTypes}}" wx:key="categoryName" wx:for-item="group">
+        <text class="lamp-category-title">{{group.categoryName}}</text>
+        <view class="lamp-select-grid">
+          <view
+            class="lamp-select-item {{lampSelectChecked[item.originalIndex] ? 'checked' : ''}}"
+            wx:for="{{group.lamps}}"
+            wx:key="originalIndex"
+            data-index="{{item.originalIndex}}"
+            bindtap="onToggleLampSelect"
+          >
+            <view class="lamp-select-info">
+              <text class="lamp-select-name">{{item.displayName || item.name}}</text>
+              <text wx:if="{{lampSelectExisting[item.originalIndex] > 0}}" class="lamp-select-tag">已有 {{lampSelectExisting[item.originalIndex]}} 个</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="lamp-select-footer">
+      <text class="lamp-select-count">已选 {{lampSelectCount || 0}} 项</text>
+      <view class="lamp-select-actions">
+        <button class="lamp-select-cancel" bindtap="closeLampSelectModal">取消</button>
+        <button
+          class="lamp-select-confirm {{lampSelectCount > 0 ? '' : 'disabled'}}"
+          disabled="{{!lampSelectCount}}"
+          bindtap="onConfirmLampSelect"
+        >添加</button>
+      </view>
     </view>
   </view>
 </view>

@@ -1,7 +1,5 @@
 <scroll-view class="page" scroll-y>
-  <text class="page-title">账户</text>
-
-  <!-- 未登录提示 -->
+  <!-- 未登录提示（Figma 未画此状态，保留现有交互） -->
   <view wx:if="{{!isLoggedIn}}" class="login-prompt-card">
     <image class="login-prompt-avatar" src="/images/个人中心.png" mode="aspectFill"></image>
     <view class="login-prompt-info">
@@ -11,38 +9,116 @@
     <button class="login-prompt-btn" bindtap="onGoLogin">登录</button>
   </view>
 
-  <!-- 已登录显示正常内容 -->
+  <!-- 已登录 -->
   <block wx:if="{{isLoggedIn}}">
-    <view class="profile-card unified">
-      <view class="top" bindtap="editProfile" hover-class="top-hover">
-        <image class="avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
-        <view class="info">
-          <text class="name">{{user.name || '点击完善资料'}}</text>
-          <text class="phone" bindtap="callPhone" catchtap="callPhone">{{user.phone || '未绑定手机号'}}</text>
+    <!-- ① 用户信息行 -->
+    <view class="user-row" bindtap="editProfile" hover-class="user-row-hover">
+      <image class="user-avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      <view class="user-info">
+        <view class="user-name-row">
+          <text class="user-name">{{user.name || '点击完善资料'}}</text>
+          <image wx:if="{{effectiveLevel}}" class="member-badge-img" src="/images/{{effectiveLevel === 'free' ? '普通用户' : effectiveLevel === 'normal' ? '会员' : '高级会员'}}.png" mode="heightFix"></image>
         </view>
-        <text class="edit-arrow">〉</text>
+        <text class="user-id">会员ID:{{memberId || '--'}}</text>
       </view>
+      <image class="user-row-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+    </view>
 
-      <view class="cells inline">
-        <view class="cell" bindtap="go" data-url="/pages/profile/membership/membership" hover-class="cell-hover"><text>我的会员</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/cart/cart" hover-class="cell-hover"><text>订单</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/invitations/invitations" hover-class="cell-hover"><text>我的邀请</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/mall/cart/cart" hover-class="cell-hover"><text>购物车</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/deposit/deposit" hover-class="cell-hover"><text>押金</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/services/services" hover-class="cell-hover"><text>服务</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/addresses/addresses" hover-class="cell-hover"><text>主要送货地址</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/favorites/favorites" hover-class="cell-hover"><text>我的收藏</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/receipts/receipts" hover-class="cell-hover"><text>自助结账收据</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/feedback/feedback" hover-class="cell-hover"><text>提供反馈意见</text><text class="arrow">〉</text></view>
-        <view class="cell" bindtap="go" data-url="/pages/profile/settings/settings" hover-class="cell-hover"><text>设置</text><text class="arrow">〉</text></view>
-        <view wx:if="{{isDesigner || isAdmin}}" class="cell" bindtap="goDesigner" hover-class="cell-hover"><text>设计师工作台</text><text class="arrow">〉</text></view>
+    <!-- ② 会员卡片（背景图随等级切换，点击进入我的会员） -->
+    <view wx:if="{{memberCardBg}}" class="member-card" bindtap="onViewMembership" hover-class="member-card-hover">
+      <image class="member-card-bg" src="{{memberCardBg}}" mode="widthFix"></image>
+      <text class="mc-level-name">{{memberLevelName}}</text>
+      <view class="mc-expire" wx:if="{{memberExpireDate && effectiveLevel !== 'free'}}">
+        <text class="mc-expire-label">有效期至</text>
+        <text class="mc-expire-date">{{memberExpireDate}}</text>
+      </view>
+      <view class="mc-benefits-btn {{effectiveLevel === 'free' ? 'mc-benefits-btn--silver' : ''}}" catchtap="onMemberBenefits">
+        <text class="mc-benefits-text">{{effectiveLevel === 'free' ? '开通会员' : '会员权益'}}</text>
+      </view>
+    </view>
+    <!-- 会员卡片骨架屏（首屏 / 切账号时占位，避免布局跳动） -->
+    <view wx:else class="member-card-skeleton" aria-hidden="true">
+      <view class="mcs-shimmer"></view>
+      <view class="mcs-crown"></view>
+      <view class="mcs-title"></view>
+      <view class="mcs-expire"></view>
+      <view class="mcs-button"></view>
+    </view>
+
+    <!-- ③ 四宫格 - 订单管理 / 我的收藏 / 购物车 / 主要发货地址 -->
+    <view class="quick-grid">
+      <view class="quick-item" bindtap="goTab" data-url="/pages/cart/cart" hover-class="quick-item-hover">
+        <image class="quick-icon" src="/images/订单.png" mode="aspectFit"></image>
+        <text class="quick-label">订单管理</text>
+      </view>
+      <view class="quick-item" bindtap="go" data-url="/pages/profile/favorites/favorites" hover-class="quick-item-hover">
+        <image class="quick-icon" src="/images/收藏(个人).png" mode="aspectFit"></image>
+        <text class="quick-label">我的收藏</text>
+      </view>
+      <view class="quick-item" bindtap="go" data-url="/pages/mall/cart/cart" hover-class="quick-item-hover">
+        <image class="quick-icon quick-icon--lg" src="/images/购物车_cart_4K_transparent.png" mode="aspectFit"></image>
+        <text class="quick-label">购物车</text>
+      </view>
+      <view class="quick-item" bindtap="go" data-url="/pages/profile/addresses/addresses" hover-class="quick-item-hover">
+        <image class="quick-icon quick-icon--lg" src="/images/地址_address_4K_transparent.png" mode="aspectFit"></image>
+        <text class="quick-label">发货地址</text>
+      </view>
+    </view>
+
+    <!-- ④ 会员专属（暂时隐藏，功能待上线后取消注释）
+    <view class="list-card">
+      <text class="list-card-title">会员专属</text>
+      <view class="list-item" bindtap="onComingSoon" data-name="生日特权" hover-class="list-item-hover">
+        <text class="list-label">生日特权</text>
+        <text class="list-extra">未领取</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="onContact" hover-class="list-item-hover">
+        <text class="list-label">专属客服</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="onComingSoon" data-name="会员活动" hover-class="list-item-hover">
+        <text class="list-label">会员活动</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="onComingSoon" data-name="会员升级攻略" hover-class="list-item-hover">
+        <text class="list-label">会员升级攻略</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+    </view>
+    -->
+
+    <!-- ⑤ 更多服务 -->
+    <view class="list-card">
+      <text class="list-card-title">更多服务</text>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/membership/invite-history/invite-history" hover-class="list-item-hover">
+        <text class="list-label">我的邀请</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/receipts/receipts" hover-class="list-item-hover">
+        <text class="list-label">发票管理</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/feedback/feedback" hover-class="list-item-hover">
+        <text class="list-label">帮助中心</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/deposit/deposit" hover-class="list-item-hover">
+        <text class="list-label">押金</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/services/services" hover-class="list-item-hover">
+        <text class="list-label">服务</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view class="list-item" bindtap="go" data-url="/pages/profile/settings/settings" hover-class="list-item-hover">
+        <text class="list-label">设置</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+      </view>
+      <view wx:if="{{isDesigner || isAdmin}}" class="list-item" bindtap="goDesigner" hover-class="list-item-hover">
+        <text class="list-label">设计师工作台</text>
+        <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
       </view>
     </view>
   </block>
 </scroll-view>
-
-<!-- 悬浮联系客服按钮 -->
-<view class="floating-contact" bindtap="onContact" hover-class="floating-contact-hover">
-  <image class="float-icon" src="/images/客服.png" mode="aspectFit"></image>
-  <text class="float-text">联系客服</text>
-</view>

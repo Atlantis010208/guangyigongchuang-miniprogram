@@ -44,9 +44,9 @@ Page({
   },
 
   switchIdentity() {
-    // 已移除身份选择页，统一回到业主端首页
-    wx.reLaunch({
-      url: '/pages/products/products'
+    wx.navigateTo({
+      url: '/pages/identity/identity',
+      fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
     })
   }
 })

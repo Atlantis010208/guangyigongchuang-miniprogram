@@ -11,24 +11,24 @@ Page({
     // ==================== 表单数据 ====================
     // 1. 空间类别
     spaceTypes: [
-      { id: 'living', name: '客厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '起居' },
-      { id: 'dining', name: '餐厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 150, group: '起居' },
-      { id: 'master_bedroom', name: '主卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居' },
-      { id: 'second_bedroom', name: '次卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居' },
-      { id: 'kids_room', name: '儿童房', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '起居' },
-      { id: 'elder_room', name: '老人房', baseTemp: 3000, tempRange: [2700, 3500], lux: 150, group: '起居' },
-      { id: 'kitchen', name: '厨房', baseTemp: 4000, tempRange: [3500, 4500], lux: 150, group: '功能' },
-      { id: 'bathroom', name: '卫生间', baseTemp: 4000, tempRange: [3500, 4000], lux: 100, group: '功能' },
-      { id: 'cloakroom', name: '衣帽间', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '功能' },
-      { id: 'study', name: '书房/办公', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '功能' },
-      { id: 'balcony', name: '阳台', baseTemp: 3500, tempRange: [3000, 4000], lux: 75, group: '功能' },
-      { id: 'hotel_lobby', name: '酒店大堂', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业' },
-      { id: 'hotel_room', name: '酒店客房', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '商业' },
-      { id: 'cafe', name: '咖啡厅/茶室', baseTemp: 3000, tempRange: [2700, 3000], lux: 150, group: '商业' },
-      { id: 'restaurant', name: '餐饮空间', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业' },
-      { id: 'retail', name: '零售店铺', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业' },
-      { id: 'gallery', name: '展厅/画廊', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业' },
-      { id: 'office', name: '办公室', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '商业' }
+      { id: 'living', name: '客厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '起居', defaultUsage: 'relax' },
+      { id: 'dining', name: '餐厅', baseTemp: 3500, tempRange: [3000, 3500], lux: 150, group: '起居', defaultUsage: 'eat' },
+      { id: 'master_bedroom', name: '主卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居', defaultUsage: 'sleep' },
+      { id: 'second_bedroom', name: '次卧', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '起居', defaultUsage: 'sleep' },
+      { id: 'kids_room', name: '儿童房', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '起居', defaultUsage: 'daily' },
+      { id: 'elder_room', name: '老人房', baseTemp: 3000, tempRange: [2700, 3500], lux: 150, group: '起居', defaultUsage: 'daily' },
+      { id: 'kitchen', name: '厨房', baseTemp: 4000, tempRange: [3500, 4500], lux: 150, group: '功能', defaultUsage: 'cook' },
+      { id: 'bathroom', name: '卫生间', baseTemp: 4000, tempRange: [3500, 4000], lux: 100, group: '功能', defaultUsage: 'daily' },
+      { id: 'cloakroom', name: '衣帽间', baseTemp: 4000, tempRange: [3500, 4000], lux: 150, group: '功能', defaultUsage: 'daily' },
+      { id: 'study', name: '书房/办公', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '功能', defaultUsage: 'work' },
+      { id: 'balcony', name: '阳台', baseTemp: 3500, tempRange: [3000, 4000], lux: 75, group: '功能', defaultUsage: 'daily' },
+      { id: 'hotel_lobby', name: '酒店大堂', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业', defaultUsage: 'daily' },
+      { id: 'hotel_room', name: '酒店客房', baseTemp: 3500, tempRange: [2700, 3500], lux: 100, group: '商业', defaultUsage: 'sleep' },
+      { id: 'cafe', name: '咖啡厅/茶室', baseTemp: 3000, tempRange: [2700, 3000], lux: 150, group: '商业', defaultUsage: 'eat' },
+      { id: 'restaurant', name: '餐饮空间', baseTemp: 3500, tempRange: [3000, 3500], lux: 200, group: '商业', defaultUsage: 'eat' },
+      { id: 'retail', name: '零售店铺', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业', defaultUsage: 'work' },
+      { id: 'gallery', name: '展厅/画廊', baseTemp: 4000, tempRange: [3500, 4500], lux: 300, group: '商业', defaultUsage: 'work' },
+      { id: 'office', name: '办公室', baseTemp: 4000, tempRange: [4000, 4500], lux: 300, group: '商业', defaultUsage: 'work' }
     ],
     spaceIndex: -1,
     suggestedTemp: '',
@@ -130,15 +130,16 @@ Page({
       if (data) {
         const updates = {}
         if (data.spaceTypes && data.spaceTypes.length) {
-          // 合并云端配置，保留本地的 tempRange 字段（云端通常不带）
+          // 合并云端配置，保留本地的 tempRange / defaultUsage 字段（云端通常不带）
           const localMap = {}
           this.data.spaceTypes.forEach(s => { if (s && s.id) localMap[s.id] = s })
           updates.spaceTypes = data.spaceTypes.map(s => {
             const local = s && s.id ? localMap[s.id] : null
-            if (s && !s.tempRange && local && local.tempRange) {
-              return Object.assign({}, s, { tempRange: local.tempRange })
-            }
-            return s
+            if (!s || !local) return s
+            const patch = {}
+            if (!s.tempRange && local.tempRange) patch.tempRange = local.tempRange
+            if (!s.defaultUsage && local.defaultUsage) patch.defaultUsage = local.defaultUsage
+            return Object.keys(patch).length ? Object.assign({}, s, patch) : s
           })
         }
         if (data.ageGroups && data.ageGroups.length) updates.ageGroups = data.ageGroups
@@ -179,6 +180,13 @@ Page({
         ? `${space.tempRange[0]}K-${space.tempRange[1]}K`
         : String(space.baseTemp) + 'K'
       updates.suggestedTempSource = '基于「' + space.name + '」推荐区间，可手动修改'
+    }
+    // 根据空间的 defaultUsage 自动预选一个主要用途；云端配置替换 usages 后找不到时不预选
+    if (space && space.defaultUsage) {
+      const presetUsage = this.data.usages.find(u => u.id === space.defaultUsage)
+      const newSelectedUsages = presetUsage ? [presetUsage] : []
+      updates.selectedUsages = newSelectedUsages
+      updates.usageSelectedMap = this._buildSelectedMap(newSelectedUsages)
     }
     this.setData(updates)
   },

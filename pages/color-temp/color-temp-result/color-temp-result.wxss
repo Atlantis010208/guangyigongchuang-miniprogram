@@ -455,6 +455,10 @@
   border: none;
 }
 
+.paywall-btn--invite {
+  background: #2563EB;
+}
+
 .paywall-btn--hover {
   opacity: 0.85;
 }

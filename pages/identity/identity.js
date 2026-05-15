@@ -20,6 +20,13 @@ Page({
     })
   },
 
+  // 点击申请入驻
+  onApplyDesigner() {
+    wx.navigateTo({
+      url: '/pages/auth/designer-denied/designer-denied'
+    })
+  },
+
   // 确认选择
   async onConfirm() {
     const { selectedRole } = this.data

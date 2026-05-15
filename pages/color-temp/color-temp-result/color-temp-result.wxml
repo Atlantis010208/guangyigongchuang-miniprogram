@@ -147,7 +147,7 @@
           <text class="paywall-progress__text">{{paywallInviteProgress.inCycle}} / 2 人</text>
         </view>
         <text class="paywall-option__stats" wx:if="{{paywallInvitedTotal > 0}}">已邀 {{paywallInvitedTotal}} 人 · 累计获 {{paywallTrialGranted}} 天试用</text>
-        <button class="paywall-btn"
+        <button class="paywall-btn paywall-btn--invite"
                 open-type="share"
                 hover-class="paywall-btn--hover"
                 bindtap="onPaywallInviteTap">邀请好友</button>
