@@ -4,6 +4,26 @@ const util = require('./utils/util')
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
 
+// 全局注入分享：所有未自定义 onShareAppMessage 的页面自动获得默认分享
+;(function() {
+  const _Page = Page
+  Page = function(options) {
+    if (!options.onShareAppMessage) {
+      options.onShareAppMessage = function() {
+        const pages = getCurrentPages()
+        const currentPage = pages[pages.length - 1]
+        const route = currentPage ? '/' + currentPage.route : '/pages/products/products'
+        return {
+          title: '光乙共创平台',
+          path: route,
+          imageUrl: '/images/share-logo.png'
+        }
+      }
+    }
+    return _Page(options)
+  }
+})()
+
 App({
   onLaunch(options) {
     console.log('小程序启动', options)

@@ -48,7 +48,10 @@ Page({
     submitError: '',
 
     // 题型标签查找表（供 wxml 用）
-    typeLabels: TYPE_LABELS
+    typeLabels: TYPE_LABELS,
+
+    // 选项字母标签（按位置顺序渲染，不依赖 option.key；最多支持 6 个选项）
+    optionKeys: ['A', 'B', 'C', 'D', 'E', 'F']
   },
 
   // ============== 生命周期 ==============

@@ -98,7 +98,10 @@ Page({
               acceptedLabel: createdAtText,
               rewarded: !!r.rewardGranted,
               rewardGranted: !!r.rewardGranted,
-              rewardDays: r.rewardDays || 0
+              rewardDays: r.rewardDays || 0,
+              status: r.status || '',
+              registered: r.status === 'registered' || (!r.status && !!(r.invitedUserId || r.invitedNickname)),
+              shared: r.status === 'shared'
             }
           }))
         },
@@ -126,6 +129,13 @@ Page({
 
   onShareAppMessage() {
     const code = this.data.membership.inviteCode || ''
+    // fire-and-forget：分享时预建记录（不阻塞分享流程）
+    if (wx.cloud && wx.cloud.callFunction) {
+      wx.cloud.callFunction({
+        name: 'invitations_query',
+        data: { action: 'createShare' }
+      }).catch(err => console.warn('[invite-history] createShare 失败:', err))
+    }
     return {
       title: '光乙共创：邀你一起体验专业灯光设计工具',
       path: code

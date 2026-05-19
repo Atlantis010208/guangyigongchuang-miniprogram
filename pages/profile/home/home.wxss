@@ -59,6 +59,8 @@ page {
   align-items: center;
   gap: 16rpx;
   margin-bottom: 8rpx;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .user-name {
@@ -69,7 +71,8 @@ page {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 280rpx;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 /* 会员圆角标图片（根据 effectiveLevel 动态切换） */

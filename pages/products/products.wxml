@@ -5,6 +5,7 @@
     <text class="header-title">首页</text>
     <view class="user-avatar" bindtap="onUserTap">
       <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
     </view>
   </view>
 
@@ -15,7 +16,7 @@
           <view class="category-image-container">
             <image class="category-image" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/miniprogram-images/共创设计.jpeg" mode="aspectFit"></image>
           </view>
-          <text class="category-title">共创设计</text>
+          <text class="category-title">找设计师</text>
         </view>
         <view class="category-card" bindtap="onCategoryTap" data-category="commercial">
           <view class="category-image-container">
@@ -85,6 +86,12 @@
         </view>
         <view class="service-pill" bindtap="onServiceTap" data-service="lightingDesign">
             <text class="service-pill-text">灯光设计</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="collection">
+            <text class="service-pill-text">灯光设计个性需求收集表</text>
+        </view>
+        <view class="service-pill" bindtap="onServiceTap" data-service="lightingSelection">
+            <text class="service-pill-text">灯具选型及报价需求收集表</text>
         </view>
       </view>
     </scroll-view>

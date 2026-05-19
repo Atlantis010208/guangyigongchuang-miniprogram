@@ -18,6 +18,8 @@ const _ = db.command
 
 // 注意：现有 invitations 集合已被设计师邀请工单系统占用，会员邀请奖励单独使用 member_invitations 集合
 const COLLECTION = 'member_invitations'
+// 5分钟内相同邀请人的 shared 记录不重复创建（防止多次点击分享）
+const SHARE_DEDUPE_MS = 5 * 60 * 1000
 const DEFAULT_PAGE_SIZE = 20
 const MAX_PAGE_SIZE = 50
 
@@ -44,8 +46,63 @@ function sanitizeForUser(record) {
     inviteCode: record.inviteCode || '',
     createdAt: Number(record.createdAt) || 0,
     rewardGranted: !!record.rewardGranted,
-    rewardDays: Number(record.rewardDays) || 0
+    rewardDays: Number(record.rewardDays) || 0,
+    status: record.status || (record.invitedUserId ? 'registered' : 'shared')
   }
+}
+
+/**
+ * 分享时预建邀请记录（status: 'shared'）
+ * 5 分钟内同一邀请人已有 shared 记录则不重复创建
+ */
+async function createShare(openid) {
+  const now = Date.now()
+
+  // 查询邀请人的 inviteCode
+  const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
+  const user = userRes.data && userRes.data[0]
+  if (!user || !user.inviteCode) {
+    return resp(false, 'NO_INVITE_CODE', null, '邀请码不存在')
+  }
+
+  // 去重：5 分钟内已有 shared 未关联记录则跳过
+  try {
+    const recentRes = await db.collection(COLLECTION)
+      .where({
+        inviterOpenid: openid,
+        status: 'shared',
+        invitedUserId: '',
+        createdAt: _.gt(now - SHARE_DEDUPE_MS)
+      })
+      .count()
+    if (recentRes.total > 0) {
+      return resp(true, 'OK', { created: false, reason: 'recent_exists' })
+    }
+  } catch (e) {
+    console.warn('[invitations_query][createShare] 去重查询失败，继续创建:', e && e.message)
+  }
+
+  const addRes = await db.collection(COLLECTION).add({
+    data: {
+      _openid: openid,
+      inviterOpenid: openid,
+      inviterUserId: user._id || '',
+      inviteCode: user.inviteCode,
+      invitedUserId: '',
+      // 注意：shared 状态不写 invitedOpenid 字段，避免空字符串触发复合唯一索引冲突。
+      // 等被邀请人注册时（applyInviteReward）再写入真实 invitedOpenid。
+      invitedNickname: '',
+      invitedAvatarUrl: '',
+      status: 'shared',
+      rewardGranted: false,
+      rewardDays: 0,
+      rewardSnapshot: {},
+      createdAt: now,
+      updatedAt: now
+    }
+  })
+
+  return resp(true, 'OK', { created: true, id: addRes._id })
 }
 
 /**
@@ -94,6 +151,11 @@ exports.main = async (event) => {
     }
 
     const action = event && event.action ? String(event.action) : 'listMine'
+
+    if (action === 'createShare') {
+      return await createShare(OPENID)
+    }
+
     if (action !== 'listMine') {
       return resp(false, 'INVALID_PARAMS', null, '不支持的 action: ' + action)
     }

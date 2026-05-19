@@ -563,25 +563,31 @@ Page({
       return
     }
 
-    // 如果是 cloud:// fileID，需要转换
-    if (avatarUrl.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
+    if (avatarUrl.startsWith('cloud://')) {
+      // cloud:// fileID 不能直接作为 <image> src（渲染层会把它当成相对路径导致 500）
+      // 必须通过 getTempFileURL 转换为 HTTPS URL
+      if (!wx.cloud || !wx.cloud.getTempFileURL) {
+        // 云开发不可用，保持空（显示默认头像），不传 cloud:// 给渲染层
+        this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
+        return
+      }
       try {
         const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
-        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({ 
-            userAvatarDisplay: res.fileList[0].tempFileURL,
-            userAvatarFileID: avatarUrl 
-          })
+        const item = res && res.fileList && res.fileList[0]
+        console.log('[home] 头像 getTempFileURL item:', item ? JSON.stringify(item) : 'null')
+        const tempUrl = item && item.tempFileURL
+        if (tempUrl) {
+          this.setData({ userAvatarDisplay: tempUrl, userAvatarFileID: avatarUrl })
         } else {
-          console.warn('头像转换失败')
+          console.warn('[home] 头像 getTempFileURL 空链接，status:', item && item.status, 'errMsg:', item && item.errMsg)
           this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
         }
       } catch (e) {
-        console.warn('头像转换异常', e)
+        console.warn('[home] 头像 getTempFileURL 失败:', e)
         this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
       }
     } else {
-      // 不是 cloud:// 格式，直接使用
+      // http/https 或本地路径，直接使用
       this.setData({ userAvatarDisplay: avatarUrl, userAvatarFileID: '' })
     }
   },
@@ -589,25 +595,9 @@ Page({
   /**
    * 头像加载失败时的处理
    */
-  async onAvatarError() {
-    console.warn('头像图片加载失败')
-    
-    const { userAvatarFileID } = this.data
-    
-    // 如果有 fileID，尝试重新获取
-    if (userAvatarFileID && userAvatarFileID.startsWith('cloud://') && wx.cloud) {
-      try {
-        const res = await wx.cloud.getTempFileURL({ fileList: [userAvatarFileID] })
-        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({ userAvatarDisplay: res.fileList[0].tempFileURL })
-          return
-        }
-      } catch (e) {
-        console.warn('重新获取头像失败', e)
-      }
-    }
-    
-    // 失败则显示默认头像
+  onAvatarError() {
+    console.warn('头像图片加载失败，降级显示默认头像')
+    // cloud:// fileID 加载失败时直接降级，不再重试 getTempFileURL（会返回 500）
     this.setData({ userAvatarDisplay: '' })
   }
 })

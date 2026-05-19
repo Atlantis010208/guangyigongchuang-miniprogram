@@ -260,6 +260,16 @@ Page({
     })
   },
 
+  onViewHistory() {
+    wx.navigateTo({
+      url: '/pages/quiz/lighting-history/lighting-history',
+      fail: (err) => {
+        console.error('[lighting-intro] navigate to history failed:', err)
+        wx.showToast({ title: '页面跳转失败', icon: 'none' })
+      }
+    })
+  },
+
   onBackHome() {
     if (getCurrentPages().length > 1) {
       wx.navigateBack()

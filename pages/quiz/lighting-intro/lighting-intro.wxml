@@ -22,7 +22,10 @@
 
     <!-- A. 标题区，文案随版本切换 -->
     <view class="hero">
-      <view class="hero-eyebrow">认知水平测试</view>
+      <view class="hero-eyebrow-row">
+        <text class="hero-eyebrow">认知水平测试</text>
+        <text class="history-link" bindtap="onViewHistory">历史记录</text>
+      </view>
       <view class="hero-title">{{currentVersion.title}}</view>
       <view class="hero-subtitle">{{currentVersion.subtitle}}</view>
     </view>

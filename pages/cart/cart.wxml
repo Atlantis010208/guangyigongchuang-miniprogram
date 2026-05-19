@@ -19,6 +19,10 @@
       <view wx:if="{{cartItems.length > 0}}" class="edit-btn" bindtap="onEditTap">
         <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
       </view>
+      <view class="user-avatar" bindtap="onUserTap">
+        <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+        <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
+      </view>
     </view>
 
     <!-- 筛选器：商城订单 / 方案订单 -->

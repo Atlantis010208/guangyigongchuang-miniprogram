@@ -1,5 +1,6 @@
 // pages/products/products.js
 const util = require('../../utils/util')
+const { fetchMembershipStatus } = require('../../utils/membership.js')
 
 // 避坑指南 PDF 文件地址（压缩版）
 const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/（已压缩）2、工具包｜装修灯光注意事项-避坑指南（最新）.pdf'
@@ -15,7 +16,8 @@ Page({
     assistantToolkitCover: '',
     assistantCourseCover: '',
     assistantCourseId: '', // 课程 ID，用于跳转详情页
-    assistantCourseTitle: '' // 课程标题
+    assistantCourseTitle: '', // 课程标题
+    effectiveLevel: 'free'
     // features 已移除，改为电子商城入口
   },
 
@@ -136,6 +138,17 @@ Page({
     this.loadUserAvatar()
     // 预加载避坑指南 PDF（后台静默下载）
     this.preloadPdfFile(PDF_BIKENG_GUIDE)
+    this._loadMembership()
+  },
+
+  async _loadMembership() {
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (err) {
+      console.warn('[products] 加载会员状态失败', err)
+      this.setData({ effectiveLevel: 'free' })
+    }
   },
 
   /**
@@ -480,7 +493,9 @@ Page({
       consult: '/pages/mall/product-detail/product-detail?id=VP1773214611725',
       optimize: '/pages/mall/product-detail/product-detail?id=VP1773364009162',
       noMainLight: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
-      lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986'
+      lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
+      collection: '/pages/flows/collection/collection',
+      lightingSelection: '/pages/flows/lighting-selection/lighting-selection'
     }
     const url = map[service]
     if (!url) {

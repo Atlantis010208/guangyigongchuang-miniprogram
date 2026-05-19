@@ -4,11 +4,13 @@
  */
 const util = require('../../../utils/util')
 const { courses: mockCourses } = require('../data.js');
+const { fetchMembershipStatus } = require('../../../utils/membership.js')
 
 Page({
   data: {
-    userAvatar: '', // 用户头像URL（临时链接）
-    avatarFileID: '', // 用户头像 cloud:// fileID（用于重试）
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free',
     courses: [],
     featuredCourse: null,
     loading: true,
@@ -31,10 +33,11 @@ Page({
       this.getTabBar().updateRole()
       this.getTabBar().setData({ selected: 2 }) // 课程在 ownerList 中变成了索引 2
     }
-    // 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
     this.loadUserAvatar();
-    // 每次显示时刷新课程列表（确保获取最新数据，包括价格更新）
     this.loadCourses();
+    fetchMembershipStatus().then(m => {
+      this.setData({ effectiveLevel: (m && m.effectiveLevel) || 'free' })
+    }).catch(() => {})
   },
 
   onPullDownRefresh() {

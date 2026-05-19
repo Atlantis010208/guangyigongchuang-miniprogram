@@ -111,26 +111,61 @@ async function applyInviteReward(db, inviteCode, invitedOpenid, invitedUserId, i
     return { applied: false, code: 'INVITE_SELF_FORBIDDEN' }
   }
 
-  // Step 2: 写 invitations 记录（依赖 idx_invitedOpenid_unique 唯一索引：以稳定的 invitedOpenid 兜底，删号重注册仍幂等）
+  // Step 2: 写 invitations 记录
+  // 优先关联邀请人已有的 'shared' 预记录（用户分享时创建），否则新建记录
+  // 依赖 idx_invitedOpenid_unique 唯一索引保证幂等
   let invitationId = ''
   try {
-    const addRes = await db.collection(INVITATIONS_COLLECTION).add({
-      data: buildInvitationDoc({
-        inviterUserId: inviter._id,
+    // 查找邀请人最近一条未关联的 shared 记录
+    const sharedRes = await db.collection(INVITATIONS_COLLECTION)
+      .where({
         inviterOpenid: inviter._openid,
         inviteCode: code,
-        invitedUserId,
-        invitedOpenid,
-        invitedSnapshot,
-        now
+        status: 'shared',
+        invitedUserId: ''
       })
-    })
-    invitationId = addRes && addRes._id ? addRes._id : ''
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get()
+    const sharedRecord = sharedRes.data && sharedRes.data[0]
+
+    if (sharedRecord) {
+      // 关联已有 shared 记录：更新被邀请人信息 + status
+      const snap = invitedSnapshot || {}
+      await db.collection(INVITATIONS_COLLECTION).doc(sharedRecord._id).update({
+        data: {
+          invitedUserId,
+          invitedOpenid,
+          invitedNickname: snap.nickname || '',
+          invitedAvatarUrl: snap.avatarUrl || '',
+          status: 'registered',
+          updatedAt: now
+        }
+      })
+      invitationId = sharedRecord._id
+    } else {
+      // 无预记录：新建（走原有逻辑）
+      const addRes = await db.collection(INVITATIONS_COLLECTION).add({
+        data: {
+          ...buildInvitationDoc({
+            inviterUserId: inviter._id,
+            inviterOpenid: inviter._openid,
+            inviteCode: code,
+            invitedUserId,
+            invitedOpenid,
+            invitedSnapshot,
+            now
+          }),
+          status: 'registered'
+        }
+      })
+      invitationId = addRes && addRes._id ? addRes._id : ''
+    }
   } catch (e) {
     if (isDuplicateKeyError(e)) {
       return { applied: false, code: 'INVITE_ALREADY_BOUND' }
     }
-    console.warn('[login][invite] 写入 invitations 失败:', e.message)
+    console.warn('[login][invite] 写入/更新 invitations 失败:', e.message)
     return { applied: false, code: 'INVITE_REWARD_FAILED', message: e.message }
   }
 
@@ -291,6 +326,46 @@ function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
 }
 
 /**
+ * 赠送会员给用户（不降级，取期限较大值）
+ * @param {object} db cloud.database()
+ * @param {string} openid 用户 openid
+ * @param {string} grantLevel 赠送等级 'normal' | 'premium'
+ * @param {number} now 当前时间戳
+ * @returns {{ success, newLevel, newExpireAt, error? }}
+ */
+async function grantVipToUser(db, openid, grantLevel, now) {
+  const VIP_RANK = { free: 0, normal: 1, premium: 2 }
+  try {
+    const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
+    if (!userRes.data || userRes.data.length === 0) {
+      return { success: false, error: 'USER_NOT_FOUND' }
+    }
+    const user = userRes.data[0]
+    const currentLevel = user.vipLevel || 'free'
+    const currentExpireAt = Number(user.vipExpireAt) || 0
+
+    // 取较高等级（已过期则不保留旧等级）
+    const effectiveCurrentLevel = currentExpireAt > now ? currentLevel : 'free'
+    const effectiveRank = VIP_RANK[effectiveCurrentLevel] || 0
+    const grantRank = VIP_RANK[grantLevel] || 0
+    const newLevel = effectiveRank >= grantRank ? effectiveCurrentLevel : grantLevel
+
+    // 到期时间：取 max(现有到期时间, now+365天)，保证赠送1年但不缩短已有更长期限
+    const grantExpireAt = now + 365 * 24 * 60 * 60 * 1000
+    const newExpireAt = Math.max(currentExpireAt, grantExpireAt)
+
+    await db.collection('users').doc(user._id).update({
+      data: { vipLevel: newLevel, vipExpireAt: newExpireAt, vipUpdatedAt: now }
+    })
+    console.log('[grantVipToUser] 赠送成功:', openid, newLevel, new Date(newExpireAt).toISOString())
+    return { success: true, newLevel, newExpireAt }
+  } catch (e) {
+    console.error('[grantVipToUser] 赠送失败:', e.message)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
  * 检查并激活白名单授权
  * 静默执行，不影响主流程
  * 支持境外手机号匹配
@@ -313,11 +388,12 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
   
   try {
     // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
+    // 兼容历史已激活但未赠送会员的记录
     const whitelistRes = await db.collection('course_whitelist')
-      .where({
-        phone: _.in(phoneMatchList),
-        status: 'pending'
-      })
+      .where(_.or([
+        { phone: _.in(phoneMatchList), status: 'pending' },
+        { phone: _.in(phoneMatchList), status: 'activated', vipGranted: _.neq(true) }
+      ]))
       .limit(10) // 一个手机号可能对应多个课程
       .get()
     
@@ -363,6 +439,14 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
             }
           })
           activatedCount++
+          // 赠送高级会员（幂等）
+          if (!whitelist.vipGranted) {
+            const grantResult = await grantVipToUser(db, openid, 'premium', now)
+            const vipPatch = grantResult.success
+              ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+              : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+            await db.collection('course_whitelist').doc(whitelist._id).update({ data: vipPatch })
+          }
           continue
         }
         
@@ -418,6 +502,14 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
         
         console.log('[白名单激活] 白名单记录已更新为激活状态')
         activatedCount++
+        // 赠送高级会员（幂等）
+        if (!whitelist.vipGranted) {
+          const grantResult = await grantVipToUser(db, openid, 'premium', now)
+          const vipPatch = grantResult.success
+            ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+            : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+          await db.collection('course_whitelist').doc(whitelist._id).update({ data: vipPatch })
+        }
         
       } catch (itemErr) {
         console.error('[白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)
@@ -461,11 +553,12 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
   
   try {
     // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
+    // 兼容历史已激活但未赠送会员的记录
     const whitelistRes = await db.collection('toolkit_whitelist')
-      .where({
-        phone: _.in(phoneMatchList),
-        status: 'pending'
-      })
+      .where(_.or([
+        { phone: _.in(phoneMatchList), status: 'pending' },
+        { phone: _.in(phoneMatchList), status: 'activated', vipGranted: _.neq(true) }
+      ]))
       .limit(10) // 一个手机号可能对应多个工具包
       .get()
     
@@ -511,6 +604,14 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
             }
           })
           activatedCount++
+          // 赠送普通会员（幂等）
+          if (!whitelist.vipGranted) {
+            const grantResult = await grantVipToUser(db, openid, 'normal', now)
+            const vipPatch = grantResult.success
+              ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+              : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+            await db.collection('toolkit_whitelist').doc(whitelist._id).update({ data: vipPatch })
+          }
           continue
         }
         
@@ -567,6 +668,14 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
         
         console.log('[工具包白名单激活] 白名单记录已更新为激活状态')
         activatedCount++
+        // 赠送普通会员（幂等）
+        if (!whitelist.vipGranted) {
+          const grantResult = await grantVipToUser(db, openid, 'normal', now)
+          const vipPatch = grantResult.success
+            ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+            : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+          await db.collection('toolkit_whitelist').doc(whitelist._id).update({ data: vipPatch })
+        }
         
       } catch (itemErr) {
         console.error('[工具包白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)

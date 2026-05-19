@@ -156,6 +156,21 @@ exports.main = async (event) => {
     const isVipActive = vipExpireAt && vipExpireAt > now
     const remainingDays = isVipActive ? Math.ceil((vipExpireAt - now) / ONE_DAY_MS) : 0
 
+    // 从 member_invitations 集合实时 count 邀请人数（防止 user.inviteStats.invitedCount 字段缺失）
+    let invitedCount = 0
+    try {
+      const countRes = await db.collection('member_invitations')
+        .where({ inviterOpenid: OPENID })
+        .count()
+      invitedCount = (countRes && typeof countRes.total === 'number') ? countRes.total : 0
+    } catch (e) {
+      // 兜底：从 user.inviteStats 读取
+      invitedCount = (user.inviteStats && Number(user.inviteStats.invitedCount)) || 0
+    }
+
+    const rawStats = user.inviteStats || {}
+    const trialDaysGranted = Number(rawStats.trialDaysGranted) || 0
+
     return {
       success: true,
       code: 'OK',
@@ -167,7 +182,7 @@ exports.main = async (event) => {
         toolkitPerpetual: !!user.toolkitPerpetual,
         galleryTrialExpireAt: user.galleryTrialExpireAt || null,
         inviteCode: user.inviteCode || '',
-        inviteStats: user.inviteStats || { invitedCount: 0, trialDaysGranted: 0 },
+        inviteStats: { invitedCount, trialDaysGranted },
         isLoggedIn: true
       }
     }

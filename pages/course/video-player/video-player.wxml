@@ -136,8 +136,8 @@
       </view>
     </view>
 
-    <!-- Playlist Section - 简化配置避免与video冲突 -->
-    <scroll-view scroll-y class="playlist-section" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <!-- 固定头部：课程列表标题 + 当前播放 + 视频章节时间轴 -->
+    <view class="playlist-header">
       <view class="section-header">
         <text class="section-title">课程列表</text>
         <view class="section-subtitle-row">
@@ -150,7 +150,7 @@
         <!-- 已学习人数 -->
         <text class="learned-count">{{learnedCount * 35}}人已学习</text>
 
-        <!-- 🆕 视频内章节列表（融入简介模式） -->
+        <!-- 视频内章节列表（融入简介模式） -->
         <view class="video-time-chapters" wx:if="{{currentLesson.timeChapters && currentLesson.timeChapters.length > 0}}">
           <view class="chapters-list {{isChaptersExpanded ? 'expanded' : ''}}">
             <view 
@@ -172,7 +172,10 @@
           </view>
         </view>
       </view>
+    </view>
 
+    <!-- 可滚动的课程章节列表 -->
+    <scroll-view scroll-y class="playlist-section" enhanced="{{true}}" show-scrollbar="{{false}}">
       <block wx:for="{{chapters}}" wx:key="title" wx:for-item="chapter" wx:for-index="chapterIndex">
         <view class="chapter-group">
           <view class="chapter-title-row">

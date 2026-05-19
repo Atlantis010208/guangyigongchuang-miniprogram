@@ -1,6 +1,7 @@
 // pages/cart/cart.js
 const api = require('../../utils/api')
 const util = require('../../utils/util')
+const { fetchMembershipStatus } = require('../../utils/membership.js')
 
 Page({
 
@@ -18,8 +19,11 @@ Page({
     requestsCloud: [],
     mallOrdersCloud: [],
     filterType: 'mall',
-    isLoggedIn: false, // 登录状态
-    countdownTimer: null // 支付倒计时定时器
+    isLoggedIn: false,
+    countdownTimer: null,
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free'
   },
   
   // 订单超时时间（毫秒）: 15分钟
@@ -73,6 +77,46 @@ Page({
         this.updateCountdown()
       }, 1000)
     }
+    this._loadAvatarAndMembership()
+  },
+
+  async _loadAvatarAndMembership() {
+    const app = getApp()
+    const userDoc = (app && app.globalData && app.globalData.userDoc) || util.getStorage('userDoc')
+    if (userDoc && userDoc.avatarUrl) {
+      const avatarUrl = userDoc.avatarUrl
+      if (avatarUrl.startsWith('cloud://')) {
+        try {
+          const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+          const item = res && res.fileList && res.fileList[0]
+          if (item && item.tempFileURL) {
+            this.setData({ userAvatar: item.tempFileURL, avatarFileID: avatarUrl })
+          }
+        } catch (e) {
+          this.setData({ userAvatar: '', avatarFileID: avatarUrl })
+        }
+      } else {
+        this.setData({ userAvatar: avatarUrl, avatarFileID: '' })
+      }
+    }
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (e) {}
+  },
+
+  onUserTap() {
+    wx.navigateTo({ url: '/pages/profile/home/home' })
+  },
+
+  async onAvatarError() {
+    const { avatarFileID } = this.data
+    if (!avatarFileID || !avatarFileID.startsWith('cloud://')) return
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: [avatarFileID] })
+      const item = res && res.fileList && res.fileList[0]
+      if (item && item.tempFileURL) this.setData({ userAvatar: item.tempFileURL })
+    } catch (e) {}
   },
 
   /**

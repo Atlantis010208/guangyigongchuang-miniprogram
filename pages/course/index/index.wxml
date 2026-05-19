@@ -5,6 +5,7 @@
       <text class="title-large">课程中心</text>
       <view class="user-avatar" bindtap="onUserTap">
         <image class="avatar-small" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+        <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
       </view>
     </view>
   </view>

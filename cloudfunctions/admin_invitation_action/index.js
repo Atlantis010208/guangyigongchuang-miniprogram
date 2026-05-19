@@ -101,12 +101,16 @@ async function handleGrant({ tx, adminId, invitationId, note, now }) {
 
   const oldStats = inviter.inviteStats || { invitedCount: 0, trialDaysGranted: 0 }
   const newTrialDays = (Number(oldStats.trialDaysGranted) || 0) + REWARD_DAYS
+  // 同步更新 lastRewardCount：将其设为当前 invitedCount，防止 applyInviteReward
+  // 在下次新邀请时因 lastRewardCount 未对齐而重复触发自动奖励。
+  const currentInvitedCount = Number(oldStats.invitedCount) || 0
 
   await tx.collection('users').doc(inv.inviterUserId).update({
     data: {
       vipExpireAt: afterVipExpireAt,
       galleryTrialExpireAt: afterGalleryTrialExpireAt,
       'inviteStats.trialDaysGranted': newTrialDays,
+      'inviteStats.lastRewardCount': currentInvitedCount,
       updatedAt: now
     }
   })
@@ -168,12 +172,16 @@ async function handleRevoke({ tx, adminId, invitationId, note, now }) {
 
   const oldStats = inviter.inviteStats || { invitedCount: 0, trialDaysGranted: 0 }
   const newTrialDays = Math.max(0, (Number(oldStats.trialDaysGranted) || 0) - revokedDays)
+  // 回退 lastRewardCount：使用户在奖励被撤销后，再邀请 INVITE_REWARD_EVERY(2) 人即可重新获奖。
+  const currentLastRewardCount = Number(oldStats.lastRewardCount) || 0
+  const newLastRewardCount = Math.max(0, currentLastRewardCount - 2)
 
   await tx.collection('users').doc(inv.inviterUserId).update({
     data: {
       vipExpireAt: afterVipExpireAt,
       galleryTrialExpireAt: afterGalleryTrialExpireAt,
       'inviteStats.trialDaysGranted': newTrialDays,
+      'inviteStats.lastRewardCount': newLastRewardCount,
       updatedAt: now
       // 注：不动 vipLevel（与 applyInviteReward 等级保护语义一致）
     }

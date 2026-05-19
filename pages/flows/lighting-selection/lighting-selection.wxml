@@ -1,0 +1,114 @@
+<wxs src="./helpers.wxs" module="h" />
+
+<view class="page">
+
+  <!-- 感谢页（提交成功后展示） -->
+  <view class="thanks-page" wx:if="{{submitted}}">
+    <view class="thanks-icon">✓</view>
+    <view class="thanks-title">感谢你的填写！</view>
+    <view class="thanks-footer">
+      <button class="btn-home" bindtap="onBackHome">返回首页</button>
+    </view>
+  </view>
+
+  <!-- 表单内容（提交前展示） -->
+  <block wx:if="{{!submitted}}">
+
+  <!-- 顶部进度条 -->
+  <view class="progress-bar">
+    <view class="progress-fill" style="width: {{(currentStep + 1) / steps.length * 100}}%"></view>
+  </view>
+
+  <!-- 主内容区：只展示当前步骤 -->
+  <view class="main-content">
+    <block wx:for="{{steps}}" wx:key="id" wx:for-item="step" wx:for-index="index">
+      <view class="step-container {{currentStep === index ? 'active' : ''}}" wx:if="{{currentStep === index}}">
+
+        <!-- 标题区域 -->
+        <view class="step-header">
+          <view class="step-title">
+            <text class="step-required" wx:if="{{step.required}}">*</text>{{step.no}} {{step.title}}
+          </view>
+          <view class="step-subtitle" wx:if="{{step.subtitle}}">{{step.subtitle}}</view>
+        </view>
+
+        <!-- 单选 (choice) -->
+        <view class="options-list" wx:if="{{step.type === 'choice'}}">
+          <block wx:for="{{step.options}}" wx:key="*this" wx:for-item="option">
+            <view class="option-card {{answers[step.id] === option ? 'selected' : ''}}"
+                  bindtap="handleOptionSelect"
+                  data-id="{{step.id}}"
+                  data-option="{{option}}">
+              <text class="option-text">{{option}}</text>
+              <view class="other-input-container {{answers[step.id] === '其他' && option === '其他' ? 'show' : ''}}" catchtap="true">
+                <input class="other-input"
+                       placeholder="请输入详细信息..."
+                       placeholder-class="other-input-placeholder"
+                       value="{{otherInputs[step.id]}}"
+                       bindinput="handleOtherInput"
+                       bindblur="handleOtherBlur"
+                       bindkeyboardheightchange="onKeyboardHeightChange"
+                       adjust-position="{{false}}"
+                       data-id="{{step.id}}" />
+              </view>
+            </view>
+          </block>
+        </view>
+
+        <!-- 多选 (multiChoice) -->
+        <view class="options-list" wx:if="{{step.type === 'multiChoice'}}">
+          <block wx:for="{{step.options}}" wx:key="*this" wx:for-item="option">
+            <view class="option-card multi {{h.includes(multiAnswers[step.id], option) ? 'selected' : ''}}"
+                  bindtap="handleMultiSelect"
+                  data-id="{{step.id}}"
+                  data-option="{{option}}">
+              <view class="checkbox-icon {{h.includes(multiAnswers[step.id], option) ? 'checked' : ''}}"></view>
+              <text class="option-text">{{option}}</text>
+              <view class="other-input-container {{h.includes(multiAnswers[step.id], '其他') && option === '其他' ? 'show' : ''}}" catchtap="true">
+                <input class="other-input"
+                       placeholder="请输入详细信息..."
+                       placeholder-class="other-input-placeholder"
+                       value="{{otherInputs[step.id]}}"
+                       bindinput="handleOtherInput"
+                       bindblur="handleOtherBlur"
+                       bindkeyboardheightchange="onKeyboardHeightChange"
+                       adjust-position="{{false}}"
+                       data-id="{{step.id}}" />
+              </view>
+            </view>
+          </block>
+        </view>
+
+        <!-- 大文本输入 (textarea) -->
+        <view class="textarea-container" wx:if="{{step.type === 'textarea'}}">
+          <textarea class="form-textarea"
+                    placeholder="请输入"
+                    placeholder-class="form-textarea-placeholder"
+                    value="{{answers[step.id]}}"
+                    focus="{{inputFocus}}"
+                    bindinput="handleTextInput"
+                    bindblur="handleInputBlur"
+                    bindkeyboardheightchange="onKeyboardHeightChange"
+                    adjust-position="{{false}}"
+                    auto-height
+                    data-id="{{step.id}}" />
+        </view>
+
+      </view>
+    </block>
+  </view>
+
+  <!-- 底部悬浮操作栏 -->
+  <view class="footer-bar" style="bottom: {{keyboardHeight}}px; transition: bottom 0.3s ease;">
+    <view class="footer-content">
+      <button class="btn-prev" wx:if="{{currentStep > 0}}" bindtap="handlePrev">上一步</button>
+      <button class="btn-next {{!isNextValid ? 'disabled' : ''}}"
+              bindtap="{{currentStep === steps.length - 1 ? 'onSubmit' : 'handleNext'}}"
+              disabled="{{!isNextValid}}">
+        {{currentStep === steps.length - 1 ? '提交收集表' : '下一步'}}
+      </button>
+    </view>
+  </view>
+
+  </block>
+</view>

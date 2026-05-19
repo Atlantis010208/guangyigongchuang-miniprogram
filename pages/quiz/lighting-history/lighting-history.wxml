@@ -1,0 +1,117 @@
+<!-- 灯光测试历史记录页 -->
+<view class="page">
+
+  <!-- 加载中：骨架屏 -->
+  <view class="skeleton-wrap" wx:if="{{loading}}">
+    <view class="tab-bar skeleton-tab">
+      <view class="tab-item skeleton-block"></view>
+      <view class="tab-item skeleton-block"></view>
+    </view>
+    <view class="skeleton-list">
+      <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="sk-line sk-line-short"></view>
+        <view class="sk-line sk-line-long"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载失败 -->
+  <view class="state-block" wx:elif="{{loadError}}">
+    <view class="state-icon">!</view>
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-actions">
+      <button class="btn-retry" bindtap="onRetry">重试</button>
+    </view>
+  </view>
+
+  <!-- 主内容 -->
+  <block wx:else>
+
+    <!-- 顶部 Tab -->
+    <view class="tab-bar">
+      <view
+        class="tab-item {{activeTab === item.id ? 'active' : ''}}"
+        wx:for="{{tabs}}"
+        wx:key="id"
+        wx:for-item="item"
+        data-id="{{item.id}}"
+        bindtap="onSwitchTab"
+      >
+        <text class="tab-label">{{item.label}}</text>
+        <!-- 记录数角标 -->
+        <text class="tab-count" wx:if="{{item.id === 'full' && fullList.length > 0}}">{{fullList.length}}</text>
+        <text class="tab-count" wx:if="{{item.id === 'quick' && quickList.length > 0}}">{{quickList.length}}</text>
+      </view>
+    </view>
+
+    <!-- 完整版列表 -->
+    <scroll-view scroll-y="true" class="list-scroll" enhanced="true" show-scrollbar="{{false}}" wx:if="{{activeTab === 'full'}}">
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{fullList.length === 0}}">
+        <image class="empty-icon" src="/images/测试申请.png" mode="aspectFit"></image>
+        <text class="empty-title">还没有完整版测试记录</text>
+        <text class="empty-sub">去完成第一次测试，获取你的认知阶段报告</text>
+        <button class="btn-go-test" bindtap="onGoTest">去测试</button>
+      </view>
+      <!-- 记录列表 -->
+      <block wx:else>
+        <view
+          class="record-card"
+          wx:for="{{fullList}}"
+          wx:key="_id"
+          wx:for-item="item"
+          data-id="{{item._id}}"
+          bindtap="onTapRecord"
+        >
+          <view class="record-row-top">
+            <text class="record-date">{{item.dateText}}</text>
+            <image class="record-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+          </view>
+          <view class="record-row-bottom">
+            <view class="level-tag" style="background-color: {{item.levelBgColor}}; color: {{item.levelColor}}">{{item.levelName}}</view>
+            <text class="record-score">{{item.scoreText}}</text>
+            <text class="record-passed {{item.passed ? 'passed' : 'failed'}}">{{item.passed ? '✓ 及格' : '✗ 未及格'}}</text>
+          </view>
+          <text class="record-duration" wx:if="{{item.durationText}}">用时 {{item.durationText}}</text>
+        </view>
+        <view class="list-footer">最多显示最近 50 条记录</view>
+      </block>
+    </scroll-view>
+
+    <!-- 快测版列表 -->
+    <scroll-view scroll-y="true" class="list-scroll" enhanced="true" show-scrollbar="{{false}}" wx:if="{{activeTab === 'quick'}}">
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{quickList.length === 0}}">
+        <image class="empty-icon" src="/images/测试申请.png" mode="aspectFit"></image>
+        <text class="empty-title">还没有快测版测试记录</text>
+        <text class="empty-sub">去完成第一次测试，快速定位你的认知阶段</text>
+        <button class="btn-go-test" bindtap="onGoTest">去测试</button>
+      </view>
+      <!-- 记录列表 -->
+      <block wx:else>
+        <view
+          class="record-card"
+          wx:for="{{quickList}}"
+          wx:key="_id"
+          wx:for-item="item"
+          data-id="{{item._id}}"
+          bindtap="onTapRecord"
+        >
+          <view class="record-row-top">
+            <text class="record-date">{{item.dateText}}</text>
+            <image class="record-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
+          </view>
+          <view class="record-row-bottom">
+            <view class="level-tag" style="background-color: {{item.levelBgColor}}; color: {{item.levelColor}}">{{item.levelName}}</view>
+            <text class="record-score">{{item.scoreText}}</text>
+            <text class="record-passed {{item.passed ? 'passed' : 'failed'}}">{{item.passed ? '✓ 及格' : '✗ 未及格'}}</text>
+          </view>
+          <text class="record-duration" wx:if="{{item.durationText}}">用时 {{item.durationText}}</text>
+        </view>
+        <view class="list-footer">最多显示最近 50 条记录</view>
+      </block>
+    </scroll-view>
+
+  </block>
+
+</view>

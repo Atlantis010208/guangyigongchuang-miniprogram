@@ -30,13 +30,25 @@ page {
   padding: 56rpx 48rpx 40rpx;
 }
 
+.hero-eyebrow-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
 .hero-eyebrow {
   font-size: 24rpx;
   font-weight: 500;
   color: #888;
   letter-spacing: 4rpx;
   text-transform: uppercase;
-  margin-bottom: 16rpx;
+}
+
+.history-link {
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #888;
 }
 
 .hero-title {

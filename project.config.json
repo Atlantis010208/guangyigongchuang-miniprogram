@@ -103,10 +103,6 @@
         "type": "folder"
       },
       {
-        "value": "pages/legal",
-        "type": "folder"
-      },
-      {
         "value": "pages/product-detail",
         "type": "folder"
       },

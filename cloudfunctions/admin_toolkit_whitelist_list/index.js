@@ -69,7 +69,8 @@ exports.main = async (event) => {
       offset = 0,
       status = 'all',
       phone,
-      source
+      source,
+      vipGrantResult = 'all'
     } = event
     
     // 2. 构建查询条件
@@ -91,6 +92,16 @@ exports.main = async (event) => {
         regexp: phone.replace(/\*/g, ''),
         options: 'i'
       })
+    }
+
+    // 会员赠送状态筛选
+    if (vipGrantResult === 'success') {
+      where.vipGrantResult = 'success'
+    } else if (vipGrantResult === 'failed') {
+      where.vipGrantResult = 'failed'
+    } else if (vipGrantResult === 'pending') {
+      where.status = 'activated'
+      where.vipGranted = _.neq(true)
     }
     
     // 3. 查询统计数据
@@ -138,7 +149,13 @@ exports.main = async (event) => {
       orderNo: item.orderNo,
       createdAt: item.createdAt,
       createdAtDisplay: formatTime(item.createdAt),
-      createdBy: item.createdBy
+      createdBy: item.createdBy,
+      vipGranted: item.vipGranted || false,
+      vipGrantedAt: item.vipGrantedAt || null,
+      vipGrantedAtDisplay: formatTime(item.vipGrantedAt),
+      vipGrantLevel: item.vipGrantLevel || null,
+      vipGrantResult: item.vipGrantResult || null,
+      vipGrantError: item.vipGrantError || null
     }))
     
     // 7. 返回结果

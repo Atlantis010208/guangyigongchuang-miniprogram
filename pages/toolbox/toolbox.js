@@ -1,4 +1,6 @@
 // pages/toolbox/toolbox.js
+const util = require('../../utils/util')
+const { fetchMembershipStatus } = require('../../utils/membership.js')
 const DEFAULT_GALLERY_COVER = 'https://picsum.photos/seed/luxuryinterior/800/800'
 const DEFAULT_CT_BG = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/color-temp-bg.png'
 const DEFAULT_CALC_BG = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/toolbox/calculator-bg.jpeg'
@@ -23,7 +25,10 @@ Page({
     // 九宫格轮播
     imagePool: [],   // 动态扩张的缩略图 URL 池（首批 40，后续背景拉取逐步追加直至全量）
     poolReady: false, // 池是否就绪（首批成功且 length>=9）
-    gridImages: []   // 9 个格子的状态：[{base, swap, swapVisible, noTransition, pending, pendingHandover}]
+    gridImages: [],  // 9 个格子的状态：[{base, swap, swapVisible, noTransition, pending, pendingHandover}]
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free'
   },
 
   onLoad: function (options) {
@@ -67,6 +72,46 @@ Page({
     if (this.data.poolReady && (!this.timers || this.timers.length === 0)) {
       this.startCarousel()
     }
+    this._loadAvatarAndMembership()
+  },
+
+  async _loadAvatarAndMembership() {
+    const app = getApp()
+    const userDoc = (app && app.globalData && app.globalData.userDoc) || util.getStorage('userDoc')
+    if (userDoc && userDoc.avatarUrl) {
+      const avatarUrl = userDoc.avatarUrl
+      if (avatarUrl.startsWith('cloud://')) {
+        try {
+          const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+          const item = res && res.fileList && res.fileList[0]
+          if (item && item.tempFileURL) {
+            this.setData({ userAvatar: item.tempFileURL, avatarFileID: avatarUrl })
+          }
+        } catch (e) {
+          this.setData({ userAvatar: '', avatarFileID: avatarUrl })
+        }
+      } else {
+        this.setData({ userAvatar: avatarUrl, avatarFileID: '' })
+      }
+    }
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (e) {}
+  },
+
+  onUserTap() {
+    wx.navigateTo({ url: '/pages/profile/home/home' })
+  },
+
+  async onAvatarError() {
+    const { avatarFileID } = this.data
+    if (!avatarFileID || !avatarFileID.startsWith('cloud://')) return
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: [avatarFileID] })
+      const item = res && res.fileList && res.fileList[0]
+      if (item && item.tempFileURL) this.setData({ userAvatar: item.tempFileURL })
+    } catch (e) {}
   },
 
   onHide: function () {

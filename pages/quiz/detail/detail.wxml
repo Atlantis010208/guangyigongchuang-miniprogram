@@ -52,14 +52,14 @@
 
           <!-- 选项列表（复用 option-card） -->
           <view class="options-list">
-            <block wx:for="{{q.options}}" wx:key="key" wx:for-item="option">
+            <block wx:for="{{q.options}}" wx:key="key" wx:for-item="option" wx:for-index="optionIdx">
               <view
                 class="option-card {{selectedMaps[qIdx][option.key] ? 'selected' : ''}}"
                 bindtap="onOptionTap"
                 data-qidx="{{qIdx}}"
                 data-key="{{option.key}}"
                 data-type="{{q.type}}">
-                <view class="option-key">{{option.key}}</view>
+                <view class="option-key">{{optionKeys[optionIdx]}}</view>
                 <text class="option-text">{{option.text}}</text>
                 <view class="option-check" wx:if="{{selectedMaps[qIdx][option.key]}}">✓</view>
               </view>

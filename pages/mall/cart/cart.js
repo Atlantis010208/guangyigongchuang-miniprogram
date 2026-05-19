@@ -3,6 +3,7 @@
  * 功能：展示购物车列表、增减数量、删除商品、批量操作、结算
  */
 const util = require('../../../utils/util')
+const { fetchMembershipStatus } = require('../../../utils/membership.js')
 
 Page({
   data: {
@@ -13,7 +14,10 @@ Page({
     selectedIds: [],        // 选中的商品 key 数组
     allChecked: false,      // 是否全选
     loading: false,         // 加载状态
-    syncing: false          // 同步状态
+    syncing: false,         // 同步状态
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free'
   },
 
   onLoad() {
@@ -22,8 +26,49 @@ Page({
 
   onShow() {
     this.load()
-    // 每次显示时更新 TabBar 徽标（如果有）
     this.updateTabBarBadge()
+    this._loadAvatarAndMembership()
+  },
+
+  async _loadAvatarAndMembership() {
+    const app = getApp()
+    const userDoc = (app && app.globalData && app.globalData.userDoc) || util.getStorage('userDoc')
+    if (userDoc && userDoc.avatarUrl) {
+      const avatarUrl = userDoc.avatarUrl
+      if (avatarUrl.startsWith('cloud://')) {
+        try {
+          const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+          const item = res && res.fileList && res.fileList[0]
+          if (item && item.tempFileURL) {
+            this.setData({ userAvatar: item.tempFileURL, avatarFileID: avatarUrl })
+          }
+        } catch (e) {
+          this.setData({ userAvatar: '', avatarFileID: avatarUrl })
+        }
+      } else {
+        this.setData({ userAvatar: avatarUrl, avatarFileID: '' })
+      }
+    }
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (e) {}
+  },
+
+  onUserTap() {
+    wx.navigateTo({ url: '/pages/profile/home/home' })
+  },
+
+  async onAvatarError() {
+    const { avatarFileID } = this.data
+    if (!avatarFileID || !avatarFileID.startsWith('cloud://')) return
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: [avatarFileID] })
+      const item = res && res.fileList && res.fileList[0]
+      if (item && item.tempFileURL) {
+        this.setData({ userAvatar: item.tempFileURL })
+      }
+    } catch (e) {}
   },
 
   updateTabBarBadge() {

@@ -100,11 +100,16 @@ exports.main = async () => {
       env: envId,
       collection_name: 'member_invitations',
       create_indexes: [
-        { name: 'idx_invitedOpenid_unique', unique: true, keys: [{ name: 'invitedOpenid', direction: '1' }] },
+        // 复合唯一索引：同一邀请人(inviterOpenid)不能重复绑定同一被邀请人(invitedOpenid)。
+        // 替代旧的单字段唯一索引 idx_invitedOpenid_unique，解决 createShare 写入
+        // invitedOpenid 缺失字段时被视为 null 导致不同邀请人之间冲突的问题。
+        { name: 'idx_inviter_invited_unique', unique: true, keys: [{ name: 'inviterOpenid', direction: '1' }, { name: 'invitedOpenid', direction: '1' }] },
         { name: 'idx_inviter_createdAt', unique: false, keys: [{ name: 'inviterUserId', direction: '1' }, { name: 'createdAt', direction: '-1' }] },
         { name: 'idx_createdAt_desc', unique: false, keys: [{ name: 'createdAt', direction: '-1' }] }
       ],
-      drop_indexes: []
+      drop_indexes: [
+        { name: 'idx_invitedOpenid_unique' }
+      ]
     }))
   }
   const results = canUpdate ? await Promise.all(intents) : []

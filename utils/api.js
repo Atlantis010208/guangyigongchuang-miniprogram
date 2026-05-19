@@ -1,3 +1,9 @@
+const isRealtimeStateErr = (err) => {
+  if (!err || !err.message) return false
+  const msg = err.message
+  return msg.includes('does not accept') || msg.includes('expected from state') || msg.includes('current state')
+}
+
 const makeLRU = (limit = 100) => {
   const m = new Map()
   return {
@@ -23,8 +29,7 @@ const getUsersRepo = (db) => {
       return col.doc(id).watch({ 
         onChange: handler, 
         onError: (err) => {
-          // 忽略状态机错误（CLOSED 状态不接受操作）
-          if (err && err.message && err.message.includes('does not accept')) return
+          if (isRealtimeStateErr(err)) return
           console.warn('watchById error:', err)
         }
       }) 
@@ -51,8 +56,7 @@ const getOrdersRepo = (db) => {
     // 使用 _openid 监听（自动注入）
     watchByUser(userId, onChange, onError) {
       const safeOnError = (err) => {
-        // 忽略状态机错误（CLOSED 状态不接受操作）
-        if (err && err.message && err.message.includes('does not accept')) return
+        if (isRealtimeStateErr(err)) return
         if (onError) onError(err)
       }
       return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: safeOnError })
@@ -76,8 +80,7 @@ const getRequestsRepo = (db) => {
     // 使用 _openid 监听（自动注入）
     watchByUser(userId, onChange, onError) {
       const safeOnError = (err) => {
-        // 忽略状态机错误（CLOSED 状态不接受操作）
-        if (err && err.message && err.message.includes('does not accept')) return
+        if (isRealtimeStateErr(err)) return
         if (onError) onError(err)
       }
       return col.where({ isDelete: 0 }).orderBy('createdAt', 'desc').limit(200).watch({ onChange, onError: safeOnError })

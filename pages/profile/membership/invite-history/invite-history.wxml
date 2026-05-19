@@ -77,13 +77,14 @@
           </view>
           <view class="history-reward">
             <text wx:if="{{item.rewarded}}" class="reward-positive">+{{item.rewardDays}} 天</text>
-            <text wx:else class="reward-pending">待累计</text>
+            <text wx:elif="{{item.registered}}" class="reward-registered">已注册</text>
+            <text wx:else class="reward-shared">已分享</text>
           </view>
         </view>
       </view>
 
       <view wx:else class="empty-state">
-        <view class="empty-icon-placeholder">[icon]</view>
+        <image class="empty-icon" src="/images/没有订单.png" mode="aspectFit"></image>
         <text class="empty-title">还没有邀请记录</text>
         <text class="empty-desc">邀请好友注册后，记录会显示在这里</text>
       </view>

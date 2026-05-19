@@ -1,7 +1,13 @@
 <view class="toolbox-root">
   <view class="header">
-    <text class="title">工具箱</text>
-    <text class="subtitle">照明设计专业工具</text>
+    <view class="header-text">
+      <text class="title">工具箱</text>
+      <text class="subtitle">照明设计专业工具</text>
+    </view>
+    <view class="user-avatar" bindtap="onUserTap">
+      <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
+    </view>
   </view>
 
   <view class="bento-grid">

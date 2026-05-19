@@ -70,6 +70,8 @@
       "root": "pages/flows/",
       "pages": [
         "publish/publish",
+        "collection/collection",
+        "lighting-selection/lighting-selection",
         "survey/survey",
         "concept/concept",
         "calc/calc",
@@ -161,7 +163,8 @@
         "detail/detail",
         "result/result",
         "lighting-intro/lighting-intro",
-        "lighting-result/lighting-result"
+        "lighting-result/lighting-result",
+        "lighting-history/lighting-history"
       ]
     }
   ],

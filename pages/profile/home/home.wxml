@@ -13,7 +13,7 @@
   <block wx:if="{{isLoggedIn}}">
     <!-- ① 用户信息行 -->
     <view class="user-row" bindtap="editProfile" hover-class="user-row-hover">
-      <image class="user-avatar" src="{{userAvatarDisplay || user.avatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      <image class="user-avatar" src="{{userAvatarDisplay || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
       <view class="user-info">
         <view class="user-name-row">
           <text class="user-name">{{user.name || '点击完善资料'}}</text>

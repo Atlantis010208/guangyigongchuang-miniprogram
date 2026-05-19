@@ -340,6 +340,19 @@
   line-height: 1.3;
 }
 
+.reward-registered {
+  font-size: 24rpx;
+  color: #34c759;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.reward-shared {
+  font-size: 24rpx;
+  color: #8e8e93;
+  line-height: 1.3;
+}
+
 /* ============ 空状态 ============ */
 .empty-state {
   padding: 40rpx 0 20rpx;
@@ -348,17 +361,10 @@
   align-items: center;
 }
 
-.empty-icon-placeholder {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  border: 2rpx dashed #c7c7cc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22rpx;
-  color: #c7c7cc;
-  letter-spacing: 1rpx;
+.empty-icon {
+  width: 120rpx;
+  height: 120rpx;
+  opacity: 0.45;
 }
 
 .empty-title {
