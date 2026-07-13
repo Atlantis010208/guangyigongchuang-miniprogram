@@ -1,0 +1,21 @@
+<view class="ranking-wrap {{dragging ? 'is-dragging' : ''}}">
+  <view class="ranking-tip">长按选项后上下拖动，最重要的放在最上方</view>
+  <view class="ranking-list">
+    <view
+      wx:for="{{orderedItems}}"
+      wx:key="id"
+      class="ranking-item {{draggingId === item.id ? 'is-active' : ''}}"
+      style="transform: {{draggingId === item.id ? 'translateY(' + dragOffset + 'px)' : 'none'}};"
+      data-index="{{index}}"
+      bindtouchstart="onTouchStart"
+      bindlongpress="onLongPress"
+      catchtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchCancel"
+    >
+      <view class="rank-number">{{index + 1}}</view>
+      <text class="rank-label">{{item.label}}</text>
+      <view class="drag-handle"><view></view><view></view><view></view></view>
+    </view>
+  </view>
+</view>

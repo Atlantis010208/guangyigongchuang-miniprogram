@@ -1,0 +1,98 @@
+<view class="page-shell">
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navigationBarHeight}}px;">
+    <view class="nav-back" bindtap="onBack"><view class="back-line"></view></view>
+  </view>
+
+  <scroll-view class="page-scroll" scroll-y="{{!scrollLocked}}" enhanced show-scrollbar="{{false}}">
+    <view class="content" style="padding-top: {{statusBarHeight + navigationBarHeight}}px;">
+      <block wx:if="{{view === 'overview'}}">
+        <view class="page-heading">
+          <text class="page-title">模块总览</text>
+          <text class="page-subtitle">根据您的选择，依次完成以下模块</text>
+        </view>
+        <view class="module-list overview-list">
+          <view wx:for="{{moduleCards}}" wx:key="id" class="module-card" data-index="{{index}}" bindtap="onModuleTap">
+            <view class="module-code">{{item.code}}</view>
+            <view class="module-copy">
+              <text class="module-title">{{item.title}}</text>
+              <text class="module-meta">{{item.questionCount}} 题 / 预计 {{item.estimatedMinutes}} 分钟</text>
+            </view>
+            <view class="module-status {{item.status}}">
+              <text>{{item.statusText}}</text>
+              <view wx:if="{{item.status === 'in_progress'}}" class="status-dot"></view>
+              <view wx:if="{{item.status === 'completed'}}" class="mini-check">✓</view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <block wx:elif="{{view === 'module'}}">
+        <view class="page-heading module-heading">
+          <text class="page-title">{{currentModule.code}} 模块 · {{currentModule.title}}</text>
+          <text class="page-subtitle">{{currentModule.description}}</text>
+        </view>
+        <view class="module-list">
+          <view wx:for="{{visibleQuestions}}" wx:key="id" class="question-row" data-index="{{index}}" bindtap="onQuestionTap">
+            <view class="question-code {{item.answered ? 'is-answered' : ''}}">{{item.code}}</view>
+            <text class="question-name">{{item.shortTitle}}</text>
+            <view class="row-chevron"></view>
+          </view>
+        </view>
+      </block>
+
+      <block wx:elif="{{view === 'question'}}">
+        <view class="question-topline">
+          <view class="module-tag">{{currentModule.code}} 模块</view>
+          <text class="question-count">{{currentQuestionIndex + 1}}/{{visibleQuestionCount}}</text>
+        </view>
+        <view class="progress-track"><view class="progress-fill" style="width: {{progressWidth}}%;"></view></view>
+        <view class="question-body">
+          <text class="question-title">{{currentQuestion.title}}</text>
+          <text wx:if="{{currentQuestion.description}}" class="question-description">{{currentQuestion.description}}</text>
+          <form-question-renderer
+            question="{{currentQuestion}}"
+            answer="{{currentAnswer}}"
+            bind:change="onAnswerChange"
+            bind:location="onChooseLocation"
+            bind:chooseupload="onChooseUpload"
+            bind:removeupload="onRemoveUpload"
+            bind:previewupload="onPreviewUpload"
+            bind:dragstate="onDragState"
+          />
+        </view>
+      </block>
+
+      <block wx:elif="{{view === 'review'}}">
+        <view class="page-heading review-heading">
+          <text class="page-title">确认提交</text>
+          <text class="page-subtitle">请确认以下信息，提交后我们将尽快与您联系</text>
+        </view>
+        <view class="review-list">
+          <view wx:for="{{reviewModules}}" wx:key="id" class="review-card">
+            <view class="module-code review-code">{{item.code}}</view>
+            <view class="review-copy">
+              <text class="module-title">{{item.title}}</text>
+              <text class="review-summary">{{item.summary}}</text>
+            </view>
+            <text class="edit-action" data-index="{{index}}" bindtap="onEditModule">编辑</text>
+          </view>
+        </view>
+        <view class="completion-pill">
+          <view class="completion-check">{{allModulesComplete ? '✓' : '!'}}</view>
+          <text>{{submitted ? '已完成本地演示提交' : (allModulesComplete ? '已完成全部模块' : '还有模块未完成')}}</text>
+        </view>
+      </block>
+      <view class="scroll-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-bar">
+    <button wx:if="{{view === 'overview'}}" class="primary-button full-button" bindtap="onOverviewPrimary">开始填写</button>
+    <button wx:elif="{{view === 'module'}}" class="primary-button full-button" bindtap="onModulePrimary">进入模块</button>
+    <view wx:elif="{{view === 'question'}}" class="question-actions">
+      <button class="secondary-button" bindtap="onPreviousQuestion">上一题</button>
+      <button class="primary-button next-button" bindtap="onNextQuestion">下一题</button>
+    </view>
+    <button wx:elif="{{view === 'review'}}" class="primary-button full-button" bindtap="onConfirm">确认提交</button>
+  </view>
+</view>

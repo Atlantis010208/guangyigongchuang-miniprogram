@@ -494,7 +494,7 @@ Page({
       optimize: '/pages/mall/product-detail/product-detail?id=VP1773364009162',
       noMainLight: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
       lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
-      collection: '/pages/flows/collection/collection',
+      collection: '/pages/flows/collection-type/collection-type',
       lightingSelection: '/pages/flows/lighting-selection/lighting-selection'
     }
     const url = map[service]

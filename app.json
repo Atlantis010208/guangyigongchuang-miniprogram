@@ -70,6 +70,8 @@
       "root": "pages/flows/",
       "pages": [
         "publish/publish",
+        "collection-type/collection-type",
+        "collection-form/collection-form",
         "collection/collection",
         "lighting-selection/lighting-selection",
         "survey/survey",

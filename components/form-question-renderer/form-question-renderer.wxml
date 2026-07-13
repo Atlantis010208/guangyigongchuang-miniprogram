@@ -1,0 +1,82 @@
+<view class="question-control">
+  <view wx:if="{{question.type === 'single' || question.type === 'multiple'}}" class="option-grid">
+    <view
+      wx:for="{{renderedOptions}}"
+      wx:key="id"
+      class="option-pill {{item.selected ? 'is-selected' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="onOptionTap"
+    >
+      <text>{{item.label}}</text>
+      <view wx:if="{{item.selected}}" class="option-check">✓</view>
+    </view>
+  </view>
+
+  <view wx:elif="{{question.type === 'shortText'}}" class="input-shell">
+    <input
+      class="text-input"
+      value="{{answer}}"
+      maxlength="{{question.validation.maxLength || 140}}"
+      placeholder="{{question.placeholder}}"
+      placeholder-class="input-placeholder"
+      bindinput="onInput"
+    />
+    <view wx:if="{{question.action === 'chooseLocation'}}" class="location-action" bindtap="onLocationTap">
+      <view class="location-dot"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{question.type === 'longText'}}" class="textarea-shell">
+    <textarea
+      class="long-input"
+      value="{{answer}}"
+      maxlength="{{question.validation.maxLength || 500}}"
+      placeholder="{{question.placeholder}}"
+      placeholder-class="input-placeholder"
+      auto-height
+      bindinput="onInput"
+    ></textarea>
+    <text class="word-count">{{(answer || '').length}} / {{question.validation.maxLength || 500}}</text>
+  </view>
+
+  <view wx:elif="{{question.type === 'number'}}" class="input-shell">
+    <input
+      class="text-input number-input"
+      type="digit"
+      value="{{answer}}"
+      placeholder="{{question.placeholder}}"
+      placeholder-class="input-placeholder"
+      bindinput="onInput"
+    />
+    <text class="input-unit">{{question.unit}}</text>
+  </view>
+
+  <view wx:elif="{{question.type === 'upload'}}" class="upload-list">
+    <view
+      wx:for="{{answer}}"
+      wx:key="tempPath"
+      class="upload-item {{item.valid === false ? 'is-invalid' : ''}}"
+      data-index="{{index}}"
+      bindtap="onPreviewUpload"
+    >
+      <view class="file-mark">{{question.uploadType === 'image' ? '图' : '文'}}</view>
+      <view class="file-copy">
+        <text class="file-name">{{item.name}}</text>
+        <text class="file-state">{{item.valid === false ? '文件已失效，请重新选择' : '已选择，仅保存在本机'}}</text>
+      </view>
+      <view class="file-remove" data-index="{{index}}" catchtap="onRemoveUpload">×</view>
+    </view>
+    <view class="upload-add" bindtap="onChooseUpload">
+      <view class="plus-mark"></view>
+      <text>{{question.uploadType === 'image' ? '选择图片' : '选择文件'}}</text>
+    </view>
+  </view>
+
+  <ranking-sorter
+    wx:elif="{{question.type === 'ranking'}}"
+    items="{{question.options}}"
+    value="{{answer}}"
+    bind:change="onRankingChange"
+    bind:dragstate="onRankingDragState"
+  />
+</view>

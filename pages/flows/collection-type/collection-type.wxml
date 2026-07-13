@@ -1,0 +1,46 @@
+<view class="page-shell">
+  <view
+    class="custom-navigation"
+    style="padding-top: {{statusBarHeight}}px; height: {{navigationBarHeight}}px;"
+  >
+    <view class="navigation-content">
+      <view class="back-hit-area" bindtap="onBack" hover-class="back-hit-area--pressed" aria-label="返回">
+        <view class="back-chevron"></view>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view class="page-content" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="intro">
+      <text class="page-title">类型选择</text>
+      <text class="page-subtitle">选择场景，定制专属光环境</text>
+    </view>
+
+    <view class="type-list">
+      <view
+        wx:for="{{spaceTypes}}"
+        wx:key="id"
+        class="type-pill {{item.selected ? 'type-pill--selected' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onTypeTap"
+        aria-role="radio"
+        aria-checked="{{item.selected}}"
+      >
+        <view class="type-copy">
+          <text class="type-title">{{item.title}}</text>
+          <text class="type-subtitle">{{item.subtitle}}</text>
+        </view>
+        <view class="selection-mark" wx:if="{{item.selected}}">
+          <view class="selection-check"></view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-action">
+    <button
+      class="next-button"
+      bindtap="onNext"
+    >下一步</button>
+  </view>
+</view>

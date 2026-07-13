@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "ranking-sorter": "/components/ranking-sorter/ranking-sorter"
+  }
+}

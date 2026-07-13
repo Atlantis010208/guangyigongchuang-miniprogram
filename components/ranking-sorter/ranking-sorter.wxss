@@ -1,0 +1,9 @@
+.ranking-wrap { width: 100%; }
+.ranking-tip { margin-bottom: 22rpx; font-size: 23rpx; color: #777777; }
+.ranking-list { display: flex; flex-direction: column; gap: 16rpx; }
+.ranking-item { height: 96rpx; padding: 0 28rpx; box-sizing: border-box; display: flex; align-items: center; border: 2rpx solid #E8E8E8; border-radius: 28rpx; background: #FFFFFF; position: relative; z-index: 1; }
+.ranking-item.is-active { border-color: #0B0B0B; z-index: 5; }
+.rank-number { width: 46rpx; height: 46rpx; border: 2rpx solid #0B0B0B; border-radius: 50%; line-height: 46rpx; text-align: center; font-size: 24rpx; }
+.rank-label { flex: 1; padding: 0 22rpx; font-size: 28rpx; color: #0B0B0B; }
+.drag-handle { width: 34rpx; display: flex; flex-direction: column; gap: 7rpx; }
+.drag-handle view { display: block; height: 2rpx; background: #777777; }
