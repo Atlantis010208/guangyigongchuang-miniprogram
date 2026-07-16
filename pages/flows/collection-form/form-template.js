@@ -1,4 +1,4 @@
-const option = (id, label) => ({ id, label })
+const option = (id, label, extra = {}) => ({ id, label, ...extra })
 
 const FORM_TEMPLATE = {
   id: 'lighting-needs-demo',
@@ -18,9 +18,8 @@ const FORM_TEMPLATE = {
           validation: { minLength: 2, maxLength: 40 },
         },
         {
-          id: 'a2_location', code: 'A2', type: 'shortText', required: true,
-          title: '项目位于哪里？', placeholder: '请选择城市或输入地址', action: 'chooseLocation',
-          validation: { minLength: 2, maxLength: 80 },
+          id: 'a2_location', code: 'A2', type: 'location', required: true,
+          title: '项目位于哪里？', description: '点击下方区域，在微信地图中选择项目位置',
         },
         {
           id: 'a3_area', code: 'A3', type: 'number', required: true,
@@ -52,21 +51,22 @@ const FORM_TEMPLATE = {
             option('quiet', '安静放松'), option('premium', '高级克制'),
             option('layered', '有层次感'),
           ],
-          validation: { minSelections: 1 },
+          validation: { minSelections: 2 },
         },
         {
           id: 'b2_redlines', code: 'B2', type: 'multiple', required: true,
-          title: '以下哪些情况最不能接受？', description: '（最多选 3 项）',
+          title: '以下哪些情况最不能接受？', description: '（至少选择 2 项，选择数量不限）',
           options: [
             option('glare', '灯光刺眼'), option('flat', '效果不落地'),
             option('waste', '太暗不实用'), option('complex', '智能控制太复杂'),
             option('maintenance', '后期难维护'),
+            option('other', '其他', { isOther: true, otherPlaceholder: '请填写其他不能接受的情况', otherRequired: true, otherMaxLength: 100 }),
           ],
-          validation: { minSelections: 1, maxSelections: 3 },
+          validation: { minSelections: 2 },
         },
         {
           id: 'b3_priorities', code: 'B3', type: 'ranking', required: true,
-          title: '请按优先级排列灯光目标', description: '长按选项并拖动，最重要的放在最上方',
+          title: '请按优先级排列灯光目标', description: '直接拖动选项，最重要的放在最上方',
           options: [
             option('comfort', '长期使用舒适'), option('quality', '空间高级感'),
             option('function', '功能照明完善'), option('budget', '预算可控'),
@@ -108,7 +108,7 @@ const FORM_TEMPLATE = {
             option('night', '起夜照明'), option('brighter', '整体更明亮'),
             option('anti_glare', '减少眩光'), option('simple_switch', '开关简单易用'),
           ],
-          validation: { minSelections: 1 },
+          validation: { minSelections: 2 },
           visibleWhen: { questionId: 'c1_elderly', operator: 'equals', value: 'yes' },
         },
         {
@@ -134,7 +134,7 @@ const FORM_TEMPLATE = {
             option('pendant', '吊灯'), option('wall', '壁灯'), option('floor', '落地灯'),
             option('table', '台灯'), option('none', '不需要装饰灯'),
           ],
-          validation: { minSelections: 1 },
+          validation: { minSelections: 2 },
         },
       ],
     },
@@ -160,7 +160,7 @@ const FORM_TEMPLATE = {
             option('panel', '场景面板'), option('voice', '语音控制'),
             option('phone', '手机控制'), option('sensor', '传感器联动'),
           ],
-          validation: { minSelections: 1 },
+          validation: { minSelections: 2 },
           visibleWhen: { questionId: 'd1_control', operator: 'equals', value: 'smart' },
         },
         {

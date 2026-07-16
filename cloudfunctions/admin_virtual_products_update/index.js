@@ -44,6 +44,7 @@ exports.main = async (event) => {
     const allowedFields = [
       'name', 'description', 'price', 'originalPrice',
       'images', 'detailImages', 'category', 'virtualCategory',
+      'courseId', // 课程类虚拟商品关联的 courses.courseId
       'deliveryType', 'tags', 'stock', 'status', 'isDelete',
       // 虚拟内容交付配置
       'virtualContent',

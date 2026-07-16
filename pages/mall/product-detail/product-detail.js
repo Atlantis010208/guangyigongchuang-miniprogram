@@ -595,6 +595,44 @@ Page({
     return []
   },
 
+  isToolkitProduct(product = this.data._cloudProduct || {}) {
+    const id = String(product.productId || product.toolkitId || product._id || this.data.id || '').toLowerCase()
+    const name = String(product.name || this.data.name || '').toLowerCase()
+    return product._migratedFrom === 'toolkits'
+      || !!product.toolkitId
+      || id === 'tk_default_001'
+      || id === 'toolkit'
+      || id.includes('tk_default_001')
+      || id.includes('toolkit')
+      || name.includes('工具包')
+      || name.includes('toolkit')
+  },
+
+  buildOrderItem() {
+    const product = this.data._cloudProduct || {}
+    const isToolkit = this.isToolkitProduct(product)
+    // 课程类虚拟商品：通过 virtualCategory 或绑定的 courseId 识别
+    const isCourse = !isToolkit && (String(product.virtualCategory || '') === '课程' || !!product.courseId)
+    const productId = product.productId || this.data.id
+    return {
+      id: productId,
+      productId,
+      toolkitId: isToolkit ? (product.toolkitId || productId) : '',
+      // 课程商品携带绑定的课程ID，供订单与购买校验关联到 courses 集合
+      courseId: isCourse ? (product.courseId || '') : '',
+      title: this.data.name,
+      name: this.data.name,
+      price: Number(this.data.price) || 0,
+      image: (this.data.images && this.data.images[0]) || '',
+      quantity: Math.max(1, Number(this.data.quantity || 1)),
+      specs: this.data.selectedVariants || {},
+      category: isToolkit ? 'toolkit' : (isCourse ? 'course' : (product.category || '')),
+      type: isToolkit ? 'toolkit' : (isCourse ? 'course' : (product.type || '')),
+      virtualCategory: product.virtualCategory || '',
+      deliveryType: product.deliveryType || ''
+    }
+  },
+
   /**
    * 底部导航栏加入购物车按钮 - 显示弹窗
    */
@@ -606,15 +644,7 @@ Page({
    * 执行加入购物车操作
    */
   async doAddToCart() {
-    const item = {
-      id: this.data.id,
-      title: this.data.name,
-      name: this.data.name,
-      price: Number(this.data.price)||0,
-      image: (this.data.images && this.data.images[0]) || '',
-      quantity: Math.max(1, Number(this.data.quantity||1)),
-      specs: this.data.selectedVariants || {}
-    }
+    const item = this.buildOrderItem()
     
     // 显示加载中
     wx.showLoading({ title: '添加中...', mask: true })
@@ -625,10 +655,16 @@ Page({
         action: 'add',
         product: {
           id: item.id,
+          productId: item.productId,
+          toolkitId: item.toolkitId,
           name: item.name,
           price: item.price,
           image: item.image,
-          specs: item.specs
+          specs: item.specs,
+          category: item.category,
+          type: item.type,
+          virtualCategory: item.virtualCategory,
+          deliveryType: item.deliveryType
         },
         quantity: item.quantity
       })
@@ -699,14 +735,7 @@ Page({
    * 执行立即购买操作
    */
   doBuyNow() {
-    const item = {
-      id: this.data.id,
-      name: this.data.name,
-      price: this.data.price,
-      image: (this.data.images && this.data.images[0]) || '',
-      quantity: this.data.quantity,
-      specs: this.data.selectedVariants
-    }
+    const item = this.buildOrderItem()
     const query = encodeURIComponent(JSON.stringify(item))
     wx.navigateTo({ url: `/pages/order/confirm/confirm?item=${query}` })
   },

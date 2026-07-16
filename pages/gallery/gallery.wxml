@@ -218,7 +218,7 @@
       </view>
       <view class="action-btn pill" catchtap="onDownloadCurrent">
         <image class="icon-download" src="/images/toolbox/download.svg" mode="aspectFit"></image>
-        <text>{{isDownloading ? '下载中...' : '保存高清原图'}}</text>
+        <text>{{isDownloading ? '下载中...' : '下载图片'}}</text>
       </view>
     </view>
   </view>

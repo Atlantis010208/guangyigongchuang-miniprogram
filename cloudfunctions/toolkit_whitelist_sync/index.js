@@ -20,6 +20,7 @@
  */
 const cloud = require('wx-server-sdk')
 const crypto = require('crypto')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -81,6 +82,10 @@ function verifySignature(action, phone, xhsOrderNo, timestamp, signature) {
  * @returns {{ countryCode: string, purePhone: string, fullPhone: string }}
  */
 function parsePhoneNumber(phone) {
+  return phoneUtils.parsePhoneNumber(phone)
+}
+
+function parsePhoneNumberLegacy(phone) {
   if (!phone) return { countryCode: '', purePhone: '', fullPhone: '' }
   
   let phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
@@ -124,6 +129,10 @@ function parsePhoneNumber(phone) {
  * @returns {string}
  */
 function normalizePhone(phone) {
+  return phoneUtils.normalizePhone(phone)
+}
+
+function normalizePhoneLegacy(phone) {
   if (!phone) return ''
   const parsed = parsePhoneNumber(phone)
   
@@ -146,6 +155,10 @@ function normalizePhone(phone) {
  * @returns {boolean}
  */
 function validatePhone(phone) {
+  return phoneUtils.isValidPhone(phone)
+}
+
+function validatePhoneLegacy(phone) {
   const parsed = parsePhoneNumber(phone)
   if (!parsed.countryCode || !parsed.purePhone) {
     return false
@@ -231,7 +244,7 @@ async function addWhitelist(db, _, data) {
     purePhoneNumber: parsed.purePhone,
     countryCode: parsed.countryCode,
     fullPhoneNumber: parsed.fullPhone,
-    region: PHONE_RULES[parsed.countryCode]?.name || '未知地区',
+    region: phoneUtils.PHONE_RULES[parsed.countryCode]?.name || '未知地区',
     toolkitId: TOOLKIT_ID,
     toolkitName: TOOLKIT_NAME,
     status: 'pending',

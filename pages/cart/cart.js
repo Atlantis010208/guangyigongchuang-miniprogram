@@ -1134,16 +1134,22 @@ Page({
     const id = e.currentTarget.dataset.id
     const category = e.currentTarget.dataset.category
     const courseId = e.currentTarget.dataset.courseid
-    
+
     if(!id) return
-    
-    // 课程订单跳转到课程详情页
+
+    // 课程订单：点击卡片主体快捷进入课程详情页（去观看）
     if (category === 'course' && courseId) {
       wx.navigateTo({ url: `/pages/course/course-detail/course-detail?id=${courseId}` })
       return
     }
-    
+
     // 其他订单跳转到订单详情页
+    wx.navigateTo({ url: `/pages/order/detail/detail?id=${id}` })
+  },
+  // “详情”按钮：所有订单（含课程订单）都进入订单详情页，而非课程详情页
+  onMallOrderDetailTap(e){
+    const id = e.currentTarget.dataset.id
+    if(!id) return
     wx.navigateTo({ url: `/pages/order/detail/detail?id=${id}` })
   },
   // 跳转到设计师筛选页面，携带当前需求信息

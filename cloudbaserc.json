@@ -50,6 +50,31 @@
       "runtime": "Nodejs18.15",
       "installDependency": true,
       "description": "照明计算报告生成云函数 - 生成8页报告数据、CSV数据并持久化"
+    },
+    {
+      "name": "toolkit_purchase_check",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "cart_operations",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_collection_forms",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "collection_form_public",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "admin_collection_form_submissions",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
     }
   ]
 }

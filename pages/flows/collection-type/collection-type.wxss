@@ -117,10 +117,15 @@ page {
 }
 
 .type-title {
+  display: -webkit-box;
+  overflow: hidden;
   color: #0b0b0b;
   font-size: 29rpx;
   line-height: 1.38;
   font-weight: 600;
+  word-break: break-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .type-subtitle {

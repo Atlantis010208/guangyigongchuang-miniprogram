@@ -58,6 +58,7 @@ exports.main = async (event) => {
       detailImages: data.detailImages || [],
       category: data.category || '',         // 关联 categories 集合
       virtualCategory: data.virtualCategory, // 虚拟商品细分类
+      courseId: data.courseId || '',         // 课程类虚拟商品：关联 courses 集合的 courseId（用于购买校验与观看）
       type: 'virtual',                       // 固定为 virtual
       deliveryType: data.deliveryType,       // download / service
       tags: data.tags || [],

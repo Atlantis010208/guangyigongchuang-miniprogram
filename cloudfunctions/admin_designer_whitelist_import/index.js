@@ -17,6 +17,7 @@
 const cloud = require('wx-server-sdk')
 const XLSX = require('xlsx')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -24,9 +25,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
  * 校验手机号格式（中国大陆）
  */
 function isValidPhone(phone) {
-  if (!phone) return false
-  const phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
-  return /^1[3-9]\d{9}$/.test(phoneStr)
+  return phoneUtils.isValidPhone(phone)
 }
 
 /**
@@ -34,6 +33,10 @@ function isValidPhone(phone) {
  * 如需修改此函数，请同步修改 check_designer_whitelist/index.js 中的同名函数
  */
 function normalizePhone(phone) {
+  return phoneUtils.normalizePhone(phone)
+}
+
+function normalizePhoneLegacy(phone) {
   if (!phone) return ''
   let phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
   // 移除+86前缀
@@ -78,7 +81,7 @@ function parseFile(fileData, fileName) {
       
       if (cells[phoneCol]) {
         records.push({
-          phone: normalizePhone(cells[phoneCol]),
+          phone: String(cells[phoneCol] || '').trim(),
           name: nameCol >= 0 ? (cells[nameCol] || '').trim() : '',
           remark: remarkCol >= 0 ? (cells[remarkCol] || '').trim() : ''
         })
@@ -109,7 +112,7 @@ function parseFile(fileData, fileName) {
       const row = jsonData[i]
       if (row && row[phoneCol]) {
         records.push({
-          phone: normalizePhone(row[phoneCol]),
+          phone: String(row[phoneCol] || '').trim(),
           name: nameCol >= 0 ? String(row[nameCol] || '').trim() : '',
           remark: remarkCol >= 0 ? String(row[remarkCol] || '').trim() : ''
         })
@@ -164,7 +167,7 @@ exports.main = async (event) => {
     } else if (phones && Array.isArray(phones)) {
       // 手动输入模式
       records = phones.map(p => ({
-        phone: normalizePhone(typeof p === 'string' ? p : p.phone),
+        phone: String((typeof p === 'string' ? p : p.phone) || '').trim(),
         name: (typeof p === 'string' ? '' : p.name) || '',
         remark: (typeof p === 'string' ? '' : p.remark) || ''
       }))
@@ -191,8 +194,16 @@ exports.main = async (event) => {
     const invalidPhones = []
     
     for (const record of records) {
-      if (isValidPhone(record.phone)) {
-        validRecords.push(record)
+      const result = phoneUtils.validatePhone(record.phone)
+      if (result.valid) {
+        validRecords.push({
+          ...record,
+          phone: phoneUtils.normalizePhone(record.phone),
+          purePhoneNumber: result.purePhone,
+          countryCode: result.countryCode,
+          fullPhoneNumber: result.fullPhone,
+          region: result.region
+        })
       } else if (record.phone) {
         invalidPhones.push(record.phone)
       }
@@ -234,6 +245,10 @@ exports.main = async (event) => {
           await db.collection('designer_whitelist').add({
             data: {
               phone: record.phone,
+              purePhoneNumber: record.purePhoneNumber || '',
+              countryCode: record.countryCode || '',
+              fullPhoneNumber: record.fullPhoneNumber || '',
+              region: record.region || '',
               name: record.name,
               remark: record.remark || source || '手动导入',
               status: 'active',

@@ -31,7 +31,7 @@
       <!-- 只在有视频URL时才渲染video组件，避免空URL导致错误 -->
       <!-- 不使用 poster：切换课时时避免把课程封面图作为视频海报闪现，统一由 buffering-overlay 提供加载反馈 -->
       <video
-        wx:if="{{currentLesson && currentLesson.videoUrl}}"
+        wx:if="{{currentLesson && currentLesson.videoUrl && !videoErrorMessage}}"
         id="courseVideo"
         class="video-player"
         src="{{currentLesson.videoUrl}}"
@@ -73,7 +73,7 @@
       ></video>
       
       <!-- 右上角更多按钮（三个点） -->
-      <view class="more-btn" bindtap="onMoreTap" wx:if="{{currentLesson && currentLesson.videoUrl}}">
+      <view class="more-btn" bindtap="onMoreTap" wx:if="{{currentLesson && currentLesson.videoUrl && !videoErrorMessage}}">
         <view class="dot"></view>
         <view class="dot"></view>
         <view class="dot"></view>
@@ -81,7 +81,8 @@
       
       <!-- 无视频时显示占位 -->
       <view wx:else class="video-placeholder">
-        <text class="placeholder-text">加载视频中...</text>
+        <text class="placeholder-text">{{videoErrorMessage || '加载视频中...'}}</text>
+        <button wx:if="{{videoErrorMessage}}" class="video-retry-btn" bindtap="onRetryCurrentVideo">重试视频</button>
       </view>
     </view>
 
@@ -189,7 +190,7 @@
             <view
               class="lesson-item {{lesson.id === currentLesson.id ? 'active' : ''}}"
               bindtap="onLessonTap"
-              data-lesson="{{lesson}}"
+              data-lesson-id="{{lesson.id}}"
             >
               <view class="lesson-status">
                 <view class="status-icon {{lesson.id === currentLesson.id ? 'playing' : ''}}"></view>

@@ -304,10 +304,13 @@ Page({
     const quantity = Math.max(1, Number(this.data.quantity || 1)) || 1
     const product = {
       id: this.data.id,
+      toolkitId: this.data.id,
       name: this.data.name,
       price: Number(this.data.price) || 0,
       image: (this.data.images && this.data.images[0]) || (this.data.cloudFileIDs && this.data.cloudFileIDs[0]) || '',
-      specs: this.data.selectedVariants || {}
+      specs: this.data.selectedVariants || {},
+      category: 'toolkit',
+      type: 'toolkit'
     }
 
     wx.showLoading({ title: '添加中...' })
@@ -373,6 +376,9 @@ Page({
 
     const item = {
       id: this.data.id,
+      toolkitId: this.data.id,
+      category: 'toolkit',
+      type: 'toolkit',
       name: this.data.name,
       price: this.data.price,
       image: (this.data.images && this.data.images[0]) || '',

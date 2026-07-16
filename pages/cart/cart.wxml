@@ -201,13 +201,13 @@
             >删除订单</view>
             
             <!-- 订单详情按钮 -->
-            <button 
-              class="mini-btn detail-btn" 
+            <button
+              class="mini-btn detail-btn"
               size="mini"
               data-id="{{item.id}}"
               data-category="{{item.category}}"
               data-courseid="{{item.courseId}}"
-              catchtap="onMallOrderTap"
+              catchtap="onMallOrderDetailTap"
             >详情</button>
             
             <!-- 待支付订单显示去支付按钮 -->

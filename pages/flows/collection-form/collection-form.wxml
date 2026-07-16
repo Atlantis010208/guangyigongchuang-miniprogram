@@ -5,6 +5,7 @@
 
   <scroll-view class="page-scroll" scroll-y="{{!scrollLocked}}" enhanced show-scrollbar="{{false}}">
     <view class="content" style="padding-top: {{statusBarHeight + navigationBarHeight}}px;">
+      <view class="content-transition {{motionClass}}">
       <block wx:if="{{view === 'overview'}}">
         <view class="page-heading">
           <text class="page-title">模块总览</text>
@@ -82,17 +83,18 @@
           <text>{{submitted ? '已完成本地演示提交' : (allModulesComplete ? '已完成全部模块' : '还有模块未完成')}}</text>
         </view>
       </block>
+      </view>
       <view class="scroll-spacer"></view>
     </view>
   </scroll-view>
 
-  <view class="bottom-bar">
+  <view class="bottom-bar" style="{{bottomBarStyle}}">
     <button wx:if="{{view === 'overview'}}" class="primary-button full-button" bindtap="onOverviewPrimary">开始填写</button>
     <button wx:elif="{{view === 'module'}}" class="primary-button full-button" bindtap="onModulePrimary">进入模块</button>
     <view wx:elif="{{view === 'question'}}" class="question-actions">
       <button class="secondary-button" bindtap="onPreviousQuestion">上一题</button>
       <button class="primary-button next-button" bindtap="onNextQuestion">下一题</button>
     </view>
-    <button wx:elif="{{view === 'review'}}" class="primary-button full-button" bindtap="onConfirm">确认提交</button>
+    <button wx:elif="{{view === 'review'}}" class="primary-button full-button" loading="{{submitting}}" bindtap="onConfirm">{{submitButtonText}}</button>
   </view>
 </view>

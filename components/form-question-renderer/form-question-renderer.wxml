@@ -1,25 +1,54 @@
 <view class="question-control">
-  <view wx:if="{{question.type === 'single' || question.type === 'multiple'}}" class="option-grid">
-    <view
-      wx:for="{{renderedOptions}}"
-      wx:key="id"
-      class="option-pill {{item.selected ? 'is-selected' : ''}}"
-      data-id="{{item.id}}"
-      bindtap="onOptionTap"
-    >
-      <text>{{item.label}}</text>
-      <view wx:if="{{item.selected}}" class="option-check">✓</view>
+  <block wx:if="{{question.type === 'single' || question.type === 'multiple'}}">
+    <view class="option-grid">
+      <view
+        wx:for="{{renderedOptions}}"
+        wx:key="id"
+        class="option-pill {{item.selected ? 'is-selected' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onOptionTap"
+      >
+        <text>{{item.label}}</text>
+      </view>
     </view>
-  </view>
+    <view wx:if="{{otherSelected}}" class="other-input-row">
+      <text class="other-input-label">{{otherOption.label}}</text>
+      <input
+        class="other-text-input"
+        adjust-position="{{false}}"
+        confirm-type="done"
+        focus="{{otherInputFocus}}"
+        value="{{otherText}}"
+        maxlength="{{otherMaxLength}}"
+        placeholder="{{otherOption.otherPlaceholder || '请填写其他内容'}}"
+        placeholder-class="input-placeholder"
+        bindinput="onOtherInput"
+        bindconfirm="onOtherConfirm"
+        bindblur="onOtherBlur"
+      />
+      <text class="other-word-count">{{otherText.length}}/{{otherMaxLength}}</text>
+    </view>
+  </block>
 
+  <view wx:elif="{{question.type === 'location'}}" class="location-picker" bindtap="onLocationTap">
+    <view class="location-copy">
+      <text class="location-name">{{answer.name || '选择当前位置'}}</text>
+      <text class="location-address">{{answer.address || '打开微信地图选择项目位置'}}</text>
+      <text wx:if="{{answer.latitude !== undefined && answer.longitude !== undefined}}" class="location-coordinates">{{answer.latitude}}, {{answer.longitude}}</text>
+    </view>
+    <view class="location-action"><view class="location-dot"></view></view>
+  </view>
   <view wx:elif="{{question.type === 'shortText'}}" class="input-shell">
     <input
       class="text-input"
+      adjust-position="{{false}}"
+      confirm-type="done"
       value="{{answer}}"
-      maxlength="{{question.validation.maxLength || 140}}"
+      maxlength="{{maxLength}}"
       placeholder="{{question.placeholder}}"
       placeholder-class="input-placeholder"
       bindinput="onInput"
+      bindconfirm="onInputConfirm"
     />
     <view wx:if="{{question.action === 'chooseLocation'}}" class="location-action" bindtap="onLocationTap">
       <view class="location-dot"></view>
@@ -29,19 +58,23 @@
   <view wx:elif="{{question.type === 'longText'}}" class="textarea-shell">
     <textarea
       class="long-input"
+      adjust-position="{{false}}"
+      confirm-type="done"
       value="{{answer}}"
-      maxlength="{{question.validation.maxLength || 500}}"
+      maxlength="{{maxLength}}"
       placeholder="{{question.placeholder}}"
       placeholder-class="input-placeholder"
       auto-height
       bindinput="onInput"
+      bindconfirm="onInputConfirm"
     ></textarea>
-    <text class="word-count">{{(answer || '').length}} / {{question.validation.maxLength || 500}}</text>
+    <text class="word-count">{{answerLength}} / {{maxLength}}</text>
   </view>
 
   <view wx:elif="{{question.type === 'number'}}" class="input-shell">
     <input
       class="text-input number-input"
+      adjust-position="{{false}}"
       type="digit"
       value="{{answer}}"
       placeholder="{{question.placeholder}}"
@@ -51,6 +84,28 @@
     <text class="input-unit">{{question.unit}}</text>
   </view>
 
+  <view wx:elif="{{question.type === 'table'}}" class="table-question">
+    <view wx:for="{{tableRenderedRows}}" wx:key="rowIndex" wx:for-item="row" class="table-row-card">
+      <view class="table-row-head">
+        <text>第 {{row.rowIndex + 1}} 行</text>
+        <text wx:if="{{tableRows.length > question.table.minRows}}" class="table-row-remove" data-row-index="{{row.rowIndex}}" bindtap="onRemoveTableRow">删除</text>
+      </view>
+      <view wx:for="{{row.columns}}" wx:key="id" wx:for-item="column" class="table-cell-field">
+        <view class="table-cell-label"><text>{{column.label}}</text><text wx:if="{{column.required !== false}}" class="required-mark">*</text></view>
+        <view wx:if="{{column.type === 'single' || column.type === 'multiple'}}" class="table-cell-options">
+          <view wx:for="{{column.renderedOptions}}" wx:key="id" wx:for-item="option" class="table-cell-option {{option.selected ? 'is-selected' : ''}}" data-row-index="{{row.rowIndex}}" data-column-id="{{column.id}}" data-option-id="{{option.id}}" bindtap="onTableOptionTap">{{option.label}}</view>
+        </view>
+        <view wx:elif="{{column.type === 'longText'}}" class="table-cell-textarea-wrap">
+          <textarea class="table-cell-textarea" adjust-position="{{false}}" value="{{row.values[column.id]}}" maxlength="{{column.validation.maxLength || 500}}" placeholder="{{column.placeholder}}" placeholder-class="input-placeholder" auto-height data-row-index="{{row.rowIndex}}" data-column-id="{{column.id}}" bindinput="onTableCellInput"></textarea>
+        </view>
+        <view wx:else class="table-cell-input-wrap">
+          <input class="table-cell-input" adjust-position="{{false}}" type="{{column.type === 'number' ? 'digit' : 'text'}}" value="{{row.values[column.id]}}" maxlength="{{column.validation.maxLength || 500}}" placeholder="{{column.placeholder}}" placeholder-class="input-placeholder" data-row-index="{{row.rowIndex}}" data-column-id="{{column.id}}" bindinput="onTableCellInput" />
+          <text wx:if="{{column.unit}}" class="table-cell-unit">{{column.unit}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{tableRows.length < tableMaxRows}}" class="table-add-row" bindtap="onAddTableRow"><view class="plus-mark"></view><text>添加一行</text></view>
+  </view>
   <view wx:elif="{{question.type === 'upload'}}" class="upload-list">
     <view
       wx:for="{{answer}}"

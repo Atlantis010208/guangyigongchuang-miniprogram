@@ -37,9 +37,6 @@ Component({
     onTouchStart(event) {
       const touch = event.touches[0]
       this.touchStartY = touch ? touch.clientY : 0
-    },
-
-    onLongPress(event) {
       const index = Number(event.currentTarget.dataset.index)
       const item = this.data.orderedItems[index]
       if (!item) return
@@ -75,7 +72,9 @@ Component({
         dragOffset: 0,
       })
       this.triggerEvent('dragstate', { dragging: false })
-      this.triggerEvent('change', { value: items.map((item) => item.id) })
+      if (targetIndex !== sourceIndex) {
+        this.triggerEvent('change', { value: items.map((item) => item.id) })
+      }
     },
 
     onTouchCancel() {

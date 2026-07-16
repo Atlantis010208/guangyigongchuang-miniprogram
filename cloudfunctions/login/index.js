@@ -19,6 +19,7 @@
  *   - whitelistActivated: boolean 是否激活了白名单授权
  */
 const cloud = require('wx-server-sdk')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -297,6 +298,10 @@ function generateOrderNo() {
  * @returns {string[]} 可能的匹配格式列表
  */
 function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
+  return phoneUtils.generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+}
+
+function generatePhoneMatchListLegacy(phoneNumber, purePhoneNumber, countryCode) {
   const matchList = []
   
   // 纯手机号（不带国家码）
@@ -785,9 +790,10 @@ exports.main = async (event) => {
           // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
           let toolkitWhitelistResult = null
           if (existingUser.phoneNumber || existingUser.purePhoneNumber) {
-            const fullPhone = existingUser.phoneNumber || ''
-            const purePhone = existingUser.purePhoneNumber || existingUser.phoneNumber.replace(/^\+\d+/, '')
-            const countryCode = existingUser.countryCode || '86'
+            const phoneParts = phoneUtils.getPhoneParts(existingUser.phoneNumber, existingUser.purePhoneNumber, existingUser.countryCode)
+            const fullPhone = phoneParts.phoneNumber || ''
+            const purePhone = phoneParts.purePhone || ''
+            const countryCode = phoneParts.countryCode || '86'
             
             // 课程白名单检查（支持多格式匹配）
             whitelistResult = await checkAndActivateWhitelist(
@@ -925,9 +931,10 @@ exports.main = async (event) => {
       // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       let toolkitWhitelistResult = null
       if (user.phoneNumber || user.purePhoneNumber) {
-        const fullPhone = user.phoneNumber || ''
-        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
-        const countryCode = user.countryCode || '86'
+        const phoneParts = phoneUtils.getPhoneParts(user.phoneNumber, user.purePhoneNumber, user.countryCode)
+        const fullPhone = phoneParts.phoneNumber || ''
+        const purePhone = phoneParts.purePhone || ''
+        const countryCode = phoneParts.countryCode || '86'
         
         // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(
@@ -1007,9 +1014,10 @@ exports.main = async (event) => {
       // ========== 新增：白名单激活检查 ==========
       // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       if (user.phoneNumber || user.purePhoneNumber) {
-        const fullPhone = user.phoneNumber || ''
-        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
-        const countryCode = user.countryCode || '86'
+        const phoneParts = phoneUtils.getPhoneParts(user.phoneNumber, user.purePhoneNumber, user.countryCode)
+        const fullPhone = phoneParts.phoneNumber || ''
+        const purePhone = phoneParts.purePhone || ''
+        const countryCode = phoneParts.countryCode || '86'
         
         // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(

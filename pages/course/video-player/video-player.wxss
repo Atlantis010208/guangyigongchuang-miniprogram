@@ -144,14 +144,34 @@
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: #000000;
+  padding: 0 48rpx;
+  box-sizing: border-box;
 }
 
 .placeholder-text {
   color: rgba(255, 255, 255, 0.5);
   font-size: 28rpx;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.video-retry-btn {
+  margin-top: 24rpx;
+  width: 180rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: 32rpx;
+  background-color: #007aff;
+  color: #ffffff;
+  font-size: 26rpx;
+}
+
+.video-retry-btn::after {
+  border: 0;
 }
 
 /* 固定头部：课程列表标题 + 当前播放 + 视频章节时间轴 */

@@ -611,7 +611,7 @@ Page({
       
       // 1. 检查本地缓存
       const cached = wx.getStorageSync(CACHE_KEY)
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      if (cached && cached.isPurchased === true && Date.now() - cached.timestamp < CACHE_DURATION) {
         console.log('[search] 使用缓存的权限状态:', cached.isPurchased)
         return cached.isPurchased
       }
@@ -620,7 +620,7 @@ Page({
       console.log('[search] 调用云函数检查权限...')
       const res = await wx.cloud.callFunction({
         name: 'toolkit_purchase_check',
-        data: { toolkitId: 'toolkit' }
+        data: { toolkitId: 'TK_DEFAULT_001' }
       })
       
       console.log('[search] 云函数返回:', res)
@@ -677,6 +677,9 @@ Page({
     // 直接跳转到订单确认页，跳过工具包详情页
     const item = {
       id: 'TK_DEFAULT_001',
+      toolkitId: 'TK_DEFAULT_001',
+      category: 'toolkit',
+      type: 'toolkit',
       name: '灯光设计工具包',
       price: 69,
       image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg',
@@ -1531,6 +1534,9 @@ Page({
             // 直接跳转到订单确认页，跳过工具包详情页
             const item = {
               id: 'TK_DEFAULT_001',
+              toolkitId: 'TK_DEFAULT_001',
+              category: 'toolkit',
+              type: 'toolkit',
               name: '灯光设计工具包',
               price: 69,
               image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/工具包主图/工具包-主图1.jpg',
