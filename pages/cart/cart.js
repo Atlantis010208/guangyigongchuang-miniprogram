@@ -1,6 +1,7 @@
 // pages/cart/cart.js
 const api = require('../../utils/api')
 const util = require('../../utils/util')
+const { fetchMembershipStatus } = require('../../utils/membership.js')
 
 Page({
 
@@ -18,8 +19,11 @@ Page({
     requestsCloud: [],
     mallOrdersCloud: [],
     filterType: 'mall',
-    isLoggedIn: false, // 登录状态
-    countdownTimer: null // 支付倒计时定时器
+    isLoggedIn: false,
+    countdownTimer: null,
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free'
   },
   
   // 订单超时时间（毫秒）: 15分钟
@@ -73,6 +77,46 @@ Page({
         this.updateCountdown()
       }, 1000)
     }
+    this._loadAvatarAndMembership()
+  },
+
+  async _loadAvatarAndMembership() {
+    const app = getApp()
+    const userDoc = (app && app.globalData && app.globalData.userDoc) || util.getStorage('userDoc')
+    if (userDoc && userDoc.avatarUrl) {
+      const avatarUrl = userDoc.avatarUrl
+      if (avatarUrl.startsWith('cloud://')) {
+        try {
+          const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+          const item = res && res.fileList && res.fileList[0]
+          if (item && item.tempFileURL) {
+            this.setData({ userAvatar: item.tempFileURL, avatarFileID: avatarUrl })
+          }
+        } catch (e) {
+          this.setData({ userAvatar: '', avatarFileID: avatarUrl })
+        }
+      } else {
+        this.setData({ userAvatar: avatarUrl, avatarFileID: '' })
+      }
+    }
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (e) {}
+  },
+
+  onUserTap() {
+    wx.navigateTo({ url: '/pages/profile/home/home' })
+  },
+
+  async onAvatarError() {
+    const { avatarFileID } = this.data
+    if (!avatarFileID || !avatarFileID.startsWith('cloud://')) return
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList: [avatarFileID] })
+      const item = res && res.fileList && res.fileList[0]
+      if (item && item.tempFileURL) this.setData({ userAvatar: item.tempFileURL })
+    } catch (e) {}
   },
 
   /**
@@ -303,6 +347,11 @@ Page({
   getCoverForRequest(r){
     const fallback = 'https://images.pexels.com/photos/45072/pexels-photo-45072.jpeg'
     if(!r) return fallback
+    // 优先使用用户在发布需求时上传的第一张图片（fileID 或 https URL）
+    if (Array.isArray(r.images) && r.images.length > 0) {
+      const first = r.images[0]
+      if (typeof first === 'string' && first) return first
+    }
     if(r.source === 'scheme'){
       switch(r.category){
         case 'residential': return 'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg'
@@ -618,6 +667,9 @@ Page({
         designerId: doc.designerId || '',
         designerName: doc.designerName || '',
         designerStatus: designerStatus,  // 🔥 新增：设计师分配状态
+        // 🔥 用户上传的附件（发布需求第八题）
+        images: Array.isArray(params.images) ? params.images.filter((s) => typeof s === 'string' && s) : [],
+        files: Array.isArray(params.files) ? params.files : [],
         // 🔥 个性需求定制字段
         area: params.area || '',
         budget: params.budgetTotal || params.budget || '',
@@ -1082,16 +1134,22 @@ Page({
     const id = e.currentTarget.dataset.id
     const category = e.currentTarget.dataset.category
     const courseId = e.currentTarget.dataset.courseid
-    
+
     if(!id) return
-    
-    // 课程订单跳转到课程详情页
+
+    // 课程订单：点击卡片主体快捷进入课程详情页（去观看）
     if (category === 'course' && courseId) {
       wx.navigateTo({ url: `/pages/course/course-detail/course-detail?id=${courseId}` })
       return
     }
-    
+
     // 其他订单跳转到订单详情页
+    wx.navigateTo({ url: `/pages/order/detail/detail?id=${id}` })
+  },
+  // “详情”按钮：所有订单（含课程订单）都进入订单详情页，而非课程详情页
+  onMallOrderDetailTap(e){
+    const id = e.currentTarget.dataset.id
+    if(!id) return
     wx.navigateTo({ url: `/pages/order/detail/detail?id=${id}` })
   },
   // 跳转到设计师筛选页面，携带当前需求信息

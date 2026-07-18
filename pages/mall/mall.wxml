@@ -44,7 +44,7 @@
         </view>
         <view class="product-info">
           <text class="product-name">{{item.name}}</text>
-          <text class="product-desc">{{item.shortDesc || '专业团队 · 一对一服务'}}</text>
+          <text class="product-desc">{{item.shortDesc || '专业团队 · 多对一服务'}}</text>
           <view class="product-price-wrap">
             <text class="price-symbol">¥</text>
             <text class="price-value">{{item.price}}</text>

@@ -48,23 +48,53 @@
     
   </view>
 
-  <view class="section actions">
-    <!-- 进行中且未提交验收：显示提交验收按钮 -->
-    <block wx:if="{{(project.status==='review' || project.status==='design') && !project.designerConfirmed}}">
-      <button class="btn primary" bindtap="onSubmitVerify">提交验收</button>
-      <button class="btn ghost" bindtap="onCallClient">联系客户</button>
-      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+  <!-- 🔥 客户上传资料：图片九宫格 + 文件列表，无附件时显示空态文案 -->
+  <view class="section attachments-section">
+    <view class="block-title">客户上传资料</view>
+
+    <!-- 空态：客户暂未上传 -->
+    <view class="empty-hint" wx:if="{{!project.hasAttachments}}">
+      客户暂未上传参考资料，可联系业主获取
+    </view>
+
+    <!-- 非空态：图片 + 文件 -->
+    <block wx:else>
+      <!-- 图片九宫格 -->
+      <view class="img-grid" wx:if="{{project.attachmentImagesCount > 0}}">
+        <view class="img-cell" wx:for="{{project.attachmentImages}}" wx:key="fileID" bindtap="onPreviewImage" data-index="{{index}}">
+          <image src="{{item.tempUrl}}" mode="aspectFill" wx:if="{{item.tempUrl}}" />
+          <view class="img-loading" wx:else>加载中</view>
+        </view>
+      </view>
+
+      <!-- 文件列表 -->
+      <view class="files-section" wx:if="{{project.attachmentFilesCount > 0}}">
+        <view class="file-item" wx:for="{{project.attachmentFiles}}" wx:key="fileID" bindtap="onTapFile" data-index="{{index}}">
+          <text class="file-icon">{{item.icon}}</text>
+          <view class="file-info">
+            <text class="file-name">{{item.name}}</text>
+            <text class="file-size">{{item.sizeText}}</text>
+          </view>
+          <text class="file-action">›</text>
+        </view>
+      </view>
     </block>
-    <!-- 待验收：显示等待提示 -->
+  </view>
+
+  <view class="section actions">
+    <!-- 进行中且未提交验收：提交验收(次) + 联系客户(主，加大) -->
+    <block wx:if="{{(project.status==='review' || project.status==='design') && !project.designerConfirmed}}">
+      <button class="btn ghost" bindtap="onSubmitVerify">提交验收</button>
+      <button class="btn primary btn-lg" bindtap="onCallClient">联系客户</button>
+    </block>
+    <!-- 待验收：等待提示 + 联系客户(主，加大) -->
     <block wx:elif="{{project.status==='verifying'}}">
       <view class="verify-hint">已提交验收，等待客户确认</view>
-      <button class="btn ghost" bindtap="onCallClient">联系客户</button>
-      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+      <button class="btn primary btn-lg" bindtap="onCallClient">联系客户</button>
     </block>
-    <!-- 已完成或其他状态 -->
+    <!-- 已完成或其他状态：仅联系客户(主，加大) -->
     <block wx:else>
-      <button class="btn primary" bindtap="onCallClient" disabled="{{project.status==='cancelled'}}">联系客户</button>
-      <button class="btn ghost" bindtap="onContactAdmin">联系平台</button>
+      <button class="btn primary btn-lg" bindtap="onCallClient" disabled="{{project.status==='cancelled'}}">联系客户</button>
     </block>
   </view>
 </scroll-view>

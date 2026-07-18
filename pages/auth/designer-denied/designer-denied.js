@@ -44,9 +44,9 @@ Page({
   },
 
   switchIdentity() {
-    // 跳转回身份选择页并清除所有页面栈
-    wx.reLaunch({
-      url: '/pages/identity/identity'
+    wx.navigateTo({
+      url: '/pages/identity/identity',
+      fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
     })
   }
 })

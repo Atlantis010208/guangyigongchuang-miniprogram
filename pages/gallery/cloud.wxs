@@ -23,6 +23,12 @@ var state = {
   animId: 0, // 当前运行的动画 ID，用于取消旧动画
   isSnapping: false,
   isTouching: false,
+  // isDragging：是否已越过启动阈值进入"拖动模式"。
+  // 用来区分"轻点"和"滑动"——避免点击时手指微小抖动改写标签 transform，
+  // 进而导致小程序 tap 合成事件因元素位置变化而被取消（标签点不选中）。
+  isDragging: false,
+  // DRAG_THRESHOLD：手指累计位移超过该 px 值才进入拖动模式
+  DRAG_THRESHOLD: 10,
   
   // 业务状态
   activeCategory: '全部',
@@ -78,45 +84,12 @@ function init(newValue, oldValue, ownerInstance, instance) {
 function onActiveChange(newValue, oldValue, ownerInstance, instance) {
   if (newValue && newValue !== state.activeCategory) {
     state.activeCategory = newValue
-    
-    // 如果用户正在触摸，不要打断用户，仅更新状态
-    if (state.isTouching) {
-      render(ownerInstance)
-      return
-    }
-
-    // 否则，平滑滚动到最接近中心的同名副本（避免滚到远端副本导致视觉跳远）
-    if (state.nodesCache.length > 0) {
-      var w = state.torusWidth
-      var h = state.torusHeight
-      var minDist = Infinity
-      var targetDx = 0
-      var targetDy = 0
-      var found = false
-      
-      for (var i = 0; i < state.nodesCache.length; i++) {
-        var node = state.nodesCache[i]
-        if (node.name === newValue) {
-          // 水平 mod，垂直不 mod（副本的 by 已含偏移）
-          var px = ((node.bx + state.globalX + w/2) % w + w) % w - w/2
-          var py = node.by + state.globalY
-          var d = Math.sqrt(px*px + py*py)
-          if (d < minDist) {
-            minDist = d
-            targetDx = px
-            targetDy = py
-            found = true
-          }
-        }
-      }
-      
-      if (found) {
-        // 统一走 startAnimation('snap', {dx, dy})，把目标位移交给动画函数自己换算
-        startAnimation(ownerInstance, 'snap', { dx: targetDx, dy: targetDy })
-      } else {
-        render(ownerInstance)
-      }
-    }
+    // 仅 render：让 render 函数中基于 activeCategory 的 opacity/z-index 重算生效，
+    // 同时 .active 黑底白字样式由 wxml 的 class 绑定自动应用。
+    // 不再启动 snap 动画把"最近同名副本"飞到视口中心——
+    // 那会让用户感觉点完一下整个云图"乱跳"到一个新位置。
+    // 现在点击标签后云图保持不动，体验更自然。
+    render(ownerInstance)
   }
 }
 
@@ -136,11 +109,31 @@ function touchStart(e, ownerInstance) {
   state.lastTime = e.timeStamp
   state.vx = state.vy = 0
   state.isTouching = true
+  state.isDragging = false // 每次触摸都重置：默认按"点击"处理，越过阈值才转为拖动
   cancelAnimation(ownerInstance) // 触摸立即停止动画
 }
 
 function touchMove(e, ownerInstance) {
   var touch = e.touches[0] || e.changedTouches[0]
+
+  // 启动阈值（deadband）：未越过 DRAG_THRESHOLD 之前，绝不改写 globalX/Y、绝不 render，
+  // 否则点击瞬间手指 1-3px 的微小抖动会立刻平移所有标签的 transform，
+  // 进而打断小程序底层 tap 合成事件 → 标签点不中、还会"乱跳"。
+  if (!state.isDragging) {
+    var totalDx = touch.clientX - state.startX
+    var totalDy = touch.clientY - state.startY
+    var totalDist = Math.sqrt(totalDx * totalDx + totalDy * totalDy)
+    if (totalDist < state.DRAG_THRESHOLD) {
+      // 仍在死区：保持画面静止，但同步 lastX/Y/Time，
+      // 这样真正进入拖动模式后第一次 dx 不会"暴跳"出阈值距离
+      state.lastX = touch.clientX
+      state.lastY = touch.clientY
+      state.lastTime = e.timeStamp
+      return
+    }
+    state.isDragging = true
+  }
+
   var dx = touch.clientX - state.lastX
   var dy = touch.clientY - state.lastY
   var dt = e.timeStamp - state.lastTime
@@ -161,6 +154,9 @@ function touchMove(e, ownerInstance) {
 
 function touchEnd(e, ownerInstance) {
   state.isTouching = false
+  // 纯点击（未越过阈值）：直接结束，不启动惯性，让 tap 事件正常派发
+  if (!state.isDragging) return
+  state.isDragging = false
   if (Math.abs(state.vx) > 0.1 || Math.abs(state.vy) > 0.1) {
     startAnimation(ownerInstance, 'inertia')
   }
@@ -273,20 +269,20 @@ function render(ownerInstance) {
     
     // Apple Watch 真实 "穹顶" (Dome) 3D 透视曲线：
     // 中心 120rpx 内保持 1.0 大小，形成平坦焦点区
-    // 超过后迅速且非线性地衰减至极小 (0.3)，模拟球面的边缘曲率
+    // 衰减曲率放缓，边缘最小只缩小到 0.65，保证填充感
     var scale = 1.0
     if (dist > 120) {
-      scale = 1.0 - Math.pow((dist - 120) / 450, 1.8)
+      scale = 1.0 - Math.pow((dist - 120) / 500, 1.4)
     }
-    scale = Math.max(0.3, Math.min(1.0, safeNum(scale, 0.3)))
+    scale = Math.max(0.65, Math.min(1.0, safeNum(scale, 0.65)))
 
     // 透明度曲线：
-    // 中心 150rpx 完全不透明，之后快速隐没进背景，营造纵深感
+    // 让周边的标签也保持较高的可见度（最低0.4），彻底消除留白的错觉
     var opacity = 1.0
     if (dist > 150) {
-      opacity = 1.0 - Math.pow((dist - 150) / 350, 1.5)
+      opacity = 1.0 - Math.pow((dist - 150) / 450, 1.2)
     }
-    opacity = Math.max(0.05, Math.min(1.0, safeNum(opacity, 0.05)))
+    opacity = Math.max(0.4, Math.min(1.0, safeNum(opacity, 0.4)))
 
     // 层级计算：中心节点永远在上层
     var zIndex = Math.floor(1000 - dist)
@@ -314,5 +310,6 @@ module.exports = {
   touchMove: touchMove,
   touchEnd: touchEnd,
   init: init,
-  onActiveChange: onActiveChange
+  onActiveChange: onActiveChange,
+  onConfigChange: onConfigChange
 }

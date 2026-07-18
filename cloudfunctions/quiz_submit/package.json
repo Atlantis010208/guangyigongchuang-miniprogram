@@ -1,0 +1,9 @@
+{
+  "name": "quiz_submit",
+  "version": "1.0.0",
+  "description": "服务端判分并写入 quiz_attempts",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "admin_membership_stats",
+  "version": "1.0.0",
+  "description": "后台管理端会员数据看板聚合查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

@@ -9,6 +9,91 @@ const app = tcb.init({ env: 'cloud1-5gb9c5u2c58ad6d7', timeout: 60000 })
 const db = cloud.database()
 const kbDb = app.database() // 用管理员身份访问 color_temp_knowledge（绕过小程序端安全规则）
 
+/**
+ * 用栈匹配修复 JSON 中缺失的右括号
+ * 处理两种典型情况：
+ *  1) 对象内最后一个键值对后缺 }，直接遇到 ]：补 }
+ *  2) 数组内最后一个元素后缺 ]，直接遇到 }：补 ]
+ *  3) 末尾整体缺若干 } 或 ]：栈剩余补齐
+ * 字符串内的 { [ } ] 不参与匹配（含 \\\" 转义处理）
+ */
+function fixBracesByStack(text) {
+  const stack = []
+  let inString = false
+  let escape = false
+  let result = ''
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inString) {
+      result += ch
+      if (escape) { escape = false; continue }
+      if (ch === '\\') { escape = true; continue }
+      if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') { inString = true; result += ch; continue }
+    if (ch === '{' || ch === '[') {
+      stack.push(ch)
+      result += ch
+    } else if (ch === '}') {
+      // 数组没闭合就遇到了 }，先补 ]
+      while (stack.length && stack[stack.length - 1] === '[') {
+        result += ']'
+        stack.pop()
+      }
+      if (stack.length && stack[stack.length - 1] === '{') stack.pop()
+      result += ch
+    } else if (ch === ']') {
+      // 对象没闭合就遇到了 ]（本次故障的典型 case），先补 }
+      while (stack.length && stack[stack.length - 1] === '{') {
+        result += '}'
+        stack.pop()
+      }
+      if (stack.length && stack[stack.length - 1] === '[') stack.pop()
+      result += ch
+    } else {
+      result += ch
+    }
+  }
+  // 末尾仍有未闭合的括号，全部补齐
+  while (stack.length > 0) {
+    const open = stack.pop()
+    result += (open === '{' ? '}' : ']')
+  }
+  return result
+}
+
+/**
+ * 从 AI 原始文本中提取并尝试修复 JSON
+ * 返回 parsed 对象，失败返回 null
+ */
+function extractAndRepairJson(text) {
+  if (!text || typeof text !== 'string') return null
+  // 1) 去除 markdown 代码块包裹
+  let cleaned = text.trim()
+    .replace(/^```(?:json|javascript)?\s*/i, '')
+    .replace(/\s*```\s*$/i, '')
+    .trim()
+  // 2) 截取从第一个 { 到最后一个 } 之间的内容（去除前后解释性文字）
+  const firstBrace = cleaned.indexOf('{')
+  if (firstBrace < 0) return null
+  let raw = cleaned.slice(firstBrace)
+  const lastBrace = raw.lastIndexOf('}')
+  if (lastBrace > 0) raw = raw.slice(0, lastBrace + 1)
+  // 3) 直接解析
+  try { return JSON.parse(raw) } catch (e) {}
+  // 4) 移除多余尾逗号: ", ]" / ", }"
+  let fixed = raw.replace(/,(\s*[\]\}])/g, '$1')
+  try { return JSON.parse(fixed) } catch (e) {}
+  // 5) 用栈修复缺失的括号
+  fixed = fixBracesByStack(fixed)
+  try { return JSON.parse(fixed) } catch (e) {}
+  // 6) 再次清理可能由栈修复引入的多余尾逗号
+  fixed = fixed.replace(/,(\s*[\]\}])/g, '$1')
+  try { return JSON.parse(fixed) } catch (e) {}
+  return null
+}
+
 // 默认 Prompt 模板（降级方案）
 const DEFAULT_PROMPT = `你是一名拥有 15 年经验的专业灯光设计师，曾参与超过 500 个住宅及商业照明项目。
 现在需要你根据客户提供的信息，给出科学、专业且实用的色温方案建议。
@@ -147,10 +232,15 @@ exports.main = async (event) => {
 
     // === 模型降级链：glm-5.1（主） → glm-4.5-air（兜底） ===
     // 两者同属 Coding Plan 覆盖，无额外计费；air 版本更快更稳
+    // 触发降级的条件：(1) 模型调用异常 (2) 返回内容 JSON 解析失败（含修复后仍失败）
     const ai = app.ai()
     const model = ai.createModel('bigmodel-custom')
 
-    async function runModel(modelName) {
+    /**
+     * 调用一次模型并尝试解析+修复 JSON
+     * 解析失败抛出带 aiText 的 Error，便于上层降级
+     */
+    async function runModelAndParse(modelName) {
       const stream = await model.streamText({
         model: modelName,
         messages: [{ role: 'user', content: prompt }],
@@ -160,43 +250,41 @@ exports.main = async (event) => {
       let text = ''
       for await (const chunk of stream.textStream) text += chunk
       const usage = await stream.usage
-      return { text, usage }
+      const parsed = extractAndRepairJson(text)
+      if (!parsed) {
+        const err = new Error(`JSON_PARSE_FAILED (model=${modelName})`)
+        err.aiText = text
+        throw err
+      }
+      return { text, usage, parsed }
     }
 
-    let aiText = ''
+    let aiResult = null
     let usage = null
     let usedModel = 'glm-5.1'
     try {
-      const res = await runModel('glm-5.1')
-      aiText = res.text
+      const res = await runModelAndParse('glm-5.1')
+      aiResult = res.parsed
       usage = res.usage
     } catch (mainErr) {
-      console.warn('[色温AI] glm-5.1 调用失败，降级到 glm-4.5-air:', mainErr.message)
+      console.warn('[色温AI] glm-5.1 失败，降级到 glm-4.5-air:', mainErr.message)
+      if (mainErr.aiText) {
+        // JSON 修复仍失败时，记录原始内容前 500 字便于追溯（避免日志过大）
+        console.warn('[色温AI] glm-5.1 原始返回(截断500字):', String(mainErr.aiText).slice(0, 500))
+      }
       usedModel = 'glm-4.5-air'
       try {
-        const res = await runModel('glm-4.5-air')
-        aiText = res.text
+        const res = await runModelAndParse('glm-4.5-air')
+        aiResult = res.parsed
         usage = res.usage
-        console.log('[色温AI] 兜底模型 glm-4.5-air 调用成功')
+        console.log('[色温AI] 兜底模型 glm-4.5-air 调用并解析成功')
       } catch (fallbackErr) {
         console.error('[色温AI] 兜底模型 glm-4.5-air 仍失败:', fallbackErr.message)
-        throw fallbackErr
+        if (fallbackErr.aiText) {
+          console.warn('[色温AI] glm-4.5-air 原始返回(截断500字):', String(fallbackErr.aiText).slice(0, 500))
+        }
+        return { success: false, error: 'AI 返回格式异常，请重试', fallback: true }
       }
-    }
-    
-    // 尝试提取 JSON（AI 可能返回 markdown 代码块包裹的 JSON）
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      console.error('AI 返回内容无法解析为 JSON:', aiText)
-      return { success: false, error: 'AI 返回格式异常，请重试', fallback: true }
-    }
-
-    let aiResult
-    try {
-      aiResult = JSON.parse(jsonMatch[0])
-    } catch (parseErr) {
-      console.error('JSON 解析失败:', parseErr, jsonMatch[0])
-      return { success: false, error: 'AI 返回格式异常，请重试', fallback: true }
     }
 
     // 校验必要字段

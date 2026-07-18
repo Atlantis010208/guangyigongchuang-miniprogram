@@ -17,9 +17,23 @@ const _ = db.command
 
 exports.main = async (event) => {
   try {
-    // 权限验证（支持小程序和 Web 端）
-    const authResult = await requireAdmin(db, _)
-    
+    // 权限验证：优先使用 event._adminToken（Web 端，无 DB 查询）
+    let authResult = { ok: false }
+    const rawToken = event._adminToken
+    if (rawToken) {
+      try {
+        const tokenData = JSON.parse(Buffer.from(rawToken, 'base64').toString('utf8'))
+        if (tokenData && Date.now() < tokenData.exp &&
+            (tokenData.roles === 0 || tokenData.roles === 1)) {
+          authResult = { ok: true, user: { _id: tokenData.userId, roles: tokenData.roles }, authType: 'token' }
+        }
+      } catch (_e) {}
+    }
+    // 降级到 DB 验证（兼容小程序直接调用）
+    if (!authResult.ok) {
+      authResult = await requireAdmin(db, _)
+    }
+
     if (!authResult.ok) {
       console.log('[admin_courses_update] 权限验证失败:', authResult.errorCode)
       return { 

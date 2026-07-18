@@ -1,4 +1,5 @@
 const util = require('../../utils/util')
+const attachments = require('../../utils/attachments')
 
 Page({
   data: {
@@ -102,12 +103,51 @@ Page({
       activeIndex = 0; // 待确认
     }
 
+    // 🔥 业主上传的图片/文件归一化（publish 与 optimize 双源兼容）
+    Object.assign(project, attachments.normalizeAttachments(project));
+
     this.setData({
       project,
       progressSteps,
       progressActive: activeIndex,
       acceptedTimeText
     });
+
+    // 🔥 异步换取图片临时链接（失败时保留占位）
+    this._hydrateAttachmentImages();
+  },
+
+  // 🔥 异步换取图片临时链接
+  async _hydrateAttachmentImages() {
+    const list = (this.data.project && this.data.project.attachmentImages) || [];
+    if (!list.length) return;
+    try {
+      const hydrated = await attachments.hydrateImageTempUrls(list);
+      this.setData({ 'project.attachmentImages': hydrated });
+    } catch (err) {
+      console.warn('[designer-project-detail] hydrate attachment images failed:', err);
+    }
+  },
+
+  // 🔥 点击图片缩略图：全屏预览
+  onPreviewImage(e) {
+    const idx = Number(e.currentTarget.dataset.index) || 0;
+    const list = (this.data.project && this.data.project.attachmentImages) || [];
+    const urls = list.map(it => it.tempUrl).filter(Boolean);
+    if (!urls.length) {
+      wx.showToast({ title: '图片未加载完成', icon: 'none' });
+      return;
+    }
+    const current = urls[idx] || urls[0];
+    wx.previewImage({ current, urls });
+  },
+
+  // 🔥 点击文件项：按扩展名走预览或保存到本地
+  onTapFile(e) {
+    const idx = Number(e.currentTarget.dataset.index) || 0;
+    const file = ((this.data.project && this.data.project.attachmentFiles) || [])[idx];
+    if (!file) return;
+    attachments.openAttachment(file);
   },
 
   // 提交验收

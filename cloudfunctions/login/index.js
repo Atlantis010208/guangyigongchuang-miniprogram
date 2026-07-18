@@ -19,11 +19,259 @@
  *   - whitelistActivated: boolean 是否激活了白名单授权
  */
 const cloud = require('wx-server-sdk')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const INVITE_REWARD_EVERY = 2
+const INVITE_REWARD_DAYS = 7
+// 注意：现有 invitations 集合已被设计师邀请工单系统占用，会员邀请奖励单独使用 member_invitations 集合
+const INVITATIONS_COLLECTION = 'member_invitations'
+
+function normalizeInviteCode(code) {
+  return String(code || '').trim().toUpperCase()
+}
+
+/**
+ * 判断错误是否为唯一索引冲突（DB 唯一索引或 Mongo dup key）
+ */
+function isDuplicateKeyError(e) {
+  if (!e) return false
+  const code = e.errCode || e.code
+  if (code === -502002 || code === 11000) return true
+  const msg = String(e.message || '').toLowerCase()
+  return msg.includes('dup key') || msg.includes('duplicate key')
+}
+
+/**
+ * 构造 invitations 集合写入的初始文档（不含 _id）
+ */
+function buildInvitationDoc({ inviterUserId, inviterOpenid, inviteCode, invitedUserId, invitedOpenid, invitedSnapshot, now }) {
+  const snap = invitedSnapshot || {}
+  return {
+    inviterUserId,
+    inviterOpenid,
+    inviteCode,
+    invitedUserId,
+    invitedOpenid,
+    invitedNickname: snap.nickname || '',
+    invitedAvatarUrl: snap.avatarUrl || '',
+    createdAt: now,
+    rewardGranted: false,
+    rewardDays: 0,
+    // 初始空对象。事务 update 时云开发数据库会把嵌套对象按点号路径合并；
+    // 若初始为 null，则会因 PathNotViable 拒绝在 null 上创建子字段，事务整体回滚。
+    rewardSnapshot: {},
+    errorCode: '',
+    errorMessage: ''
+  }
+}
+
+/**
+ * 邀请奖励发放（重构：事务 + 唯一索引幂等）
+ *
+ * 步骤：
+ *   1. 归一化邀请码，校验邀请人存在 / 非自邀
+ *   2. 写入 invitations 记录（依赖 idx_invitedOpenid_unique 保证幂等：以微信 openid 锚定，不受 users._id 重建影响）
+ *   3. 在事务内重新读取邀请人 → 计算阈值 → 同步更新邀请人字段与邀请记录奖励快照
+ *   4. 事务外更新被邀请人 invitedBy/invitedByUserId/inviteCodeUsed/invitedAt
+ *
+ * 任意失败都不会让 login 失败，仅返回 inviteReward.code 体现失败原因。
+ *
+ * @param {*} db cloud.database()
+ * @param {string} inviteCode 邀请码（来源：分享路径透传 → pendingInviteCode）
+ * @param {string} invitedOpenid 被邀请人 openid
+ * @param {string} invitedUserId 被邀请人 users._id
+ * @param {{ nickname?: string, avatarUrl?: string }} invitedSnapshot 被邀请人快照（用于审计与列表展示）
+ * @param {number} now 当前时间戳
+ * @returns {{ applied: boolean, code: string, rewardDays?: number, inviterId?: string, message?: string }}
+ */
+async function applyInviteReward(db, inviteCode, invitedOpenid, invitedUserId, invitedSnapshot, now) {
+  const code = normalizeInviteCode(inviteCode)
+  if (!code || !invitedOpenid || !invitedUserId) {
+    return { applied: false, code: 'INVALID_PARAMS' }
+  }
+
+  // Step 1: 查邀请人 + 自邀检查
+  let inviter = null
+  try {
+    const inviterRes = await db.collection('users').where({ inviteCode: code }).limit(1).get()
+    inviter = inviterRes.data && inviterRes.data[0]
+  } catch (e) {
+    console.warn('[login][invite] 查询邀请人失败:', e.message)
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: e.message }
+  }
+
+  if (!inviter) {
+    return { applied: false, code: 'INVITE_CODE_NOT_FOUND' }
+  }
+  if (inviter._openid === invitedOpenid || inviter._id === invitedUserId) {
+    return { applied: false, code: 'INVITE_SELF_FORBIDDEN' }
+  }
+
+  // Step 2: 写 invitations 记录
+  // 优先关联邀请人已有的 'shared' 预记录（用户分享时创建），否则新建记录
+  // 依赖 idx_invitedOpenid_unique 唯一索引保证幂等
+  let invitationId = ''
+  try {
+    // 查找邀请人最近一条未关联的 shared 记录
+    const sharedRes = await db.collection(INVITATIONS_COLLECTION)
+      .where({
+        inviterOpenid: inviter._openid,
+        inviteCode: code,
+        status: 'shared',
+        invitedUserId: ''
+      })
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get()
+    const sharedRecord = sharedRes.data && sharedRes.data[0]
+
+    if (sharedRecord) {
+      // 关联已有 shared 记录：更新被邀请人信息 + status
+      const snap = invitedSnapshot || {}
+      await db.collection(INVITATIONS_COLLECTION).doc(sharedRecord._id).update({
+        data: {
+          invitedUserId,
+          invitedOpenid,
+          invitedNickname: snap.nickname || '',
+          invitedAvatarUrl: snap.avatarUrl || '',
+          status: 'registered',
+          updatedAt: now
+        }
+      })
+      invitationId = sharedRecord._id
+    } else {
+      // 无预记录：新建（走原有逻辑）
+      const addRes = await db.collection(INVITATIONS_COLLECTION).add({
+        data: {
+          ...buildInvitationDoc({
+            inviterUserId: inviter._id,
+            inviterOpenid: inviter._openid,
+            inviteCode: code,
+            invitedUserId,
+            invitedOpenid,
+            invitedSnapshot,
+            now
+          }),
+          status: 'registered'
+        }
+      })
+      invitationId = addRes && addRes._id ? addRes._id : ''
+    }
+  } catch (e) {
+    if (isDuplicateKeyError(e)) {
+      return { applied: false, code: 'INVITE_ALREADY_BOUND' }
+    }
+    console.warn('[login][invite] 写入/更新 invitations 失败:', e.message)
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: e.message }
+  }
+
+  if (!invitationId) {
+    return { applied: false, code: 'INVITE_REWARD_FAILED', message: '邀请记录写入未返回 _id' }
+  }
+
+  // Step 3: 事务内同步更新邀请人 + 邀请记录奖励快照
+  const result = { applied: true, code: 'OK', rewardDays: 0, inviterId: inviter._id }
+  try {
+    await db.runTransaction(async (tx) => {
+      const inviterRef = tx.collection('users').doc(inviter._id)
+      const fresh = await inviterRef.get()
+      if (!fresh || !fresh.data) {
+        const err = new Error('inviter gone')
+        err.code = 'INVITE_INVITER_GONE'
+        throw err
+      }
+
+      const u = fresh.data
+      const stats = u.inviteStats || {}
+      const beforeCount = Number(stats.invitedCount) || 0
+      const beforeLastReward = Number(stats.lastRewardCount) || 0
+      const beforeTrialDays = Number(stats.trialDaysGranted) || 0
+      const newCount = beforeCount + 1
+      const shouldGrant =
+        Math.floor(newCount / INVITE_REWARD_EVERY) >
+        Math.floor(beforeLastReward / INVITE_REWARD_EVERY)
+
+      const updateInviter = {
+        'inviteStats.invitedCount': newCount,
+        updatedAt: now
+      }
+
+      let rewardSnapshot = null
+      if (shouldGrant) {
+        const beforeVip = Number(u.vipExpireAt) || 0
+        const beforeGallery = Number(u.galleryTrialExpireAt) || 0
+        const vipBase = beforeVip > now ? beforeVip : now
+        const galleryBase = beforeGallery > now ? beforeGallery : now
+        const afterVip = vipBase + INVITE_REWARD_DAYS * ONE_DAY_MS
+        const afterGallery = galleryBase + INVITE_REWARD_DAYS * ONE_DAY_MS
+
+        updateInviter['inviteStats.trialDaysGranted'] = beforeTrialDays + INVITE_REWARD_DAYS
+        updateInviter['inviteStats.lastRewardCount'] = newCount
+        updateInviter.vipExpireAt = afterVip
+        updateInviter.galleryTrialExpireAt = afterGallery
+        updateInviter.vipUpdatedAt = now
+        // 等级保护：仅未过期的 premium 保持 premium，否则降到 normal（普通会员试用）
+        if (!(u.vipLevel === 'premium' && beforeVip > now)) {
+          updateInviter.vipLevel = 'normal'
+        }
+        result.rewardDays = INVITE_REWARD_DAYS
+        rewardSnapshot = {
+          beforeInvitedCount: beforeCount,
+          afterInvitedCount: newCount,
+          beforeVipExpireAt: beforeVip,
+          afterVipExpireAt: afterVip,
+          beforeGalleryTrialExpireAt: beforeGallery,
+          afterGalleryTrialExpireAt: afterGallery
+        }
+      }
+
+      await inviterRef.update({ data: updateInviter })
+      await tx.collection(INVITATIONS_COLLECTION).doc(invitationId).update({
+        data: {
+          rewardGranted: shouldGrant,
+          rewardDays: shouldGrant ? INVITE_REWARD_DAYS : 0,
+          rewardSnapshot
+        }
+      })
+    })
+  } catch (e) {
+    const errCode = e && e.code === 'INVITE_INVITER_GONE' ? 'INVITE_INVITER_GONE' : 'INVITE_REWARD_FAILED'
+    console.warn('[login][invite] 事务执行失败:', errCode, e && e.message)
+    try {
+      await db.collection(INVITATIONS_COLLECTION).doc(invitationId).update({
+        data: {
+          errorCode: errCode,
+          errorMessage: (e && e.message) || ''
+        }
+      })
+    } catch (markErr) {
+      console.warn('[login][invite] 标记失败 invitations 记录失败:', markErr && markErr.message)
+    }
+    return { applied: false, code: errCode, message: e && e.message }
+  }
+
+  // Step 4: 更新被邀请人字段（事务外，失败仅记日志）
+  try {
+    await db.collection('users').doc(invitedUserId).update({
+      data: {
+        invitedBy: inviter._openid,
+        invitedByUserId: inviter._id,
+        inviteCodeUsed: code,
+        invitedAt: now,
+        updatedAt: now
+      }
+    })
+  } catch (e) {
+    console.warn('[login][invite] 更新被邀请人字段失败:', e && e.message)
+  }
+
+  return result
+}
 
 /**
  * 生成订单号
@@ -50,6 +298,10 @@ function generateOrderNo() {
  * @returns {string[]} 可能的匹配格式列表
  */
 function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
+  return phoneUtils.generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+}
+
+function generatePhoneMatchListLegacy(phoneNumber, purePhoneNumber, countryCode) {
   const matchList = []
   
   // 纯手机号（不带国家码）
@@ -79,6 +331,46 @@ function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
 }
 
 /**
+ * 赠送会员给用户（不降级，取期限较大值）
+ * @param {object} db cloud.database()
+ * @param {string} openid 用户 openid
+ * @param {string} grantLevel 赠送等级 'normal' | 'premium'
+ * @param {number} now 当前时间戳
+ * @returns {{ success, newLevel, newExpireAt, error? }}
+ */
+async function grantVipToUser(db, openid, grantLevel, now) {
+  const VIP_RANK = { free: 0, normal: 1, premium: 2 }
+  try {
+    const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
+    if (!userRes.data || userRes.data.length === 0) {
+      return { success: false, error: 'USER_NOT_FOUND' }
+    }
+    const user = userRes.data[0]
+    const currentLevel = user.vipLevel || 'free'
+    const currentExpireAt = Number(user.vipExpireAt) || 0
+
+    // 取较高等级（已过期则不保留旧等级）
+    const effectiveCurrentLevel = currentExpireAt > now ? currentLevel : 'free'
+    const effectiveRank = VIP_RANK[effectiveCurrentLevel] || 0
+    const grantRank = VIP_RANK[grantLevel] || 0
+    const newLevel = effectiveRank >= grantRank ? effectiveCurrentLevel : grantLevel
+
+    // 到期时间：取 max(现有到期时间, now+365天)，保证赠送1年但不缩短已有更长期限
+    const grantExpireAt = now + 365 * 24 * 60 * 60 * 1000
+    const newExpireAt = Math.max(currentExpireAt, grantExpireAt)
+
+    await db.collection('users').doc(user._id).update({
+      data: { vipLevel: newLevel, vipExpireAt: newExpireAt, vipUpdatedAt: now }
+    })
+    console.log('[grantVipToUser] 赠送成功:', openid, newLevel, new Date(newExpireAt).toISOString())
+    return { success: true, newLevel, newExpireAt }
+  } catch (e) {
+    console.error('[grantVipToUser] 赠送失败:', e.message)
+    return { success: false, error: e.message }
+  }
+}
+
+/**
  * 检查并激活白名单授权
  * 静默执行，不影响主流程
  * 支持境外手机号匹配
@@ -101,11 +393,12 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
   
   try {
     // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
+    // 兼容历史已激活但未赠送会员的记录
     const whitelistRes = await db.collection('course_whitelist')
-      .where({
-        phone: _.in(phoneMatchList),
-        status: 'pending'
-      })
+      .where(_.or([
+        { phone: _.in(phoneMatchList), status: 'pending' },
+        { phone: _.in(phoneMatchList), status: 'activated', vipGranted: _.neq(true) }
+      ]))
       .limit(10) // 一个手机号可能对应多个课程
       .get()
     
@@ -151,6 +444,14 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
             }
           })
           activatedCount++
+          // 赠送高级会员（幂等）
+          if (!whitelist.vipGranted) {
+            const grantResult = await grantVipToUser(db, openid, 'premium', now)
+            const vipPatch = grantResult.success
+              ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+              : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+            await db.collection('course_whitelist').doc(whitelist._id).update({ data: vipPatch })
+          }
           continue
         }
         
@@ -206,6 +507,14 @@ async function checkAndActivateWhitelist(phoneNumber, purePhoneNumber, countryCo
         
         console.log('[白名单激活] 白名单记录已更新为激活状态')
         activatedCount++
+        // 赠送高级会员（幂等）
+        if (!whitelist.vipGranted) {
+          const grantResult = await grantVipToUser(db, openid, 'premium', now)
+          const vipPatch = grantResult.success
+            ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+            : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+          await db.collection('course_whitelist').doc(whitelist._id).update({ data: vipPatch })
+        }
         
       } catch (itemErr) {
         console.error('[白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)
@@ -249,11 +558,12 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
   
   try {
     // 1. 查询白名单中是否有该手机号的待激活记录（支持多种格式匹配）
+    // 兼容历史已激活但未赠送会员的记录
     const whitelistRes = await db.collection('toolkit_whitelist')
-      .where({
-        phone: _.in(phoneMatchList),
-        status: 'pending'
-      })
+      .where(_.or([
+        { phone: _.in(phoneMatchList), status: 'pending' },
+        { phone: _.in(phoneMatchList), status: 'activated', vipGranted: _.neq(true) }
+      ]))
       .limit(10) // 一个手机号可能对应多个工具包
       .get()
     
@@ -299,6 +609,14 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
             }
           })
           activatedCount++
+          // 赠送普通会员（幂等）
+          if (!whitelist.vipGranted) {
+            const grantResult = await grantVipToUser(db, openid, 'normal', now)
+            const vipPatch = grantResult.success
+              ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+              : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+            await db.collection('toolkit_whitelist').doc(whitelist._id).update({ data: vipPatch })
+          }
           continue
         }
         
@@ -355,6 +673,14 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
         
         console.log('[工具包白名单激活] 白名单记录已更新为激活状态')
         activatedCount++
+        // 赠送普通会员（幂等）
+        if (!whitelist.vipGranted) {
+          const grantResult = await grantVipToUser(db, openid, 'normal', now)
+          const vipPatch = grantResult.success
+            ? { vipGranted: true, vipGrantedAt: now, vipGrantLevel: grantResult.newLevel, vipGrantResult: 'success' }
+            : { vipGranted: false, vipGrantResult: 'failed', vipGrantError: grantResult.error }
+          await db.collection('toolkit_whitelist').doc(whitelist._id).update({ data: vipPatch })
+        }
         
       } catch (itemErr) {
         console.error('[工具包白名单激活] 处理单条记录失败:', whitelist._id, itemErr.message)
@@ -464,9 +790,10 @@ exports.main = async (event) => {
           // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
           let toolkitWhitelistResult = null
           if (existingUser.phoneNumber || existingUser.purePhoneNumber) {
-            const fullPhone = existingUser.phoneNumber || ''
-            const purePhone = existingUser.purePhoneNumber || existingUser.phoneNumber.replace(/^\+\d+/, '')
-            const countryCode = existingUser.countryCode || '86'
+            const phoneParts = phoneUtils.getPhoneParts(existingUser.phoneNumber, existingUser.purePhoneNumber, existingUser.countryCode)
+            const fullPhone = phoneParts.phoneNumber || ''
+            const purePhone = phoneParts.purePhone || ''
+            const countryCode = phoneParts.countryCode || '86'
             
             // 课程白名单检查（支持多格式匹配）
             whitelistResult = await checkAndActivateWhitelist(
@@ -563,6 +890,7 @@ exports.main = async (event) => {
     let user
     let whitelistResult = null
     let toolkitWhitelistResult = null
+    let inviteRewardResult = null
 
     // 仅验证模式：检查用户是否存在且登录未过期
     if (verifyOnly) {
@@ -603,9 +931,10 @@ exports.main = async (event) => {
       // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       let toolkitWhitelistResult = null
       if (user.phoneNumber || user.purePhoneNumber) {
-        const fullPhone = user.phoneNumber || ''
-        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
-        const countryCode = user.countryCode || '86'
+        const phoneParts = phoneUtils.getPhoneParts(user.phoneNumber, user.purePhoneNumber, user.countryCode)
+        const fullPhone = phoneParts.phoneNumber || ''
+        const purePhone = phoneParts.purePhone || ''
+        const countryCode = phoneParts.countryCode || '86'
         
         // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(
@@ -685,9 +1014,10 @@ exports.main = async (event) => {
       // ========== 新增：白名单激活检查 ==========
       // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
       if (user.phoneNumber || user.purePhoneNumber) {
-        const fullPhone = user.phoneNumber || ''
-        const purePhone = user.purePhoneNumber || user.phoneNumber.replace(/^\+\d+/, '')
-        const countryCode = user.countryCode || '86'
+        const phoneParts = phoneUtils.getPhoneParts(user.phoneNumber, user.purePhoneNumber, user.countryCode)
+        const fullPhone = phoneParts.phoneNumber || ''
+        const purePhone = phoneParts.purePhone || ''
+        const countryCode = phoneParts.countryCode || '86'
         
         // 课程白名单检查（支持多格式匹配）
         whitelistResult = await checkAndActivateWhitelist(
@@ -738,6 +1068,25 @@ exports.main = async (event) => {
       console.log('新用户创建成功，docId:', docId)
       
       if (docId) {
+        if (event && event.inviteCode) {
+          try {
+            inviteRewardResult = await applyInviteReward(
+              db,
+              event.inviteCode,
+              openid,
+              docId,
+              { nickname, avatarUrl },
+              now
+            )
+          } catch (inviteErr) {
+            console.warn('[login][invite] 邀请奖励处理失败（兜底）:', inviteErr && inviteErr.message)
+            inviteRewardResult = {
+              applied: false,
+              code: 'INVITE_REWARD_FAILED',
+              message: inviteErr && inviteErr.message
+            }
+          }
+        }
         const docRes = await col.doc(docId).get()
         user = docRes && docRes.data ? { ...docRes.data, _id: docId } : { _id: docId, _openid: openid, ...newUserData }
       } else {
@@ -758,7 +1107,8 @@ exports.main = async (event) => {
       whitelistActivated: whitelistResult ? whitelistResult.activated : false,
       whitelistInfo: whitelistResult,
       toolkitWhitelistActivated: toolkitWhitelistResult ? toolkitWhitelistResult.activated : false,
-      toolkitWhitelistInfo: toolkitWhitelistResult
+      toolkitWhitelistInfo: toolkitWhitelistResult,
+      inviteReward: inviteRewardResult
     }
   } catch (err) {
     console.error('登录云函数执行失败:', err)

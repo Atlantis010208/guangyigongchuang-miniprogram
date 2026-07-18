@@ -1,0 +1,96 @@
+<scroll-view class="page" scroll-y>
+
+  <!-- 未登录占位 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-prompt-card">
+    <image class="login-prompt-avatar" src="/images/个人中心.png" mode="aspectFill"></image>
+    <view class="login-prompt-info">
+      <text class="login-prompt-title">登录后查看邀请记录</text>
+      <text class="login-prompt-desc">登录后可邀请好友、累计获得试用天数</text>
+    </view>
+    <button class="login-prompt-btn" bindtap="onGoLogin">登录</button>
+  </view>
+
+  <block wx:if="{{isLoggedIn}}">
+
+    <!-- 区块 1：状态摘要卡 -->
+    <view class="m-card stats-card">
+      <view class="stats-row">
+        <view class="stats-item">
+          <text class="stats-num">{{membership.inviteStats.invitedCount}}</text>
+          <text class="stats-label">累计邀请</text>
+        </view>
+        <view class="stats-divider"></view>
+        <view class="stats-item">
+          <text class="stats-num">{{membership.inviteStats.trialDaysGranted}}</text>
+          <text class="stats-label">试用天数（天）</text>
+        </view>
+      </view>
+
+      <view class="invite-code-row">
+        <view class="invite-code-box">
+          <text class="invite-code-label">我的邀请码</text>
+          <text class="invite-code-value">{{membership.inviteCode || '生成中…'}}</text>
+        </view>
+        <button class="invite-copy-btn" bindtap="onCopyInviteCode" hover-class="btn-hover">复制</button>
+      </view>
+
+      <view class="invite-progress-row">
+        <view class="invite-progress-bar">
+          <view class="invite-progress-fill" style="width: {{inviteProgress.percent}}%;"></view>
+        </view>
+        <text class="invite-progress-text">{{inviteProgress.inCycle}} / 2 人</text>
+      </view>
+
+      <text class="invite-tip">再邀 {{inviteProgress.needed}} 人即可再得 {{inviteProgress.nextRewardDays}} 天</text>
+
+      <button class="invite-share-btn" open-type="share" hover-class="btn-hover-primary">邀请好友</button>
+    </view>
+
+    <!-- 区块 2：规则说明 -->
+    <view class="m-card rules-card">
+      <text class="rules-title">邀请规则</text>
+      <view class="rules-list">
+        <view class="rules-item">
+          <text class="rules-bullet">·</text>
+          <text class="rules-text">每邀请 2 位好友注册并完成验证，获 7 天普通会员试用</text>
+        </view>
+        <view class="rules-item">
+          <text class="rules-bullet">·</text>
+          <text class="rules-text">试用天数无上限叠加，可与已有会员有效期累加</text>
+        </view>
+        <view class="rules-item">
+          <text class="rules-bullet">·</text>
+          <text class="rules-text">同一好友重复注册不重复计入</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 区块 3：邀请记录列表（本期为空状态） -->
+    <view class="m-card history-card">
+      <text class="history-title">邀请记录</text>
+
+      <view wx:if="{{hasRecords}}" class="history-list">
+        <view wx:for="{{records}}" wx:key="id" class="history-item">
+          <view class="history-info">
+            <text class="history-name">{{item.inviteeName}}</text>
+            <text class="history-time">{{item.acceptedLabel}}</text>
+          </view>
+          <view class="history-reward">
+            <text wx:if="{{item.rewarded}}" class="reward-positive">+{{item.rewardDays}} 天</text>
+            <text wx:elif="{{item.registered}}" class="reward-registered">已注册</text>
+            <text wx:else class="reward-shared">已分享</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:else class="empty-state">
+        <image class="empty-icon" src="/images/没有订单.png" mode="aspectFit"></image>
+        <text class="empty-title">还没有邀请记录</text>
+        <text class="empty-desc">邀请好友注册后，记录会显示在这里</text>
+      </view>
+    </view>
+
+  </block>
+
+  <view class="page-bottom-spacer"></view>
+</scroll-view>

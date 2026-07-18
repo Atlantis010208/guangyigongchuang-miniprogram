@@ -1,0 +1,65 @@
+<view class="container">
+  <view class="header"></view>
+
+  <view class="main">
+    <view class="title-section">
+      <text class="title">确认网页登录</text>
+      <text class="subtitle">{{subtitle}}</text>
+    </view>
+
+    <view class="confirm-card {{status}}">
+      <view class="icon-wrap {{status}}">
+        <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+        <text wx:else class="avatar-letter">{{avatarLetter}}</text>
+      </view>
+
+      <view class="account-info">
+        <text class="account-name">{{displayName}}</text>
+        <text class="account-role">{{roleLabel}}</text>
+      </view>
+
+      <view class="status-panel">
+        <text class="status-title">{{statusTitle}}</text>
+        <text class="status-desc">{{statusDesc}}</text>
+      </view>
+
+      <view class="security-list" wx:if="{{status !== 'success'}}">
+        <view class="security-item">
+          <view class="security-dot"></view>
+          <text class="security-text">确认后，电脑端将登录此账号</text>
+        </view>
+        <view class="security-item">
+          <view class="security-dot"></view>
+          <text class="security-text">请确认二维码来自光乙平台官网</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">
+    <button
+      wx:if="{{canConfirm}}"
+      class="confirm-btn active"
+      bindtap="onConfirmLogin"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+    >确认登录</button>
+
+    <button
+      wx:elif="{{status === 'success'}}"
+      class="confirm-btn active"
+      bindtap="goHome"
+    >返回首页</button>
+
+    <button
+      wx:else
+      class="confirm-btn active"
+      bindtap="goHome"
+    >返回首页</button>
+
+    <view class="cancel-link-wrap" wx:if="{{status === 'ready'}}" bindtap="onCancel">
+      <text class="cancel-link-text">不是本人操作？</text>
+      <text class="cancel-link-action">取消登录</text>
+    </view>
+  </view>
+</view>

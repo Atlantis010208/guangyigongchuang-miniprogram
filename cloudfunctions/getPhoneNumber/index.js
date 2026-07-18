@@ -16,6 +16,7 @@
  *   - toolkitWhitelistActivated: boolean 是否激活了工具包白名单授权
  */
 const cloud = require('wx-server-sdk')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -44,6 +45,10 @@ function generateOrderNo() {
  * @returns {string[]} 可能的匹配格式列表
  */
 function generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode) {
+  return phoneUtils.generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+}
+
+function generatePhoneMatchListLegacy(phoneNumber, purePhoneNumber, countryCode) {
   const matchList = []
   
   // 纯手机号（不带国家码）
@@ -426,7 +431,8 @@ exports.main = async (event) => {
         try {
           let existingUser = null
           const _ = db.command
-          const purePhone = phoneInfo.purePhoneNumber || phoneInfo.phoneNumber.replace(/^\+86/, '')
+          const phoneParts = phoneUtils.getPhoneParts(phoneInfo.phoneNumber, phoneInfo.purePhoneNumber, phoneInfo.countryCode)
+          const purePhone = phoneParts.purePhone || ''
 
           // ========== 新增：手机号去重检查 ==========
           // 检查该手机号是否已被其他用户使用（排除已删除的用户）
@@ -519,9 +525,10 @@ exports.main = async (event) => {
             // ========== 新增：白名单激活检查 ==========
             // 保存手机号成功后，检查并激活白名单授权
             // 支持境外手机号：使用完整手机号、纯手机号和国家码进行多格式匹配
-            const fullPhone = phoneInfo.phoneNumber || ''
-            const purePhone = phoneInfo.purePhoneNumber || phoneInfo.phoneNumber.replace(/^\+86/, '')
-            const countryCode = phoneInfo.countryCode || '86'
+            const phoneParts = phoneUtils.getPhoneParts(phoneInfo.phoneNumber, phoneInfo.purePhoneNumber, phoneInfo.countryCode)
+            const fullPhone = phoneParts.phoneNumber || ''
+            const purePhone = phoneParts.purePhone || ''
+            const countryCode = phoneParts.countryCode || '86'
             
             console.log('[getPhoneNumber] 白名单匹配参数:', {
               fullPhone: fullPhone.substring(0, 5) + '****',

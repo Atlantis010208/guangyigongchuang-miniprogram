@@ -11,6 +11,50 @@
     />
   </view>
 
+  <!-- 🔥 设计师卡片：进入"进行中"之后展示（紧随进度条下方） -->
+  <view class="section designer-section" wx:if="{{progressActive >= 1 && (req.hasDesignerAssigned || req.hasCustomContact)}}">
+    <view class="block-title">设计师</view>
+
+    <!-- 系统分配的设计师：可点击查看主页 -->
+    <view class="designer-head" wx:if="{{req.hasDesignerAssigned}}" bindtap="onGoDesignerHome" data-id="{{req.designerId}}">
+      <image class="designer-avatar" src="{{req.designerInfo.avatar || '/images/个人中心.png'}}" mode="aspectFill"></image>
+      <view class="designer-meta">
+        <view class="designer-name-row">
+          <text class="designer-name">{{req.designerInfo.name || '设计师'}}</text>
+          <view class="designer-tag accepted">已接单</view>
+        </view>
+        <text class="designer-sub" wx:if="{{req.designerInfo.title}}">{{req.designerInfo.title}}</text>
+      </view>
+      <view class="designer-arrow">
+        <text class="designer-arrow-text">主页</text>
+        <text class="designer-arrow-icon">›</text>
+      </view>
+    </view>
+
+    <!-- 自定义联系方式（用户自填）：仅展示标题，无主页入口 -->
+    <view class="designer-head custom" wx:elif="{{req.hasCustomContact}}">
+      <view class="designer-avatar custom-avatar"><text class="custom-avatar-icon">人</text></view>
+      <view class="designer-meta">
+        <text class="designer-name">{{req.designerInfo.name || '指定联系人'}}</text>
+        <text class="designer-sub">业主自定义联系人</text>
+      </view>
+    </view>
+
+    <!-- 联系方式列表（手机号已在订单信息卡片中展示，此处只保留微信/邮箱） -->
+    <view class="contact-list" wx:if="{{req.designerInfo.wechat || req.designerInfo.email}}">
+      <view class="contact-row" wx:if="{{req.designerInfo.wechat}}">
+        <text class="contact-label">微信</text>
+        <text class="contact-val wechat longpress-copy" bindlongpress="onLongPressWechat" data-wechat="{{req.designerInfo.wechat}}">{{req.designerInfo.wechat}}</text>
+        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.wechat}}" data-label="微信号">复制</view>
+      </view>
+      <view class="contact-row" wx:if="{{req.designerInfo.email}}">
+        <text class="contact-label">邮箱</text>
+        <text class="contact-val longpress-copy" bindlongpress="onLongPressEmail" data-email="{{req.designerInfo.email}}">{{req.designerInfo.email}}</text>
+        <view class="contact-btn" catchtap="onCopyText" data-text="{{req.designerInfo.email}}" data-label="邮箱">复制</view>
+      </view>
+    </view>
+  </view>
+
   <view class="section">
     <view class="info">
       <view class="block-title">订单信息</view>
@@ -48,20 +92,6 @@
         <view class="cell"><text class="label">优化方向</text><text class="val">{{req.needsText || '-'}}</text></view>
         <view class="cell"><text class="label">期望交付</text><text class="val">{{req.deliverablesText || '-'}}</text></view>
         <view class="cell" wx:if="{{req.note}}"><text class="label">备注说明</text><text class="val">{{req.note}}</text></view>
-        <view class="cell" wx:if="{{req.filesCount > 0}}">
-          <text class="label">上传文件</text>
-          <text class="val">{{req.filesCount}} 个文件</text>
-        </view>
-        <!-- 文件列表 -->
-        <view class="files-section" wx:if="{{req.files && req.files.length > 0}}">
-          <view class="file-item" wx:for="{{req.files}}" wx:key="name">
-            <text class="file-icon">📄</text>
-            <view class="file-info">
-              <text class="file-name">{{item.name}}</text>
-              <text class="file-size">{{item.sizeText || '-'}}</text>
-            </view>
-          </view>
-        </view>
       </block>
       
       <!-- 其他类型（发布需求等） -->
@@ -74,34 +104,16 @@
         <view class="cell" wx:if="{{req.target}}"><text class="label">内容</text><text class="val">{{req.target}}</text></view>
       </block>
       
-      <!-- 🔥 设计师联系方式（只在进行中或已完成阶段显示） -->
-      <block wx:if="{{progressActive >= 1 && (req.hasDesignerContact || req.hasCustomContact)}}">
-        <view class="cell" wx:if="{{req.designerInfo.phone}}">
-          <text class="label">联系方式(设计师)</text>
-          <text 
-            class="val phone longpress-copy" 
-            bindlongpress="onLongPressPhone" 
-            data-phone="{{req.designerInfo.phone}}"
-          >{{req.designerInfo.phone}}</text>
-        </view>
-        <view class="cell" wx:if="{{req.designerInfo.wechat}}">
-          <text class="label">微信号</text>
-          <text 
-            class="val wechat longpress-copy" 
-            bindlongpress="onLongPressWechat" 
-            data-wechat="{{req.designerInfo.wechat}}"
-          >{{req.designerInfo.wechat}}</text>
-        </view>
-        <view class="cell" wx:if="{{req.designerInfo.email}}">
-          <text class="label">邮箱</text>
-          <text 
-            class="val longpress-copy" 
-            bindlongpress="onLongPressEmail" 
-            data-email="{{req.designerInfo.email}}"
-          >{{req.designerInfo.email}}</text>
-        </view>
-      </block>
-      
+      <!-- 设计师联系方式（手机号，仅在进入"进行中"且设计师已填写手机号时显示） -->
+      <view class="cell" wx:if="{{progressActive >= 1 && req.designerInfo.phone}}">
+        <text class="label">设计师联系方式</text>
+        <text
+          class="val phone longpress-copy"
+          bindlongpress="onLongPressPhone"
+          data-phone="{{req.designerInfo.phone}}"
+        >{{req.designerInfo.phone}}</text>
+      </view>
+
       <view class="cell"><text class="label">提交时间（北京时间）</text><text class="val">{{beijingTime}}</text></view>
       <text wx:if="{{req.status==='canceled'}}" class="badge cancel">已撤销</text>
       <text wx:if="{{req.priority}}" class="badge priority">优先</text>
@@ -110,6 +122,36 @@
       <view class="t-row" wx:for="{{req.steps}}" wx:key="key">
         <view class="t-dot {{item.done ? 'done' : ''}}"></view>
         <text class="t-text">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 🔥 业主上传资料：图片九宫格 + 文件列表，无附件时整个隐藏 -->
+  <view class="section attachments-section" wx:if="{{req.hasAttachments}}">
+    <view class="block-title-row">
+      <text class="block-title">上传资料</text>
+      <text class="attachments-meta">
+        {{req.attachmentImagesCount > 0 ? '图片 ' + req.attachmentImagesCount + ' 张' : ''}}{{req.attachmentImagesCount > 0 && req.attachmentFilesCount > 0 ? ' · ' : ''}}{{req.attachmentFilesCount > 0 ? '文件 ' + req.attachmentFilesCount + ' 个' : ''}}
+      </text>
+    </view>
+
+    <!-- 图片九宫格 -->
+    <view class="img-grid" wx:if="{{req.attachmentImagesCount > 0}}">
+      <view class="img-cell" wx:for="{{req.attachmentImages}}" wx:key="fileID" bindtap="onPreviewImage" data-index="{{index}}">
+        <image src="{{item.tempUrl}}" mode="aspectFill" wx:if="{{item.tempUrl}}" />
+        <view class="img-loading" wx:else>加载中</view>
+      </view>
+    </view>
+
+    <!-- 文件列表（复用现有 .files-section / .file-item 样式族） -->
+    <view class="files-section" wx:if="{{req.attachmentFilesCount > 0}}">
+      <view class="file-item" wx:for="{{req.attachmentFiles}}" wx:key="fileID" bindtap="onTapFile" data-index="{{index}}">
+        <text class="file-icon">{{item.icon}}</text>
+        <view class="file-info">
+          <text class="file-name">{{item.name}}</text>
+          <text class="file-size">{{item.sizeText}}</text>
+        </view>
+        <text class="file-action">›</text>
       </view>
     </view>
   </view>

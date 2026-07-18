@@ -1,0 +1,9 @@
+{
+  "name": "seed_lighting_quiz",
+  "version": "1.0.0",
+  "description": "幂等写入业主端「灯光设计认知与判断力测试」题目集（仅后台/MCP 触发）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

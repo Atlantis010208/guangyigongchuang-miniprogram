@@ -122,8 +122,20 @@ exports.main = async (event, context) => {
     };
   }
   
-  const { refundNo, action, rejectReason } = event;
+  const { refundNo, action, rejectReason, orderNo, reason } = event;
   
+  // 管理员直接建立并审批退款（为补单订单等虚拟商品订单使用）
+  if (action === 'admin_create') {
+    if (!orderNo) return { success: false, errorMessage: '缺少订单号' };
+    if (!reason) return { success: false, errorMessage: '请填写退款原因' };
+    try {
+      return await handleAdminCreate(orderNo, reason, authResult.user?._id || authResult.user?.username || 'admin');
+    } catch (e) {
+      console.error('管理员建立退款失败:', e.message);
+      return { success: false, errorMessage: e.message || '系统异常' };
+    }
+  }
+
   // 参数验证
   if (!refundNo) {
     return { success: false, errorMessage: '缺少退款单号' };
@@ -564,3 +576,72 @@ async function initiateWxRefund(refund, now) {
   }
 }
 
+/**
+ * 管理员直接建立退款申请并发起退款（无需用户身份，适用于虚拟商品/会员订单）
+ * @param {string} orderNo - 订单号
+ * @param {string} reason - 退款原因
+ * @param {string} adminId - 操作管理员ID
+ */
+async function handleAdminCreate(orderNo, reason, adminId) {
+  const now = new Date();
+
+  // 查询订单
+  const orderRes = await db.collection('orders').where({ orderNo }).get();
+  if (!orderRes.data || orderRes.data.length === 0) {
+    return { success: false, errorMessage: '订单不存在' };
+  }
+  const order = orderRes.data[0];
+
+  if (!['paid', '已支付'].includes(order.status)) {
+    return { success: false, errorMessage: `订单状态不支持退款（当前：${order.status}）` };
+  }
+
+  // 检查是否已有进行中的退款申请
+  const existing = await db.collection('refunds').where({
+    orderNo,
+    status: _.in(['待审核', '已同意', '退款中'])
+  }).get();
+  if (existing.data && existing.data.length > 0) {
+    return { success: false, errorMessage: '该订单已有进行中的退款申请', data: { refundNo: existing.data[0].refundNo } };
+  }
+
+  const refundAmount = (order.params && order.params.totalAmount) || order.totalAmount || 0;
+  const refundNo = `RF${Date.now()}${Math.random().toString(36).substring(2, 8)}`;
+
+  const refundDoc = {
+    refundNo,
+    orderNo,
+    userId: order._openid || order.userId || '',
+    refundType: 'refund_only',
+    refundTypeLabel: '仅退款',
+    refundAmount,
+    reason,
+    reasonDetail: `管理员操作退款（${adminId || 'admin'}）`,
+    images: [],
+    status: '待审核',
+    statusLogs: [{ status: '待审核', time: now, operator: 'admin', remark: `管理员发起退款：${reason}` }],
+    rejectReason: '',
+    approvedAt: null,
+    returnConfirmedAt: null,
+    wxRefundId: '',
+    wxRefundStatus: '',
+    refundedAt: null,
+    retryCount: 0,
+    lastRetryAt: null,
+    failReason: '',
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await db.collection('refunds').add({ data: refundDoc });
+
+  // 更新订单状态
+  await db.collection('orders').where({ orderNo }).update({
+    data: { status: '退款申请中', afterSaleStatus: '待售后', updatedAt: now }
+  });
+
+  console.log('[handleAdminCreate] 退款申请已创建:', refundNo, '开始发起退款...');
+
+  // 直接发起退款（复用 handleApprove 逻辑）
+  return await handleApprove(refundDoc, now);
+}

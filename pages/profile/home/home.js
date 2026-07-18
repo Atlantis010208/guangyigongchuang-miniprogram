@@ -3,6 +3,33 @@
  * 功能：显示用户信息、导航到各子页面
  */
 const auth = require('../../../utils/auth.js')
+const {
+  fetchMembershipStatus,
+  formatExpireDate
+} = require('../../../utils/membership.js')
+
+/**
+ * 会员卡背景图 cloud fileID 映射
+ * key 与 utils/membership.js 的 effectiveLevel 对齐：'free' | 'normal' | 'premium'
+ * 云存储文件名仍用 level-none.png（普通用户 = effectiveLevel 'free'）
+ */
+const MEMBER_CARD_BG_FILE_IDS = {
+  free: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/membership-card/level-none.png',
+  normal: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/membership-card/level-normal.png',
+  premium: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/images/membership-card/level-premium.png'
+}
+
+/**
+ * effectiveLevel → 中文显示名映射（与会员卡背景图保持一致）
+ */
+const VIP_LEVEL_LABELS = {
+  free: '普通用户',
+  normal: '会员',
+  premium: '高级会员'
+}
+
+// 会员卡临时链接缓存：避免相同等级重复请求 getTempFileURL
+const _memberCardBgUrlCache = {}
 
 Page({
   data: {
@@ -13,7 +40,26 @@ Page({
     openid: '',
     isAdmin: false,
     isDesigner: false,
-    isLoggedIn: false // 登录状态
+    isLoggedIn: false, // 登录状态
+
+    // 会员卡相关字段（缺失时显示 '--'）
+    memberId: '',              // 会员ID
+    memberLevelName: '',       // 会员等级名（如：尊享会员）
+    memberExpireDate: '',      // 有效期
+    memberGrowth: '0',         // 当前成长值
+    memberGrowthMax: '0',      // 下一级所需成长值
+    memberProgressPercent: 0,  // 进度百分比 0-100
+    memberNextLevelTip: '',    // 下一级提示文字（如：升级至钻石会员）
+
+    // 会员卡背景图（根据 effectiveLevel 切换）
+    effectiveLevel: 'free',    // 'free' | 'normal' | 'premium'，来自 membership_status 云函数
+    memberCardBg: '',          // 会员卡背景图 https 临时链接（异步加载）
+
+    // 四宫格统计数据（空字符串 → 显示 '--'）
+    orderCount: '',     // 订单数
+    favCount: '',       // 收藏数
+    cartCount: '',      // 购物车数
+    addressCount: ''    // 地址数
   },
 
   onShow() {
@@ -116,6 +162,9 @@ Page({
           console.warn('更新 userDoc 缓存失败', e)
         }
 
+        // 计算会员卡展示字段
+        const memberFields = this._buildMemberFields(doc)
+
         this.setData({
           user: {
             name: doc.nickname || '',
@@ -124,13 +173,20 @@ Page({
           },
           userId: doc._id || '',
           isAdmin: auth.isAdmin(doc),
-          isDesigner: auth.isDesigner(doc)
+          isDesigner: auth.isDesigner(doc),
+          ...memberFields
         })
 
         // 转换头像为临时链接
         if (doc.avatarUrl) {
           await this.convertAvatarUrl(doc.avatarUrl)
         }
+
+        // 异步加载会员状态（effectiveLevel/vipExpireAt 由 membership_status 云函数权威返回）
+        this._loadMembership()
+
+        // 异步加载四宫格统计数据（订单/收藏/购物车/地址）
+        this._loadCounts(doc)
         return
       }
 
@@ -274,10 +330,218 @@ Page({
   },
 
   /**
-   * 联系客服
+   * 联系客服 / 专属客服
    */
   onContact() { 
     wx.navigateTo({ url: '/pages/support/contact/contact' }) 
+  },
+
+  /**
+   * 切换 tab 页面（用于「订单管理」跳转到购物车 tab）
+   */
+  goTab(e) {
+    const url = e.currentTarget.dataset.url
+    if (!url) return
+    wx.switchTab({ url })
+  },
+
+  /**
+   * 点击会员深色大卡 → 我的会员页
+   */
+  onViewMembership() {
+    if (this.data.effectiveLevel === 'free') {
+      wx.navigateTo({ url: '/pages/profile/membership/upgrade/upgrade' })
+    } else {
+      wx.navigateTo({ url: '/pages/profile/membership/membership' })
+    }
+  },
+
+  /**
+   * 点击会员卡上的「会员权益」按钮（catchtap 防冒泡到大卡）
+   */
+  onMemberBenefits() {
+    if (this.data.effectiveLevel === 'free') {
+      wx.navigateTo({ url: '/pages/profile/membership/upgrade/upgrade' })
+    } else {
+      wx.navigateTo({ url: '/pages/profile/membership/membership' })
+    }
+  },
+
+  /**
+   * 占位：尚未上线的会员入口（生日特权 / 会员活动 / 会员升级攻略）
+   */
+  onComingSoon(e) {
+    const name = (e && e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.name) || '该功能'
+    wx.showToast({ title: `${name} 即将上线`, icon: 'none' })
+  },
+
+  /**
+   * 根据 user doc 计算会员卡展示字段
+   * 字段缺失时返回兜底值（与 wxml 的 || '--' 配合显示占位）
+   * @param {Object} doc 用户文档
+   * @returns {Object} 可直接 spread 到 setData 的字段对象
+   */
+  _buildMemberFields(doc) {
+    // 会员等级、等级名、有效期由 _loadMembership 异步从 membership_status 云函数加载
+    // 此处仅处理与用户 doc 同步可得的字段（会员ID / 成长值 / 进度等）
+    if (!doc || typeof doc !== 'object') {
+      return {
+        memberId: '',
+        memberGrowth: '0',
+        memberGrowthMax: '0',
+        memberProgressPercent: 0,
+        memberNextLevelTip: ''
+      }
+    }
+
+    // 会员ID：优先 memberId 字段，其次 _id 末 8 位
+    let memberId = doc.memberId || ''
+    if (!memberId && doc._id) {
+      const idStr = String(doc._id)
+      memberId = idStr.length > 8 ? idStr.slice(-8) : idStr
+    }
+
+    // 成长值
+    const growth = Number(doc.memberGrowth || doc.growth || 0) || 0
+    const growthMax = Number(doc.memberGrowthMax || doc.growthMax || 0) || 0
+    const memberGrowth = String(growth)
+    const memberGrowthMax = String(growthMax)
+
+    // 进度百分比
+    let memberProgressPercent = 0
+    if (growthMax > 0) {
+      memberProgressPercent = Math.min(100, Math.max(0, Math.round((growth / growthMax) * 100)))
+    }
+
+    // 下一级提示
+    const memberNextLevelTip = doc.memberNextLevelTip || ''
+
+    return {
+      memberId,
+      memberGrowth,
+      memberGrowthMax,
+      memberProgressPercent,
+      memberNextLevelTip
+    }
+  },
+
+  /**
+   * 异步加载会员状态
+   * 调用 membership_status 云函数获取权威的 effectiveLevel / vipExpireAt
+   * - effectiveLevel: 'free' | 'normal' | 'premium'（云函数已含过期判定）
+   * - vipExpireAt: 毫秒时间戳；'free' 等级下为 null，wxml wx:if 会跳过"有效期"那行
+   */
+  async _loadMembership() {
+    try {
+      const m = await fetchMembershipStatus()
+      const level = MEMBER_CARD_BG_FILE_IDS[m.effectiveLevel] ? m.effectiveLevel : 'free'
+      this.setData({
+        effectiveLevel: level,
+        memberLevelName: VIP_LEVEL_LABELS[level],
+        memberExpireDate: m.vipExpireAt ? formatExpireDate(m.vipExpireAt) : ''
+      })
+      this._loadMemberCardBg(level)
+    } catch (err) {
+      console.warn('[home] 加载会员状态失败', err)
+      // 失败兜底：按 free 等级显示
+      this.setData({
+        effectiveLevel: 'free',
+        memberLevelName: VIP_LEVEL_LABELS.free,
+        memberExpireDate: ''
+      })
+      this._loadMemberCardBg('free')
+    }
+  },
+
+  /**
+   * 异步加载会员卡背景图 https 临时链接
+   * - 命中缓存直接 setData
+   * - 未命中时调用 wx.cloud.getTempFileURL 获取，失败时 memberCardBg 置空
+   * @param {string} level 'free' | 'normal' | 'premium'
+   */
+  _loadMemberCardBg(level) {
+    const lv = MEMBER_CARD_BG_FILE_IDS[level] ? level : 'free'
+    const fileID = MEMBER_CARD_BG_FILE_IDS[lv]
+
+    // 命中缓存
+    if (_memberCardBgUrlCache[lv]) {
+      if (this.data.memberCardBg !== _memberCardBgUrlCache[lv]) {
+        this.setData({ memberCardBg: _memberCardBgUrlCache[lv] })
+      }
+      return
+    }
+
+    // 无云开发环境兜底
+    if (!wx.cloud || !wx.cloud.getTempFileURL) {
+      this.setData({ memberCardBg: '' })
+      return
+    }
+
+    wx.cloud.getTempFileURL({ fileList: [fileID] })
+      .then((res) => {
+        const item = res && res.fileList && res.fileList[0]
+        const url = item && item.tempFileURL
+        if (url) {
+          _memberCardBgUrlCache[lv] = url
+          // 仅当当前等级仍是请求时的等级，才回写（避免乱序）
+          if (this.data.effectiveLevel === lv) {
+            this.setData({ memberCardBg: url })
+          }
+        } else {
+          console.warn('会员卡背景图临时链接为空', item && item.errMsg)
+        }
+      })
+      .catch((err) => {
+        console.warn('获取会员卡背景图临时链接失败', err)
+      })
+  },
+
+  /**
+   * 异步加载四宫格统计数据：订单数、收藏数、购物车数、地址数
+   * 任意字段失败均不影响其他字段，失败的保持空字符串（→ 显示 '--'）
+   * @param {Object} doc 用户文档
+   */
+  async _loadCounts(doc) {
+    if (!doc || !wx.cloud) return
+
+    const openid = wx.getStorageSync('openid') || ''
+    const userId = doc._id || ''
+    if (!openid && !userId) return
+
+    const db = wx.cloud.database()
+    const _ = db.command
+    const ownerWhere = openid ? { _openid: openid } : { userId }
+
+    // 并行查询 4 个集合的 count，每一个独立 try/catch
+    const tasks = [
+      // 订单数
+      db.collection('orders').where(ownerWhere).count()
+        .then(r => ({ key: 'orderCount', val: r && typeof r.total === 'number' ? r.total : '' }))
+        .catch(() => ({ key: 'orderCount', val: '' })),
+      // 收藏数
+      db.collection('favorites').where(ownerWhere).count()
+        .then(r => ({ key: 'favCount', val: r && typeof r.total === 'number' ? r.total : '' }))
+        .catch(() => ({ key: 'favCount', val: '' })),
+      // 购物车数
+      db.collection('mall_cart').where(ownerWhere).count()
+        .then(r => ({ key: 'cartCount', val: r && typeof r.total === 'number' ? r.total : '' }))
+        .catch(() => ({ key: 'cartCount', val: '' })),
+      // 地址数
+      db.collection('addresses').where(ownerWhere).count()
+        .then(r => ({ key: 'addressCount', val: r && typeof r.total === 'number' ? r.total : '' }))
+        .catch(() => ({ key: 'addressCount', val: '' }))
+    ]
+
+    try {
+      const results = await Promise.all(tasks)
+      const patch = {}
+      results.forEach(({ key, val }) => {
+        patch[key] = val === '' ? '' : String(val)
+      })
+      this.setData(patch)
+    } catch (e) {
+      console.warn('加载四宫格统计数据失败', e)
+    }
   },
 
   /**
@@ -299,25 +563,31 @@ Page({
       return
     }
 
-    // 如果是 cloud:// fileID，需要转换
-    if (avatarUrl.startsWith('cloud://') && wx.cloud && wx.cloud.getTempFileURL) {
+    if (avatarUrl.startsWith('cloud://')) {
+      // cloud:// fileID 不能直接作为 <image> src（渲染层会把它当成相对路径导致 500）
+      // 必须通过 getTempFileURL 转换为 HTTPS URL
+      if (!wx.cloud || !wx.cloud.getTempFileURL) {
+        // 云开发不可用，保持空（显示默认头像），不传 cloud:// 给渲染层
+        this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
+        return
+      }
       try {
         const res = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
-        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({ 
-            userAvatarDisplay: res.fileList[0].tempFileURL,
-            userAvatarFileID: avatarUrl 
-          })
+        const item = res && res.fileList && res.fileList[0]
+        console.log('[home] 头像 getTempFileURL item:', item ? JSON.stringify(item) : 'null')
+        const tempUrl = item && item.tempFileURL
+        if (tempUrl) {
+          this.setData({ userAvatarDisplay: tempUrl, userAvatarFileID: avatarUrl })
         } else {
-          console.warn('头像转换失败')
+          console.warn('[home] 头像 getTempFileURL 空链接，status:', item && item.status, 'errMsg:', item && item.errMsg)
           this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
         }
       } catch (e) {
-        console.warn('头像转换异常', e)
+        console.warn('[home] 头像 getTempFileURL 失败:', e)
         this.setData({ userAvatarDisplay: '', userAvatarFileID: avatarUrl })
       }
     } else {
-      // 不是 cloud:// 格式，直接使用
+      // http/https 或本地路径，直接使用
       this.setData({ userAvatarDisplay: avatarUrl, userAvatarFileID: '' })
     }
   },
@@ -325,25 +595,9 @@ Page({
   /**
    * 头像加载失败时的处理
    */
-  async onAvatarError() {
-    console.warn('头像图片加载失败')
-    
-    const { userAvatarFileID } = this.data
-    
-    // 如果有 fileID，尝试重新获取
-    if (userAvatarFileID && userAvatarFileID.startsWith('cloud://') && wx.cloud) {
-      try {
-        const res = await wx.cloud.getTempFileURL({ fileList: [userAvatarFileID] })
-        if (res && res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({ userAvatarDisplay: res.fileList[0].tempFileURL })
-          return
-        }
-      } catch (e) {
-        console.warn('重新获取头像失败', e)
-      }
-    }
-    
-    // 失败则显示默认头像
+  onAvatarError() {
+    console.warn('头像图片加载失败，降级显示默认头像')
+    // cloud:// fileID 加载失败时直接降级，不再重试 getTempFileURL（会返回 500）
     this.setData({ userAvatarDisplay: '' })
   }
 })

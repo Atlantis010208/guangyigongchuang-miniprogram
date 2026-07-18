@@ -1,7 +1,13 @@
 <view class="toolbox-root">
   <view class="header">
-    <text class="title">工具箱</text>
-    <text class="subtitle">照明设计专业工具</text>
+    <view class="header-text">
+      <text class="title">工具箱</text>
+      <text class="subtitle">照明设计专业工具</text>
+    </view>
+    <view class="user-avatar" bindtap="onUserTap">
+      <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+      <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
+    </view>
   </view>
 
   <view class="bento-grid">
@@ -65,6 +71,22 @@
         </view>
         <view class="gallery-icon-wrap">
           <image class="icon-camera" src="/images/toolbox/camera.svg" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+
+    <!-- Wide Banner: 灯光测试 -->
+    <view class="bento-card col-span-2 quiz-card hover-scale" bindtap="navigateToLightingQuiz">
+      <!-- 考试场景高清图：答题卡与笔（来自 Unsplash 高清图库） -->
+      <image class="quiz-bg-img" src="https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=800&auto=format&fit=crop" mode="aspectFill"></image>
+      <view class="quiz-overlay"></view>
+      <view class="quiz-content">
+        <view class="quiz-text-wrap">
+          <text class="quiz-title">灯光测试</text>
+          <text class="quiz-desc">5 分钟测一测你的灯光设计认知阶段</text>
+        </view>
+        <view class="quiz-icon-wrap">
+          <image class="icon-quiz" src="/images/toolbox/zap.svg" mode="aspectFit"></image>
         </view>
       </view>
     </view>

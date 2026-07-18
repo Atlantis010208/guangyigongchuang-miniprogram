@@ -10,7 +10,7 @@
  * 权限：公开（未登录返回 isPurchased: false）
  * 
  * 参数：
- * - toolkitId: 工具包 ID（可选，默认为 'toolkit'）
+ * - toolkitId: 工具包 ID（可选，默认为 'TK_DEFAULT_001'）
  * 
  * 返回：
  * - success: true/false
@@ -29,6 +29,105 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const DEFAULT_TOOLKIT_ID = 'TK_DEFAULT_001'
+
+function normalizeId(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function buildToolkitAliasSet(toolkitId) {
+  const ids = new Set()
+  const add = (value) => {
+    const normalized = normalizeId(value)
+    if (!normalized) return
+    ids.add(normalized)
+    ids.add(normalized.replace(/^vp_/, ''))
+    ids.add(`vp_${normalized}`)
+  }
+
+  add(toolkitId)
+  add(DEFAULT_TOOLKIT_ID)
+  add('toolkit')
+
+  return ids
+}
+
+function isToolkitItem(item = {}, order = {}, toolkitAliases) {
+  const idFields = [
+    item.id,
+    item.productId,
+    item.toolkitId,
+    item._id,
+    order.toolkitId,
+    order.productId
+  ].map(normalizeId).filter(Boolean)
+
+  if (idFields.some(id => toolkitAliases.has(id))) return true
+
+  const category = normalizeId(item.category || order.category)
+  const type = normalizeId(item.type || order.type)
+  if (category === 'toolkit' || type === 'toolkit') return true
+
+  if (idFields.some(id => id.startsWith('tk') || id.includes('toolkit') || id.includes('tk_default_001'))) {
+    return true
+  }
+
+  const name = String(item.name || item.title || order.title || order.name || '').toLowerCase()
+  return name.includes('工具包') || name.includes('toolkit')
+}
+
+async function queryPaidOrdersByUser(openid) {
+  const paidStatus = _.in(['paid', 'completed'])
+  const baseQuery = {
+    status: paidStatus,
+    isDelete: _.neq(1)
+  }
+  const pageSize = 100
+  const maxPages = 10
+  const byId = new Map()
+
+  const fetchPage = (field, offset) => db.collection('orders')
+    .where({ ...baseQuery, [field]: openid })
+    .field({
+      _id: true,
+      orderNo: true,
+      userId: true,
+      _openid: true,
+      paidAt: true,
+      createdAt: true,
+      params: true,
+      items: true,
+      category: true,
+      type: true,
+      toolkitId: true,
+      productId: true,
+      source: true
+    })
+    .skip(offset)
+    .limit(pageSize)
+    .get()
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const offset = page * pageSize
+    const [openidRes, userIdRes] = await Promise.all([
+      fetchPage('_openid', offset),
+      fetchPage('userId', offset)
+    ])
+
+    const batch = [...(openidRes.data || []), ...(userIdRes.data || [])]
+    batch.forEach(order => {
+      const key = order._id || order.orderNo
+      if (key && !byId.has(key)) byId.set(key, order)
+    })
+
+    if ((openidRes.data || []).length < pageSize && (userIdRes.data || []).length < pageSize) {
+      break
+    }
+  }
+
+  return Array.from(byId.values())
+}
+
 exports.main = async (event) => {
   const startTime = Date.now()
   
@@ -36,7 +135,8 @@ exports.main = async (event) => {
     const wxContext = cloud.getWXContext()
     const OPENID = wxContext.OPENID || wxContext.openid
     
-    const { toolkitId = 'toolkit' } = event
+    const { toolkitId = DEFAULT_TOOLKIT_ID } = event
+    const toolkitAliases = buildToolkitAliasSet(toolkitId)
     
     console.log('[toolkit_purchase_check] 开始检查权限:', {
       OPENID: OPENID ? `${OPENID.substring(0, 10)}...` : 'null',
@@ -54,48 +154,29 @@ exports.main = async (event) => {
       }
     }
     
-    // 2. 查询用户已支付的工具包订单
-    // 查询条件：(userId 或 _openid) + category='toolkit' + status in ['paid', 'completed'] + isDelete != 1
-    const ordersRes = await db.collection('orders')
-      .where({
-        _openid: OPENID,  // 使用 _openid 字段查询，这是云数据库自动添加的字段
-        category: 'toolkit',
-        status: _.in(['paid', 'completed']),
-        isDelete: _.neq(1)
-      })
-      .field({
-        _id: true,
-        orderNo: true,
-        paidAt: true,
-        createdAt: true,
-        params: true,
-        items: true,
-        category: true,
-        source: true // 用于识别是否来自白名单
-      })
-      .limit(20)  // 限制查询数量，优化性能
-      .get()
+    // 2. 查询用户已支付订单，再在订单明细里识别工具包。
+    // 不能先限定 category='toolkit'：照度页和部分商城路径曾把工具包订单写成 mall/goods。
+    const paidOrders = await queryPaidOrdersByUser(OPENID)
     
-    console.log('[toolkit_purchase_check] 查询订单数量:', ordersRes.data.length)
+    console.log('[toolkit_purchase_check] 查询已支付订单数量:', paidOrders.length)
     
-    // 打印订单详情用于调试
-    if (ordersRes.data.length > 0) {
-      console.log('[toolkit_purchase_check] 订单详情:', JSON.stringify(ordersRes.data, null, 2))
+    // 打印订单摘要用于调试，避免把地址等订单参数写入日志。
+    if (paidOrders.length > 0) {
+      console.log('[toolkit_purchase_check] 已支付订单摘要:', paidOrders.map(order => ({
+        orderNo: order.orderNo,
+        category: order.category,
+        type: order.type,
+        itemCount: (((order.params || {}).items) || order.items || []).length
+      })))
     }
     
     // 3. 检查订单中是否包含目标工具包
-    for (const order of ordersRes.data) {
+    for (const order of paidOrders) {
       // 获取订单商品列表（兼容不同数据结构）
       const items = (order.params && order.params.items) || order.items || []
       
       for (const item of items) {
-        // 获取商品 ID（兼容不同字段名）
-        const itemId = item.id || item.productId || item.toolkitId
-        const itemCategory = item.category || ''
-        const itemType = item.type || ''
-        
-        // 匹配工具包：ID 匹配 或 category 为 toolkit 或 type 为 toolkit
-        if (itemId === toolkitId || itemCategory === 'toolkit' || itemType === 'toolkit') {
+        if (isToolkitItem(item, order, toolkitAliases)) {
           const purchasedAt = order.paidAt || order.createdAt
           const orderId = order.orderNo || order._id
           
@@ -126,7 +207,7 @@ exports.main = async (event) => {
       }
       
       // 如果订单本身就是工具包（没有 items 的情况）
-      if (items.length === 0 && order.category === 'toolkit') {
+      if (items.length === 0 && isToolkitItem({}, order, toolkitAliases)) {
         const purchasedAt = order.paidAt || order.createdAt
         const orderId = order.orderNo || order._id
         

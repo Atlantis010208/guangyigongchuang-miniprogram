@@ -2,7 +2,7 @@
 <view class="page color-temp-page">
   <!-- 统一版 UI 头部 (保留蓝色背景和标题) -->
   <view class="v2-header">
-    <image class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
+    <image wx:if="{{headerBgFileId}}" class="v2-header-bg" src="{{headerBgFileId}}" mode="aspectFill"></image>
     <image class="v2-logo" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/LOGO/光乙灯光工作室 logo(长版本-透明-白字).png" mode="aspectFit"></image>
     <view class="v2-history-btn" bindtap="onHistoryTap">历史记录</view>
     <text class="v2-overlay-title">{{headerTitle}}</text>
@@ -31,17 +31,6 @@
           </picker>
         </view>
 
-        <!-- 色温建议 -->
-        <view class="v2-input-row">
-          <text class="v2-label">色温建议</text>
-          <input class="v2-input-box" type="text" value="{{suggestedTemp}}" data-field="suggestedTemp" bindinput="onFieldInput" placeholder="选择空间后自动推荐" placeholder-style="color:#C0C4CC"/>
-        </view>
-
-      </view>
-
-      <!-- 卡片：场景与灯具 -->
-      <view class="v2-card group-card">
-
         <!-- 使用人群 -->
         <view class="v2-input-row">
           <text class="v2-label">使用人群</text>
@@ -52,33 +41,52 @@
           </picker>
         </view>
 
-        <!-- 主要用途 -->
-        <view class="v2-input-row">
-          <text class="v2-label">主要用途</text>
-          <picker class="v2-input-box picker" mode="selector" range="{{usages}}" range-key="name" value="{{usageIndex < 0 ? 0 : usageIndex}}" bindchange="onUsageChange">
-            <view class="picker-text {{usageIndex >= 0 ? '' : 'placeholder'}}">
-              {{usageIndex >= 0 ? usages[usageIndex].name : '这个空间主要做什么'}}
-            </view>
-          </picker>
-        </view>
+      </view>
 
-        <!-- 灯具选择 -->
-        <view class="v2-input-row">
-          <text class="v2-label">添加灯具</text>
-          <picker class="v2-input-box picker" mode="selector" range="{{fixtureAddOptions}}" value="{{fixtureAddValue}}" bindchange="onAddFixture">
-            <view class="picker-text {{fixtureAddValue===0 ? 'placeholder' : ''}}">
-              {{fixtureAddOptions[fixtureAddValue]}}
-              <text class="v2-picker-arrow">▼</text>
+      <!-- 卡片：主要用途（网格 chip 一次性多选） -->
+      <view class="v2-card group-card">
+        <view class="chip-section">
+          <view class="chip-section-title">
+            <text class="chip-section-name">主要用途</text>
+            <text class="chip-section-hint">{{selectedUsages.length > 0 ? '已选 ' + selectedUsages.length + ' 项' : '可多选 · 这个空间主要做什么'}}</text>
+          </view>
+          <view class="chip-grid">
+            <view
+              class="chip-item {{usageSelectedMap[item.id] ? 'chip-item--selected' : ''}}"
+              wx:for="{{usages}}"
+              wx:key="id"
+              data-id="{{item.id}}"
+              bindtap="onToggleUsage"
+              hover-class="chip-item--hover"
+              hover-stay-time="80"
+            >
+              <text class="chip-item-name">{{item.name}}</text>
             </view>
-          </picker>
+          </view>
         </view>
-        
-        <!-- 选中的灯具，直接复用 v2-input-row 保证样式完全一致 -->
-        <view class="v2-input-row" wx:for="{{selectedFixtures}}" wx:key="id">
-          <text style="flex: 1; font-size: 30rpx; color: #333; font-weight: 500;">{{item.name}}</text>
-          <view data-id="{{item.id}}" bindtap="onRemoveFixture" style="font-size: 36rpx; color: #999; padding: 0 10rpx;">×</view>
-        </view>
+      </view>
 
+      <!-- 卡片：添加灯具（网格 chip 一次性多选） -->
+      <view class="v2-card group-card">
+        <view class="chip-section">
+          <view class="chip-section-title">
+            <text class="chip-section-name">添加灯具</text>
+            <text class="chip-section-hint">{{selectedFixtures.length > 0 ? '已选 ' + selectedFixtures.length + ' 项' : '可多选 · 空间内已规划的灯具'}}</text>
+          </view>
+          <view class="chip-grid">
+            <view
+              class="chip-item {{fixtureSelectedMap[item.id] ? 'chip-item--selected' : ''}}"
+              wx:for="{{fixtures}}"
+              wx:key="id"
+              data-id="{{item.id}}"
+              bindtap="onToggleFixture"
+              hover-class="chip-item--hover"
+              hover-stay-time="80"
+            >
+              <text class="chip-item-name">{{item.name}}</text>
+            </view>
+          </view>
+        </view>
       </view>
 
       <button class="v2-btn-calculate" bindtap="onCalculate">获取专业建议</button>

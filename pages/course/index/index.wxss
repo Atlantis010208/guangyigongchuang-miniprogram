@@ -2,6 +2,27 @@
 
 .header-section {
   width: 100%;
+  padding-top: 16rpx;
+  padding-right: 16rpx;
+  box-sizing: border-box;
+}
+
+.user-avatar {
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vip-crown {
+  position: absolute;
+  top: -14rpx;
+  right: -14rpx;
+  width: 36rpx;
+  height: 36rpx;
+  z-index: 2;
+  transform: rotate(30deg);
 }
 
 .avatar-small {

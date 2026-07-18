@@ -35,6 +35,7 @@ Page({
     
     // 视频加载状态
     videoLoaded: false,
+    videoErrorMessage: '',
     
     // 长视频友好提示
     isLongVideo: false,
@@ -63,7 +64,15 @@ Page({
     currentChapterIndex: -1,
     
     // 🆕 视频内章节列表展开状态
-    isChaptersExpanded: false
+    isChaptersExpanded: false,
+
+    // 资料下载弹窗（第三章 · 灯光实操课）
+    showMaterialModal: false,
+    materialPackage: {
+      title: '第3课、灯光实操课-资料包',
+      link: 'https://ug.link/DXP8800PRO-D50E/filemgr/share-download/?id=a8e641299e594068ac4c11e37df78931',
+      password: '2580'
+    }
   },
 
   // 实例属性（不触发渲染）
@@ -78,6 +87,7 @@ Page({
     this._bufferingTimer = null;
     this._seekingTimer = null;  // 拖动进度条的定时器
     this._retryCount = 0;       // 视频重试计数器
+    this._refreshingCurrentVideoUrl = false; // 防止视频错误时重复刷新临时链接
     this._currentTime = 0;      // 当前播放时间
     this._duration = 0;         // 视频总时长
     this._viewerCountTimer = null;  // 🆕 观看人数刷新定时器
@@ -187,6 +197,7 @@ Page({
       error: null, 
       errorCode: null,
       videoLoaded: false,
+      videoErrorMessage: '',
       isBuffering: false
     });
 
@@ -199,7 +210,17 @@ Page({
       console.log('[video-player] Cloud function took:', Date.now() - startTime, 'ms');
 
       if (res.result && res.result.success) {
-        const { courseId: id, title, chapters, currentLesson, coverUrl, lazyLoadEnabled } = res.result.data;
+        const {
+          courseId: id,
+          title,
+          chapters,
+          currentLesson: loadedCurrentLesson,
+          coverUrl,
+          driveLink,
+          drivePassword,
+          lazyLoadEnabled
+        } = res.result.data;
+        let currentLesson = loadedCurrentLesson;
 
         // 【流量优化】记录是否启用了延迟加载
         this._lazyLoadEnabled = lazyLoadEnabled !== false;
@@ -237,6 +258,18 @@ Page({
         } else {
           console.warn(`[video-player] 未找到 ${currentQuality} 视频 URL`);
         }
+
+        let videoErrorMessage = '';
+        const playableResult = await this._prepareLessonForPlayback(currentLesson, currentQuality);
+        if (playableResult.success) {
+          currentLesson = playableResult.lesson;
+          currentQuality = playableResult.quality || currentQuality;
+          this._mergeLessonIntoChapters(chapters, currentLesson.id, currentLesson);
+        } else {
+          currentLesson = playableResult.lesson || currentLesson;
+          videoErrorMessage = playableResult.errorMessage || '视频地址暂时无法播放，请重试';
+          console.warn('[video-player] 当前课时视频地址不可播放:', playableResult);
+        }
         
         // 🆕 统一处理所有章节和课时的章节数据
         if (chapters && chapters.length > 0) {
@@ -247,6 +280,25 @@ Page({
               });
             }
           });
+        }
+
+        // 🆕 注入"1.2 课程作业" PDF 虚拟课时（紧跟在 1.1 之后，简答题作业）
+        if (chapters && chapters.length > 0) {
+          for (const chapter of chapters) {
+            const lessons = chapter.lessons || [];
+            const idx = lessons.findIndex(l => l && l.id === 'l1-1');
+            if (idx >= 0) {
+              const exists = lessons.some(l => l && l.id === 'l1-2-homework-pdf');
+              if (!exists) {
+                lessons.splice(idx + 1, 0, {
+                  id: 'l1-2-homework-pdf',
+                  title: '1.2 课程作业',
+                  type: 'homework-pdf'
+                });
+              }
+              break;
+            }
+          }
         }
 
         // 🆕 处理当前课时（如果是独立对象）
@@ -272,12 +324,18 @@ Page({
         // 一次性更新所有状态，减少渲染次数
         this.setData({
           course: { id, title, coverUrl: coverUrl || '' },  // 【流量优化】添加封面URL
+          materialPackage: {
+            ...this.data.materialPackage,
+            link: driveLink || '',
+            password: drivePassword || ''
+          },
           chapters: chapters || [],
           currentLesson: currentLesson,
           currentQuality: currentQuality,        // 🆕 当前分辨率
           availableQualities: availableQualities, // 🆕 可用分辨率列表
           loading: false,
           autoplay: true,
+          videoErrorMessage: videoErrorMessage,
           isLongVideo: isLongVideo,
           bufferingText: isLongVideo ? '长视频加载中，请稍候...' : '视频加载中...'
         });
@@ -291,11 +349,18 @@ Page({
         setTimeout(() => {
           this.getViewerCount();
           this.getLearnedCount();
+          // 🆕 批量查询作业课时的通过状态，回填 lesson.quizPassed
+          this._fetchQuizPassedStates();
         }, 100);
 
       } else {
         const errorCode = res.result?.code || 'UNKNOWN_ERROR';
-        const errorMessage = res.result?.errorMessage || '加载失败';
+        const rawErrorMessage = res.result?.errorMessage || '加载失败';
+        const errorMessage = this._formatVideoUrlError({
+          code: errorCode,
+          errorMessage: rawErrorMessage,
+          data: res.result?.data || null
+        }, rawErrorMessage);
         
         console.error('[video-player] Load failed:', errorCode, errorMessage);
 
@@ -350,6 +415,69 @@ Page({
   onRetry() {
     if (this.courseId) {
       this.loadCourseVideos(this.courseId, this.lessonId);
+    }
+  },
+
+  async onRetryCurrentVideo() {
+    if (this.data.currentLesson && this.data.currentLesson.id) {
+      this.setData({
+        videoErrorMessage: '',
+        isBuffering: true,
+        bufferingText: '重新获取视频链接...'
+      });
+      await this._reloadCurrentVideo();
+      return;
+    }
+
+    this.onRetry();
+  },
+
+  /**
+   * 批量查询作业课时（quiz）的通过状态
+   * - 收集所有 type=quiz && quizId 的课时
+   * - 并行调用 quiz_attempt_get 取得 best attempt
+   * - 把 passed=true 回填到 chapters[ci].lessons[li].quizPassed
+   * - 任何失败都静默吞掉，不影响主流程（只是少一个 ✓）
+   */
+  async _fetchQuizPassedStates() {
+    const chapters = this.data.chapters || [];
+    if (chapters.length === 0) return;
+
+    const quizLessons = [];
+    chapters.forEach((ch, ci) => {
+      (ch.lessons || []).forEach((l, li) => {
+        if (l && l.type === 'quiz' && l.quizId) {
+          quizLessons.push({ ci, li, quizId: l.quizId });
+        }
+      });
+    });
+    if (quizLessons.length === 0) return;
+
+    try {
+      const results = await Promise.all(
+        quizLessons.map(({ quizId }) =>
+          wx.cloud.callFunction({
+            name: 'quiz_attempt_get',
+            data: { quizId, bestOnly: true }
+          }).catch(err => {
+            console.warn('[video-player] quiz_attempt_get error:', err);
+            return null;
+          })
+        )
+      );
+
+      const updates = {};
+      quizLessons.forEach(({ ci, li }, i) => {
+        const r = results[i] && results[i].result;
+        if (r && r.success && r.data && r.data.attempt && r.data.attempt.passed) {
+          updates[`chapters[${ci}].lessons[${li}].quizPassed`] = true;
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        this.setData(updates);
+      }
+    } catch (e) {
+      console.warn('[video-player] _fetchQuizPassedStates error:', e);
     }
   },
 
@@ -615,7 +743,7 @@ Page({
    * 视频错误
    * 特别处理 MEDIA_ERR_SRC_NOT_SUPPORTED 错误（拖动进度条后常见）
    */
-  onVideoError(e) {
+  async onVideoError(e) {
     console.error('[video-player] onVideoError:', e.detail);
     this._clearBuffering();
     this._isPlaying = false;
@@ -631,7 +759,7 @@ Page({
       
       if (this._retryCount <= 2) {
         // 重新加载当前视频
-        this._reloadCurrentVideo();
+        await this._reloadCurrentVideo();
         return;
       } else {
         // 重试次数用完，重置计数器
@@ -658,6 +786,11 @@ Page({
       toastMsg = '视频加载被中断';
     }
     
+    this.setData({
+      isBuffering: false,
+      videoErrorMessage: toastMsg
+    });
+
     wx.showToast({ title: toastMsg, icon: 'none', duration: 2500 });
   },
   
@@ -665,57 +798,102 @@ Page({
    * 重新加载当前视频
    * @private
    */
-  _reloadCurrentVideo() {
+  async _reloadCurrentVideo() {
     const { currentLesson } = this.data;
-    if (!currentLesson || !currentLesson.videoUrl) {
+    if (!currentLesson || !currentLesson.id) {
       console.warn('[video-player] Cannot reload: no current lesson');
+      return;
+    }
+
+    if (this._refreshingCurrentVideoUrl) {
+      console.log('[video-player] Video URL refresh already in progress');
       return;
     }
     
     console.log('[video-player] Reloading video:', currentLesson.title);
     
-    // 显示加载提示
-    wx.showLoading({ title: '重新加载中...', mask: true });
-    
-    // 保存当前视频 URL
-    const videoUrl = currentLesson.videoUrl;
-    
-    // 先停止视频
-    if (this.videoContext) {
-      try {
-        this.videoContext.stop();
-      } catch (e) {
-        // ignore
+    this._refreshingCurrentVideoUrl = true;
+    this.setData({
+      isBuffering: true,
+      videoErrorMessage: '',
+      bufferingText: '重新获取视频链接...'
+    });
+
+    try {
+      let nextLesson = await this._lazyLoadLessonUrl(currentLesson.id);
+
+      if (nextLesson) {
+        nextLesson = {
+          ...currentLesson,
+          ...nextLesson
+        };
+      } else {
+        const prepared = await this._prepareLessonForPlayback(currentLesson, this.data.currentQuality || '720p');
+        if (prepared.success) {
+          nextLesson = prepared.lesson;
+        } else {
+          const errorMessage = prepared.errorMessage || '视频链接刷新失败，请重试';
+          this.setData({
+            currentLesson: {
+              ...currentLesson,
+              videoUrl: ''
+            },
+            isBuffering: false,
+            videoErrorMessage: errorMessage
+          });
+          wx.showToast({ title: errorMessage, icon: 'none', duration: 2500 });
+          return;
+        }
       }
-    }
-    
-    // 短暂延迟后重新设置视频源
-    setTimeout(() => {
-      // 重新获取 videoContext
-      this.videoContext = wx.createVideoContext('courseVideo');
-      
-      // 强制重新渲染视频组件
-      this.setData({
-        currentLesson: { ...currentLesson, videoUrl: '' }
-      });
-      
-      setTimeout(() => {
+
+      if (!this._isPlayableVideoUrl(nextLesson.videoUrl)) {
+        const errorMessage = '视频链接刷新失败，请重试';
         this.setData({
-          currentLesson: { ...currentLesson, videoUrl: videoUrl },
+          currentLesson: {
+            ...nextLesson,
+            videoUrl: ''
+          },
           isBuffering: false,
+          videoErrorMessage: errorMessage
+        });
+        wx.showToast({ title: errorMessage, icon: 'none', duration: 2500 });
+        return;
+      }
+
+      this._updateLessonInChapters(nextLesson.id, nextLesson);
+
+      if (this.videoContext) {
+        try {
+          this.videoContext.stop();
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      this.setData({
+        currentLesson: { ...nextLesson, videoUrl: '' },
+        videoLoaded: false
+      });
+
+      setTimeout(() => {
+        this.videoContext = wx.createVideoContext('courseVideo');
+
+        this.setData({
+          currentLesson: nextLesson,
+          isBuffering: false,
+          videoErrorMessage: '',
           autoplay: true
         });
-        
-        wx.hideLoading();
-        
-        // 延迟播放
+
         setTimeout(() => {
           if (this.videoContext) {
             this.videoContext.play();
           }
         }, 300);
-      }, 100);
-    }, 200);
+      }, 120);
+    } finally {
+      this._refreshingCurrentVideoUrl = false;
+    }
   },
 
   /**
@@ -745,7 +923,7 @@ Page({
 
     for (const chapter of chapters) {
       for (const lesson of chapter.lessons || []) {
-        if (foundCurrent && lesson.type === 'video' && lesson.videoUrl) {
+        if (foundCurrent && lesson.type === 'video' && this._hasVideoSource(lesson)) {
           nextLesson = lesson;
           break;
         }
@@ -766,22 +944,59 @@ Page({
     }
   },
 
+  _findLessonById(lessonId) {
+    if (!lessonId) return null;
+
+    for (const chapter of this.data.chapters || []) {
+      for (const lesson of chapter.lessons || []) {
+        if (lesson && lesson.id === lessonId) {
+          return lesson;
+        }
+      }
+    }
+
+    return null;
+  },
+
   /**
    * 课时点击事件
    */
   onLessonTap(e) {
-    const lesson = e.currentTarget.dataset.lesson;
+    const lessonId = e.currentTarget.dataset.lessonId;
+    const lesson = this._findLessonById(lessonId) || e.currentTarget.dataset.lesson;
     
     if (!lesson) return;
-    
+
+    // 🆕 PDF 课程作业（简答题）：直接下载 PDF，无需跳转作业页
+    if (lesson.type === 'homework-pdf') {
+      this.onHomeworkTap({ currentTarget: { dataset: { lessonId: lesson.id } } });
+      return;
+    }
+
+    // 🆕 作业课时：跳转到答题页
+    if (lesson.type === 'quiz') {
+      if (!lesson.quizId) {
+        wx.showToast({ title: '该作业尚未配置题目', icon: 'none' });
+        return;
+      }
+      const params = [
+        `quizId=${encodeURIComponent(lesson.quizId)}`,
+        this.courseId ? `courseId=${encodeURIComponent(this.courseId)}` : '',
+        `lessonId=${encodeURIComponent(lesson.id || '')}`
+      ].filter(Boolean).join('&');
+      wx.navigateTo({ url: `/pages/quiz/detail/detail?${params}` });
+      return;
+    }
+
     // 检查是否是视频类型
     if (lesson.type !== 'video') {
       wx.showToast({ title: '该章节非视频内容', icon: 'none' });
       return;
     }
     
-    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
-    const hasVideoUrl = lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0);
+    // 延迟加载课时会被云函数清空 videoUrl/videoUrls，只保留 _needsLazyLoad。
+    // 这里不能提前拦截，否则 switchLesson 没机会按需获取临时链接。
+    const hasVideoUrl = this._hasVideoSource(lesson);
     if (!hasVideoUrl) {
       wx.showToast({ title: '视频地址无效', icon: 'none' });
       return;
@@ -816,8 +1031,7 @@ Page({
     }
     
     // 【流量优化】检查是否需要延迟加载视频链接
-    const needsLazyLoad = lesson._needsLazyLoad || 
-                          (!lesson.videoUrl && (!lesson.videoUrls || !this._hasValidVideoUrl(lesson.videoUrls)));
+    const needsLazyLoad = lesson._needsLazyLoad || this._needsVideoUrlLazyLoad(lesson);
     
     if (needsLazyLoad) {
       console.log(`[video-player] 课时 ${lesson.id} 需要延迟加载视频链接`);
@@ -840,15 +1054,15 @@ Page({
           // 更新章节列表中的数据
           this._updateLessonInChapters(lesson.id, loadedLesson);
         } else {
-          console.warn('[video-player] 延迟加载视频链接失败');
-          wx.showToast({ title: '加载视频失败，请重试', icon: 'none' });
+          const detail = this._lastLazyLoadError || {};
+          console.warn('[video-player] 延迟加载视频链接失败:', detail);
+          wx.showToast({ title: detail.errorMessage || '加载视频失败，请重试', icon: 'none' });
           return;
         }
       }
     }
     
-    // 🔧 修复：检查 videoUrls 对象或 videoUrl（兼容新旧格式）
-    const hasVideoUrl = lesson.videoUrl || (lesson.videoUrls && Object.keys(lesson.videoUrls).length > 0);
+    const hasVideoUrl = this._hasVideoSource(lesson);
     if (!hasVideoUrl) {
       console.warn('[video-player] Invalid lesson or no video URL:', lesson);
       wx.showToast({ title: '视频地址无效', icon: 'none' });
@@ -856,7 +1070,7 @@ Page({
     }
     
     // 🔧 修复：根据当前分辨率设置 videoUrl
-    if (lesson.videoUrls && !lesson.videoUrl) {
+    if (lesson.videoUrls && !this._isPlayableVideoUrl(lesson.videoUrl)) {
       const currentQuality = this.data.currentQuality || '720p';
       const videoUrl = this.getVideoUrlByQuality(lesson, currentQuality);
       if (videoUrl) {
@@ -873,8 +1087,23 @@ Page({
       }
     }
     
-    if (!lesson.videoUrl) {
-      console.warn('[video-player] 无法获取视频 URL');
+    if (!this._isPlayableVideoUrl(lesson.videoUrl)) {
+      const prepared = await this._prepareLessonForPlayback(lesson, this.data.currentQuality || '720p');
+      if (prepared.success) {
+        lesson = prepared.lesson;
+        if (prepared.quality && prepared.quality !== this.data.currentQuality) {
+          this.setData({ currentQuality: prepared.quality });
+        }
+        this._updateLessonInChapters(lesson.id, lesson);
+      } else {
+        console.warn('[video-player] 无法获取视频 URL:', prepared);
+        wx.showToast({ title: prepared.errorMessage || '视频地址无效', icon: 'none' });
+        return;
+      }
+    }
+
+    if (!this._isPlayableVideoUrl(lesson.videoUrl)) {
+      console.warn('[video-player] 无法获取可播放视频 URL');
       wx.showToast({ title: '视频地址无效', icon: 'none' });
       return;
     }
@@ -917,6 +1146,7 @@ Page({
       currentChapterIndex: -1, // 切换课时重置章节索引
       isBuffering: true,
       videoLoaded: false,
+      videoErrorMessage: '',
       autoplay: true,
       isLongVideo: isLongVideo,
       bufferingText: isLongVideo ? '长视频加载中，请稍候...' : '视频加载中...'
@@ -1573,7 +1803,9 @@ Page({
     
     // 课后作业PDF的云存储地址映射
     const homeworkFileMap = {
-      'l1-1': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课后作业/课后作业｜灯光设计基本原则.pdf'
+      'l1-1': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课后作业/课后作业｜灯光设计基本原则.pdf',
+      // 1.2 课程作业（简答题）—— 由 onLessonTap 在 type=homework-pdf 时转发触发
+      'l1-2-homework-pdf': 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/灯光课程-¥999｜二哥十年经验的灯光课（正课）/第1课 | 灯光设计基本原理/课程作业/课程作业｜灯光设计基本原则.pdf'
     };
     
     const fileID = homeworkFileMap[lessonId];
@@ -1695,6 +1927,90 @@ Page({
     }
   },
 
+  /**
+   * 资料下载按钮点击事件（章节级别）
+   * 第三章（chapterIndex === 3）打开资料下载弹窗
+   */
+  onMaterialDownloadTap(e) {
+    const chapterIndex = e.currentTarget.dataset.chapterIndex;
+    console.log('[material] 点击资料下载按钮, chapterIndex:', chapterIndex);
+    this.setData({ showMaterialModal: true });
+  },
+
+  /**
+   * 关闭资料下载弹窗
+   */
+  onCloseMaterialModal() {
+    this.setData({ showMaterialModal: false });
+  },
+
+  /**
+   * 阻止冒泡（点击弹窗内部不关闭）
+   */
+  stopMaterialPropagation() {
+    // 空函数，配合 catchtap 阻止冒泡到 mask
+  },
+
+  /**
+   * 复制资料分享链接
+   */
+  onCopyMaterialLink() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.link) return;
+
+    wx.setClipboardData({
+      data: materialPackage.link,
+      success: () => {
+        wx.showToast({
+          title: '链接已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 复制资料访问密码
+   */
+  onCopyMaterialPassword() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.password) return;
+
+    wx.setClipboardData({
+      data: materialPackage.password,
+      success: () => {
+        wx.showToast({
+          title: '密码已复制',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
+  /**
+   * 一键复制资料链接和密码
+   */
+  onCopyMaterialAll() {
+    const { materialPackage } = this.data;
+    if (!materialPackage || !materialPackage.link) return;
+
+    const lines = [`分享内容：${materialPackage.title}`, `分享链接：${materialPackage.link}`];
+    if (materialPackage.password) {
+      lines.push(`访问密码：${materialPackage.password}`);
+    }
+    const content = lines.join('\n');
+
+    wx.setClipboardData({
+      data: content,
+      success: () => {
+        wx.showToast({
+          title: '已复制到剪贴板',
+          icon: 'success'
+        });
+      }
+    });
+  },
+
   // ==================== 【流量优化】延迟加载相关方法 ====================
 
   /**
@@ -1742,10 +2058,232 @@ Page({
     if (!videoUrls || typeof videoUrls !== 'object') return false;
     
     for (const url of Object.values(videoUrls)) {
-      // 有效链接：非空且不是 cloud:// 开头（已转换为临时链接）
-      if (url && typeof url === 'string' && !url.startsWith('cloud://')) {
+      if (this._isPlayableVideoUrl(url)) {
         return true;
       }
+    }
+    return false;
+  },
+
+  /**
+   * 判断 URL 是否可直接交给 video 组件播放。
+   * cloud:// 是云存储 fileID，必须先通过云函数转换成 HTTPS 临时链接。
+   */
+  _isPlayableVideoUrl(url) {
+    return typeof url === 'string' && /^(https?:\/\/|wxfile:\/\/)/i.test(url);
+  },
+
+  _isCloudVideoUrl(url) {
+    return typeof url === 'string' && url.indexOf('cloud://') === 0;
+  },
+
+  _cloneLessonForVideo(lesson) {
+    if (!lesson) return null;
+    return {
+      ...lesson,
+      videoUrls: lesson.videoUrls && typeof lesson.videoUrls === 'object'
+        ? { ...lesson.videoUrls }
+        : lesson.videoUrls
+    };
+  },
+
+  _pickPlayableVideoUrl(lesson, preferredQuality) {
+    if (!lesson) return { url: '', quality: '' };
+
+    if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+      const preferredUrl = lesson.videoUrls[preferredQuality];
+      if (this._isPlayableVideoUrl(preferredUrl)) {
+        return { url: preferredUrl, quality: preferredQuality };
+      }
+
+      const qualities = Object.keys(lesson.videoUrls)
+        .filter(quality => this._isPlayableVideoUrl(lesson.videoUrls[quality]))
+        .sort((a, b) => parseInt(a) - parseInt(b));
+
+      if (qualities.length > 0) {
+        const quality = qualities.includes('720p') ? '720p' : qualities[qualities.length - 1];
+        return { url: lesson.videoUrls[quality], quality };
+      }
+    }
+
+    if (this._isPlayableVideoUrl(lesson.videoUrl)) {
+      return { url: lesson.videoUrl, quality: preferredQuality || '720p' };
+    }
+
+    return { url: '', quality: '' };
+  },
+
+  async _convertCloudVideoUrlsOnClient(lesson) {
+    const cloudFileIDs = [];
+
+    if (this._isCloudVideoUrl(lesson.videoUrl)) {
+      cloudFileIDs.push(lesson.videoUrl);
+    }
+
+    if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+      Object.values(lesson.videoUrls).forEach(url => {
+        if (this._isCloudVideoUrl(url)) cloudFileIDs.push(url);
+      });
+    }
+
+    const fileList = [...new Set(cloudFileIDs)];
+    if (fileList.length === 0) {
+      return { success: true, lesson };
+    }
+
+    if (!wx.cloud || !wx.cloud.getTempFileURL) {
+      return {
+        success: false,
+        lesson,
+        errorMessage: '当前环境无法获取视频临时链接',
+        data: { fileList }
+      };
+    }
+
+    try {
+      const res = await wx.cloud.getTempFileURL({ fileList });
+      const urlMap = {};
+      const failures = [];
+
+      ;(res.fileList || []).forEach(item => {
+        if (item && item.status === 0 && item.tempFileURL) {
+          urlMap[item.fileID] = item.tempFileURL;
+        } else {
+          failures.push({
+            fileID: item && item.fileID,
+            status: item && item.status,
+            errMsg: (item && (item.errMsg || item.message || item.errorMessage)) || ''
+          });
+        }
+      });
+
+      if (this._isCloudVideoUrl(lesson.videoUrl) && urlMap[lesson.videoUrl]) {
+        lesson.videoUrl = urlMap[lesson.videoUrl];
+      }
+
+      if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+        Object.keys(lesson.videoUrls).forEach(quality => {
+          const url = lesson.videoUrls[quality];
+          if (this._isCloudVideoUrl(url) && urlMap[url]) {
+            lesson.videoUrls[quality] = urlMap[url];
+          }
+        });
+      }
+
+      const hasRemainingCloudUrl = this._isCloudVideoUrl(lesson.videoUrl)
+        || (lesson.videoUrls && Object.values(lesson.videoUrls).some(url => this._isCloudVideoUrl(url)));
+
+      if (hasRemainingCloudUrl && !this._pickPlayableVideoUrl(lesson, this.data.currentQuality || '720p').url) {
+        return {
+          success: false,
+          lesson,
+          errorMessage: '视频临时链接获取失败，请重试',
+          data: { fileList, failures }
+        };
+      }
+
+      return { success: true, lesson, data: { failures } };
+    } catch (err) {
+      return {
+        success: false,
+        lesson,
+        errorMessage: '视频临时链接获取失败，请稍后重试',
+        data: {
+          fileList,
+          errMsg: err && (err.message || err.errMsg || String(err))
+        }
+      };
+    }
+  },
+
+  async _prepareLessonForPlayback(lesson, preferredQuality = '720p') {
+    const prepared = this._cloneLessonForVideo(lesson);
+    if (!prepared) {
+      return { success: false, lesson: null, errorMessage: '课时数据无效' };
+    }
+
+    if (prepared.videoUrls && typeof prepared.videoUrls === 'object') {
+      const selected = this.getVideoUrlByQuality(prepared, preferredQuality);
+      if (selected) prepared.videoUrl = selected;
+    }
+
+    const converted = await this._convertCloudVideoUrlsOnClient(prepared);
+    const nextLesson = converted.lesson || prepared;
+    const picked = this._pickPlayableVideoUrl(nextLesson, preferredQuality);
+
+    if (picked.url) {
+      nextLesson.videoUrl = picked.url;
+      nextLesson._needsLazyLoad = false;
+      return {
+        success: true,
+        lesson: nextLesson,
+        quality: picked.quality || preferredQuality,
+        data: converted.data || null
+      };
+    }
+
+    nextLesson.videoUrl = '';
+    return {
+      success: false,
+      lesson: nextLesson,
+      errorMessage: converted.errorMessage || '视频地址暂时无法播放，请重试',
+      data: converted.data || null
+    };
+  },
+
+  _formatVideoUrlError(detail, fallback = '视频加载失败') {
+    const code = detail && detail.code;
+    if (code === 'VIDEO_URL_MISSING') return '当前课时未配置视频地址';
+    if (code === 'VIDEO_URL_NOT_PLAYABLE') return '当前课时视频地址格式无效';
+    if (code === 'VIDEO_TEMP_URL_FAILED' || code === 'VIDEO_TEMP_URL_REQUEST_FAILED') {
+      return '视频临时链接获取失败，请重试';
+    }
+    return (detail && detail.errorMessage) || fallback;
+  },
+
+  _mergeLessonIntoChapters(chapters, lessonId, nextLesson) {
+    if (!chapters || !lessonId || !nextLesson) return false;
+
+    for (const chapter of chapters) {
+      const lessons = chapter.lessons || [];
+      const index = lessons.findIndex(item => item && item.id === lessonId);
+      if (index >= 0) {
+        lessons[index] = {
+          ...lessons[index],
+          ...nextLesson
+        };
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * 判断当前课时是否需要通过 course_videos 按需换取临时 HTTPS 链接。
+   */
+  _needsVideoUrlLazyLoad(lesson) {
+    if (!lesson) return false;
+    if (lesson.videoUrl && !this._isPlayableVideoUrl(lesson.videoUrl)) return true;
+    if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+      const urls = Object.values(lesson.videoUrls).filter(url => typeof url === 'string' && !!url);
+      return urls.length === 0 || urls.some(url => !this._isPlayableVideoUrl(url));
+    }
+    return !lesson.videoUrl && !lesson.videoUrls;
+  },
+
+  /**
+   * 检查课时是否有可播放链接，或可通过延迟加载获取链接。
+   * 云函数在流量优化模式下会清空非当前课时 URL，仅返回 _needsLazyLoad。
+   * @param {Object} lesson - 课时对象
+   * @returns {boolean} 是否存在视频来源
+   */
+  _hasVideoSource(lesson) {
+    if (!lesson) return false;
+    if (lesson._needsLazyLoad) return true;
+    if (lesson.videoUrl && typeof lesson.videoUrl === 'string') return true;
+    if (lesson.videoUrls && typeof lesson.videoUrls === 'object') {
+      return Object.values(lesson.videoUrls).some(url => typeof url === 'string' && !!url);
     }
     return false;
   },
@@ -1757,6 +2295,7 @@ Page({
    */
   async _lazyLoadLessonUrl(lessonId) {
     console.log(`[video-player] 延迟加载课时 ${lessonId} 的视频链接`);
+    this._lastLazyLoadError = null;
     
     try {
       wx.showLoading({ title: '加载视频中...', mask: false });
@@ -1773,7 +2312,7 @@ Page({
       wx.hideLoading();
       
       if (res.result && res.result.success && res.result.data.lesson) {
-        const lesson = res.result.data.lesson;
+        let lesson = res.result.data.lesson;
         
         // 根据当前分辨率设置 videoUrl
         if (lesson.videoUrls && !lesson.videoUrl) {
@@ -1783,6 +2322,18 @@ Page({
             lesson.videoUrl = videoUrl;
           }
         }
+
+        const prepared = await this._prepareLessonForPlayback(lesson, this.data.currentQuality || '720p');
+        if (!prepared.success) {
+          this._lastLazyLoadError = {
+            code: 'VIDEO_URL_NOT_PLAYABLE',
+            errorMessage: prepared.errorMessage || '加载视频失败，请重试',
+            data: prepared.data || null
+          };
+          return null;
+        }
+
+        lesson = prepared.lesson;
         
         // 缓存到本地
         this._cacheVideoUrl(lesson);
@@ -1791,11 +2342,21 @@ Page({
         return lesson;
       } else {
         console.error('[video-player] 延迟加载失败:', res.result);
+        this._lastLazyLoadError = {
+          code: res.result?.code || 'UNKNOWN_ERROR',
+          errorMessage: this._formatVideoUrlError(res.result, res.result?.errorMessage || '加载视频失败，请重试'),
+          data: res.result?.data || null
+        };
         return null;
       }
     } catch (err) {
       wx.hideLoading();
       console.error('[video-player] 延迟加载出错:', err);
+      this._lastLazyLoadError = {
+        code: 'NETWORK_ERROR',
+        errorMessage: err.message || '网络错误',
+        data: err
+      };
       return null;
     }
   },

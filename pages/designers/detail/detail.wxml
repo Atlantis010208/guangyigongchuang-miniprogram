@@ -118,7 +118,12 @@
       <text class="action-icon-text">↗</text>
       <text class="action-icon-label">分享</text>
     </view>
-    <view class="action-main-btn" bindtap="onInvite">
+    <!-- 来自已接单订单：显示"联系设计师"（拨打电话/复制微信） -->
+    <view wx:if="{{fromOrder}}" class="action-main-btn" bindtap="onContactDesigner">
+      <text>联系设计师</text>
+    </view>
+    <!-- 默认场景（设计师列表/浏览）：显示"邀请抢单" -->
+    <view wx:else class="action-main-btn" bindtap="onInvite">
       <text>邀请抢单</text>
     </view>
   </view>

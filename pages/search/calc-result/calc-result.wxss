@@ -115,8 +115,8 @@ page {
   color: #94A3B8;
   letter-spacing: 6rpx;
   text-align: center;
-  margin-top: 100rpx;
-  margin-bottom: 50rpx;
+  margin-top: 40rpx;
+  margin-bottom: 24rpx;
 }
 
 /* ================================================
@@ -356,9 +356,9 @@ page {
 .range-bar-area {
   position: relative;
   width: 100%;
-  margin-top: 16rpx;
-  margin-bottom: 20rpx;
-  padding-top: 70rpx;
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+  padding-top: 56rpx;
 }
 
 /* 当前值标记 */
@@ -431,81 +431,137 @@ page {
 .scale-num:first-child { transform: translateX(0); }
 .scale-num:last-child { transform: translateX(-100%); }
 
-/* 示意图区域 */
+/* 示意图区域（可滑动 swiper 容器）
+ * 用 padding-bottom 锁定容器宽高比 = 图片真实比例 1080:603（≈55.83%），
+ * 这样无论屏幕多宽，容器都精确匹配图片比例，配合 aspectFit 模式完全无裁剪、不压缩。
+ */
 .range-illustration {
   width: 100%;
-  height: 200rpx;
+  height: 0;
+  padding-bottom: 55.83%;
   border-radius: 32rpx;
   overflow: hidden;
-  margin-bottom: 20rpx;
-  background: #FFFFFF;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+  margin-bottom: 12rpx;
+  background: #0F172A;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   position: relative;
 }
 
-.illustration-img {
-  width: 100%;
-  height: 100%;
-  opacity: 1;
-  display: block;
-}
-
-.illu-masks {
+/* swiper 用绝对定位铺满父容器（因为父容器高度由 padding 撑出，本身 height:0） */
+.illustration-swiper {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
 }
 
-.illu-mask {
-  flex: 1;
+.illustration-item {
+  width: 100%;
   height: 100%;
-  transition: all 0.3s ease;
-  position: relative;
-  box-sizing: border-box;
 }
 
-/* 用半透明黑色和白色来模拟亮暗程度，原图作为舒适区基准 */
-.mask-dark { background: rgba(0, 0, 0, 0.65); }
-.mask-dim { background: rgba(0, 0, 0, 0.35); }
-.mask-comfort { background: rgba(0, 0, 0, 0); }
-.mask-bright { background: rgba(255, 255, 255, 0.25); }
-.mask-over { background: rgba(255, 255, 255, 0.55); }
+.illustration-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
-/* 当前高亮选中的区间，非选中区间适当变暗以突出选中区间 */
-.illu-mask.mask-active {
-  border: 4rpx solid #1a2234;
+/* 底部圆点指示器：5 个 */
+.illu-dots {
+  position: absolute;
+  bottom: 18rpx;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10rpx;
   z-index: 2;
-  box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.2);
 }
 
-.illu-masks:has(.mask-active) .illu-mask:not(.mask-active) {
-  opacity: 0.8; /* 其他区块变暗点 */
+.illu-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.25s ease;
+}
+
+/* 当前查看的页：圆点变长 */
+.illu-dot.illu-dot-active {
+  width: 28rpx;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* 用户照度实际所在区间：白色描边小光环 */
+.illu-dot.illu-dot-current {
+  box-shadow: 0 0 0 3rpx rgba(255, 255, 255, 0.5);
+}
+
+/* 图片与区间列表之间的双状态提示行（始终显示，颜色随状态切换） */
+.illu-ref-hint {
+  height: 28rpx;
+  line-height: 28rpx;
+  text-align: center;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+  transition: color 0.25s ease;
+}
+
+/* 默认：引导用户点击下方区间（中灰，更醒目） */
+.illu-ref-hint--guide {
+  color: #64748B;
+}
+
+/* 已点击/滑动到非当前区间：参考亮度说明（浅灰，弱化） */
+.illu-ref-hint--warn {
+  color: #94A3B8;
+}
+
+/* 警告态文案中的"计算结果"四字高亮：与 500+ 过亮区彩条同色（#FB7185） */
+.ref-hint-highlight {
+  color: #FB7185;
+  font-weight: 600;
 }
 
 /* 区间列表 */
 .range-list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 140rpx;
+  gap: 6rpx;
+  margin-top: 20rpx;
+  /* 100rpx 底部保护区：仅避开 page-footer(底部 ~116rpx) 顶端区域，让整页视觉更紧凑不空旷 */
+  margin-bottom: 100rpx;
 }
 
 .range-row {
   display: flex;
   align-items: center;
-  padding: 20rpx 40rpx;
+  padding: 14rpx 32rpx;
   border-radius: 40rpx;
   background: transparent;
   transition: all 0.3s ease;
+}
+
+/* 点击反馈 */
+.range-row-hover {
+  background: rgba(241, 245, 249, 0.6);
+  transform: scale(0.985);
 }
 
 .range-active {
   background: #FFFFFF;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.05);
   border: 1rpx solid rgba(241, 245, 249, 0.8);
+}
+
+/* 当前正在上方查看的区间（与 swiper 联动） */
+.range-row.range-viewing:not(.range-active) {
+  background: rgba(241, 245, 249, 0.5);
+  border: 1rpx dashed rgba(148, 163, 184, 0.5);
 }
 
 .range-dot {
@@ -529,18 +585,18 @@ page {
 }
 
 .range-state {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: #64748B;
 }
 
 .range-active .range-state {
   color: #1a2234;
-  font-size: 32rpx;
+  font-size: 36rpx;
 }
 
 .range-scene {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: #94A3B8;
   margin-top: 6rpx;
   font-weight: 400;
@@ -551,7 +607,7 @@ page {
 }
 
 .range-val {
-  font-size: 26rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #94A3B8;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
@@ -560,7 +616,7 @@ page {
 .range-active .range-val {
   color: #1a2234;
   font-weight: 800;
-  font-size: 28rpx;
+  font-size: 32rpx;
 }
 
 /* ================================================
@@ -1360,4 +1416,637 @@ page {
 .btn-icon {
   width: 36rpx;
   height: 36rpx;
+}
+
+/* ================================================
+   导出报告浮动按钮（右上角）
+   - 使用 absolute 相对于 .report-page (position:relative) 定位
+   - top: 24rpx 表示位于内容区顶部 24rpx 处（导航栏下方）
+   - 不会与系统导航栏 / 微信胶囊冲突，每页可见
+   ================================================ */
+.export-fab {
+  position: absolute;
+  top: 24rpx;
+  right: 32rpx;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 0 22rpx;
+  height: 56rpx;
+  background: rgba(26, 34, 52, 0.92);
+  border-radius: 999rpx;
+  box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.16);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.export-fab--hover {
+  transform: scale(0.96);
+  opacity: 0.92;
+}
+
+/* CSS 绘制下载/导出图标 */
+.export-fab__icon {
+  position: relative;
+  width: 22rpx;
+  height: 22rpx;
+}
+
+.export-fab__icon::before {
+  /* 上方主体竖线 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3rpx;
+  height: 12rpx;
+  background: #FFFFFF;
+  border-radius: 2rpx;
+  transform: translateX(-50%);
+}
+
+.export-fab__icon::after {
+  /* 下方箭头（旋转方块的对角线） */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 6rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-right: 3rpx solid #FFFFFF;
+  border-bottom: 3rpx solid #FFFFFF;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2rpx;
+}
+
+.export-fab__text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  line-height: 1;
+  padding-bottom: 2rpx;
+}
+
+/* ================================================
+   会员门槛弹窗（免费用户点「导出报告」时弹出）
+   - 视觉与报告页一致：白底 + 极淡阴影 + #1a2234 强调色
+   - 两选项视觉重量相同：均用深色实心 CTA
+   - 复用 sigModalFadeIn / sigCardSlideUp 进出动画
+   ================================================ */
+.paywall-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+.paywall-card {
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 90vh;
+  background: #FFFFFF;
+  border-radius: 40rpx;
+  padding: 48rpx 40rpx 32rpx;
+  /* 阴影沿用报告页 .cover-card / .standard-card 极淡阴影语言 */
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.06);
+  animation: sigCardSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.paywall-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.paywall-card__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a2234;
+  letter-spacing: -0.5rpx;
+}
+
+.paywall-card__close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 36rpx;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.paywall-card__close:active {
+  background: #F1F5F9;
+}
+
+.paywall-card__hint {
+  font-size: 24rpx;
+  color: #64748B;
+  margin-bottom: 32rpx;
+  display: block;
+  line-height: 1.5;
+  letter-spacing: 0.5rpx;
+}
+
+/* 选项卡：所有选项视觉重量相同 —— 不存在「主选项」 */
+.paywall-option {
+  border: 2rpx solid rgba(148, 163, 184, 0.16);
+  border-radius: 32rpx;
+  padding: 32rpx 28rpx;
+  margin-bottom: 20rpx;
+  background: #FFFFFF;
+}
+
+.paywall-option__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a2234;
+  letter-spacing: 0.5rpx;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+}
+
+.paywall-option__desc {
+  display: block;
+  font-size: 24rpx;
+  color: #64748B;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+}
+
+.paywall-option__stats {
+  display: block;
+  font-size: 22rpx;
+  color: #94A3B8;
+  margin-top: 12rpx;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+  letter-spacing: 0.5rpx;
+}
+
+/* 邀请进度条：与报告页 marker-label / indicator-dot.active 同色 */
+.paywall-progress {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.paywall-progress__bar {
+  flex: 1;
+  height: 8rpx;
+  background: #F1F5F9;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.paywall-progress__fill {
+  height: 100%;
+  background: #1a2234;
+  border-radius: 999rpx;
+  transition: width 0.3s ease;
+  min-width: 0;
+}
+
+.paywall-progress__text {
+  font-size: 22rpx;
+  color: #64748B;
+  font-weight: 500;
+  min-width: 80rpx;
+  text-align: right;
+  letter-spacing: 0.5rpx;
+}
+
+/* CTA 按钮：兼容 view 与 button（邀请好友需用 button open-type=share） */
+.paywall-btn {
+  height: 80rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  line-height: 1;
+  width: 100%;
+  box-sizing: border-box;
+  background: #1a2234;
+  color: #FFFFFF;
+}
+
+.paywall-btn::after {
+  border: none;
+}
+
+.paywall-btn--invite {
+  background: #2563EB;
+}
+
+.paywall-btn--hover {
+  opacity: 0.85;
+}
+
+.paywall-card__cancel {
+  margin-top: 12rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: #94A3B8;
+  letter-spacing: 1rpx;
+}
+
+.paywall-card__cancel:active {
+  color: #64748B;
+}
+
+/* ================================================
+   署名输入弹窗
+   ================================================ */
+.sig-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 56rpx;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+@keyframes sigModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sig-card {
+  width: 100%;
+  max-width: 600rpx;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 48rpx 40rpx 36rpx;
+  box-shadow: 0 24rpx 48rpx rgba(15, 23, 42, 0.18);
+  animation: sigCardSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sigCardSlideUp {
+  from { transform: translateY(30rpx); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sig-card__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+}
+
+.sig-card__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 1rpx;
+}
+
+.sig-card__hint {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.sig-field {
+  margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.sig-field__label {
+  font-size: 24rpx;
+  color: #64748B;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.sig-field__input {
+  height: 80rpx;
+  padding: 0 24rpx;
+  background: #F8FAFC;
+  border: 2rpx solid rgba(148, 163, 184, 0.2);
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #1E293B;
+  box-sizing: border-box;
+}
+
+.sig-card__actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.sig-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  transition: opacity 0.15s ease;
+}
+
+.sig-btn--ghost {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.sig-btn--ghost:active {
+  background: #E2E8F0;
+}
+
+.sig-btn--primary {
+  background: #1a2234;
+  color: #FFFFFF;
+  box-shadow: 0 12rpx 24rpx rgba(30, 41, 59, 0.18);
+}
+
+.sig-btn--primary:active {
+  opacity: 0.9;
+}
+
+.sig-btn--disabled {
+  background: #CBD5E1 !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ================================================
+   导出后预览弹窗
+   ================================================ */
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 40rpx;
+  box-sizing: border-box;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+.preview-card {
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 86vh;
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 36rpx 36rpx 32rpx;
+  box-shadow: 0 24rpx 48rpx rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  animation: sigCardSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preview-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.preview-card__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 1rpx;
+}
+
+.preview-card__close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: #F1F5F9;
+  color: #94A3B8;
+  font-size: 36rpx;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.preview-card__close:active {
+  background: #E2E8F0;
+}
+
+/* PDF 文件卡（弹窗中央） */
+.pdf-file-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  background: #F8FAFC;
+  border: 2rpx solid rgba(148, 163, 184, 0.18);
+  border-radius: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.pdf-file-card__icon {
+  width: 96rpx;
+  height: 120rpx;
+  background: linear-gradient(180deg, #DC2626 0%, #B91C1C 100%);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16rpx;
+  box-shadow: 0 6rpx 16rpx rgba(220, 38, 38, 0.25);
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* 模拟文件「折角」 */
+.pdf-file-card__icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  clip-path: polygon(0 0, 100% 100%, 100% 0);
+  border-bottom-left-radius: 4rpx;
+}
+
+.pdf-file-card__icon-label {
+  color: #FFFFFF;
+  font-size: 22rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  line-height: 1;
+}
+
+.pdf-file-card__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  overflow: hidden;
+}
+
+.pdf-file-card__name {
+  font-size: 28rpx;
+  color: #1E293B;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  line-height: 1.4;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pdf-file-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 22rpx;
+  color: #94A3B8;
+}
+
+.pdf-file-card__size {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.pdf-file-card__dot {
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 6rpx;
+  background: #CBD5E1;
+}
+
+.pdf-file-card__type {
+  color: #94A3B8;
+}
+
+/* 弹窗内的提示文案 */
+.pdf-tip {
+  font-size: 22rpx;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 28rpx;
+  line-height: 1.5;
+}
+
+.preview-card__actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.preview-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.preview-btn--ghost {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.preview-btn--ghost:active {
+  background: #E2E8F0;
+}
+
+.preview-btn--primary {
+  background: #1a2234;
+  color: #FFFFFF;
+  box-shadow: 0 12rpx 24rpx rgba(30, 41, 59, 0.18);
+}
+
+.preview-btn--primary:active {
+  opacity: 0.9;
+}
+
+/* ================================================
+   屏外 Canvas（用于绘制报告图片，永远不可见）
+   - 不使用 display:none，否则 Canvas 2D context 无法绘制
+   - 用 absolute + 远离屏幕的负坐标隐藏
+   ================================================ */
+.report-canvas-offscreen {
+  position: absolute;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 1080rpx;
+  height: 1920rpx;
+  pointer-events: none;
+}
+
+/* ================================================
+   导出过程 Loading 遮罩
+   ================================================ */
+.export-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+}
+
+.export-loading__spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.25);
+  border-top-color: #FFFFFF;
+  border-radius: 999rpx;
+  animation: spinnerRotate 0.8s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+.export-loading__text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  letter-spacing: 1rpx;
 }

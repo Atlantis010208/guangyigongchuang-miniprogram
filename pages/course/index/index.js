@@ -4,11 +4,13 @@
  */
 const util = require('../../../utils/util')
 const { courses: mockCourses } = require('../data.js');
+const { fetchMembershipStatus } = require('../../../utils/membership.js')
 
 Page({
   data: {
-    userAvatar: '', // 用户头像URL（临时链接）
-    avatarFileID: '', // 用户头像 cloud:// fileID（用于重试）
+    userAvatar: '',
+    avatarFileID: '',
+    effectiveLevel: 'free',
     courses: [],
     featuredCourse: null,
     loading: true,
@@ -31,10 +33,11 @@ Page({
       this.getTabBar().updateRole()
       this.getTabBar().setData({ selected: 2 }) // 课程在 ownerList 中变成了索引 2
     }
-    // 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
     this.loadUserAvatar();
-    // 每次显示时刷新课程列表（确保获取最新数据，包括价格更新）
     this.loadCourses();
+    fetchMembershipStatus().then(m => {
+      this.setData({ effectiveLevel: (m && m.effectiveLevel) || 'free' })
+    }).catch(() => {})
   },
 
   onPullDownRefresh() {
@@ -175,7 +178,10 @@ Page({
   },
 
   /**
-   * 点击课程卡片
+   * 点击课程卡片（卡片整体区域）
+   * 统一跳转到课程详情页：
+   * - 已购买：进入详情页的目录 Tab，方便选择具体课时观看
+   * - 未购买：进入详情页的介绍 Tab，方便用户先了解课程
    */
   onCourseTap(e) {
     const id = e.currentTarget.dataset.id;
@@ -185,6 +191,26 @@ Page({
         ? `/pages/course/course-detail/course-detail?id=${id}&tab=1`
         : `/pages/course/course-detail/course-detail?id=${id}`,
     });
+  },
+
+  /**
+   * 点击「立即观看」按钮（catchtap 已阻止冒泡到 onCourseTap）
+   * - 已购买：直接进视频播放页，由云函数和 video-player 内部恢复进度
+   * - 未购买：跳详情页让用户先了解/购买
+   */
+  onWatchTap(e) {
+    const id = e.currentTarget.dataset.id;
+    const purchased = e.currentTarget.dataset.purchased === true;
+
+    if (purchased) {
+      wx.navigateTo({
+        url: `/pages/course/video-player/video-player?courseId=${id}`,
+      });
+    } else {
+      wx.navigateTo({
+        url: `/pages/course/course-detail/course-detail?id=${id}`,
+      });
+    }
   },
 
   /**

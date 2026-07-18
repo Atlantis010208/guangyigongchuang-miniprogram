@@ -1,0 +1,9 @@
+{
+  "name": "quiz_attempt_get",
+  "version": "1.0.0",
+  "description": "查询作答记录（结果回放 + 通过状态）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

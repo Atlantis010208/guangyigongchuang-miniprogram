@@ -14,6 +14,7 @@
  */
 const cloud = require('wx-server-sdk')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -33,7 +34,11 @@ function generateOrderNo() {
 /**
  * 生成手机号匹配列表（与 login / getPhoneNumber 云函数保持一致）
  */
-function generatePhoneMatchList(phone) {
+function generatePhoneMatchList(phone, purePhoneNumber, countryCode) {
+  return phoneUtils.generatePhoneMatchList(phone, purePhoneNumber, countryCode)
+}
+
+function generatePhoneMatchListLegacy(phone) {
   const matchList = []
   if (!phone) return matchList
 
@@ -88,7 +93,13 @@ exports.main = async (event) => {
     }
 
     // 3. 提取所有手机号，批量查询 users 表
-    const phoneList = pendingList.map(w => w.phone).filter(Boolean)
+    const phoneList = [
+      ...new Set(pendingList.flatMap(w => generatePhoneMatchList(
+        w.fullPhoneNumber || w.phone,
+        w.purePhoneNumber,
+        w.countryCode
+      )))
+    ].filter(Boolean)
 
     // 分批查询（每次最多 100 个）
     const phoneToUser = {}
@@ -104,8 +115,9 @@ exports.main = async (event) => {
         .get()
 
       for (const user of (byPhoneRes.data || [])) {
-        if (user.phoneNumber) phoneToUser[user.phoneNumber] = user
-        if (user.purePhoneNumber) phoneToUser[user.purePhoneNumber] = user
+        for (const variant of generatePhoneMatchList(user.phoneNumber, user.purePhoneNumber, user.countryCode)) {
+          phoneToUser[variant] = user
+        }
       }
 
       // 通过 purePhoneNumber 字段匹配（兼容存储格式不同的用户）
@@ -115,8 +127,9 @@ exports.main = async (event) => {
         .get()
 
       for (const user of (byPureRes.data || [])) {
-        if (user.phoneNumber) phoneToUser[user.phoneNumber] = user
-        if (user.purePhoneNumber) phoneToUser[user.purePhoneNumber] = user
+        for (const variant of generatePhoneMatchList(user.phoneNumber, user.purePhoneNumber, user.countryCode)) {
+          phoneToUser[variant] = user
+        }
       }
     }
 
@@ -131,7 +144,11 @@ exports.main = async (event) => {
     const details = []
 
     for (const whitelist of pendingList) {
-      const phoneVariants = generatePhoneMatchList(whitelist.phone)
+      const phoneVariants = generatePhoneMatchList(
+        whitelist.fullPhoneNumber || whitelist.phone,
+        whitelist.purePhoneNumber,
+        whitelist.countryCode
+      )
       let matchedUser = null
 
       for (const variant of phoneVariants) {

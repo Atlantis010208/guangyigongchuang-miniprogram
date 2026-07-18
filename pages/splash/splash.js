@@ -68,8 +68,11 @@ Page({
       return
     }
 
-    // 3. 完全没有角色信息（首次用户）-> 跳转身份选择页
+    // 3. 完全没有角色信息（首次用户）-> 进入身份选择页
     console.log('[splash] 未选择身份，跳转身份选择页')
-    wx.redirectTo({ url: '/pages/identity/identity' })
+    wx.navigateTo({
+      url: '/pages/identity/identity',
+      fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
+    })
   }
 })

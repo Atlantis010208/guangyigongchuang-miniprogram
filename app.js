@@ -4,6 +4,26 @@ const util = require('./utils/util')
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
 
+// 全局注入分享：所有未自定义 onShareAppMessage 的页面自动获得默认分享
+;(function() {
+  const _Page = Page
+  Page = function(options) {
+    if (!options.onShareAppMessage) {
+      options.onShareAppMessage = function() {
+        const pages = getCurrentPages()
+        const currentPage = pages[pages.length - 1]
+        const route = currentPage ? '/' + currentPage.route : '/pages/products/products'
+        return {
+          title: '光乙共创平台',
+          path: route,
+          imageUrl: '/images/share-logo.png'
+        }
+      }
+    }
+    return _Page(options)
+  }
+})()
+
 App({
   onLaunch(options) {
     console.log('小程序启动', options)
@@ -27,6 +47,7 @@ App({
     
     // 初始化全局数据
     this.initGlobalData()
+    this.captureInviteCode(options)
     
     // 获取系统信息
     this.getSystemInfo()
@@ -37,6 +58,7 @@ App({
 
   onShow(options) {
     console.log('小程序显示', options)
+    this.captureInviteCode(options)
     // 每次切到前台时，静默检查工具包白名单激活状态
     // 解决"先注册后导入白名单"导致已登录用户无法自动激活的问题
     this.silentCheckToolkitWhitelist()
@@ -44,6 +66,19 @@ App({
 
   onHide() {
     console.log('小程序隐藏')
+  },
+
+  captureInviteCode(options = {}) {
+    const query = options.query || {}
+    const rawCode = query.inviteCode || query.invite_code || ''
+    const inviteCode = String(rawCode || '').trim().toUpperCase()
+    if (!inviteCode) return
+    this.globalData.pendingInviteCode = inviteCode
+    try {
+      wx.setStorageSync('pendingInviteCode', inviteCode)
+    } catch (e) {
+      console.warn('保存邀请码失败', e)
+    }
   },
 
   onError(msg) {

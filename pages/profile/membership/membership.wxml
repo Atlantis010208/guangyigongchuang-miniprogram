@@ -1,0 +1,99 @@
+<scroll-view class="page" scroll-y wx:if="{{isLoggedIn && !isLoading}}">
+  <!-- Top Card -->
+  <view class="top-card">
+    <image wx:if="{{topCardBg}}" class="tc-bg-img" src="{{topCardBg}}" mode="widthFix"></image>
+    <view wx:else class="tc-bg-fallback"></view>
+    <view class="tc-content">
+      <view class="tc-header">
+        <text class="tc-title">{{effectiveLevel === 'premium' ? '高级会员' : '会员'}}</text>
+      </view>
+      <view class="tc-expire">有效期至 {{memberExpireDate}}</view>
+      <view class="tc-desc">
+        {{effectiveLevel === 'premium' ? '已解锁专业照度计算、报告导出与灵感图库能力' : '已解锁专业照度计算与报告导出能力'}}
+      </view>
+
+    </view>
+  </view>
+
+  <!-- Section: Unlocked Benefits -->
+  <view class="section">
+    <view class="section-title">当前已解锁权益</view>
+    <view class="grid-benefits">
+      <view class="gb-item {{item.styleClass}}" wx:for="{{unlockedBenefits}}" wx:key="id">
+        <view class="gb-icon-box">
+          <image class="gb-icon" src="{{item.icon}}"></image>
+          <view wx:if="{{item.id === 'calc'}}" class="gb-pro-badge">Pro</view>
+        </view>
+        <view class="gb-title">{{item.title}}</view>
+        <view class="gb-sub">{{item.sub}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section: Upgrade to Premium (Normal Only) -->
+  <view class="section" wx:if="{{effectiveLevel === 'normal'}}">
+    <view class="section-title">升级高级会员，解锁更多能力</view>
+    <view class="compare-table">
+      <view class="ct-header">
+        <view class="ct-col ct-left">权益对比</view>
+        <view class="ct-col ct-mid">会员</view>
+        <view class="ct-col ct-right">
+          <image class="ct-crown-small" src="{{ICONS.crownDark}}"></image>
+          <text>高级会员</text>
+        </view>
+      </view>
+      <view class="ct-row" wx:for="{{compareList}}" wx:key="name">
+        <view class="ct-col ct-left">
+          <image class="ct-row-icon" src="{{item.icon}}"></image>
+          <text>{{item.name}}</text>
+        </view>
+        <view class="ct-col ct-mid">
+          <image class="ct-check-icon" src="{{item.normal ? ICONS.checkGray : ICONS.crossGray}}"></image>
+        </view>
+        <view class="ct-col ct-right">
+          <image class="ct-check-icon" src="{{item.premium ? ICONS.checkGold : ICONS.crossGray}}"></image>
+        </view>
+      </view>
+    </view>
+    <view class="ct-note">
+      <text class="ct-note-icon">ⓘ</text>
+      <text>适合需要方案参考、素材预览与下载的专业用户</text>
+    </view>
+  </view>
+
+  <!-- Section: Premium Exclusive (Premium Only) -->
+  <view class="section" wx:if="{{effectiveLevel === 'premium'}}">
+    <view class="section-title">高级会员专属价值</view>
+    <view class="exclusive-list">
+      <view class="ex-item" wx:for="{{exclusiveValues}}" wx:key="title">
+        <view class="ex-icon-wrap">
+          <image class="ex-icon" src="{{item.icon}}"></image>
+        </view>
+        <view class="ex-text">
+          <view class="ex-title">{{item.title}}</view>
+          <view class="ex-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Section: Benefits Description -->
+  <view class="section">
+    <view class="section-title">权益说明</view>
+    <view class="desc-list">
+      <view class="dl-item" wx:for="{{descList}}" wx:key="title">
+        <image class="dl-icon" src="{{item.icon}}"></image>
+        <view class="dl-title">{{item.title}}</view>
+        <view class="dl-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-spacer"></view>
+
+  <!-- Bottom CTA -->
+  <view class="bottom-cta">
+    <view class="cta-tip">按年订阅，立即生效</view>
+    <button class="cta-btn" bindtap="onTapCta">{{effectiveLevel === 'premium' ? '立即续费' : '升级高级会员'}}</button>
+  </view>
+</scroll-view>

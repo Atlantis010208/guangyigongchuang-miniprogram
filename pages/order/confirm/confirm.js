@@ -255,26 +255,58 @@ Page({
     const userDoc = wx.getStorageSync('userDoc') || {}
     const userId = (userDoc && userDoc._id) ? userDoc._id : null
     
-    // 判断订单分类：根据商品的 category 字段判断
-    // toolkit - 工具包，course - 课程，其他 - 普通商品(mall)
+    const isToolkitItem = (item = {}) => {
+      const id = String(item.id || item.productId || item.toolkitId || '').toLowerCase()
+      const category = String(item.category || '').toLowerCase()
+      const type = String(item.type || '').toLowerCase()
+      const name = String(item.name || item.title || '').toLowerCase()
+      return category === 'toolkit'
+        || type === 'toolkit'
+        || id === 'tk_default_001'
+        || id === 'toolkit'
+        || id.includes('toolkit')
+        || id.startsWith('tk')
+        || name.includes('工具包')
+        || name.includes('toolkit')
+    }
+
+    const isCourseItem = (item = {}) => {
+      const id = String(item.id || item.productId || item.courseId || '').toLowerCase()
+      const category = String(item.category || '').toLowerCase()
+      const type = String(item.type || '').toLowerCase()
+      const name = String(item.name || item.title || '').toLowerCase()
+      const virtualCategory = String(item.virtualCategory || '')
+      return !!item.courseId
+        || category === 'course'
+        || type === 'course'
+        || virtualCategory === '课程'
+        || id.includes('course')
+        || name.includes('课程')
+        || name.includes('course')
+    }
+
+    // 判断订单分类：根据商品标记、ID、名称综合判断，避免工具包被写成普通 mall 订单。
     const firstItem = orderItems && orderItems[0]
     let orderCategory = 'mall'  // 默认为普通商品
-    if (firstItem && firstItem.category) {
-      // 如果商品有 category 字段，使用商品的分类
-      if (firstItem.category === 'toolkit' || firstItem.category === 'course') {
-        orderCategory = firstItem.category
-      }
+    if (isToolkitItem(firstItem)) {
+      orderCategory = 'toolkit'
+    } else if (isCourseItem(firstItem)) {
+      orderCategory = 'course'
     }
     
     const orderParams = {
       items: (orderItems || []).map(it => ({
         id: it.id,
+        productId: it.productId || it.id,
+        toolkitId: it.toolkitId || (isToolkitItem(it) ? (it.id || 'TK_DEFAULT_001') : ''),
+        courseId: it.courseId || (isCourseItem(it) ? it.id : ''),
         name: it.title || it.name || '',
         specs: it.specs || {},
         quantity: Number(it.quantity || 1),
         amount: Number(it.price || 0),
         image: it.image || it.img || it.thumb || it.cover || '',  // 保存商品图片
-        category: it.category || ''  // 保留商品分类信息
+        category: isToolkitItem(it) ? 'toolkit' : (isCourseItem(it) ? 'course' : (it.category || '')),  // 保留商品分类信息
+        type: isToolkitItem(it) ? 'toolkit' : (isCourseItem(it) ? 'course' : (it.type || ''))
       })),
       totalAmount: Number(total || 0),
       address: address,

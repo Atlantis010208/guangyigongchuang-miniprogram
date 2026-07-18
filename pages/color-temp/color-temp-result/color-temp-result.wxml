@@ -3,24 +3,70 @@
   <view class="v2-content">
     <view class="result-container">
       
-      <!-- 核心结果卡片 -->
+      <!-- 核心结果卡片：胶囊场景图 -->
       <view class="v2-card group-card result-hero">
-        <view class="result-hero-header">
-          <view class="temp-display">
-            <text class="temp-val">{{result.standardTemp}}</text>
-            <text class="temp-unit">K</text>
-          </view>
-          <view class="temp-tag">{{result.desc}}</view>
-        </view>
-        
-        <!-- 色温条 -->
+        <!-- 当前档位的场景对比图（点击全屏预览；左右滑动可切换上一/下一档） -->
         <view class="color-scale">
-          <view class="scale-bar">
-            <view class="scale-marker" style="left: {{(result.standardTemp - 2700) / 3800 * 100}}%"></view>
-          </view>
-          <view class="scale-labels">
-            <text>2700K</text>
-            <text>6500K</text>
+          <view
+            class="scale-bar-img"
+            bindtouchstart="onSceneTouchStart"
+            catch:touchmove="onSceneTouchMove"
+            bindtouchend="onSceneTouchEnd"
+          >
+            <!-- 包裹层：overflow:hidden 限制 slide 横向溢出（箭头 absolute 在 .scale-bar-img 上不受影响） -->
+            <view class="image-wrapper">
+              <!-- 6 张完整 slide（图 + 渐变蒙版 + 底座 + 胶囊）横排，translateX 整体平移 -->
+              <view class="scene-track" style="{{trackStyle}}">
+                <view class="scene-slide" style="background: rgb({{item.color}})" wx:for="{{sceneList}}" wx:key="temp" wx:for-index="idx">
+                  <!-- 图片 + 该 slide 自己的边界蒙版 -->
+                  <view class="slide-image">
+                    <image
+                      class="scale-img"
+                      src="{{item.url}}"
+                      mode="aspectFill"
+                      lazy-load="{{true}}"
+                      data-temp="{{item.temp}}"
+                      bindtap="onPreviewScaleImage"
+                    ></image>
+                    <view class="slide-mask" style="background: linear-gradient(to bottom, rgba({{item.color}}, 0) 0%, rgba({{item.color}}, 1) 75%)"></view>
+                  </view>
+
+                  <!-- 该 slide 的纯色底座 + 胶囊 + 本 slide 专属的一对箭头（仅当前可见 slide 渲染箭头，避免相邻 slide 箭头在边界错向叠加） -->
+                  <view class="slide-strip" style="background: rgb({{item.color}})">
+                    <!-- 左箭头：仅当前可见 slide 且非首张时渲染；首张完全不出现左箭头 -->
+                    <view
+                      wx:if="{{idx === displayedIndex && idx !== 0}}"
+                      class="temp-summary-arrow temp-summary-arrow--left"
+                      hover-class="temp-summary-arrow--hover"
+                      hover-stay-time="80"
+                      bindtap="onPrevTemp"
+                      aria-label="上一档色温"
+                    >
+                      <image src="/images/arrow-left.png" mode="aspectFit" class="arrow-icon"></image>
+                    </view>
+
+                    <!-- 仅 AI 推荐档位的 slide 有 item.desc（AI 生成的专业小字描述）；
+                         其余档位 desc 为空：大字改为「{temp}K 色温参考效果」并水平居中（slide-bubble--center），无小字 -->
+                    <view class="slide-bubble {{item.desc ? '' : 'slide-bubble--center'}}">
+                      <text class="temp-summary-prefix">{{item.desc ? ('建议整体色温：' + item.temp + 'K。') : (item.temp + 'K 色温参考效果')}}</text>
+                      <text wx:if="{{item.desc}}" class="temp-summary-desc">{{item.desc}}</text>
+                    </view>
+
+                    <!-- 右箭头：仅当前可见 slide 且非末张时渲染；末张完全不出现右箭头 -->
+                    <view
+                      wx:if="{{idx === displayedIndex && idx !== sceneList.length - 1}}"
+                      class="temp-summary-arrow temp-summary-arrow--right"
+                      hover-class="temp-summary-arrow--hover"
+                      hover-stay-time="80"
+                      bindtap="onNextTemp"
+                      aria-label="下一档色温"
+                    >
+                      <image src="/images/arrow-right.png" mode="aspectFit" class="arrow-icon"></image>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -31,9 +77,10 @@
         <view class="reasoning-text">{{result.reasoning}}</view>
       </view>
 
-      <!-- 分层建议卡片 -->
-      <view class="v2-card group-card">
+      <!-- 分层建议卡片：按各灯具列出推荐色温 -->
+      <view class="v2-card group-card" wx:if="{{result.layers && result.layers.length > 0}}">
         <view class="card-title">分层色温建议</view>
+        <view class="advice-subtitle">以下为各灯具的具体推荐色温</view>
         <view class="advice-list">
           <view class="advice-item" wx:for="{{result.layers}}" wx:key="index">
             <view class="advice-content">
@@ -62,7 +109,139 @@
         </view>
       </view>
 
-      <button class="v2-btn-calculate" style="background: #fff; color: #1E3A5F; border: 2rpx solid #1E3A5F; margin-top: 40rpx;" bindtap="onRecalculate">重新测试</button>
+      <!-- ====== 底部操作按钮：左「导出报告」（次） + 右「重新测试」（主） ====== -->
+      <view class="result-actions">
+        <view class="result-action-btn result-action-btn--ghost"
+              bindtap="onExportReportTap"
+              hover-class="result-action-btn--hover"
+              hover-stay-time="80">
+          <text>导出报告</text>
+        </view>
+        <view class="result-action-btn result-action-btn--primary"
+              bindtap="onRecalculate"
+              hover-class="result-action-btn--hover"
+              hover-stay-time="80">
+          <text>重新测试</text>
+        </view>
+      </view>
     </view>
+  </view>
+
+  <!-- ====== 会员门槛弹窗（免费用户点「导出报告」时出现，邀请好友 / 开通会员 二选一） ====== -->
+  <view wx:if="{{showPaywallModal}}" class="paywall-modal" catchtap="onClosePaywall">
+    <view class="paywall-card" catchtap="noop">
+      <view class="paywall-card__head">
+        <text class="paywall-card__title">导出专业报告</text>
+        <view class="paywall-card__close" bindtap="onClosePaywall">×</view>
+      </view>
+      <text class="paywall-card__hint">该功能需要会员身份，下面两种方式可解锁</text>
+
+      <!-- 选项 1：邀请好友 -->
+      <view class="paywall-option">
+        <text class="paywall-option__title">邀请好友 · 试用会员</text>
+        <text class="paywall-option__desc">每邀 2 位好友注册，得 7 天会员试用</text>
+        <view class="paywall-progress">
+          <view class="paywall-progress__bar">
+            <view class="paywall-progress__fill" style="width: {{paywallInviteProgress.percent}}%;"></view>
+          </view>
+          <text class="paywall-progress__text">{{paywallInviteProgress.inCycle}} / 2 人</text>
+        </view>
+        <text class="paywall-option__stats" wx:if="{{paywallInvitedTotal > 0}}">已邀 {{paywallInvitedTotal}} 人 · 累计获 {{paywallTrialGranted}} 天试用</text>
+        <button class="paywall-btn paywall-btn--invite"
+                open-type="share"
+                hover-class="paywall-btn--hover"
+                bindtap="onPaywallInviteTap">邀请好友</button>
+      </view>
+
+      <!-- 选项 2：开通会员 -->
+      <view class="paywall-option">
+        <text class="paywall-option__title">开通会员 · 立即解锁</text>
+        <text class="paywall-option__desc">不限次导出，全部专业功能</text>
+        <view class="paywall-btn"
+              hover-class="paywall-btn--hover"
+              bindtap="onPaywallUpgradeTap">立即开通</view>
+      </view>
+
+      <view class="paywall-card__cancel" bindtap="onClosePaywall">稍后再说</view>
+    </view>
+  </view>
+
+  <!-- ====== 署名输入弹窗 ====== -->
+  <view wx:if="{{showSignatureModal}}" class="sig-modal" catchtap="onCloseSignatureModal">
+    <view class="sig-card" catchtap="noop">
+      <view class="sig-card__head">
+        <text class="sig-card__title">添加署名</text>
+        <text class="sig-card__hint">署名将出现在报告底部</text>
+      </view>
+      <view class="sig-field">
+        <text class="sig-field__label">设计师 / 顾问姓名</text>
+        <input class="sig-field__input"
+               placeholder="例：张三"
+               value="{{signatureName}}"
+               maxlength="16"
+               bindinput="onSignatureNameInput"
+               confirm-type="next" />
+      </view>
+      <view class="sig-field">
+        <text class="sig-field__label">工作室 / 公司（选填）</text>
+        <input class="sig-field__input"
+               placeholder="例：光乙照明设计"
+               value="{{signatureStudio}}"
+               maxlength="20"
+               bindinput="onSignatureStudioInput"
+               confirm-type="done" />
+      </view>
+      <view class="sig-card__actions">
+        <view class="sig-btn sig-btn--ghost" bindtap="onCloseSignatureModal">取消</view>
+        <view class="sig-btn sig-btn--primary {{!signatureName ? 'sig-btn--disabled' : ''}}"
+              bindtap="onConfirmSignature">确认导出</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 导出后预览弹窗（PDF 文件卡 + 打开/分享） ====== -->
+  <view wx:if="{{showPreviewModal}}" class="preview-modal" catchtap="onClosePreviewModal">
+    <view class="preview-card" catchtap="noop">
+      <view class="preview-card__head">
+        <text class="preview-card__title">报告已生成</text>
+        <view class="preview-card__close" bindtap="onClosePreviewModal">×</view>
+      </view>
+
+      <view class="pdf-file-card">
+        <view class="pdf-file-card__icon">
+          <text class="pdf-file-card__icon-label">PDF</text>
+        </view>
+        <view class="pdf-file-card__meta">
+          <text class="pdf-file-card__name">{{exportedPdfFileName || '色温推荐报告.pdf'}}</text>
+          <view class="pdf-file-card__sub">
+            <text class="pdf-file-card__size">{{exportedPdfSizeText}}</text>
+            <text wx:if="{{exportedPdfSizeText}}" class="pdf-file-card__dot"></text>
+            <text class="pdf-file-card__type">便携式文档格式</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="pdf-tip">
+        <text>「分享给好友」可发送到聊天 / 邮箱 / 电脑收藏</text>
+      </view>
+
+      <view class="preview-card__actions">
+        <view class="preview-btn preview-btn--ghost" bindtap="onOpenPdf">
+          <text>打开预览</text>
+        </view>
+        <view class="preview-btn preview-btn--primary" bindtap="onSharePdf">
+          <text>分享给好友</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ====== 屏外 Canvas（用于绘制报告图片，永远不可见） ====== -->
+  <canvas type="2d" id="reportCanvas" class="report-canvas-offscreen"></canvas>
+
+  <!-- ====== 导出过程 Loading 遮罩 ====== -->
+  <view wx:if="{{exporting}}" class="export-loading">
+    <view class="export-loading__spinner"></view>
+    <text class="export-loading__text">{{exportingText || '正在生成报告...'}}</text>
   </view>
 </view>

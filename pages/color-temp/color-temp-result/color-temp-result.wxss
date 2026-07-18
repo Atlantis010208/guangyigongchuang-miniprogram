@@ -10,6 +10,14 @@
   padding-top: 30rpx;
 }
 
+/* 核心结果卡片：纯胶囊场景图，去掉 v2-card 默认内边距让图片占满；与下方卡片统一 24rpx 圆角，
+   配合 overflow:hidden 让图片左上/右上、暖色底带左下/右下都被自动裁成圆角 */
+.result-hero {
+  padding: 0;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
 .tips-title {
   display: flex;
   align-items: center;
@@ -19,4 +27,819 @@
   width: 40rpx;
   height: 40rpx;
   margin-right: 10rpx;
+}
+
+/* ==================== 顶部色温胶囊卡片 + 左/右切换箭头（悬浮在图片内部） ==================== */
+/* 必须覆盖 color-temp.wxss 中 .scale-bar-img 的 margin-top:8rpx / margin-bottom:24rpx / border-radius:16rpx，
+   否则 margin-bottom 会让 .scale-bar-img 与 .result-hero 底沿之间露出 24rpx 的 .v2-card #fff 白底（图片下方的"白色窄带"根因）。 */
+.scale-bar-img {
+  position: relative;
+  width: 100%;
+  display: block;
+  margin: 0;
+  border-radius: 0;
+}
+
+/* 包裹层：overflow:hidden 隐藏横排的其余 slide；position:relative 限制蒙版绝对定位 */
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 6 张 slide 横排轨道：用 transform 平移实现平滑切换 */
+/* transition 已移到 inline style（见 trackStyle），跟手拖动时由 JS 临时关闭 transition 实现实时跟手；
+   松手 snap 时再恢复 transition，确保切档过渡平滑。这里只保留 will-change 提示 GPU 合成。 */
+.scene-track {
+  display: flex;
+  flex-direction: row;
+  width: 600%; /* 6 张 slide 水平拼接的总宽（相对 .image-wrapper） */
+  will-change: transform;
+  /* 强制创建合成层，让 transform 走 GPU，避免 CPU 合成大尺寸 element 卡顿 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.scene-slide {
+  width: calc(100% / 6); /* 每个 slide 占轨道 1/6 → .image-wrapper 的 100% */
+  flex-shrink: 0;
+  display: flex;          /* 列向 flex：让 .slide-strip 可以 flex:1 撑满被 stretch 后的剩余高度 */
+  flex-direction: column;
+}
+
+/* slide 中的图片包裹层：锁定 16:10 比例，保证 6 张图的容器高度完全一致 */
+.slide-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+/* 必须覆盖 color-temp.wxss 的 .scale-img 父样式：
+   - transition: transform 0.2s ease + .scale-img:active { transform: scale(0.98) } 会让手指按住图片那一瞬触发"缩放→恢复"的卡顿动效，
+     干扰横滑切档手势（用户按住准备滑动时图片会先缩 0.98，看起来像被卡住）。
+   - 这里把 transform/transition 都置空，按住图片不再有视觉缩放反馈。 */
+.scale-img {
+  width: 100%;
+  height: 100%;            /* 填满容器高度（配合 image mode="aspectFill" 按比例填充，超出居中裁切） */
+  display: block;
+  transition: none;
+}
+
+.scale-img:active {
+  transform: none;
+}
+
+/* 每个 slide 各自的边界蒙版：贴图片底部往上延伸 160rpx，从透明过渡到该 slide 的底色 */
+.slide-mask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 160rpx;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 每个 slide 各自的纯色底座：胶囊住在这里，会跟随平移一起划过去 */
+/* flex:1 配合 .scene-slide 的 flex column 撑满 slide 被 stretch 后的剩余高度，
+   防止文字短的 slide 底部空白透出 .v2-card 的 #fff 白底（图片下方出现白色卡片的根因） */
+.slide-strip {
+  position: relative;
+  width: 100%;
+  margin-top: -2rpx; /* 上叠 2rpx 消除 1px 拼接缝 */
+  padding: 0 0 36rpx;
+  box-sizing: border-box;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.temp-summary-arrow {
+  position: absolute;             /* 锅点在所在 slide 的 .slide-strip（relative）上，会跟随本 slide 一起 transform 平移 */
+  bottom: 12rpx;                  /* 靠底座底部 12rpx，使箭头中心大致对齐胶囊中心 */
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  /* === 液态玻璃效果：与 .slide-bubble 一致 === */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.22) 60%, rgba(255, 255, 255, 0.30) 100%);
+  backdrop-filter: blur(24rpx) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(24rpx) saturate(180%) brightness(1.08);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 多层阴影：内上微亮漫射 + 内下微沉漫射 + 外层贴边 + 外层飘浮 */
+  box-shadow:
+    inset 0 4rpx 12rpx rgba(255, 255, 255, 0.18),
+    inset 0 -6rpx 14rpx rgba(0, 0, 0, 0.05),
+    0 2rpx 6rpx rgba(0, 0, 0, 0.10),
+    0 12rpx 28rpx rgba(0, 0, 0, 0.18);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  z-index: 10;                    /* 高于 slide 内部蒙版/底座 */
+}
+
+.temp-summary-arrow--hover {
+  transform: scale(0.92);
+  /* hover 时仅提高渐变透明度，保留液态玻璃质感，不上纯白 */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.35) 60%, rgba(255, 255, 255, 0.45) 100%);
+}
+
+/* 首/末张现在 wxml 中直接不渲染箭头，.is-disabled 不再使用；保留以防外部复用不够安全 */
+.temp-summary-arrow.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 箭头半圆溢出 slide 左/右边缘 32rpx，由 .image-wrapper 的 overflow:hidden 自然裁出半圆；需配合 wxml 中 wx:if="{{idx === displayedIndex}}"只渲染当前 slide 箭头，避免相邻 slide 箭头错向叠加 */
+.temp-summary-arrow--left {
+  left: -32rpx;
+}
+
+.temp-summary-arrow--right {
+  right: -32rpx;
+}
+
+/* 用 base64 svg 替换不存在的本地图标；图标向"内"偏移半个图标宽度，使箭头在可见的半圆中居中 */
+.temp-summary-arrow--left .arrow-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'%3E%3C/polyline%3E%3C/svg%3E");
+  background-size: cover;
+  transform: translateX(16rpx);
+}
+
+.temp-summary-arrow--right .arrow-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E");
+  background-size: cover;
+  transform: translateX(-16rpx);
+}
+
+/* 胶囊本身：各 slide 迭代后不再用 .temp-summary-bubble，统一采用 .slide-bubble */
+.slide-bubble {
+  margin: -40rpx 64rpx 0;          /* 上叠 40rpx 贴到图片底部；左右各留 64rpx 避开备箭头位置 */
+  /* === 液态玻璃（Liquid Glass）效果 === */
+  /* 1) 斜向光照渐变：左上较亮 → 右下较暗，模拟从左上 45° 入射光 */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.22) 60%, rgba(255, 255, 255, 0.30) 100%);
+  /* 2) 强化毛玻璃：模糊 + 饱和度 + 提亮，把背景色"折射"进玻璃内部 */
+  backdrop-filter: blur(24rpx) saturate(180%) brightness(1.08);
+  -webkit-backdrop-filter: blur(24rpx) saturate(180%) brightness(1.08);
+  /* 3) 不要显式 border 与强 inset 边线，避免胶囊被白色描边框出 */
+  border: none;
+  border-radius: 32rpx;
+  padding: 24rpx 32rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #1d1d1f;
+  text-align: left;
+  /* 4) 阴影组合（去掉所有 1rpx 内边高光/暗线，改靠面积漫射模拟玻璃厚度）：
+     - inset 顶部 4rpx 极淡白漫射：胶囊上沿被环境光浅浅打亮，没有清晰边线
+     - inset 底部 6rpx 极淡黑漫射：胶囊下沿略沉下去，增加厚度而非描边
+     - 外层近距贴边阴影 + 外层远距飘浮阴影 */
+  box-shadow:
+    inset 0 4rpx 12rpx rgba(255, 255, 255, 0.18),
+    inset 0 -6rpx 14rpx rgba(0, 0, 0, 0.05),
+    0 2rpx 6rpx rgba(0, 0, 0, 0.10),
+    0 12rpx 28rpx rgba(0, 0, 0, 0.18);
+  flex: 1;
+  min-width: 0;
+}
+
+/* 参考档位（无 AI desc）的胶囊：只有一行「{temp}K 色温参考效果」，水平 + 垂直居中 */
+/* margin: auto 64rpx 覆盖 .slide-bubble 默认的 -40rpx 64rpx 0：
+   - 上下 auto 在 .slide-strip 这个 flex 容器内自动平分剩余 cross axis 空间 → 垂直居中
+   - 左右保持 64rpx 避开左/右箭头位置 */
+.slide-bubble--center {
+  text-align: center;
+  margin: auto 64rpx;
+}
+
+.temp-summary-prefix {
+  font-weight: 700;
+  font-size: 30rpx;
+  color: #1d1d1f;
+}
+
+.temp-summary-desc {
+  font-weight: 400;
+  color: #1d1d1f;
+}
+
+/* ==================== 分层色温建议卡片副标题 ==================== */
+.advice-subtitle {
+  font-size: 24rpx;
+  color: #909399;
+  margin-top: -4rpx;        /* 与 .card-title 拉近 */
+  margin-bottom: 16rpx;     /* 与 .advice-list 间距 */
+  line-height: 1.4;
+}
+
+/* ==================================================================
+   底部操作按钮组：左「导出报告」（次按钮）+ 右「重新测试」（主按钮）
+   ================================================================== */
+.result-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+  padding: 0 4rpx;
+}
+
+.result-action-btn {
+  flex: 1;
+  height: 92rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  box-sizing: border-box;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.result-action-btn--hover {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+
+/* 次按钮：白底 + 深色描边（与原「重新测试」配色保持一致，作为辅助操作） */
+.result-action-btn--ghost {
+  background: #FFFFFF;
+  color: #1E3A5F;
+  border: 2rpx solid #1E3A5F;
+}
+
+/* 主按钮：深色填充 + 白字 + 阴影（突出"重新测试"为主操作） */
+.result-action-btn--primary {
+  background: #1E3A5F;
+  color: #FFFFFF;
+  border: 2rpx solid #1E3A5F;
+  box-shadow: 0 12rpx 24rpx rgba(30, 58, 95, 0.2);
+}
+
+/* ==================================================================
+   会员门槛弹窗（免费用户点「导出报告」时弹出）
+   - 视觉与报告页一致：白底 + 极淡阴影 + #1a2234 强调色
+   - 两选项视觉重量相同：均用深色实心 CTA
+   - 复用 sigModalFadeIn / sigCardSlideUp 进出动画
+   ================================================================== */
+.paywall-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+.paywall-card {
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 90vh;
+  background: #FFFFFF;
+  border-radius: 40rpx;
+  padding: 48rpx 40rpx 32rpx;
+  /* 阴影沿用报告页 .cover-card / .standard-card 极淡阴影语言 */
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.06);
+  animation: sigCardSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.paywall-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.paywall-card__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a2234;
+  letter-spacing: -0.5rpx;
+}
+
+.paywall-card__close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 36rpx;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.paywall-card__close:active {
+  background: #F1F5F9;
+}
+
+.paywall-card__hint {
+  font-size: 24rpx;
+  color: #64748B;
+  margin-bottom: 32rpx;
+  display: block;
+  line-height: 1.5;
+  letter-spacing: 0.5rpx;
+}
+
+/* 选项卡：所有选项视觉重量相同 —— 不存在「主选项」 */
+.paywall-option {
+  border: 2rpx solid rgba(148, 163, 184, 0.16);
+  border-radius: 32rpx;
+  padding: 32rpx 28rpx;
+  margin-bottom: 20rpx;
+  background: #FFFFFF;
+}
+
+.paywall-option__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a2234;
+  letter-spacing: 0.5rpx;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+}
+
+.paywall-option__desc {
+  display: block;
+  font-size: 24rpx;
+  color: #64748B;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+}
+
+.paywall-option__stats {
+  display: block;
+  font-size: 22rpx;
+  color: #94A3B8;
+  margin-top: 12rpx;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
+  letter-spacing: 0.5rpx;
+}
+
+/* 邀请进度条：与报告页 marker-label / indicator-dot.active 同色 */
+.paywall-progress {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.paywall-progress__bar {
+  flex: 1;
+  height: 8rpx;
+  background: #F1F5F9;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.paywall-progress__fill {
+  height: 100%;
+  background: #1a2234;
+  border-radius: 999rpx;
+  transition: width 0.3s ease;
+  min-width: 0;
+}
+
+.paywall-progress__text {
+  font-size: 22rpx;
+  color: #64748B;
+  font-weight: 500;
+  min-width: 80rpx;
+  text-align: right;
+  letter-spacing: 0.5rpx;
+}
+
+/* CTA 按钮：兼容 view 与 button（邀请好友需用 button open-type=share） */
+.paywall-btn {
+  height: 80rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  line-height: 1;
+  width: 100%;
+  box-sizing: border-box;
+  background: #1a2234;
+  color: #FFFFFF;
+}
+
+.paywall-btn::after {
+  border: none;
+}
+
+.paywall-btn--invite {
+  background: #2563EB;
+}
+
+.paywall-btn--hover {
+  opacity: 0.85;
+}
+
+.paywall-card__cancel {
+  margin-top: 12rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: #94A3B8;
+  letter-spacing: 1rpx;
+}
+
+.paywall-card__cancel:active {
+  color: #64748B;
+}
+
+/* ==================================================================
+   署名输入弹窗
+   ================================================================== */
+.sig-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 56rpx;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+@keyframes sigModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sig-card {
+  width: 100%;
+  max-width: 600rpx;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 48rpx 40rpx 36rpx;
+  box-shadow: 0 24rpx 48rpx rgba(15, 23, 42, 0.18);
+  animation: sigCardSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sigCardSlideUp {
+  from { transform: translateY(30rpx); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sig-card__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+}
+
+.sig-card__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 1rpx;
+}
+
+.sig-card__hint {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.sig-field {
+  margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.sig-field__label {
+  font-size: 24rpx;
+  color: #64748B;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.sig-field__input {
+  height: 80rpx;
+  padding: 0 24rpx;
+  background: #F8FAFC;
+  border: 2rpx solid rgba(148, 163, 184, 0.2);
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #1E293B;
+  box-sizing: border-box;
+}
+
+.sig-card__actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.sig-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  transition: opacity 0.15s ease;
+}
+
+.sig-btn--ghost {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.sig-btn--ghost:active {
+  background: #E2E8F0;
+}
+
+.sig-btn--primary {
+  background: #1a2234;
+  color: #FFFFFF;
+  box-shadow: 0 12rpx 24rpx rgba(30, 41, 59, 0.18);
+}
+
+.sig-btn--primary:active {
+  opacity: 0.9;
+}
+
+.sig-btn--disabled {
+  background: #CBD5E1 !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ==================================================================
+   导出后预览弹窗（PDF 文件卡）
+   ================================================================== */
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+  animation: sigModalFadeIn 0.18s ease;
+}
+
+.preview-card {
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 86vh;
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 40rpx 36rpx 32rpx;
+  box-shadow: 0 24rpx 48rpx rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  animation: sigCardSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preview-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.preview-card__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 1rpx;
+}
+
+.preview-card__close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 999rpx;
+  background: #F1F5F9;
+  color: #94A3B8;
+  font-size: 36rpx;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.preview-card__close:active {
+  background: #E2E8F0;
+}
+
+.pdf-file-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  background: #F8FAFC;
+  border: 2rpx solid rgba(148, 163, 184, 0.18);
+  border-radius: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.pdf-file-card__icon {
+  width: 96rpx;
+  height: 120rpx;
+  background: linear-gradient(180deg, #DC2626 0%, #B91C1C 100%);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16rpx;
+  box-shadow: 0 6rpx 16rpx rgba(220, 38, 38, 0.25);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pdf-file-card__icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  clip-path: polygon(0 0, 100% 100%, 100% 0);
+  border-bottom-left-radius: 4rpx;
+}
+
+.pdf-file-card__icon-label {
+  color: #FFFFFF;
+  font-size: 22rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  line-height: 1;
+}
+
+.pdf-file-card__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  overflow: hidden;
+}
+
+.pdf-file-card__name {
+  font-size: 28rpx;
+  color: #1E293B;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  line-height: 1.4;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pdf-file-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 22rpx;
+  color: #94A3B8;
+}
+
+.pdf-file-card__size {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.pdf-file-card__dot {
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 6rpx;
+  background: #CBD5E1;
+}
+
+.pdf-file-card__type {
+  color: #94A3B8;
+}
+
+.pdf-tip {
+  font-size: 22rpx;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 28rpx;
+  line-height: 1.5;
+}
+
+.preview-card__actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.preview-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.preview-btn--ghost {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.preview-btn--ghost:active {
+  background: #E2E8F0;
+}
+
+.preview-btn--primary {
+  background: #1a2234;
+  color: #FFFFFF;
+  box-shadow: 0 12rpx 24rpx rgba(30, 41, 59, 0.18);
+}
+
+.preview-btn--primary:active {
+  opacity: 0.9;
+}
+
+/* ==================================================================
+   屏外 Canvas（绘制报告图片用，永远不可见）
+   ================================================================== */
+.report-canvas-offscreen {
+  position: absolute;
+  left: -9999rpx;
+  top: -9999rpx;
+  width: 1080rpx;
+  height: 1920rpx;
+  pointer-events: none;
+}
+
+/* ==================================================================
+   导出过程 Loading 遮罩
+   ================================================================== */
+.export-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+}
+
+.export-loading__spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.25);
+  border-top-color: #FFFFFF;
+  border-radius: 999rpx;
+  animation: spinnerRotate 0.8s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+.export-loading__text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  letter-spacing: 1rpx;
 }

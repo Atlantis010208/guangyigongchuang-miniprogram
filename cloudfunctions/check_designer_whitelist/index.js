@@ -12,6 +12,7 @@
  *   - message: 提示信息
  */
 const cloud = require('wx-server-sdk')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -20,6 +21,10 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
  * 如需修改此函数，请同步修改 admin_designer_whitelist_import/index.js 中的同名函数
  */
 function normalizePhone(phone) {
+  return phoneUtils.normalizePhone(phone)
+}
+
+function normalizePhoneLegacy(phone) {
   if (!phone) return ''
   let phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
   // 移除+86前缀
@@ -44,14 +49,19 @@ exports.main = async (event) => {
 
   try {
     const db = cloud.database()
+    const _ = db.command
 
     // 标准化手机号
     const normalizedPhone = normalizePhone(phone)
+    const phoneMatchList = phoneUtils.generatePhoneMatchList(phone)
+    if (!phoneMatchList.includes(normalizedPhone)) {
+      phoneMatchList.push(normalizedPhone)
+    }
 
     // 查询设计师白名单
     const res = await db.collection('designer_whitelist')
       .where({
-        phone: normalizedPhone,
+        phone: _.in(phoneMatchList),
         status: 'active'
       })
       .limit(1)

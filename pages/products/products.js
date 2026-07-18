@@ -1,5 +1,6 @@
 // pages/products/products.js
 const util = require('../../utils/util')
+const { fetchMembershipStatus } = require('../../utils/membership.js')
 
 // 避坑指南 PDF 文件地址（压缩版）
 const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/（已压缩）2、工具包｜装修灯光注意事项-避坑指南（最新）.pdf'
@@ -15,7 +16,8 @@ Page({
     assistantToolkitCover: '',
     assistantCourseCover: '',
     assistantCourseId: '', // 课程 ID，用于跳转详情页
-    assistantCourseTitle: '' // 课程标题
+    assistantCourseTitle: '', // 课程标题
+    effectiveLevel: 'free'
     // features 已移除，改为电子商城入口
   },
 
@@ -136,36 +138,36 @@ Page({
     this.loadUserAvatar()
     // 预加载避坑指南 PDF（后台静默下载）
     this.preloadPdfFile(PDF_BIKENG_GUIDE)
+    this._loadMembership()
+  },
+
+  async _loadMembership() {
+    try {
+      const m = await fetchMembershipStatus()
+      this.setData({ effectiveLevel: m.effectiveLevel || 'free' })
+    } catch (err) {
+      console.warn('[products] 加载会员状态失败', err)
+      this.setData({ effectiveLevel: 'free' })
+    }
   },
 
   /**
    * 检查用户是否已选择身份
-   * 首次启动或未选择身份时，跳转到身份选择页
+   * 未选择身份的首次用户跳转到身份选择页
    */
   checkIdentitySelection() {
-    const app = getApp()
-    if (!app) return
-
-    // 管理员(roles=0)不需要选择身份，直接放行
-    const userDoc = wx.getStorageSync('userDoc') || {}
-    if (userDoc.roles === 0) return
-
-    // 已选择身份的用户不再跳转
-    if (userDoc.identitySelected === true) return
-
-    // 首次启动 或 用户未选择身份 -> 跳转身份选择页
-    if (app.globalData.isFirstLaunch || !userDoc.identitySelected) {
-      // 检查云端用户记录
-      const openid = wx.getStorageSync('openid')
-      if (openid && userDoc._id) {
-        // 已登录用户，检查云端 identitySelected 状态
-        if (userDoc.identitySelected !== true) {
-          wx.navigateTo({ url: '/pages/identity/identity' })
-        }
-      } else {
-        // 未登录用户，首次启动跳转身份选择页
-        wx.navigateTo({ url: '/pages/identity/identity' })
-      }
+    try {
+      const userDoc = wx.getStorageSync('userDoc')
+      const userRole = wx.getStorageSync('userRole')
+      // 已有角色缓存或已选择身份，无需跳转
+      if (userRole || (userDoc && userDoc.identitySelected)) return
+      // 首次用户，跳转身份选择页
+      wx.navigateTo({
+        url: '/pages/identity/identity',
+        fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
+      })
+    } catch (e) {
+      console.warn('[products] 检查身份选择失败', e)
     }
   },
 
@@ -491,7 +493,9 @@ Page({
       consult: '/pages/mall/product-detail/product-detail?id=VP1773214611725',
       optimize: '/pages/mall/product-detail/product-detail?id=VP1773364009162',
       noMainLight: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
-      lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986'
+      lightingDesign: '/pages/mall/product-detail/product-detail?id=VP1773217002986',
+      collection: '/pages/flows/collection-type/collection-type',
+      lightingSelection: '/pages/flows/lighting-selection/lighting-selection'
     }
     const url = map[service]
     if (!url) {
@@ -554,9 +558,15 @@ Page({
       return
     }
     
-    // 灯光测试 - 功能开发中
+    // 灯光测试 - 跳转到业主端灯光设计认知测试介绍页
     if (category === 'hotel') {
-      wx.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+      wx.navigateTo({
+        url: '/pages/quiz/lighting-intro/lighting-intro',
+        fail: (err) => {
+          console.error('[products] 跳转灯光测试失败:', err)
+          wx.showToast({ title: '页面跳转失败，请稍后重试', icon: 'none' })
+        }
+      })
       return
     }
     

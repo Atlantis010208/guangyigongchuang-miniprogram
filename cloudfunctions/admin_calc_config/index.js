@@ -67,18 +67,35 @@ function getDefaultConfig() {
       { name: '一般', value: 0.7 },
       { name: '污染', value: 0.6 }
     ],
-    lampTypes: [
-      { id: 'lamp_1', name: '反灯槽灯带', displayName: '反灯槽灯带', powerW: 10, efficacy: 80, sourceUtil: 0.15, order: 0 },
-      { id: 'lamp_2', name: '正灯槽灯带', displayName: '正灯槽灯带', powerW: 10, efficacy: 80, sourceUtil: 0.30, order: 1 },
-      { id: 'lamp_3', name: '线性灯', displayName: '线性灯', powerW: 10, efficacy: 80, sourceUtil: 0.80, order: 2 },
-      { id: 'lamp_4', name: '射灯', displayName: '射灯', powerW: 3, efficacy: 65, sourceUtil: 0.95, order: 3 },
-      { id: 'lamp_5', name: '筒灯', displayName: '筒灯', powerW: 7, efficacy: 65, sourceUtil: 0.95, order: 4 },
-      { id: 'lamp_6', name: '吊灯', displayName: '吊灯', powerW: 25, efficacy: 80, sourceUtil: 0.90, order: 5 },
-      { id: 'lamp_7', name: '装饰灯', displayName: '装饰灯', powerW: 10, efficacy: 80, sourceUtil: 0.90, order: 6 }
-    ],
+    lampTypes: getStandardLampTypes(),
     updatedAt: new Date(),
     updatedBy: ''
   }
+}
+
+/**
+ * 标准灯具数据（含 category 和正确 sourceUtil）
+ * 每次需要默认值时统一调用这里，避免多处维护
+ */
+function getStandardLampTypes() {
+  return [
+    // 直射重点照明 (75%)
+    { id: 'lamp_s1', category: '直射重点照明', name: '射灯', displayName: '射灯', powerW: 7, efficacy: 65, sourceUtil: 0.75, order: 0 },
+    { id: 'lamp_s2', category: '直射重点照明', name: '磁吸射灯', displayName: '磁吸射灯', powerW: 7, efficacy: 65, sourceUtil: 0.75, order: 1 },
+    { id: 'lamp_s3', category: '直射重点照明', name: '磁吸格栅', displayName: '磁吸格栅', powerW: 10, efficacy: 65, sourceUtil: 0.75, order: 2 },
+    // 直接基础照明 (70%)
+    { id: 'lamp_s4', category: '直接基础照明', name: '筒灯', displayName: '筒灯', powerW: 7, efficacy: 65, sourceUtil: 0.70, order: 3 },
+    // 间接基础照明 (35%)
+    { id: 'lamp_s5', category: '间接基础照明', name: '正灯槽灯带', displayName: '正灯槽灯带', powerW: 10, efficacy: 80, sourceUtil: 0.35, order: 4 },
+    { id: 'lamp_s6', category: '间接基础照明', name: '线性灯', displayName: '线性灯', powerW: 10, efficacy: 80, sourceUtil: 0.35, order: 5 },
+    // 间接氛围照明 (20%)
+    { id: 'lamp_s7', category: '间接氛围照明', name: '反灯槽灯带', displayName: '反灯槽灯带', powerW: 10, efficacy: 80, sourceUtil: 0.20, order: 6 },
+    // 装饰类直接照明 (75%)
+    { id: 'lamp_s8', category: '装饰类直接照明', name: '吊灯', displayName: '吊灯', powerW: 25, efficacy: 80, sourceUtil: 0.75, order: 7 },
+    { id: 'lamp_s9', category: '装饰类直接照明', name: '装饰灯', displayName: '装饰灯', powerW: 10, efficacy: 80, sourceUtil: 0.75, order: 8 },
+    // 柔光漫射照明 (60%)
+    { id: 'lamp_s10', category: '柔光漫射照明', name: '磁吸泛光', displayName: '磁吸泛光', powerW: 7, efficacy: 65, sourceUtil: 0.60, order: 9 }
+  ]
 }
 
 /**
@@ -299,6 +316,15 @@ exports.main = async (event) => {
           success: true,
           code: 'OK',
           message: '配置初始化完成'
+        }
+        
+      case 'reset_lamps':
+        // 强制将数据库中的灯具数据重置为最新标准数据
+        await updateConfig({ lampTypes: getStandardLampTypes() }, userId)
+        return {
+          success: true,
+          code: 'OK',
+          message: '灯具数据已重置为最新标准'
         }
         
       default:

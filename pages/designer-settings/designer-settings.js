@@ -96,9 +96,15 @@ Page({
             data: { action: 'logout' },
             complete: () => {
               wx.clearStorageSync();
-              if (app.globalData) app.globalData.userDoc = null;
+              if (app.globalData) {
+                app.globalData.userDoc = null;
+                app.globalData.userRole = 'owner';
+              }
               wx.hideLoading();
-              wx.reLaunch({ url: '/pages/splash/splash' });
+              wx.navigateTo({
+                url: '/pages/identity/identity',
+                fail: () => wx.reLaunch({ url: '/pages/identity/identity' })
+              });
             }
           });
         }

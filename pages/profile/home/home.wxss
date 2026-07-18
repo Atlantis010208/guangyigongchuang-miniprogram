@@ -1,43 +1,404 @@
-.page{background:#f2f2f7;min-height:100vh}
-.page-title{display:block;font-size:56rpx;font-weight:800;padding:30rpx}
-.profile-card{margin:0 30rpx 20rpx;background:#fff;border-radius:40rpx;padding:0;position:relative;overflow:hidden}
-.profile-card.unified .top{display:flex;align-items:center;padding:24rpx 28rpx}
-/* 移除全局点击效果，改为独立的 hover-class */
-.top-hover{background:#f8f8f8;transition:background 0.2s}
-.edit-arrow{position:absolute;right:28rpx;color:#c7c7cc;font-size:28rpx}
-.avatar{width:120rpx;height:120rpx;border-radius:50%;background:#e5e5ea}
-.info{margin-left:24rpx}
-.name{display:block;font-size:40rpx;font-weight:700}
-.phone{display:block;margin-top:8rpx;color:#0a84ff;font-size:26rpx}
-.cells{margin:20rpx 30rpx;background:#fff;border-radius:40rpx;overflow:hidden}
-.profile-card.unified .cells.inline{margin:0;border-top:1rpx solid #eee;border-radius:0}
-.profile-card.unified .cells.inline .cell{padding:30rpx 28rpx}
-.cell{display:flex;justify-content:space-between;align-items:center;padding:34rpx 28rpx;border-bottom:1rpx solid #eee;transition:background-color 0.2s}
-.cell:last-child{border-bottom:none}
-.cell-hover{background:#f8f8f8}
-.arrow{color:#c7c7cc}
+/* ============================================================================
+   个人中心首页 · 按 Figma 设计稿 1:1 复刻（不含底部 Tab Bar）
+   配色：浅灰背景 + 白色卡 + 深色会员卡 + 金色高光
+   ============================================================================ */
+page {
+  --bg-page: #F2F3F5;
+  --bg-card: #FFFFFF;
+  --bg-member-card: #1F1F1F;
+  --gold-primary: #D4A574;
+  --gold-soft: #E8C896;
+  --gold-deep: #B88A5F;
+  --text-primary: #1F1F1F;
+  --text-secondary: #999999;
+  --text-tertiary: #C5C5C5;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-dim: rgba(255, 255, 255, 0.55);
+  --divider: #F0F0F0;
+  background: var(--bg-page);
+}
 
-.floating-contact{ position: fixed; right: 24rpx; bottom: 160rpx; background: #ffffff; border-radius: 999rpx; box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); display: flex; align-items: center; padding: 12rpx 18rpx; z-index: 9; transition: all 0.2s }
-.floating-contact-hover{ background: #f2f2f7; transform: scale(0.95) }
-.float-icon{ width: 36rpx; height: 36rpx; margin-right: 8rpx }
-.float-text{ font-size: 26rpx; color: #1c1c1e }
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
 
-/* 未登录提示卡片 */
+/* ----------------------------------------------------------------------------
+   ① 用户信息行（裸露在背景上，无卡片）
+   ---------------------------------------------------------------------------- */
+.user-row {
+  display: flex;
+  align-items: center;
+  padding: 40rpx 30rpx;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.user-row-hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #E5E5EA;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  margin-left: 24rpx;
+  min-width: 0;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.user-name {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* 会员圆角标图片（根据 effectiveLevel 动态切换） */
+.member-badge-img {
+  height: 36rpx;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.user-id {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.user-row-arrow {
+  width: 28rpx;
+  height: 28rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   ② 会员卡片（背景图 + 叠加 3 个元素：会员名称 / 有效期 / 会员权益按钮）
+   ---------------------------------------------------------------------------- */
+.member-card {
+  position: relative;
+  margin: 0 30rpx 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: transparent;
+  transition: transform 0.2s;
+}
+
+.member-card-hover {
+  transform: scale(0.99);
+}
+
+.member-card-bg {
+  width: 100%;
+  display: block;
+  border-radius: 24rpx;
+}
+
+/* 会员名称（左上，紧靠背景图中的金色皇冠） */
+.mc-level-name {
+  position: absolute;
+  top: 26rpx;
+  left: 90rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.2;
+  letter-spacing: 2rpx;
+}
+
+/* 有效期（左中下，"有效期至 yyyy.mm.dd"） */
+.mc-expire {
+  position: absolute;
+  top: 96rpx;
+  left: 32rpx;
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+}
+
+.mc-expire-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.55);
+  margin-right: 12rpx;
+  line-height: 1;
+}
+
+.mc-expire-date {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+  letter-spacing: 0.5rpx;
+}
+
+/* 会员权益按钮（右下，金色胶囊） */
+.mc-benefits-btn {
+  position: absolute;
+  right: 28rpx;
+  bottom: 30rpx;
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  background: linear-gradient(135deg, #E8C896 0%, #D4A574 100%);
+  border-radius: 999rpx;
+  line-height: 1;
+}
+
+.mc-benefits-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #1F1F1F;
+  line-height: 1;
+}
+
+/* 普通用户：银色按钮 */
+.mc-benefits-btn--silver {
+  background: linear-gradient(135deg, #D8D8D8 0%, #B0B0B0 100%);
+}
+.mc-benefits-btn--silver .mc-benefits-text {
+  color: #1F1F1F;
+}
+
+/* ----------------------------------------------------------------------------
+   ②.1 会员卡片骨架屏（memberCardBg 未加载完成时占位，避免布局跳动）
+   - padding-top:33.2% 与背景图 1024:340 比例一致，跨机型自适应高度
+   - 4 个占位块 + 流光动画，模拟皇冠/等级名/有效期/按钮位置
+   ---------------------------------------------------------------------------- */
+.member-card-skeleton {
+  position: relative;
+  margin: 0 30rpx 24rpx;
+  padding-top: 33.2%;
+  background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+/* 流光层：从左到右扫过，营造加载中的视觉反馈 */
+.mcs-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: mcs-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes mcs-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(280%); }
+}
+
+/* 皇冠占位（左上小圆） */
+.mcs-crown {
+  position: absolute;
+  top: 28rpx;
+  left: 32rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 等级名占位（左上长条，与 .mc-level-name 同位置） */
+.mcs-title {
+  position: absolute;
+  top: 38rpx;
+  left: 110rpx;
+  width: 140rpx;
+  height: 36rpx;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 有效期占位（左中长条，与 .mc-expire 同位置） */
+.mcs-expire {
+  position: absolute;
+  top: 100rpx;
+  left: 32rpx;
+  width: 220rpx;
+  height: 22rpx;
+  border-radius: 6rpx;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 会员权益按钮占位（右下胶囊，与 .mc-benefits-btn 同位置） */
+.mcs-button {
+  position: absolute;
+  right: 28rpx;
+  bottom: 30rpx;
+  width: 140rpx;
+  height: 48rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+/* ----------------------------------------------------------------------------
+   ③ 四宫格 - 快捷入口
+   ---------------------------------------------------------------------------- */
+.quick-grid {
+  margin: 0 30rpx 24rpx;
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  padding: 36rpx 8rpx;
+  display: flex;
+  align-items: flex-start;
+}
+
+.quick-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8rpx 4rpx;
+  transition: transform 0.15s;
+}
+
+.quick-item-hover {
+  transform: scale(0.94);
+}
+
+.quick-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: 18rpx;
+  display: block;
+}
+
+/* 4K 透明底 PNG 内部留白较多，用 scale 放大但不撑开容器 */
+.quick-icon--lg {
+  transform: scale(1.2);
+}
+
+.quick-label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.quick-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+/* ----------------------------------------------------------------------------
+   ④ ⑤ 列表卡片（会员专属 / 更多服务）
+   ---------------------------------------------------------------------------- */
+.list-card {
+  margin: 0 30rpx 24rpx;
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  padding: 0 32rpx;
+  overflow: hidden;
+}
+
+.list-card-title {
+  display: block;
+  padding: 32rpx 0 8rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+  border-top: 1rpx solid var(--divider);
+  transition: background-color 0.2s;
+}
+
+.list-card-title + .list-item {
+  border-top: none;
+}
+
+.list-item-hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.list-icon {
+  width: 42rpx;
+  height: 42rpx;
+  margin-right: 24rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.list-icon-placeholder {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 8rpx;
+  background: #F2F3F5;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.list-label {
+  flex: 1;
+  font-size: 30rpx;
+  color: var(--text-primary);
+}
+
+.list-extra {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-right: 16rpx;
+}
+
+.list-arrow {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   未登录提示卡（保留原逻辑，配色调整匹配新风格）
+   ---------------------------------------------------------------------------- */
 .login-prompt-card {
-  margin: 0 30rpx 20rpx;
-  background: #fff;
-  border-radius: 40rpx;
+  margin: 60rpx 30rpx 0;
+  background: var(--bg-card);
+  border-radius: 24rpx;
   padding: 40rpx 28rpx;
   display: flex;
   align-items: center;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
 }
 
 .login-prompt-avatar {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: #e5e5ea;
+  background: #E5E5EA;
   flex-shrink: 0;
 }
 
@@ -51,29 +412,34 @@
   display: block;
   font-size: 32rpx;
   font-weight: 600;
-  color: #1d1d1f;
+  color: var(--text-primary);
   margin-bottom: 8rpx;
 }
 
 .login-prompt-desc {
   display: block;
   font-size: 24rpx;
-  color: #86868b;
+  color: var(--text-secondary);
 }
 
 .login-prompt-btn {
   flex-shrink: 0;
   padding: 16rpx 32rpx;
-  background: #007aff;
-  color: #fff;
+  background: #1F1F1F;
+  color: var(--gold-soft);
   font-size: 28rpx;
   font-weight: 600;
   border-radius: 999rpx;
   border: none;
+  line-height: 1.4;
+}
+
+.login-prompt-btn::after {
+  border: none;
 }
 
 .login-prompt-btn:active {
-  background: #0066d6;
+  opacity: 0.9;
 }
 
 

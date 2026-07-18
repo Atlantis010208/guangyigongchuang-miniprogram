@@ -1,0 +1,92 @@
+<!-- 课程作业答题页：复用 pages/flows/publish 的视觉语言 -->
+<view class="page">
+
+  <!-- 加载态 -->
+  <view class="state-block" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="state-text">题目加载中...</text>
+  </view>
+
+  <!-- 加载失败 / 空状态 -->
+  <view class="state-block" wx:elif="{{loadError}}">
+    <view class="state-icon">!</view>
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-actions">
+      <button class="btn-prev" bindtap="onBack">返回</button>
+      <button class="btn-next" bindtap="onRetryLoad" wx:if="{{loadRetryable}}">重试</button>
+    </view>
+  </view>
+
+  <!-- 答题主区域 -->
+  <block wx:elif="{{quiz && questions.length > 0}}">
+
+    <!-- 顶部：标题 + 进度 -->
+    <view class="quiz-head">
+      <view class="quiz-title">{{quiz.title}}</view>
+      <view class="quiz-meta">
+        <text class="quiz-meta-text">第 {{currentIndex + 1}} / {{questions.length}} 题</text>
+        <text class="quiz-meta-text">·</text>
+        <text class="quiz-meta-text">及格 {{quiz.passScore}} 分</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progress}}%"></view>
+      </view>
+    </view>
+
+    <!-- 主内容：单题模式 + slideIn 动画 -->
+    <view class="main-content">
+      <block wx:for="{{questions}}" wx:key="id" wx:for-item="q" wx:for-index="qIdx">
+        <view class="step-container {{currentIndex === qIdx ? 'active' : ''}}" wx:if="{{currentIndex === qIdx}}">
+
+          <!-- 题型 + 分值标签 -->
+          <view class="question-tags">
+            <text class="question-type-tag type-{{q.type}}">{{typeLabels[q.type]}}</text>
+            <text class="question-score">{{q.score}} 分</text>
+          </view>
+
+          <!-- 题干（复用 step-title 大字风格） -->
+          <view class="step-header">
+            <view class="step-title">{{q.stem}}</view>
+            <view class="step-subtitle" wx:if="{{q.type === 'multiple'}}">本题为多选题，请选择所有正确选项</view>
+          </view>
+
+          <!-- 选项列表（复用 option-card） -->
+          <view class="options-list">
+            <block wx:for="{{q.options}}" wx:key="key" wx:for-item="option" wx:for-index="optionIdx">
+              <view
+                class="option-card {{selectedMaps[qIdx][option.key] ? 'selected' : ''}}"
+                bindtap="onOptionTap"
+                data-qidx="{{qIdx}}"
+                data-key="{{option.key}}"
+                data-type="{{q.type}}">
+                <view class="option-key">{{optionKeys[optionIdx]}}</view>
+                <text class="option-text">{{option.text}}</text>
+                <view class="option-check" wx:if="{{selectedMaps[qIdx][option.key]}}">✓</view>
+              </view>
+            </block>
+          </view>
+
+        </view>
+      </block>
+    </view>
+
+    <!-- 底部操作栏 -->
+    <view class="footer-bar">
+      <view class="footer-content">
+        <button class="btn-prev" wx:if="{{currentIndex > 0}}" bindtap="onPrev">上一题</button>
+        <!-- 不使用 button.disabled 属性，避免微信某些场景下拦截 bindtap；
+             由 onNext 内部根据 isCurrentAnswered/submitting 驱动提示，视觉态仍由 class.disabled 控制 -->
+        <button
+          class="btn-next {{!isCurrentAnswered || submitting ? 'disabled' : ''}}"
+          bindtap="onNext"
+          loading="{{submitting && isLast}}">
+          {{nextBtnText}}
+        </button>
+      </view>
+      <view class="submit-error" wx:if="{{submitError}}">
+        <text class="submit-error-text">{{submitError}}</text>
+      </view>
+    </view>
+
+  </block>
+</view>

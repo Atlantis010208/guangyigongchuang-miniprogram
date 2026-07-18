@@ -1,0 +1,87 @@
+<view class="page">
+
+  <!-- 品牌图标占位 -->
+  <view class="brand-icon-wrap">
+    <image class="brand-icon-img" src="{{activeTab === 'premium' ? '/images/订阅（高级会员）.png' : '/images/订阅（会员）.png'}}" mode="aspectFit"></image>
+  </view>
+
+  <!-- 标题 -->
+  <view class="header">
+    <text class="header-title">开通光乙会员</text>
+    <text class="header-sub">解锁全部专业工具，省心又高效</text>
+  </view>
+
+  <!-- Tab 切换器 -->
+  <view class="tab-switch">
+    <view
+      class="tab-item {{activeTab === 'normal' ? 'tab-active' : ''}}"
+      data-tab="normal"
+      bindtap="onTabChange"
+      hover-class="tab-hover"
+    >
+      <text>普通会员</text>
+    </view>
+    <view
+      class="tab-item {{activeTab === 'premium' ? 'tab-active' : ''}}"
+      data-tab="premium"
+      bindtap="onTabChange"
+      hover-class="tab-hover"
+    >
+      <text>高级会员</text>
+    </view>
+  </view>
+
+  <!-- 权益对比表 -->
+  <view class="benefit-table">
+    <!-- 表头 -->
+    <view class="benefit-row benefit-header">
+      <text class="benefit-name">功能</text>
+      <text class="benefit-col-free">{{activeTab === 'premium' ? '普通会员' : '免费'}}</text>
+      <text class="benefit-col-current">{{activeTab === 'normal' ? '普通会员' : '高级会员'}}</text>
+    </view>
+
+    <!-- 表行 -->
+    <view
+      wx:for="{{benefitsView}}"
+      wx:key="name"
+      class="benefit-row"
+    >
+      <text class="benefit-name">{{item.name}}</text>
+      <view class="benefit-col-free">
+        <text wx:if="{{item.free}}" class="check-icon">✓</text>
+        <text wx:else class="dash-icon">—</text>
+      </view>
+      <view class="benefit-col-current">
+        <text wx:if="{{item.current}}" class="check-icon current-check">✓</text>
+        <text wx:else class="dash-icon">—</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- CTA 按钮 -->
+  <view class="cta-wrap">
+    <button
+      class="cta-btn {{ctaState === 'opened' ? 'cta-disabled' : ''}}"
+      hover-class="{{ctaState === 'opened' ? '' : 'cta-hover'}}"
+      bindtap="onTapCta"
+      disabled="{{isPaying}}"
+    >
+      <text>{{ctaText}}</text>
+    </button>
+
+    <!-- 已开通时显示「续费」蓝链 -->
+    <view wx:if="{{showRenewalLink}}" class="renewal-link" bindtap="onTapRenewal" hover-class="link-hover">
+      <text>续费</text>
+      <text class="arrow">〉</text>
+    </view>
+  </view>
+
+  <!-- 协议说明 -->
+  <view class="agreement-row">
+    <text class="agreement-text">开通即代表同意</text>
+    <text class="agreement-link" bindtap="onTapAgreement" hover-class="link-hover">《会员服务协议》</text>
+  </view>
+
+  <!-- 底部留白 -->
+  <view class="page-bottom-spacer"></view>
+</view>

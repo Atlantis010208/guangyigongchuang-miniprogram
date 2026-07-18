@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "usingComponents": {
+    "form-question-renderer": "/components/form-question-renderer/form-question-renderer"
+  }
+}

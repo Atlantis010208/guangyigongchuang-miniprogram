@@ -11,6 +11,8 @@ Page({
     stage:'未开始',
     share:'愿意',
     coCreate:'愿意',
+    images: [], // [{ tempPath, size, sizeText, fileID, cloudPath, uploaded, error }]
+    files: [],  // [{ path, name, ext, size, sizeText, fileID, cloudPath, uploaded, error }]
     submitting:false,
     
     // 分步表单状态
@@ -68,6 +70,12 @@ Page({
         subtitle: '',
         type: 'choice',
         options: ['愿意', '不愿意'],
+      },
+      {
+        id: 'attachments',
+        title: '08 上传户型图（选填）',
+        subtitle: '上传户型图片或图纸文件，方便设计师快速理解你的需求；图片可拍照或从相册选择，pdf / dwg / dxf 等文件请先发送到微信（如文件传输助手）后再选择',
+        type: 'upload',
       }
     ]
   },
@@ -107,6 +115,9 @@ Page({
       }
     } else if (step.type === 'input') {
       valid = !!(this.data[step.id] && String(this.data[step.id]).trim())
+    } else if (step.type === 'upload') {
+      // 上传步骤选填，始终允许进入下一步/提交
+      valid = true
     }
     this.setData({ isNextValid: valid })
   },
@@ -146,6 +157,200 @@ Page({
 
   handleNumberConfirm(e) {
     this.setData({ keyboardHeight: 0 })
+  },
+
+  // ========== 上传：图片 ==========
+  onChooseImages() {
+    const remaining = 9 - (this.data.images || []).length
+    if (remaining <= 0) {
+      wx.showToast({ title: '最多上传 9 张图片', icon: 'none' })
+      return
+    }
+    wx.chooseMedia({
+      count: remaining,
+      mediaType: ['image'],
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const newImages = (res.tempFiles || []).map((f) => {
+          const sizeBytes = f.size || 0
+          const sizeText = sizeBytes >= 1024 * 1024
+            ? (sizeBytes / 1024 / 1024).toFixed(2) + 'MB'
+            : Math.max(1, Math.round(sizeBytes / 1024)) + 'KB'
+          return {
+            tempPath: f.tempFilePath,
+            size: sizeBytes,
+            sizeText,
+            fileID: '',
+            cloudPath: '',
+            uploaded: false,
+            error: false
+          }
+        })
+        if (!newImages.length) return
+        this.setData({ images: (this.data.images || []).concat(newImages) }, () => {
+          newImages.forEach((img) => this._uploadImage(img.tempPath))
+        })
+      },
+      fail: (err) => {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') !== -1) return
+        console.error('选择图片失败', err)
+        wx.showToast({ title: '选择图片失败', icon: 'none' })
+      }
+    })
+  },
+
+  _uploadImage(tempPath) {
+    const cur = this.data.images || []
+    const idx = cur.findIndex((it) => it.tempPath === tempPath)
+    if (idx === -1) return
+    const img = cur[idx]
+    const ext = (String(tempPath).split('.').pop() || 'jpg').toLowerCase().slice(0, 8)
+    const ts = Date.now()
+    const rand = Math.random().toString(36).slice(2, 8)
+    const cloudPath = `publish/images/${ts}_${rand}.${ext}`
+    wx.cloud.uploadFile({
+      cloudPath,
+      filePath: img.tempPath,
+      success: (r) => {
+        const list = (this.data.images || []).slice()
+        const i = list.findIndex((it) => it.tempPath === tempPath)
+        if (i === -1) return
+        list[i] = Object.assign({}, list[i], { fileID: r.fileID, cloudPath, uploaded: true, error: false })
+        this.setData({ images: list })
+      },
+      fail: (err) => {
+        console.error('图片上传失败', err)
+        const list = (this.data.images || []).slice()
+        const i = list.findIndex((it) => it.tempPath === tempPath)
+        if (i === -1) return
+        list[i] = Object.assign({}, list[i], { error: true })
+        this.setData({ images: list })
+        wx.showToast({ title: '图片上传失败', icon: 'none' })
+      }
+    })
+  },
+
+  onRemoveImage(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(idx)) return
+    const list = (this.data.images || []).slice()
+    if (idx < 0 || idx >= list.length) return
+    list.splice(idx, 1)
+    this.setData({ images: list })
+  },
+
+  onRetryImage(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(idx)) return
+    const cur = this.data.images || []
+    const img = cur[idx]
+    if (!img) return
+    const list = cur.slice()
+    list[idx] = Object.assign({}, img, { error: false })
+    this.setData({ images: list }, () => this._uploadImage(img.tempPath))
+  },
+
+  // ========== 上传：图纸文件 ==========
+  onChooseFiles() {
+    const remaining = 5 - (this.data.files || []).length
+    if (remaining <= 0) {
+      wx.showToast({ title: '最多上传 5 个文件', icon: 'none' })
+      return
+    }
+    const allowedExt = ['pdf', 'dwg', 'dxf', 'doc', 'docx', 'xlsx']
+    wx.chooseMessageFile({
+      count: remaining,
+      type: 'file',
+      extension: allowedExt,
+      success: (res) => {
+        const valid = []
+        const invalid = []
+        ;(res.tempFiles || []).forEach((f) => {
+          const name = f.name || '文件'
+          const ext = (name.split('.').pop() || '').toLowerCase()
+          if (allowedExt.indexOf(ext) === -1) { invalid.push(name); return }
+          const sizeBytes = f.size || 0
+          const sizeText = sizeBytes >= 1024 * 1024
+            ? (sizeBytes / 1024 / 1024).toFixed(2) + 'MB'
+            : Math.max(1, Math.round(sizeBytes / 1024)) + 'KB'
+          valid.push({
+            path: f.path,
+            name,
+            ext,
+            size: sizeBytes,
+            sizeText,
+            fileID: '',
+            cloudPath: '',
+            uploaded: false,
+            error: false
+          })
+        })
+        if (invalid.length) {
+          wx.showToast({ title: `不支持：${invalid[0]}`, icon: 'none' })
+        }
+        if (!valid.length) return
+        this.setData({ files: (this.data.files || []).concat(valid) }, () => {
+          valid.forEach((f) => this._uploadFile(f.path))
+        })
+      },
+      fail: (err) => {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') !== -1) return
+        console.error('选择文件失败', err)
+        wx.showToast({ title: '选择文件失败', icon: 'none' })
+      }
+    })
+  },
+
+  _uploadFile(path) {
+    const cur = this.data.files || []
+    const idx = cur.findIndex((it) => it.path === path)
+    if (idx === -1) return
+    const f = cur[idx]
+    const ts = Date.now()
+    const rand = Math.random().toString(36).slice(2, 8)
+    const safeName = String(f.name || 'file').replace(/[^\w.\-\u4e00-\u9fa5]/g, '_')
+    const cloudPath = `publish/files/${ts}_${rand}_${safeName}`
+    wx.cloud.uploadFile({
+      cloudPath,
+      filePath: f.path,
+      success: (r) => {
+        const list = (this.data.files || []).slice()
+        const i = list.findIndex((it) => it.path === path)
+        if (i === -1) return
+        list[i] = Object.assign({}, list[i], { fileID: r.fileID, cloudPath, uploaded: true, error: false })
+        this.setData({ files: list })
+      },
+      fail: (err) => {
+        console.error('文件上传失败', err)
+        const list = (this.data.files || []).slice()
+        const i = list.findIndex((it) => it.path === path)
+        if (i === -1) return
+        list[i] = Object.assign({}, list[i], { error: true })
+        this.setData({ files: list })
+        wx.showToast({ title: '文件上传失败', icon: 'none' })
+      }
+    })
+  },
+
+  onRemoveFile(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(idx)) return
+    const list = (this.data.files || []).slice()
+    if (idx < 0 || idx >= list.length) return
+    list.splice(idx, 1)
+    this.setData({ files: list })
+  },
+
+  onRetryFile(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(idx)) return
+    const cur = this.data.files || []
+    const f = cur[idx]
+    if (!f) return
+    const list = cur.slice()
+    list[idx] = Object.assign({}, f, { error: false })
+    this.setData({ files: list }, () => this._uploadFile(f.path))
   },
 
   _applyStepSideEffects() {
@@ -213,6 +418,20 @@ Page({
     if(!this.data.area){ wx.showToast({ title:'请输入设计面积', icon:'none' }); return }
     if(!this.data.stage){ wx.showToast({ title:'请选择项目进度', icon:'none' }); return }
 
+    // 检查附件上传状态：仍在上传 / 上传失败时阻止提交
+    const uploadingImg = (this.data.images || []).find((img) => !img.uploaded && !img.error)
+    const uploadingFile = (this.data.files || []).find((f) => !f.uploaded && !f.error)
+    if (uploadingImg || uploadingFile) {
+      wx.showToast({ title: '附件还在上传中，请稍候', icon: 'none' })
+      return
+    }
+    const errorImg = (this.data.images || []).find((img) => img.error)
+    const errorFile = (this.data.files || []).find((f) => f.error)
+    if (errorImg || errorFile) {
+      wx.showToast({ title: '有附件上传失败，请删除或重试', icon: 'none' })
+      return
+    }
+
     // 校验通过后，立即同步调用订阅弹窗（必须在用户点击同步上下文中）
     // 同时订阅：接单通知 + 订单完成通知
     const tmplIds = [
@@ -248,6 +467,14 @@ Page({
     const userDoc = wx.getStorageSync('userDoc') || {}
     const userIdLocal = (userDoc && userDoc._id) ? userDoc._id : null
 
+    // 收集已上传成功的附件
+    const imageFileIDs = (this.data.images || [])
+      .filter((img) => img.uploaded && img.fileID)
+      .map((img) => img.fileID)
+    const fileAttachments = (this.data.files || [])
+      .filter((f) => f.uploaded && f.fileID)
+      .map((f) => ({ name: f.name, size: f.size, ext: f.ext, fileID: f.fileID }))
+
     const id = Date.now().toString()
     const req = {
       id,
@@ -258,6 +485,8 @@ Page({
       stage: this.data.stage,
       share: this.data.share,
       coCreate: this.data.coCreate,
+      images: imageFileIDs,
+      files: fileAttachments,
       createdAt: new Date().toISOString(),
       source: 'publish',
       priority: depositPaid,
@@ -276,7 +505,7 @@ Page({
       if (db) {
         const userDoc = wx.getStorageSync('userDoc') || {}
         const userId = (userDoc && userDoc._id) ? userDoc._id : null
-        const params = { space, service: this.data.service, budget, area: this.data.area, stage: this.data.stage, coCreate: this.data.coCreate, share: this.data.share }
+        const params = { space, service: this.data.service, budget, area: this.data.area, stage: this.data.stage, coCreate: this.data.coCreate, share: this.data.share, images: imageFileIDs, files: fileAttachments }
         try{
           const r1 = await util.callCf('requests_create', { request: { orderNo: id, category: 'publish', params, userId, status: 'submitted', priority: depositPaid } })
           if (!r1 || !r1.success) throw new Error((r1 && r1.errorMessage) || 'requests_create failed')

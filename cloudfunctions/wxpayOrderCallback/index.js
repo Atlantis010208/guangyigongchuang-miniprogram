@@ -208,16 +208,31 @@ async function processPaymentNotification(paymentData) {
   
   const order = orderResult.data[0];
   
-  // 2. 幂等性检查（防止重复处理）
-  if (order.paid === true && order.transactionId === transactionId) {
-    console.log('订单已支付且交易号一致，跳过处理:', outTradeNo);
-    return { skipped: true };
-  }
-  
-  // 3. 再次确认交易状态
+  // 2. 再次确认交易状态（提前到幂等检查之前，不影响其他分支）
   if (tradeState !== 'SUCCESS') {
     console.warn('交易状态非SUCCESS，跳过:', tradeState);
     return { skipped: true, reason: 'trade_state not SUCCESS' };
+  }
+  
+  // 3. 会员订单分支：优先于外层幂等检查。
+  // 原因：前端 pollOrderPaid 调用 wxpay_query_order_by_out_trade_no 可能提前将订单标记为 paid + 写入 transactionId
+  // （syncSource: "query"），导致外层「order.paid && transactionId 一致」幂等跳过跳过会员激活。
+  // processMembershipPayment 内部会基于 callbackSource 字段做自身幂等保护。
+  if (order.category === 'membership' || outTradeNo.startsWith('M')) {
+    console.log('===== 处理会员订单（优先于幂等检查） =====');
+    return await processMembershipPayment(order, {
+      transactionId,
+      successTime,
+      amount,
+      payer,
+      paymentData
+    });
+  }
+  
+  // 4. 外层幂等性检查（仅适用于押金/普通订单分支）
+  if (order.paid === true && order.transactionId === transactionId) {
+    console.log('订单已支付且交易号一致，跳过处理:', outTradeNo);
+    return { skipped: true };
   }
   
   // 4. 判断订单类型 - 押金订单特殊处理
@@ -481,4 +496,122 @@ function formatHttpResponse(statusCode, body) {
     },
     body: JSON.stringify(body)
   };
+}
+
+/**
+ * 处理会员订单支付成功
+ * 配套文档：specs/membership_center/design.md §4.3
+ *
+ * 流程：
+ * 1. 幂等性检查（已 paid 且 transactionId 一致 → skip）
+ * 2. 更新 orders 状态为 paid
+ * 3. 解析 SKU 与时长
+ * 4. 计算新到期日（续费叠加：max(now, vipExpireAt) + durationDays）
+ * 5. 写入 users.vipLevel + vipExpireAt + vipUpdatedAt
+ *
+ * 注意：会员订单不更新商品销量（无库存概念）
+ */
+async function processMembershipPayment(order, payInfo) {
+  const { transactionId, successTime, amount, payer, paymentData } = payInfo;
+  const now = successTime ? new Date(successTime) : new Date();
+  const nowMs = now.getTime();
+  const orderNo = order.orderNo;
+
+  console.log('[membership] 处理会员订单:', orderNo);
+
+  try {
+    // 1. 幂等性检查：基于 callbackSource 判断，避免被 wxpay_query_order_by_out_trade_no 提前写入的 paid+transactionId 误伤
+    // - 首次回调：order.callbackSource 未设置 → 继续执行，后续写入 callbackSource = 'wxpay_v3_callback'
+    // - 重复回调（微信重试）：order.callbackSource 已是 'wxpay_v3_callback' 且 transactionId 一致 → 跳过
+    // - 手工恢复订单（callbackSource = 'manual_recovery'）不会拦截后续回调处理（如需拦截可追加判断）
+    if (order.callbackSource === 'wxpay_v3_callback' && order.transactionId === transactionId) {
+      console.log('[membership] 订单已被回调处理过，跳过:', orderNo);
+      return { skipped: true };
+    }
+
+    // 2. 更新订单状态
+    await db.collection('orders').doc(order._id).update({
+      data: {
+        status: 'paid',
+        paid: true,
+        paidAt: now,
+        transactionId: transactionId,
+        paymentAmount: amount?.total || null,
+        payerOpenid: payer?.openid || null,
+        updatedAt: now,
+        callbackId: paymentData?.id,
+        callbackTime: paymentData?.create_time,
+        callbackSource: 'wxpay_v3_callback'
+      }
+    });
+    console.log('[membership] ✅ orders 状态已更新为 paid:', orderNo);
+
+    // 3. 解析 SKU 与时长
+    const items = (order.params && order.params.items) || [];
+    const firstItem = items[0] || {};
+    const skuId = order.skuId || firstItem.skuId || '';
+    const durationDays = Number(firstItem.duration) || 365;
+
+    // targetLevel 优先从 firstItem 读取（更准确），否则按 skuId 推断
+    let targetLevel = firstItem.targetLevel || null;
+    if (!targetLevel) {
+      targetLevel = skuId === 'vip_premium_year' ? 'premium' : 'normal';
+    }
+
+    console.log('[membership] SKU 解析:', { skuId, durationDays, targetLevel });
+
+    // 4. 查询用户文档
+    const userOpenid = order._openid || order.userId;
+    if (!userOpenid) {
+      console.error('[membership] ⚠️ 订单缺少用户标识:', orderNo);
+      return { error: 'order missing user identifier', orderNo };
+    }
+
+    const userQuery = await db.collection('users')
+      .where({ _openid: userOpenid })
+      .limit(1)
+      .get();
+
+    if (!userQuery.data || userQuery.data.length === 0) {
+      // 用户文档不存在：仅记录错误，不抛异常（防止微信支付重试风暴）
+      console.error('[membership] ⚠️ 用户不存在，跳过会员激活:', userOpenid);
+      return { error: 'user not found', orderNo, openid: userOpenid };
+    }
+
+    const user = userQuery.data[0];
+
+    // 5. 续费叠加公式：max(now, vipExpireAt) + durationDays
+    const baseTime = (user.vipExpireAt && user.vipExpireAt > nowMs) ? user.vipExpireAt : nowMs;
+    const newExpireAt = baseTime + durationDays * 86400000;
+
+    // 6. 写入会员状态
+    await db.collection('users').doc(user._id).update({
+      data: {
+        vipLevel: targetLevel,
+        vipExpireAt: newExpireAt,
+        vipUpdatedAt: nowMs,
+        updatedAt: nowMs
+      }
+    });
+
+    console.log('[membership] ✅ 会员激活成功:', {
+      orderNo,
+      userId: user._id,
+      vipLevel: targetLevel,
+      vipExpireAt: new Date(newExpireAt).toISOString(),
+      remainingDays: Math.ceil((newExpireAt - nowMs) / 86400000)
+    });
+
+    return {
+      success: true,
+      orderNo,
+      type: 'membership',
+      vipLevel: targetLevel,
+      vipExpireAt: newExpireAt
+    };
+  } catch (err) {
+    console.error('[membership] 处理会员支付异常:', err);
+    // 不抛异常以避免微信无限重试，但需要返回错误便于排查
+    return { error: err.message || 'membership processing failed', orderNo };
+  }
 }

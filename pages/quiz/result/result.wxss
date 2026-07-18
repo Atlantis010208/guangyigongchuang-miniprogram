@@ -1,0 +1,493 @@
+/**
+ * 答题结果页样式
+ * 视觉 token 复刻自 pages/flows/publish/publish.wxss + pages/quiz/detail/detail.wxss
+ */
+
+page {
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+.main-content {
+  flex: 1;
+  height: 100%;
+  /* 注：scroll-view 的 padding-bottom 不会为可滚动内容预留底部空间，
+     底部隔离由 .bottom-spacer 控制 */
+}
+
+/* ========== 得分总览卡 ========== */
+.score-card {
+  margin: 32rpx 32rpx 24rpx;
+  padding: 56rpx 48rpx 40rpx;
+  background-color: #fff;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 大圆环 */
+.score-ring {
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.6s ease;
+}
+
+.score-ring-inner {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.score-number {
+  font-size: 88rpx;
+  font-weight: 700;
+  color: #000;
+  line-height: 1;
+  letter-spacing: -2rpx;
+}
+
+.score-divider {
+  width: 80rpx;
+  height: 2rpx;
+  background-color: #d8d8d8;
+  margin: 4rpx 0;
+}
+
+.score-total {
+  font-size: 26rpx;
+  color: #888;
+  font-weight: 500;
+}
+
+/* 状态徽章 */
+.pass-badge {
+  margin-top: 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 999rpx;
+}
+
+.pass-badge.passed {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.pass-badge.failed {
+  background-color: #ffe9e6;
+  color: #d93025;
+}
+
+.pass-icon {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.pass-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+/* 元信息行 */
+.meta-row {
+  margin-top: 40rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 32rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.meta-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.meta-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.2;
+}
+
+.meta-label {
+  font-size: 22rpx;
+  color: #a0a5ab;
+}
+
+.meta-divider {
+  width: 2rpx;
+  height: 56rpx;
+  background-color: #f0f0f0;
+}
+
+/* ========== 题目回顾区 ========== */
+.review-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16rpx 48rpx 8rpx;
+}
+
+.review-section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #000;
+}
+
+.review-list {
+  padding: 16rpx 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.review-card {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx 32rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+  border-left: 6rpx solid transparent;
+}
+
+.review-card.correct {
+  border-left-color: #137333;
+}
+
+.review-card.incorrect {
+  border-left-color: #d93025;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.review-num {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+/* 对错标记仅用颜色区分，不加底色 */
+.review-num.correct .review-num-mark {
+  color: #137333;
+}
+
+.review-num.incorrect .review-num-mark {
+  color: #d93025;
+}
+
+.review-num-mark {
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.review-num-text {
+  color: #000;
+  font-size: 26rpx;
+}
+
+.review-score {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.review-score.correct {
+  color: #137333;
+}
+
+.review-score.incorrect {
+  color: #d93025;
+}
+
+.review-type-tag {
+  display: inline-block;
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: 1rpx;
+}
+
+.review-type-tag.type-single { background-color: #e6f0ff; color: #1a73e8; }
+.review-type-tag.type-multiple { background-color: #fff4e6; color: #d97706; }
+.review-type-tag.type-judge { background-color: #e6f4ea; color: #137333; }
+
+.review-stem {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #000;
+  line-height: 1.5;
+  margin-bottom: 20rpx;
+}
+
+/* 选项展示 */
+.review-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.review-option {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  background-color: #fafafa;
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  position: relative;
+}
+
+.review-option.correct-key {
+  background-color: #e6f4ea;
+  border-color: #137333;
+}
+
+.review-option.user-selected:not(.correct-key) {
+  background-color: #ffe9e6;
+  border-color: #d93025;
+}
+
+.review-option-key {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  color: #555;
+  font-size: 24rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: -apple-system, monospace;
+}
+
+.review-option.correct-key .review-option-key {
+  background-color: #137333;
+  color: #fff;
+}
+
+.review-option.user-selected:not(.correct-key) .review-option-key {
+  background-color: #d93025;
+  color: #fff;
+}
+
+.review-option-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.review-option-tag {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background-color: #137333;
+  color: #fff;
+  font-weight: 500;
+}
+
+.review-option-tag.user-tag {
+  background-color: #d93025;
+}
+
+/* 答案行（紧凑） */
+.review-answer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  margin-bottom: 16rpx;
+  padding: 16rpx 20rpx;
+  background-color: #fafafa;
+  border-radius: 12rpx;
+}
+
+.answer-line {
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.answer-label {
+  color: #888;
+}
+
+.answer-value.correct { color: #137333; font-weight: 600; }
+.answer-value.incorrect { color: #d93025; font-weight: 600; }
+
+/* 解析 */
+.review-explanation {
+  padding: 20rpx 24rpx;
+  background-color: #fffbe6;
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.review-explanation-label {
+  font-size: 22rpx;
+  color: #a06c00;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.review-explanation-text {
+  font-size: 26rpx;
+  color: #5a4500;
+  line-height: 1.6;
+}
+
+/* 底部占位：需复盖 footer-bar 总高度（按钮 104rpx + 上下 padding 72rpx + safe-area）
+   额外多给 32rpx 视觉缓冲，避免内容贴着按钮区上缘 */
+.bottom-spacer {
+  height: calc(240rpx + env(safe-area-inset-bottom));
+}
+
+/* ========== 底部按钮（复用 detail 风格） ========== */
+.footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32rpx 48rpx calc(40rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, #f5f5f5 70%, rgba(245, 245, 245, 0));
+  z-index: 50;
+  pointer-events: none;
+}
+
+.footer-content {
+  display: flex;
+  gap: 24rpx;
+  pointer-events: auto;
+}
+
+.btn-prev {
+  width: 200rpx;
+  flex-shrink: 0;
+  height: 104rpx;
+  border-radius: 52rpx;
+  background-color: #fff;
+  color: #000;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.btn-prev:active { transform: scale(0.98); background-color: #f0f0f0; }
+.btn-prev::after { border: none; }
+
+.btn-next {
+  flex: 1;
+  height: 104rpx;
+  border-radius: 52rpx;
+  background-color: #000;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.btn-next:active { transform: scale(0.98); }
+.btn-next::after { border: none; }
+
+/* ========== 加载/错误状态 ========== */
+.state-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 0 48rpx;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(0, 0, 0, 0.08);
+  border-top-color: #000;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background-color: #fff4e6;
+  color: #d97706;
+  font-size: 48rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.state-text { font-size: 28rpx; color: #888; }
+.state-title { font-size: 32rpx; color: #000; font-weight: 500; }
+
+.state-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 16rpx;
+  width: 100%;
+  max-width: 600rpx;
+}
+
+.state-actions .btn-prev,
+.state-actions .btn-next {
+  flex: 1;
+  width: auto;
+}

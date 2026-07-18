@@ -1,0 +1,88 @@
+<!-- 业主端「灯光设计认知与判断力测试」介绍页 -->
+<!-- 视觉语言复用 pages/flows/publish + pages/quiz/detail；底部固定按钮区与 detail 同款 -->
+<view class="page">
+
+  <!-- 加载态 -->
+  <view class="state-block" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="state-text">加载中...</text>
+  </view>
+
+  <!-- 加载失败 -->
+  <view class="state-block" wx:elif="{{loadError}}">
+    <view class="state-icon">!</view>
+    <text class="state-title">{{loadError}}</text>
+    <view class="state-actions">
+      <button class="btn-prev" bindtap="onBackHome">返回首页</button>
+    </view>
+  </view>
+
+  <!-- 主内容 -->
+  <scroll-view scroll-y="true" class="main-content" enhanced="true" show-scrollbar="{{false}}" wx:elif="{{quiz}}">
+
+    <!-- A. 标题区，文案随版本切换 -->
+    <view class="hero">
+      <view class="hero-eyebrow-row">
+        <text class="hero-eyebrow">认知水平测试</text>
+        <text class="history-link" bindtap="onViewHistory">历史记录</text>
+      </view>
+      <view class="hero-title">{{currentVersion.title}}</view>
+      <view class="hero-subtitle">{{currentVersion.subtitle}}</view>
+    </view>
+
+    <!-- A2. 版本选择 segmented tab -->
+    <view class="version-switcher">
+      <view
+        class="version-tab {{currentVersionId === item.id ? 'active' : ''}}"
+        wx:for="{{versions}}"
+        wx:key="id"
+        wx:for-item="item"
+        data-id="{{item.id}}"
+        bindtap="onSwitchVersion"
+      >
+        <text class="version-tab-label">{{item.label}}</text>
+        <text class="version-tab-badge" wx:if="{{item.badge}}">{{item.badge}}</text>
+      </view>
+    </view>
+
+    <!-- B. 用途说明卡 -->
+    <view class="purpose-card">
+      <view class="purpose-text">{{quiz.description}}</view>
+    </view>
+
+    <!-- C. 你将获得（3 张并列卡） -->
+    <view class="benefits-section">
+      <view class="benefits-title">测试完成后，你将获得</view>
+      <view class="benefits-grid">
+        <view class="benefit-card" wx:for="{{benefits}}" wx:key="id" wx:for-item="b">
+          <view class="benefit-num">0{{index + 1}}</view>
+          <view class="benefit-text">{{b.text}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- D. 元信息条（题量 / 预计用时随版本切换） -->
+    <view class="meta-bar">
+      <text class="meta-item">{{quiz.questions.length}} 题</text>
+      <text class="meta-divider">·</text>
+      <text class="meta-item">单选 / 多选 / 判断</text>
+      <text class="meta-divider">·</text>
+      <text class="meta-item">预计 {{estimatedMinutes}} 分钟</text>
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- 底部固定按钮区（仅主内容可用时显示） -->
+  <view class="footer-bar" wx:if="{{!loading && !loadError && quiz}}">
+    <view class="footer-content">
+      <button class="btn-next {{starting ? 'disabled' : ''}}" bindtap="onStart" loading="{{starting}}">
+        开始测试
+      </button>
+    </view>
+    <view class="last-attempt-row" wx:if="{{hasLastAttempt}}">
+      <text class="last-attempt-link" bindtap="onViewLast">查看上次结果 ›</text>
+    </view>
+  </view>
+
+</view>

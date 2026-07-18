@@ -39,6 +39,7 @@ exports.main = async () => {
   await ensure('users')
   await ensure('orders')
   await ensure('requests')
+  await ensure('member_invitations')
 
   const token = process.env.CLOUDBASE_ACCESS_TOKEN || ''
   const envId = process.env.ENV_ID || 'cloud1-5gb9c5u2c58ad6d7'
@@ -71,7 +72,8 @@ exports.main = async () => {
       collection_name: 'users',
       create_indexes: [
         { name: 'idx_openid', unique: false, keys: [{ name: '_openid', direction: '1' }] },
-        { name: 'idx_updatedAt', unique: false, keys: [{ name: 'updatedAt', direction: '-1' }] }
+        { name: 'idx_updatedAt', unique: false, keys: [{ name: 'updatedAt', direction: '-1' }] },
+        { name: 'idx_inviteCode_unique', unique: true, keys: [{ name: 'inviteCode', direction: '1' }] }
       ],
       drop_indexes: []
     }))
@@ -93,6 +95,21 @@ exports.main = async () => {
         { name: 'idx_isDelete_createdAt', unique: false, keys: [{ name: 'isDelete', direction: '1' }, { name: 'createdAt', direction: '-1' }] }
       ],
       drop_indexes: []
+    }))
+    intents.push(postJson(`https://${host}${endpoint}`, {
+      env: envId,
+      collection_name: 'member_invitations',
+      create_indexes: [
+        // 复合唯一索引：同一邀请人(inviterOpenid)不能重复绑定同一被邀请人(invitedOpenid)。
+        // 替代旧的单字段唯一索引 idx_invitedOpenid_unique，解决 createShare 写入
+        // invitedOpenid 缺失字段时被视为 null 导致不同邀请人之间冲突的问题。
+        { name: 'idx_inviter_invited_unique', unique: true, keys: [{ name: 'inviterOpenid', direction: '1' }, { name: 'invitedOpenid', direction: '1' }] },
+        { name: 'idx_inviter_createdAt', unique: false, keys: [{ name: 'inviterUserId', direction: '1' }, { name: 'createdAt', direction: '-1' }] },
+        { name: 'idx_createdAt_desc', unique: false, keys: [{ name: 'createdAt', direction: '-1' }] }
+      ],
+      drop_indexes: [
+        { name: 'idx_invitedOpenid_unique' }
+      ]
     }))
   }
   const results = canUpdate ? await Promise.all(intents) : []

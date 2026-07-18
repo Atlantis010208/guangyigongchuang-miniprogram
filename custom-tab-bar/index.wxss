@@ -30,13 +30,13 @@
 }
 
 .tab-bar-icon {
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
 }
 
 .tab-bar-text {
   font-size: 10px;
   font-weight: 500;
-  margin-top: 2px;
-  line-height: 1;
+  margin-top: 1px;
+  line-height: 1.2;
 }

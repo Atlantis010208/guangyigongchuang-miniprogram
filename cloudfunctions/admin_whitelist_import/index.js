@@ -16,6 +16,7 @@
 const cloud = require('wx-server-sdk')
 const XLSX = require('xlsx')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
+const phoneUtils = require('./common/phone')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -64,6 +65,10 @@ const PHONE_RULES = {
  * @returns {{ countryCode: string, purePhone: string, fullPhone: string }}
  */
 function parsePhoneNumber(phone) {
+  return phoneUtils.parsePhoneNumber(phone)
+}
+
+function parsePhoneNumberLegacy(phone) {
   if (!phone) return { countryCode: '', purePhone: '', fullPhone: '' }
   
   let phoneStr = String(phone).trim().replace(/[\s\-()]/g, '')
@@ -110,6 +115,10 @@ function parsePhoneNumber(phone) {
  * @returns {{ valid: boolean, countryCode: string, purePhone: string, fullPhone: string, region: string }}
  */
 function validatePhone(phone) {
+  return phoneUtils.validatePhone(phone)
+}
+
+function validatePhoneLegacy(phone) {
   const parsed = parsePhoneNumber(phone)
   
   if (!parsed.countryCode || !parsed.purePhone) {
@@ -137,7 +146,7 @@ function validatePhone(phone) {
  * @returns {boolean} 是否有效
  */
 function isValidPhone(phone) {
-  return validatePhone(phone).valid
+  return phoneUtils.isValidPhone(phone)
 }
 
 /**
@@ -147,6 +156,10 @@ function isValidPhone(phone) {
  * @returns {string} 标准化后的手机号
  */
 function normalizePhone(phone) {
+  return phoneUtils.normalizePhone(phone)
+}
+
+function normalizePhoneLegacy(phone) {
   if (!phone) return ''
   const parsed = parsePhoneNumber(phone)
   
@@ -194,7 +207,7 @@ function parseFile(fileData, fileName) {
       
       // 取第一列作为手机号
       if (cells[0]) {
-        phones.push(normalizePhone(cells[0]))
+        phones.push(String(cells[0] || '').trim())
       }
     }
   } else {
@@ -223,7 +236,7 @@ function parseFile(fileData, fileName) {
     for (let i = 1; i < jsonData.length; i++) {
       const row = jsonData[i]
       if (row && row[phoneColIndex]) {
-        phones.push(normalizePhone(row[phoneColIndex]))
+        phones.push(String(row[phoneColIndex] || '').trim())
       }
     }
   }

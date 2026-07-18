@@ -107,12 +107,19 @@ async function getCartItems(openid, event) {
   // 格式化返回数据
   const items = processedItems.map(item => ({
     id: item.productId || item._id,
+    productId: item.productId || item._id,
+    toolkitId: item.toolkitId || '',
+    courseId: item.courseId || '',
     cartItemId: item._id,
     name: item.name || '',
     price: item.price || 0,
     image: item.image || '',
     quantity: item.quantity || 1,
     specs: item.specs || {},
+    category: item.category || '',
+    type: item.type || '',
+    virtualCategory: item.virtualCategory || '',
+    deliveryType: item.deliveryType || '',
     _key: item._key || item._id,
     createdAt: item.createdAt
   }))
@@ -182,6 +189,12 @@ async function addToCart(openid, event) {
     await col.doc(existingItem._id).update({
       data: {
         quantity: newQuantity,
+        category: product.category || existingItem.category || '',
+        type: product.type || existingItem.type || '',
+        toolkitId: product.toolkitId || existingItem.toolkitId || '',
+        courseId: product.courseId || existingItem.courseId || '',
+        virtualCategory: product.virtualCategory || existingItem.virtualCategory || '',
+        deliveryType: product.deliveryType || existingItem.deliveryType || '',
         updatedAt: Date.now()
       }
     })
@@ -207,6 +220,12 @@ async function addToCart(openid, event) {
     image: product.image || '',
     quantity: quantity,
     specs: product.specs || {},
+    category: product.category || '',
+    type: product.type || '',
+    toolkitId: product.toolkitId || '',
+    courseId: product.courseId || '',
+    virtualCategory: product.virtualCategory || '',
+    deliveryType: product.deliveryType || '',
     specsKey: specsKey,
     _key: uniqueKey,
     isDeleted: false,
@@ -506,7 +525,13 @@ async function syncCart(openid, event) {
           name: item.name,
           price: item.price,
           image: item.image,
-          specs: item.specs
+          specs: item.specs,
+          category: item.category || '',
+          type: item.type || '',
+          toolkitId: item.toolkitId || '',
+          courseId: item.courseId || '',
+          virtualCategory: item.virtualCategory || '',
+          deliveryType: item.deliveryType || ''
         },
         quantity: item.quantity || 1
       })

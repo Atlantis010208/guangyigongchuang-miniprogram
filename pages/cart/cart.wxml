@@ -19,6 +19,10 @@
       <view wx:if="{{cartItems.length > 0}}" class="edit-btn" bindtap="onEditTap">
         <text class="edit-text">{{isEditing ? '完成' : '编辑'}}</text>
       </view>
+      <view class="user-avatar" bindtap="onUserTap">
+        <image class="avatar-img" src="{{userAvatar || '/images/个人中心.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
+        <image wx:if="{{effectiveLevel === 'normal' || effectiveLevel === 'premium'}}" class="vip-crown" src="/images/皇冠.png" mode="aspectFit"></image>
+      </view>
     </view>
 
     <!-- 筛选器：商城订单 / 方案订单 -->
@@ -143,10 +147,10 @@
                 <text class="designer-status-pending">待确认</text>
               </view>
             </view>
-            <!-- 未预约且未撤销：显示筛选按钮 -->
-            <view wx:elif="{{item.status !== 'canceled'}}" class="designer-status-row">
+            <!-- 未预约且未撤销：显示筛选按钮（暂未开放，后期再开放） -->
+            <!-- <view wx:elif="{{item.status !== 'canceled'}}" class="designer-status-row">
               <button class="mini-btn designer-btn" size="mini" data-request="{{item}}" catchtap="onGoToDesigners">设计师筛选</button>
-            </view>
+            </view> -->
           </view>
         </view>
         <view wx:if="{{item.status==='canceled'}}" class="request-delete" catchtap="onDeleteRequest" data-id="{{item.id}}"><text class="request-delete-text">×</text></view>
@@ -197,13 +201,13 @@
             >删除订单</view>
             
             <!-- 订单详情按钮 -->
-            <button 
-              class="mini-btn detail-btn" 
+            <button
+              class="mini-btn detail-btn"
               size="mini"
               data-id="{{item.id}}"
               data-category="{{item.category}}"
               data-courseid="{{item.courseId}}"
-              catchtap="onMallOrderTap"
+              catchtap="onMallOrderDetailTap"
             >详情</button>
             
             <!-- 待支付订单显示去支付按钮 -->

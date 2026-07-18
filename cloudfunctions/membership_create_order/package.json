@@ -1,0 +1,9 @@
+{
+  "name": "membership_create_order",
+  "version": "1.0.0",
+  "description": "创建会员订单（价格从硬编码 SKU 表读取，防篡改）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

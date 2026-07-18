@@ -1,0 +1,10 @@
+{
+  "name": "admin_invitation_action",
+  "version": "1.0.0",
+  "description": "后台管理端邀请奖励写操作（补发 / 撤销）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}
