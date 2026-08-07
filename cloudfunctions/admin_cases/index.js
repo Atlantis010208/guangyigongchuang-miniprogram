@@ -46,6 +46,20 @@ function validateOfficialAccountUrl(url) {
   return /^https?:\/\/.+/i.test(trimmed)
 }
 
+// 项目概况字段（城市 / 面积 / 风格）均为选填短文本，仅在详情页拼成一行展示
+const PROFILE_FIELDS = ['city', 'area', 'style']
+const PROFILE_FIELD_MAX_LENGTH = 30
+
+function validateProfileField(value) {
+  if (value === undefined || value === null || value === '') return true
+  if (typeof value !== 'string') return false
+  return value.trim().length <= PROFILE_FIELD_MAX_LENGTH
+}
+
+function normalizeProfileField(value) {
+  return (value === undefined || value === null) ? '' : String(value).trim()
+}
+
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -71,7 +85,7 @@ function buildCaseWhere(event) {
 }
 
 async function addCase(event) {
-  const { imageFileIds, title, services, desc, sortOrder, officialAccountUrl } = event
+  const { imageFileIds, title, services, desc, sortOrder, officialAccountUrl, city, area, style } = event
   if (!validateImageFileIds(imageFileIds)) {
     return resp(false, 'INVALID_PARAMS', 'imageFileIds 必须为 1-9 张的字符串数组')
   }
@@ -87,6 +101,11 @@ async function addCase(event) {
   if (!validateOfficialAccountUrl(officialAccountUrl)) {
     return resp(false, 'INVALID_PARAMS', 'officialAccountUrl 必须是合法的 http(s) 链接')
   }
+  for (const field of PROFILE_FIELDS) {
+    if (!validateProfileField(event[field])) {
+      return resp(false, 'INVALID_PARAMS', `${field} 必须为 ${PROFILE_FIELD_MAX_LENGTH} 字以内的字符串`)
+    }
+  }
 
   const now = Date.now()
   const doc = {
@@ -94,6 +113,9 @@ async function addCase(event) {
     title: title.trim(),
     services,
     desc: desc.trim(),
+    city: normalizeProfileField(city),
+    area: normalizeProfileField(area),
+    style: normalizeProfileField(style),
     officialAccountUrl: (officialAccountUrl || '').toString().trim(),
     sortOrder: typeof sortOrder === 'number' ? sortOrder : 0,
     status: 'active',
@@ -112,7 +134,7 @@ async function updateCase(event) {
   }
 
   const updateData = { updatedAt: Date.now() }
-  const allow = ['imageFileIds', 'title', 'services', 'desc', 'sortOrder', 'status', 'officialAccountUrl']
+  const allow = ['imageFileIds', 'title', 'services', 'desc', 'sortOrder', 'status', 'officialAccountUrl', ...PROFILE_FIELDS]
   for (const key of allow) {
     if (event[key] !== undefined) updateData[key] = event[key]
   }
@@ -128,6 +150,13 @@ async function updateCase(event) {
   }
   if (typeof updateData.officialAccountUrl === 'string') {
     updateData.officialAccountUrl = updateData.officialAccountUrl.trim()
+  }
+  for (const field of PROFILE_FIELDS) {
+    if (updateData[field] === undefined) continue
+    if (!validateProfileField(updateData[field])) {
+      return resp(false, 'INVALID_PARAMS', `${field} 必须为 ${PROFILE_FIELD_MAX_LENGTH} 字以内的字符串`)
+    }
+    updateData[field] = normalizeProfileField(updateData[field])
   }
 
   try {

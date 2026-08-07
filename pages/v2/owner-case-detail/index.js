@@ -1,23 +1,20 @@
 ﻿const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
-const DEFAULT_CASE_ID = 'hangzhou-lake'
-const CASE_IDS = Object.freeze([
-  'nanjing-private',
-  'shanghai-minimal',
-  'hangzhou-lake',
-  'shenzhen-gallery',
-])
+const ownerApi = typeof require === 'function' ? require('../../../services/v2/owner') : { caseDetail: async () => ({ ok: false }) }
+
+// 空间亮点固定取封面之后的 4 张图，凑不满就少排几张
+const HIGHLIGHT_START = 1
+const HIGHLIGHT_END = 5
 
 const COPY = Object.freeze({
   navTitle: '\u6848\u4f8b\u8be6\u60c5',
   backAria: '\u8fd4\u56de\u6848\u4f8b\u5217\u8868',
-  category: '\u4f4f\u5b85  \u00b7  \u5168\u5c4b\u706f\u5149\u8bbe\u8ba1',
-  title: '\u9759\u8c27\u4e4b\u5bb6',
-  meta: '\u676d\u5dde  \u00b7  180m\u00b2  \u00b7  \u73b0\u4ee3\u7b80\u7ea6',
+  fallbackTitle: '\u706f\u5149\u8bbe\u8ba1\u6848\u4f8b',
   designTitle: '\u8bbe\u8ba1\u7406\u5ff5',
-  conceptLine1: '\u4ee5\u67d4\u548c\u7684\u95f4\u63a5\u5149\u5efa\u7acb\u7a7a\u95f4\u5c42\u6b21\uff0c\u8ba9\u5149\u7ebf\u987a\u7740\u751f\u6d3b\u52a8\u7ebf\u81ea\u7136\u53d1\u751f\u3002',
-  conceptLine2: '\u514b\u5236\u4eae\u5ea6\u4e0e\u7729\u5149\uff0c\u4fdd\u7559\u5bb6\u7684\u5b89\u9759\u4e0e\u6e29\u5ea6\u3002',
   highlightsTitle: '\u7a7a\u95f4\u4eae\u70b9',
-  projectInfoTitle: '\u9879\u76ee\u4fe1\u606f',
+  loadingText: '\u6b63\u5728\u52a0\u8f7d\u6848\u4f8b\u2026',
+  emptyTitle: '\u6848\u4f8b\u6682\u4e0d\u53ef\u7528',
+  emptyHint: '\u6848\u4f8b\u53ef\u80fd\u5df2\u4e0b\u67b6\uff0c\u770b\u770b\u5176\u4ed6\u4f5c\u54c1',
+  retry: '\u91cd\u65b0\u52a0\u8f7d',
   closingTitle: '\u8ba9\u5149\uff0c\u66f4\u8d34\u8fd1\u4f60\u7684\u751f\u6d3b',
   closingText: '\u4ece\u7a7a\u95f4\u3001\u4e60\u60ef\u4e0e\u6c1b\u56f4\u51fa\u53d1\uff0c\u4e3a\u4f60\u5b9a\u5236\u4e13\u5c5e\u706f\u5149\u65b9\u6848\u3002',
   favorite: '\u6536\u85cf',
@@ -26,43 +23,7 @@ const COPY = Object.freeze({
   routeError: '\u9875\u9762\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
 })
 
-const HERO = '/pages/v2/owner-case-detail/assets/hero.webp'
-const LIVING = '/pages/v2/owner-case-detail/assets/highlight-living.webp'
-const DINING = '/pages/v2/owner-case-detail/assets/highlight-dining.webp'
-const BEDROOM = '/pages/v2/owner-case-detail/assets/highlight-bedroom.webp'
-const ENTRY = '/pages/v2/owner-case-detail/assets/highlight-entry.webp'
-
-const GALLERY_URLS = Object.freeze([HERO, LIVING, DINING, BEDROOM, ENTRY, HERO])
-
-const SLIDES = Object.freeze([
-  { src: HERO, previewIndex: 0, aria: '\u9759\u8c27\u4e4b\u5bb6\u5ba2\u5385\u5168\u666f' },
-  { src: LIVING, previewIndex: 1, aria: '\u5ba2\u5385\u706f\u5149' },
-  { src: DINING, previewIndex: 2, aria: '\u9910\u5385\u706f\u5149' },
-  { src: BEDROOM, previewIndex: 3, aria: '\u4e3b\u5367\u706f\u5149' },
-  { src: ENTRY, previewIndex: 4, aria: '\u7384\u5173\u706f\u5149' },
-  { src: HERO, previewIndex: 5, aria: '\u9759\u8c27\u4e4b\u5bb6\u591c\u666f' },
-])
-
-const HIGHLIGHTS = Object.freeze([
-  { src: LIVING, previewIndex: 1, aria: '\u5ba2\u5385' },
-  { src: DINING, previewIndex: 2, aria: '\u9910\u5385' },
-  { src: BEDROOM, previewIndex: 3, aria: '\u4e3b\u5367' },
-  { src: ENTRY, previewIndex: 4, aria: '\u7384\u5173' },
-])
-
-const SUMMARY_ITEMS = Object.freeze([
-  { label: '\u9879\u76ee\u7c7b\u578b', value: '\u4f4f\u5b85' },
-  { label: '\u8bbe\u8ba1\u5468\u671f', value: '21\u5929' },
-  { label: '\u5b8c\u6210\u65f6\u95f4', value: '2026' },
-])
-
-const PROJECT_ROWS = Object.freeze([
-  { label: '\u9879\u76ee\u5730\u70b9', value: '\u676d\u5dde' },
-  { label: '\u9879\u76ee\u9762\u79ef', value: '180m\u00b2' },
-  { label: '\u8bbe\u8ba1\u8303\u56f4', value: '\u5168\u5c4b\u706f\u5149\u8bbe\u8ba1' },
-  { label: '\u670d\u52a1\u5468\u671f', value: '21\u5929' },
-  { label: '\u5b8c\u6210\u65f6\u95f4', value: '2026' },
-])
+const SEPARATOR = '  \u00b7  '
 
 function calculateNavigationLayout(windowInfo, menuButton) {
   const statusBarHeight = Number(windowInfo.statusBarHeight) || 20
@@ -107,17 +68,31 @@ function showRouteError() {
   })
 }
 
+/**
+ * 把非空短文本用中点连接，用于「设计 · 灯具」「杭州 · 180m² · 现代简约」这类信息行
+ * @param {Array<string>} parts
+ * @returns {string} 全部为空时返回空串，页面据此隐藏整行
+ */
+function joinParts(parts) {
+  return parts
+    .filter(item => typeof item === 'string' && item.trim())
+    .map(item => item.trim())
+    .join(SEPARATOR)
+}
+
 Page({
   data: {
     copy: COPY,
-    caseId: DEFAULT_CASE_ID,
-    slides: SLIDES,
-    highlights: HIGHLIGHTS,
-    summaryItems: SUMMARY_ITEMS,
-    projectRows: PROJECT_ROWS,
+    caseId: '',
+    loading: true,
+    loadFailed: false,
+    detail: null,
+    slides: [],
+    highlights: [],
+    galleryUrls: [],
     currentSlide: 0,
-    galleryIndex: 1,
-    galleryTotal: SLIDES.length,
+    galleryIndex: 0,
+    galleryTotal: 0,
     isBookmarked: false,
     bookmarkIcon: '/pages/v2/owner-cases/assets/icon-bookmark.png',
     statusBarHeight: 20,
@@ -125,11 +100,13 @@ Page({
   },
 
   onLoad(options = {}) {
-    const caseId = CASE_IDS.includes(options.id) ? options.id : DEFAULT_CASE_ID
+    // 列表页传入的是数据库 _id，微信框架已对 query 解码，这里不再二次 decode
+    const caseId = String(options.id || '').trim()
     this.setData({
       caseId,
       ...getNavigationLayout(),
     })
+    this.loadDetail()
   },
 
   onShow() {
@@ -138,6 +115,57 @@ Page({
 
   onResize() {
     this.setData(getNavigationLayout())
+  },
+
+  /**
+   * 拉取案例详情；id 缺失、案例下架或网络失败都统一落到失败态
+   */
+  async loadDetail() {
+    const caseId = this.data.caseId
+    if (!caseId) {
+      this.setData({ loading: false, loadFailed: true })
+      return
+    }
+
+    this.setData({ loading: true, loadFailed: false })
+    const response = await ownerApi.caseDetail(caseId)
+    const item = response && response.ok && response.data && response.data.item
+
+    if (!item) {
+      this.setData({ loading: false, loadFailed: true })
+      return
+    }
+
+    this.applyDetail(item)
+  },
+
+  /**
+   * 把云函数返回的案例映射成页面渲染结构
+   * @param {object} item lighting_cases_list detail 返回的单条案例
+   */
+  applyDetail(item) {
+    const imageUrls = (Array.isArray(item.imageUrls) ? item.imageUrls : [])
+      .filter(src => typeof src === 'string' && src)
+    const services = Array.isArray(item.services) ? item.services : []
+    const slides = imageUrls.map((src, index) => ({ src, index }))
+
+    this.setData({
+      loading: false,
+      loadFailed: false,
+      detail: {
+        title: (item.title || '').trim() || COPY.fallbackTitle,
+        category: joinParts(services),
+        meta: joinParts([item.city, item.area, item.style]),
+        desc: (item.desc || '').trim(),
+        officialAccountUrl: (item.officialAccountUrl || '').trim(),
+      },
+      slides,
+      highlights: slides.slice(HIGHLIGHT_START, HIGHLIGHT_END),
+      galleryUrls: imageUrls,
+      currentSlide: 0,
+      galleryIndex: imageUrls.length ? 1 : 0,
+      galleryTotal: imageUrls.length,
+    })
   },
 
   handleSwiperChange(event) {
@@ -149,10 +177,13 @@ Page({
   },
 
   previewImage(event) {
+    const urls = this.data.galleryUrls
+    if (!urls || !urls.length) return
+
     const index = Number(event.currentTarget.dataset.index) || 0
     wx.previewImage({
-      current: GALLERY_URLS[index] || GALLERY_URLS[0],
-      urls: GALLERY_URLS,
+      current: urls[index] || urls[0],
+      urls,
     })
   },
 
@@ -190,10 +221,3 @@ Page({
     fallback()
   },
 })
-
-
-
-
-
-
-

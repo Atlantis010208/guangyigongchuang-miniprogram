@@ -30,31 +30,6 @@ for (const extension of ['js', 'json', 'wxml', 'wxss']) {
   )
 }
 
-const expectedAssets = [
-  'hero.webp',
-  'highlight-living.webp',
-  'highlight-dining.webp',
-  'highlight-bedroom.webp',
-  'highlight-entry.webp',
-]
-
-for (const asset of expectedAssets) {
-  const assetPath = path.join(detailRoot, 'assets', asset)
-  assert(fs.existsSync(assetPath), 'missing detail WebP asset: ' + asset)
-
-  const file = fs.readFileSync(assetPath)
-  assert.strictEqual(
-    file.subarray(0, 4).toString('ascii'),
-    'RIFF',
-    asset + ' must be a valid RIFF WebP file'
-  )
-  assert.strictEqual(
-    file.subarray(8, 12).toString('ascii'),
-    'WEBP',
-    asset + ' must be encoded as WebP'
-  )
-}
-
 const pageConfig = JSON.parse(
   fs.readFileSync(path.join(detailRoot, 'index.json'), 'utf8')
 )
@@ -81,17 +56,45 @@ assert.strictEqual(
   'detail preview must not expose pull-to-refresh chrome'
 )
 
+// 案例正文全部来自后台，页面不得再内联原型图或写死文案
+// （assets 目录仍保留 highlight-dining.webp，它被 owner-services 面板复用）
+assert(
+  !/\.webp/.test(detailWxml) && !/\.webp/.test(detailJs),
+  'detail page must not reference local prototype imagery'
+)
+
 for (const binding of [
   'copy.navTitle',
   'copy.designTitle',
   'copy.highlightsTitle',
-  'copy.projectInfoTitle',
 ]) {
   assert(
     detailWxml.includes('{{' + binding + '}}'),
     'missing detail copy binding: ' + binding
   )
 }
+
+for (const binding of [
+  'detail.title',
+  'detail.category',
+  'detail.meta',
+  'detail.desc',
+]) {
+  assert(
+    detailWxml.includes('{{' + binding + '}}'),
+    'detail body must bind backend field: ' + binding
+  )
+}
+
+assert(
+  detailWxml.includes('{{copy.loadingText}}')
+    && detailWxml.includes('{{copy.emptyTitle}}'),
+  'detail page must render loading and empty states'
+)
+assert(
+  detailWxml.includes('bindtap="loadDetail"'),
+  'empty state must offer a retry entry'
+)
 
 assert(
   detailWxml.includes('bindtap="goBack"'),
@@ -109,7 +112,7 @@ assert(
 assert(
   detailWxml.includes('{{galleryIndex}}')
     && detailWxml.includes('{{galleryTotal}}'),
-  'hero must render the one-based 1 / 6 gallery counter'
+  'hero must render the one-based gallery counter'
 )
 assert(
   detailWxml.includes('bindtap="previewImage"'),
@@ -167,6 +170,10 @@ assert(
   detailJs.includes('/pages/support/contact/contact'),
   'consultation must enter the existing support/contact page'
 )
+assert(
+  detailJs.includes('lighting_cases_list') || detailJs.includes('caseDetail'),
+  'detail page must source its content from the case service'
+)
 
 function createDetailRuntime(windowInfo, initialPages) {
   let definition
@@ -208,6 +215,8 @@ function createDetailRuntime(windowInfo, initialPages) {
     },
   }
 
+  // vm 中没有 require，页面会退化到"云服务不可用"的兜底实现，
+  // 因此这里只验证降级路径与纯函数映射，真实数据用 applyDetail 注入
   vm.runInNewContext(detailJs, context, {
     filename: path.join(detailRoot, 'index.js'),
   })
@@ -238,15 +247,35 @@ const compactWindow = {
   menuButton: { top: 26, height: 32, left: 278, right: 365, width: 87 },
 }
 
-for (const id of [
-  'nanjing-private',
-  'shanghai-minimal',
-  'hangzhou-lake',
-  'shenzhen-gallery',
-]) {
+const realCaseId = '313b4fc069e85ff70017e91e59041171'
+const mockCase = {
+  _id: realCaseId,
+  imageUrls: [
+    'https://example.com/cover.jpg',
+    'https://example.com/living.jpg',
+    'https://example.com/dining.jpg',
+    'https://example.com/bedroom.jpg',
+    'https://example.com/entry.jpg',
+    'https://example.com/night.jpg',
+  ],
+  title: '\u9759\u8c27\u4e4b\u5bb6',
+  services: ['\u8bbe\u8ba1', '\u706f\u5177'],
+  desc: '\u4ee5\u67d4\u548c\u7684\u95f4\u63a5\u5149\u5efa\u7acb\u7a7a\u95f4\u5c42\u6b21\u3002',
+  city: '\u676d\u5dde',
+  area: '180m\u00b2',
+  style: '\u73b0\u4ee3\u7b80\u7ea6',
+  officialAccountUrl: 'https://mp.weixin.qq.com/s/example',
+}
+
+async function main() {
+  // 真实数据库 _id 必须原样保留，不能再被原型白名单改写
   const runtime = createDetailRuntime(compactWindow, [{ route: detailRoute }])
-  runtime.page.onLoad({ id })
-  assert.strictEqual(runtime.page.data.caseId, id, 'allowed case id must be kept')
+  runtime.page.onLoad({ id: realCaseId })
+  assert.strictEqual(
+    runtime.page.data.caseId,
+    realCaseId,
+    'a real case id must be passed through untouched'
+  )
   assert.strictEqual(
     runtime.page.data.statusBarHeight,
     20,
@@ -257,103 +286,240 @@ for (const id of [
     44,
     'navigation height must align to the native capsule safe area'
   )
+
+  // 云服务不可用时必须落到失败态，而不是渲染任何占位案例
+  await runtime.page.loadDetail()
+  assert.strictEqual(
+    runtime.page.data.loadFailed,
+    true,
+    'an unavailable case service must surface the empty state'
+  )
+  assert.strictEqual(
+    runtime.page.data.loading,
+    false,
+    'the loading flag must be cleared once the request settles'
+  )
+  assert.strictEqual(
+    runtime.page.data.detail,
+    null,
+    'no case content may be rendered when the request fails'
+  )
+
+  const missingIdRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: detailRoute }]
+  )
+  missingIdRuntime.page.onLoad({})
+  await missingIdRuntime.page.loadDetail()
+  assert.strictEqual(
+    missingIdRuntime.page.data.loadFailed,
+    true,
+    'a missing id must surface the empty state instead of a prototype case'
+  )
+
+  // 后端字段 → 页面结构的映射
+  const detailRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: detailRoute }]
+  )
+  detailRuntime.page.onLoad({ id: realCaseId })
+  detailRuntime.page.applyDetail(mockCase)
+
+  const rendered = detailRuntime.page.data
+  assert.strictEqual(
+    rendered.galleryTotal,
+    mockCase.imageUrls.length,
+    'the hero counter must reflect the number of stored images'
+  )
+  assert.strictEqual(
+    rendered.galleryIndex,
+    1,
+    'the gallery counter must start at one'
+  )
+  assert.strictEqual(
+    rendered.slides.length,
+    mockCase.imageUrls.length,
+    'every stored image must become a swiper slide'
+  )
+  assert.strictEqual(
+    rendered.detail.title,
+    mockCase.title,
+    'title must come from the backend record'
+  )
+  assert.strictEqual(
+    rendered.detail.category,
+    mockCase.services.join('  \u00b7  '),
+    'the category line must join the configured services'
+  )
+  assert.strictEqual(
+    rendered.detail.meta,
+    [mockCase.city, mockCase.area, mockCase.style].join('  \u00b7  '),
+    'the meta line must join city, area and style'
+  )
+  assert.strictEqual(
+    rendered.detail.desc,
+    mockCase.desc,
+    'the design concept must render the backend description'
+  )
+
+  // 空间亮点固定取封面之后的四张
+  assert.strictEqual(
+    rendered.highlights.length,
+    4,
+    'highlights must show up to four images after the cover'
+  )
+  assert.deepStrictEqual(
+    rendered.highlights.map((item) => item.index),
+    [1, 2, 3, 4],
+    'highlights must skip the cover and stay aligned to the gallery indexes'
+  )
+
+  detailRuntime.page.handleSwiperChange({ detail: { current: 2 } })
+  assert.strictEqual(
+    detailRuntime.page.data.galleryIndex,
+    3,
+    'swiper index must be presented as a one-based counter'
+  )
+
+  detailRuntime.page.previewImage({
+    currentTarget: { dataset: { index: 1 } },
+  })
+  const previewCall = detailRuntime.calls.find(
+    (call) => call.api === 'previewImage'
+  )
+  assert(previewCall, 'previewImage interaction must call wx.previewImage')
+  assert.deepStrictEqual(
+    previewCall.options.urls,
+    mockCase.imageUrls,
+    'native image preview must receive the complete remote image set'
+  )
+  assert.strictEqual(
+    previewCall.options.current,
+    mockCase.imageUrls[1],
+    'preview must open on the tapped image'
+  )
+
+  // 后台留空的可选字段不得渲染成空的分隔符
+  const sparseRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: detailRoute }]
+  )
+  sparseRuntime.page.applyDetail({
+    _id: realCaseId,
+    imageUrls: ['https://example.com/only.jpg'],
+    title: '',
+    services: [],
+    desc: '',
+    city: '',
+    area: '',
+    style: '',
+  })
+  assert.strictEqual(
+    sparseRuntime.page.data.detail.meta,
+    '',
+    'an entirely unset profile must collapse instead of rendering separators'
+  )
+  assert.strictEqual(
+    sparseRuntime.page.data.detail.category,
+    '',
+    'an empty service list must collapse the category line'
+  )
+  assert(
+    sparseRuntime.page.data.detail.title,
+    'an untitled case must still fall back to a readable title'
+  )
+  assert.strictEqual(
+    sparseRuntime.page.data.highlights.length,
+    0,
+    'a single-image case must not render an empty highlight grid'
+  )
+
+  const partialRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: detailRoute }]
+  )
+  partialRuntime.page.applyDetail({
+    _id: realCaseId,
+    imageUrls: [],
+    title: 'x',
+    services: [],
+    desc: '',
+    city: '\u676d\u5dde',
+    area: '',
+    style: '\u73b0\u4ee3\u7b80\u7ea6',
+  })
+  assert.strictEqual(
+    partialRuntime.page.data.detail.meta,
+    ['\u676d\u5dde', '\u73b0\u4ee3\u7b80\u7ea6'].join('  \u00b7  '),
+    'a partially filled profile must join only the provided values'
+  )
+  assert.strictEqual(
+    partialRuntime.page.data.galleryTotal,
+    0,
+    'a case without images must report an empty gallery'
+  )
+
+  const bookmarkBefore = detailRuntime.page.data.isBookmarked
+  detailRuntime.page.toggleBookmark()
+  assert.strictEqual(
+    detailRuntime.page.data.isBookmarked,
+    !bookmarkBefore,
+    'bookmark interaction must toggle local page state'
+  )
+
+  detailRuntime.calls.length = 0
+  detailRuntime.page.goConsultation()
+  assert.deepStrictEqual(
+    detailRuntime.calls.find((call) => call.api === 'navigateTo')?.options.url,
+    '/pages/support/contact/contact',
+    'consultation must navigate to support/contact'
+  )
+
+  const stackedRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: 'pages/v2/owner-home/index' }, { route: detailRoute }]
+  )
+  stackedRuntime.page.onLoad({ id: realCaseId })
+  stackedRuntime.calls.length = 0
+  stackedRuntime.page.goBack()
+  assert.deepStrictEqual(
+    stackedRuntime.calls.find((call) => call.api === 'navigateBack')?.options.delta,
+    1,
+    'normal detail return must restore the resident cases panel with navigateBack'
+  )
+
+  const directRuntime = createDetailRuntime(
+    compactWindow,
+    [{ route: detailRoute }]
+  )
+  directRuntime.page.onLoad({ id: realCaseId })
+  directRuntime.calls.length = 0
+  directRuntime.page.goBack()
+  assert.deepStrictEqual(
+    directRuntime.calls.find((call) => call.api === 'redirectTo')?.options.url,
+    '/pages/v2/owner-home/index?tab=cases',
+    'direct-launch back must fall back to the resident cases panel'
+  )
+
+  assert(
+    casesContentWxml.includes('data-id="{{item.id}}"')
+      && casesContentWxml.includes('bindtap="openCase"'),
+    'case cards must pass their id into openCase'
+  )
+
+  const casesRuntime = loadCasesContent()
+  const encodedCaseId = 'hangzhou lake/\u9759\u8c27?'
+  casesRuntime.component.openCase({
+    currentTarget: { dataset: { id: encodedCaseId } },
+  })
+  assert.deepStrictEqual(
+    casesRuntime.calls.find((call) => call.api === 'navigateTo')?.options.url,
+    detailUrl + '?id=' + encodeURIComponent(encodedCaseId),
+    'openCase must navigate to detail with an encoded id'
+  )
+
+  console.log('owner-case-detail preview specification: ok')
 }
-
-const invalidRuntime = createDetailRuntime(
-  compactWindow,
-  [{ route: detailRoute }]
-)
-invalidRuntime.page.onLoad({ id: 'not-a-real-case' })
-assert.strictEqual(
-  invalidRuntime.page.data.caseId,
-  'hangzhou-lake',
-  'missing or invalid ids must fall back to the prototype case'
-)
-assert.strictEqual(
-  invalidRuntime.page.data.galleryTotal,
-  6,
-  'the hero counter must represent the six-image project gallery'
-)
-
-invalidRuntime.page.handleSwiperChange({ detail: { current: 2 } })
-assert.strictEqual(
-  invalidRuntime.page.data.galleryIndex,
-  3,
-  'swiper index must be presented as a one-based counter'
-)
-
-const previewSource = detailUrl + '/assets/hero.webp'
-invalidRuntime.page.previewImage({
-  currentTarget: { dataset: { index: 0, src: previewSource } },
-})
-const previewCall = invalidRuntime.calls.find(
-  (call) => call.api === 'previewImage'
-)
-assert(previewCall, 'previewImage interaction must call wx.previewImage')
-assert(
-  Array.isArray(previewCall.options.urls)
-    && previewCall.options.urls.length >= expectedAssets.length,
-  'native image preview must receive the complete local image set'
-)
-
-const bookmarkBefore = Object.prototype.hasOwnProperty.call(
-  invalidRuntime.page.data,
-  'bookmarked'
-)
-  ? invalidRuntime.page.data.bookmarked
-  : invalidRuntime.page.data.isBookmarked
-invalidRuntime.page.toggleBookmark()
-const bookmarkAfter = Object.prototype.hasOwnProperty.call(
-  invalidRuntime.page.data,
-  'bookmarked'
-)
-  ? invalidRuntime.page.data.bookmarked
-  : invalidRuntime.page.data.isBookmarked
-assert.strictEqual(
-  bookmarkAfter,
-  !bookmarkBefore,
-  'bookmark interaction must toggle local page state'
-)
-
-invalidRuntime.calls.length = 0
-invalidRuntime.page.goConsultation()
-assert.deepStrictEqual(
-  invalidRuntime.calls.find((call) => call.api === 'navigateTo')?.options.url,
-  '/pages/support/contact/contact',
-  'consultation must navigate to support/contact'
-)
-
-const stackedRuntime = createDetailRuntime(
-  compactWindow,
-  [{ route: 'pages/v2/owner-home/index' }, { route: detailRoute }]
-)
-stackedRuntime.page.onLoad({ id: 'hangzhou-lake' })
-stackedRuntime.calls.length = 0
-stackedRuntime.page.goBack()
-assert.deepStrictEqual(
-  stackedRuntime.calls.find((call) => call.api === 'navigateBack')?.options.delta,
-  1,
-  'normal detail return must restore the resident cases panel with navigateBack'
-)
-
-const directRuntime = createDetailRuntime(
-  compactWindow,
-  [{ route: detailRoute }]
-)
-directRuntime.page.onLoad({ id: 'hangzhou-lake' })
-directRuntime.calls.length = 0
-directRuntime.page.goBack()
-assert.deepStrictEqual(
-  directRuntime.calls.find((call) => call.api === 'redirectTo')?.options.url,
-  '/pages/v2/owner-home/index?tab=cases',
-  'direct-launch back must fall back to the resident cases panel'
-)
-
-assert(
-  casesContentWxml.includes('data-id="{{item.id}}"')
-    && casesContentWxml.includes('bindtap="openCase"'),
-  'case cards must pass their id into openCase'
-)
 
 function loadCasesContent() {
   let definition
@@ -386,15 +552,7 @@ function loadCasesContent() {
   return { calls, component }
 }
 
-const casesRuntime = loadCasesContent()
-const encodedCaseId = 'hangzhou lake/\u9759\u8c27?'
-casesRuntime.component.openCase({
-  currentTarget: { dataset: { id: encodedCaseId } },
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
 })
-assert.deepStrictEqual(
-  casesRuntime.calls.find((call) => call.api === 'navigateTo')?.options.url,
-  detailUrl + '?id=' + encodeURIComponent(encodedCaseId),
-  'openCase must navigate to detail with an encoded id'
-)
-
-console.log('owner-case-detail preview specification: ok')
