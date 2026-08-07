@@ -10,14 +10,40 @@ const V2_FUNCTIONS = Object.freeze([
   'owner_portal_v2',
   'designer_portal_v2'
 ])
+// 独立测试环境是全新环境，联调要走通完整主流程就得把沿途云函数都带上。
+// 刻意排除微信支付链路（wxpayFunctions、deposit_create/confirm/refund、
+// refund_apply/cancel、membership_create_order）：这些会真实调起支付或退款，
+// 测试环境验证收益低而资金风险不对称，需要时单独评估商户号绑定后再部署。
 const TEST_SUPPORT_FUNCTIONS = Object.freeze([
-  // 登录链路：独立测试环境是全新环境，联调必须能从登录页完整走一遍，缺一个都进不去
+  // 登录链路：缺一个都进不去应用
   'login', 'getPhoneNumber', 'check_designer_whitelist',
-  'lighting_cases_list', 'gallery_list', 'gallery_favorites',
-  'collection_form_public', 'virtual_categories', 'products_list',
-  'requests_list', 'orders_list', 'designer_projects', 'designer_demands',
-  'courses_list', 'course_purchase_check', 'course_progress_update',
-  'designer_profile', 'designer_portfolios'
+  // 用户身份与设置
+  'user_operations', 'user_set_identity', 'settings_operations', 'membership_status',
+  // 内容浏览
+  'lighting_cases_list', 'gallery_list', 'gallery_favorites', 'lighting_reviews_list',
+  'lighting_delivery_list', 'lighting_manual_config', 'collection_form_public',
+  'virtual_categories', 'products_list', 'product_detail', 'viewer_count',
+  // 需求单与预约邀请
+  'requests_list', 'requests_create', 'requests_detail', 'requests_update', 'requests_remove',
+  'appointments_operations', 'invitations_create', 'invitations_query', 'invitations_operations',
+  // 订单（仅增删改查，不含支付动作）
+  'orders_list', 'orders_create', 'orders_update', 'orders_remove', 'mall_orders_list',
+  'receipts_operations', 'parse_address', 'cart_operations',
+  // 押金与退款的只读查询
+  'deposit_query', 'refund_detail',
+  // 设计师侧
+  'designer_projects', 'designer_demands', 'designer_profile', 'designer_portfolios',
+  'designers_list', 'designer_detail', 'designer_settings',
+  // 课程与测验
+  'courses_list', 'course_detail', 'course_videos', 'course_purchase_check',
+  'course_progress_update', 'quiz_detail', 'quiz_submit', 'quiz_attempt_get', 'quiz_attempt_list',
+  // 工具箱与计算器
+  'get_calc_config', 'admin_calc_config', 'calc_history', 'calc_report', 'calc_export_pdf',
+  'color_temp_ai', 'toolkit_detail', 'toolkit_purchase_check',
+  // 互动
+  'favorites_operations', 'feedback_operations',
+  // 首次启动时按需建集合
+  'initCollections'
 ])
 const ALLOWED_FUNCTIONS = Object.freeze([...V2_FUNCTIONS, ...TEST_SUPPORT_FUNCTIONS])
 
