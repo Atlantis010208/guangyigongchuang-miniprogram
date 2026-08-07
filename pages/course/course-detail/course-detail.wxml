@@ -1,5 +1,28 @@
 <wxs module="anim" src="./course-detail.wxs"></wxs>
+
+<!-- 加载中骨架屏 -->
+<view class="page-loading" wx:if="{{loading}}">
+  <view class="skeleton-cover"></view>
+  <view class="skeleton-block">
+    <view class="skeleton-line w60"></view>
+    <view class="skeleton-line w90"></view>
+    <view class="skeleton-line w75"></view>
+  </view>
+  <view class="skeleton-block">
+    <view class="skeleton-line w40"></view>
+    <view class="skeleton-line w90"></view>
+  </view>
+</view>
+
+<!-- 加载失败 -->
+<view class="page-error" wx:elif="{{error}}">
+  <text class="error-title">加载失败</text>
+  <text class="error-desc">{{error}}</text>
+  <button class="apple-button error-retry-btn" hover-class="button-hover" bindtap="onRetry">重新加载</button>
+</view>
+
 <scroll-view 
+  wx:else
   scroll-y 
   class="scroll-container"
   enhanced="{{true}}"
@@ -185,7 +208,7 @@
 </view>
 
 <!-- Fixed Bottom Bar -->
-<view class="bottom-bar shadow-large">
+<view class="bottom-bar shadow-large" wx:if="{{course && !loading && !error}}">
   <view class="bottom-bar-content flex-row flex-between">
     <block wx:if="{{!isPurchased}}">
       <view class="flex-column">

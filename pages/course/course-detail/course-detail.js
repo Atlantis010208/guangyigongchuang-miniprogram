@@ -28,6 +28,7 @@ Page({
 
     const tab = parseInt(options.tab, 10);
     const initialTab = tab === 1 ? 1 : 0;
+    this.initialTab = initialTab;
     
     // 重置状态，确保数据干净
     this.setData({
@@ -38,9 +39,55 @@ Page({
       activeTab: initialTab
     });
     
-    if (id) {
-      this.loadCourseDetail(id);
+    if (!id) {
+      // 缺少 id 时无法加载任何内容（例如打开的是旧版本分享卡片），
+      // 引导用户回到课程列表，避免停留在空白页
+      this.setData({ loading: false, error: '课程链接已失效，请从课程列表重新进入' });
+      wx.showToast({ title: '课程链接已失效', icon: 'none' });
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/course/index/index' });
+      }, 1500);
+      return;
     }
+
+    this.loadCourseDetail(id);
+  },
+
+  /**
+   * 分享给好友
+   * 必须显式带上 id，否则接收方打开后无法加载课程
+   */
+  onShareAppMessage() {
+    const { course } = this.data;
+    const courseId = this.courseId || '';
+    let path = `/pages/course/course-detail/course-detail?id=${encodeURIComponent(courseId)}`;
+    if (this.initialTab === 1) {
+      path += '&tab=1';
+    }
+
+    const shareConfig = {
+      title: course && course.title ? course.title : '光乙共创平台 · 照明设计课程',
+      path
+    };
+
+    // 用课程封面作为分享图，无封面时交由微信截取页面
+    const cover = course && (course.coverUrl || course.cover);
+    if (cover) {
+      shareConfig.imageUrl = cover;
+    }
+
+    return shareConfig;
+  },
+
+  /**
+   * 加载失败后重试
+   */
+  onRetry() {
+    if (!this.courseId) {
+      wx.switchTab({ url: '/pages/course/index/index' });
+      return;
+    }
+    this.loadCourseDetail(this.courseId);
   },
 
   onShow() {
@@ -56,17 +103,20 @@ Page({
       });
       
       // 重新加载课程详情，获取最新的每个课时的进度
-      this.loadCourseDetail(this.courseId);
+      // 静默刷新：已有内容时不重新显示骨架屏，避免返回本页时闪屏
+      this.loadCourseDetail(this.courseId, true);
     }
   },
 
   /**
    * 加载课程详情
+   * @param {string} courseId 课程 id
+   * @param {boolean} silent 为 true 时不展示骨架屏（用于已有内容的后台刷新）
    */
-  async loadCourseDetail(courseId) {
+  async loadCourseDetail(courseId, silent = false) {
     // ⚠️ 加载前先重置购买状态，确保数据不会残留
     this.setData({ 
-      loading: true, 
+      loading: silent && this.data.course ? false : true, 
       error: null,
       isPurchased: false,
       progress: 0
@@ -124,10 +174,15 @@ Page({
       }
     } catch (err) {
       console.error('[course-detail] Load error:', err);
-      this.setData({
-        loading: false,
-        error: err.message || '加载失败'
-      });
+      // 静默刷新失败时保留已有内容，只做轻提示，不用错误页覆盖页面
+      if (silent && this.data.course) {
+        this.setData({ loading: false });
+      } else {
+        this.setData({
+          loading: false,
+          error: err.message || '加载失败，请检查网络后重试'
+        });
+      }
       wx.showToast({
         title: '加载失败',
         icon: 'none'
