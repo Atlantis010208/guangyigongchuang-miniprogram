@@ -281,26 +281,27 @@ Page({
     this.setData({ portalLoading: true, portalError: '' })
     const response = await designerApi.overview()
     if (!response.ok || !response.data) {
-      this.setData({ portalLoading: false, portalError: response.message || '??????' })
+      this.setData({ portalLoading: false, portalError: response.message || '\u52a0\u8f7d\u5931\u8d25' })
       return
     }
     const data = response.data
     const next = data.nextTask || {}
     const firstProject = Array.isArray(data.projects) && data.projects[0] || {}
+    const todoCount = Number(data.stats && data.stats.todos) || 0
     const copy = Object.assign({}, this.data.copy, {
-      pendingSummary: `??? ${Number(data.stats && data.stats.todos) || 0} ????`,
-      nextTitle: firstProject.title || '???????',
-      nextTask: next.title || firstProject.nextAction || '????????',
+      pendingSummary: '\u4eca\u5929\u6709 ' + todoCount + ' \u9879\u5f85\u5904\u7406',
+      nextTitle: firstProject.title || '\u706f\u5149\u8bbe\u8ba1\u65b9\u6848',
+      nextTask: next.title || firstProject.nextAction || '\u7ee7\u7eed\u5904\u7406\u9879\u76ee',
       nextDeadline: next.deadline || '',
-      allTodos: `?? ${Array.isArray(data.todos) ? data.todos.length : 0}`,
+      allTodos: '\u5168\u90e8 ' + (Array.isArray(data.todos) ? data.todos.length : 0),
     })
     this.setData({
       copy,
       portalLoading: false,
       stats: [
-        { label: '???', value: String(Number(data.stats && data.stats.ongoing) || 0) },
-        { label: '????', value: String(Number(data.stats && data.stats.todos) || 0) },
-        { label: '???', value: String(Number(data.stats && data.stats.pendingSettlement) || 0) },
+        { label: '\u8fdb\u884c\u4e2d', value: String(Number(data.stats && data.stats.ongoing) || 0) },
+        { label: '\u4eca\u65e5\u5f85\u529e', value: String(todoCount) },
+        { label: '\u5f85\u7ed3\u7b97', value: String(Number(data.stats && data.stats.pendingSettlement) || 0) },
       ],
       todos: (data.todos || []).map((item, index) => ({ id: item.id, title: item.title, subtitle: item.projectTitle || '', time: item.deadline || '', tone: index ? 'blue' : 'dark' })),
       projects: (data.projects || []).map((item, index) => ({ id: item.id, title: item.title, tag: item.statusText || item.nextAction, progress: item.progress || 0, image: item.imageUrl || PROJECTS[index % PROJECTS.length].image })),

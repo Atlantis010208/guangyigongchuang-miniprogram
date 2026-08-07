@@ -98,7 +98,7 @@ function main(argv = process.argv.slice(2)) {
   if (envId === PRODUCTION_ENV_ID) {
     const testSupportRequested = requested.filter(name => TEST_SUPPORT_FUNCTIONS.includes(name))
     if (testSupportRequested.length) {
-      console.error(`?????????????????????${testSupportRequested.join(', ')}`)
+      console.error(`\u7981\u6b62\u5411\u751f\u4ea7\u73af\u5883\u90e8\u7f72\u6d4b\u8bd5\u652f\u6301\u4e91\u51fd\u6570\uff1a${testSupportRequested.join(', ')}`)
       return 2
     }
     if (!allowProduction || !confirmZeroPercent) {

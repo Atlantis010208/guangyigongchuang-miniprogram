@@ -97,8 +97,13 @@ npm run verify:v2
 - **案例分类筛选失效**：列表页按 `category` 过滤，但后台从不写 `category`/`spaceType`。
 - **公众号文章入口未接**：`officialAccountUrl` 后台可填、云函数已返回，但小程序缺
   web-view 页面，且需小程序后台完成同主体公众号关联。
-- **`scripts/deploy-ui-v2-functions.js` 第 101 行中文变成 `??????`**：编码丢失，需修复。
 - **测试环境云函数配额 50 已满**，17 个旧版页面函数装不下，仅影响旧页面联调。
+- **设计师端联调账号**：测试环境已把手机号 `19854562428` 写入 `designer_whitelist`，
+  并将该 openid 的 `users.roles` 置为 `2`（设计师）。联调结束后若要继续验业主端，
+  需把 `roles` 改回 `1`。
+- **设计师端种子数据**：`requests`（进行中/已完成/可接单）、`designer_portfolios`、
+  `designer_favorites` 集合已建；数据挂在设计师档案
+  `df30f3766a75668c0576f06c6a34cf47` 下，仅供测试环境使用。
 
 ## 6. 生产灰度（联调全部通过后才执行）
 

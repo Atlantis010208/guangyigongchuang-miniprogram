@@ -116,7 +116,7 @@
           />
           <view class="case-name">{{item.title}}</view>
         </button>
-        <view wx:if="{{!portalLoading && featuredCases.length === 0}}" class="case-empty">??????</view>
+        <view wx:if="{{!portalLoading && featuredCases.length === 0}}" class="case-empty">暂无精选案例</view>
       </view>
     </view>
 

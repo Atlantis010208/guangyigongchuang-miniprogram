@@ -204,7 +204,7 @@ Component({
       this._caseItems = raw.map(item => ({
         id: item._id || item.id,
         category: item.category || item.spaceType || 'all',
-        title: item.title || '??????',
+        title: item.title || '\u706f\u5149\u8bbe\u8ba1\u6848\u4f8b',
         description: item.desc || item.description || '',
         image: item.imageUrl || (item.imageUrls && item.imageUrls[0]) || '',
         bookmarked: false,

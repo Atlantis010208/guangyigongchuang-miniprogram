@@ -169,13 +169,18 @@ Page({
     this.setData({
       profileLoading: false,
       profileError: profileResponse.ok ? '' : profileResponse.message,
-      avatarUrl: profile.avatarUrl || profile.avatar || '',
+      avatarUrl: profile.tempAvatarUrl || profile.avatarUrl || profile.avatar || '',
       copy: Object.assign({}, this.data.copy, {
         role: profile.name || profile.nickname || COPY.role,
-        profession: profile.profession || profile.specialty || COPY.profession,
+        profession: profile.profession || profile.specialty || profile.styles || COPY.profession,
         intro: profile.intro || profile.bio || COPY.intro,
       }),
-      works: rawWorks.slice(0, 3).map((item, index) => ({ id: item._id || item.id, label: item.title || item.category || `?? ${index + 1}`, image: item.coverUrl || item.imageUrl || (item.images && item.images[0]) || '' }))
+      works: rawWorks.slice(0, 3).map((item, index) => ({
+        id: item._id || item.id,
+        label: item.title || item.spaceType || item.category || ('\u4f5c\u54c1 ' + (index + 1)),
+        // designer_portfolios 返回 coverImage / tempCoverImage，兼容旧字段
+        image: item.tempCoverImage || item.coverUrl || item.imageUrl || item.coverImage || (item.images && item.images[0]) || '',
+      })),
     })
   },
 

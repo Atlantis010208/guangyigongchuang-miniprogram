@@ -313,20 +313,41 @@ Page({
     ])
     const listOf = response => response.ok && response.data && (response.data.list || response.data.items) || []
     const ongoing = listOf(ongoingResponse).map((item, index) => ({
-      id: item._id || item.id, title: item.title || '??????', client: item.clientInfo && item.clientInfo.nickname || item.ownerName || '??',
-      space: item.categoryText || item.space || '', tag: item.statusText || '', nextTask: item.currentStepText || '??????', deadline: item.timeText || '',
-      progress: Number(item.progress) || 0, image: item.coverUrl || item.imageUrl || PROJECTS[index % PROJECTS.length].image,
-      primary: index === 0, primaryLabel: '????', detailLabel: '????'
+      id: item._id || item.id,
+      title: item.title || '\u706f\u5149\u8bbe\u8ba1\u65b9\u6848',
+      client: item.clientInfo && item.clientInfo.nickname || item.ownerName || '\u5ba2\u6237',
+      space: item.categoryText || item.space || '',
+      tag: item.statusText || '',
+      nextTask: item.currentStepText || '\u7ee7\u7eed\u5904\u7406',
+      deadline: item.timeText || '',
+      progress: Number(item.progress) || 0,
+      image: item.coverUrl || item.imageUrl || PROJECTS[index % PROJECTS.length].image,
+      primary: index === 0,
+      primaryLabel: '\u7ee7\u7eed\u5904\u7406',
+      detailLabel: '\u67e5\u770b\u8be6\u60c5',
     }))
     const completed = listOf(completedResponse).map((item, index) => ({
-      id: item._id || item.id, title: item.title || '??????', client: item.clientInfo && item.clientInfo.nickname || '??', space: item.categoryText || '',
-      summary: item.currentStepText || '?????', completedAt: item.completedAtText || item.timeText || '', completedOrder: Number(item.completedAt) || 0,
-      delivery: item.deliveryText || '???????', image: item.coverUrl || item.imageUrl || COMPLETED_PROJECTS[index % COMPLETED_PROJECTS.length].image
+      id: item._id || item.id,
+      title: item.title || '\u706f\u5149\u8bbe\u8ba1\u65b9\u6848',
+      client: item.clientInfo && item.clientInfo.nickname || '\u5ba2\u6237',
+      space: item.categoryText || '',
+      summary: item.currentStepText || '\u6574\u5957\u706f\u5149\u8bbe\u8ba1',
+      completedAt: item.completedAtText || item.timeText || '',
+      completedOrder: Number(item.completedAt) || 0,
+      delivery: item.deliveryText || '\u65b9\u6848\u4e0e\u706f\u5177\u6e05\u5355\u5df2\u4ea4\u4ed8',
+      image: item.coverUrl || item.imageUrl || COMPLETED_PROJECTS[index % COMPLETED_PROJECTS.length].image,
     }))
     const opportunities = listOf(demandsResponse).map((item, index) => ({
-      id: item._id || item.id, title: item.title || item.categoryText || '??????', owner: item.ownerName || '??', category: item.category || 'all',
-      budget: item.budget || '', area: item.area || '', space: item.space || item.categoryText || '', need: item.note || item.description || '',
-      image: item.coverUrl || item.imageUrl || OPPORTUNITIES[index % OPPORTUNITIES.length].image, applied: item.isCollected === true
+      id: item._id || item.id,
+      title: item.title || item.categoryText || '\u53ef\u63a5\u9879\u76ee',
+      owner: item.ownerName || '\u5ba2\u6237',
+      category: item.category || 'all',
+      budget: item.budget || '',
+      area: item.area || '',
+      space: item.space || item.categoryText || '',
+      need: item.note || item.description || '',
+      image: item.coverUrl || item.imageUrl || OPPORTUNITIES[index % OPPORTUNITIES.length].image,
+      applied: item.isCollected === true,
     }))
     this.setData({ projectsLoading: false, projectsError: ongoingResponse.ok ? '' : ongoingResponse.message, projects: ongoing, completedProjects: completed, visibleCompletedProjects: completed, opportunities, visibleOpportunities: opportunities })
   },

@@ -199,7 +199,7 @@ Page({
     this.setData({ portalLoading: true, portalError: '' })
     const response = await ownerApi.overview()
     if (!response.ok || !response.data) {
-      this.setData({ portalLoading: false, portalError: response.message || '??????' })
+      this.setData({ portalLoading: false, portalError: response.message || '\u52a0\u8f7d\u5931\u8d25' })
       return
     }
     const overview = response.data

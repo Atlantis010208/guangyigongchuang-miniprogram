@@ -165,7 +165,7 @@ Page({
     const courses = response.ok && Array.isArray(response.data) ? response.data : []
     const course = courses[0]
     if (!course) {
-      this.setData({ loading: false, loadError: response.message || '????' })
+      this.setData({ loading: false, loadError: response.message || '\u6682\u65e0\u8bfe\u7a0b' })
       return
     }
     this.setData({
