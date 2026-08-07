@@ -3,12 +3,12 @@
 ## 当前保护点
 
 - 回滚 Tag：`pre-ui-v2-20260805`
-- 集成分支：`feat/ui-v2`，为叠在正式分支之上的**纯增量**（单一提交），不含任何非 V2 改动
+- 集成分支：`feat/ui-v2`，为叠在正式分支之上的**纯增量**，不含任何非 V2 改动
 - 正式分支基线：`fix/split-out-ui-v2`
 - `develop`、`trial` 只接受独立测试环境；缺少配置时前端直接终止云请求并弹窗引导。
 - `release` 才解析生产环境 `cloud1-5gb9c5u2c58ad6d7`。
 - `cloudbaserc.json` 不设置真实默认环境，所有部署必须显式传 `--env-id`。
-- 部署脚本只允许三个 V2 云函数，无法部署 `admin_cases` 等旧函数。
+- 部署脚本按白名单放行：默认只有三个 V2 云函数，`--include-test-support` 才追加联调所需的主流程函数；生产部署一律拒绝 test-support 名单。
 - V2 灰度查询失败、超时、缺配置时，客户端一律回旧 UI。
 
 ## 1. 创建隔离测试环境（控制台一次性操作）
@@ -38,7 +38,17 @@ node scripts/deploy-ui-v2-functions.js --env-id <TEST_ENV_ID> --include-test-sup
 node scripts/deploy-ui-v2-functions.js --env-id <TEST_ENV_ID> --include-test-support
 ```
 
-脚本白名单固定为 `ui_release_gate`、`owner_portal_v2`、`designer_portal_v2`。
+不带参数时只部署 `ui_release_gate`、`owner_portal_v2`、`designer_portal_v2`；`--include-test-support` 会追加登录、内容、订单等主流程函数（不含微信支付链路）。
+
+单独重新部署某个函数用 `--functions`：
+
+```powershell
+node scripts/deploy-ui-v2-functions.js --env-id <TEST_ENV_ID> --functions lighting_cases_list
+```
+
+已存在且运行时为 Nodejs18.15 的函数，CLI 会因为默认配置想改回 Nodejs10.15 而报
+`UpdateFunctionConfiguration 函数Runtime不支持修改`，此时改用 MCP `manageFunctions`
+的 `updateFunctionCode` 更新代码即可。
 
 ## 4. 白名单联调
 
@@ -77,6 +87,19 @@ npm run verify:v2
 - `cloudbaserc.json` 不含默认环境，所有 CLI 部署必须显式传 `--env-id`。
 - 主包体积仍有余量（当前约 1724KB / 2048KB）。
 
+## 5.6 联调遗留（上线前需逐条确认）
+
+- **后台与 V2 不在同一环境**：管理后台 `guangyi-admin` 硬编码生产环境
+  `cloud1-5gb9c5u2c58ad6d7`，V2 跑在独立测试环境，因此"后台填写 → 小程序展示"
+  无法端到端联调，测试环境的案例字段是直接写库补的。合并上生产后该链路才自然连通。
+- **案例配图普遍偏少**：7 条案例中 5 条只有 1 张图，详情页的"空间亮点"取封面之后的
+  第 2–5 张，因此这些案例不会渲染该区块。需要运营补图。
+- **案例分类筛选失效**：列表页按 `category` 过滤，但后台从不写 `category`/`spaceType`。
+- **公众号文章入口未接**：`officialAccountUrl` 后台可填、云函数已返回，但小程序缺
+  web-view 页面，且需小程序后台完成同主体公众号关联。
+- **`scripts/deploy-ui-v2-functions.js` 第 101 行中文变成 `??????`**：编码丢失，需修复。
+- **测试环境云函数配额 50 已满**，17 个旧版页面函数装不下，仅影响旧页面联调。
+
 ## 6. 生产灰度（联调全部通过后才执行）
 
 先在生产环境新增集合 `ui_release_config`，导入默认关闭配置，并部署三个新函数：
@@ -84,6 +107,17 @@ npm run verify:v2
 ```powershell
 node scripts/deploy-ui-v2-functions.js --env-id cloud1-5gb9c5u2c58ad6d7 --allow-production --confirm-zero-percent
 ```
+
+**另有两个既有函数被改动，必须一并部署到生产，否则案例详情页拿不到数据、
+后台也存不下新字段**（它们在 test-support 名单里，部署脚本会拒绝，需用
+MCP `manageFunctions` 或开发者工具手动部署）：
+
+| 函数 | 改动 | 漏部署的后果 |
+| --- | --- | --- |
+| `lighting_cases_list` | 新增 `action=detail`，返回 `city/area/style` | 详情页始终空态 |
+| `admin_cases` | `add/update` 支持 `city/area/style` | 后台三个字段填了存不进去 |
+
+两处改动都只增字段、不改旧语义，可以先于客户端发布单独部署。
 
 确认旧线上版本无回归后再发布含新旧 UI 的客户端。初始全部旧 UI。按白名单、业主端 `5% -> 20% -> 50% -> 100%`，业主稳定后再对设计师端执行相同流程。
 
