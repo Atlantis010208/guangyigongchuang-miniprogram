@@ -8,6 +8,29 @@ async function safeGet(query) {
   try { const result = await query.get(); return result.data || [] } catch (error) { console.warn('[owner_portal_v2] optional query failed', error && error.message); return [] }
 }
 function firstText(...values) { return values.find(value => typeof value === 'string' && value.trim()) || '' }
+/**
+ * 批量把云存储 fileID 换成临时 URL。
+ * 案例封面在库里存的是 fileID，其中焊死了环境 ID，直接下发给客户端解析
+ * 在跨环境时会取不到图；与 lighting_cases_list 保持一致，统一在服务端换好。
+ * @param {string[]} fileIds 去重后的 fileID 列表
+ * @returns {Promise<Map<string, string>>} fileID → 临时 URL，失败的条目不入表
+ */
+async function batchGetTempUrls(fileIds) {
+  const map = new Map()
+  if (!fileIds.length) return map
+  const CHUNK = 50
+  for (let i = 0; i < fileIds.length; i += CHUNK) {
+    try {
+      const res = await cloud.getTempFileURL({ fileList: fileIds.slice(i, i + CHUNK) })
+      ;(res.fileList || []).forEach(item => {
+        if (item.fileID && item.tempFileURL) map.set(item.fileID, item.tempFileURL)
+      })
+    } catch (error) {
+      console.warn('[owner_portal_v2] getTempFileURL failed', error && error.message)
+    }
+  }
+  return map
+}
 function normalizeStatus(value) {
   if (['completed', 'done'].includes(value)) return 'completed'
   if (['processing', 'matched', 'review', 'design', 'verifying'].includes(value)) return 'processing'
@@ -33,6 +56,8 @@ exports.main = async (event) => {
     identityValues.forEach(id => branches.push({ _openid: id }, { openid: id }, { ownerId: id }, { userId: id }, { webUid: id }))
     const requests = branches.length ? await safeGet(db.collection('requests').where(_.or(branches)).orderBy('updatedAt', 'desc').limit(20)) : []
     const cases = await safeGet(db.collection('lighting_cases').where({ status: 'active' }).orderBy('sortOrder', 'desc').limit(4))
+    const coverFileIds = [...new Set(cases.map(item => Array.isArray(item.imageFileIds) && item.imageFileIds[0]).filter(Boolean))]
+    const coverUrls = await batchGetTempUrls(coverFileIds)
     const counts = { total: requests.length, pending: 0, processing: 0, completed: 0 }
     requests.forEach(item => { counts[normalizeStatus(item.status)] += 1 })
     return {
@@ -45,8 +70,12 @@ exports.main = async (event) => {
         featuredCases: cases.map(item => ({
           id: item._id,
           title: firstText(item.title, '灯光设计案例'),
-          imageUrl: firstText(item.coverUrl, item.imageUrl, Array.isArray(item.imageUrls) && item.imageUrls[0], Array.isArray(item.imageFileIds) && item.imageFileIds[0]),
-          spaceType: firstText(item.spaceType, item.category), city: firstText(item.city)
+          imageUrl: firstText(
+            item.coverUrl,
+            item.imageUrl,
+            Array.isArray(item.imageUrls) && item.imageUrls[0],
+            coverUrls.get(Array.isArray(item.imageFileIds) && item.imageFileIds[0])
+          )
         }))
       }
     }
