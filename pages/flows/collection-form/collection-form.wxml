@@ -9,7 +9,11 @@
       <block wx:if="{{view === 'overview'}}">
         <view class="page-heading">
           <text class="page-title">模块总览</text>
-          <text class="page-subtitle">根据您的选择，依次完成以下模块</text>
+          <view class="overview-intro">
+            <text class="overview-intro-line">优质灯光方案，源于深度需求的洞察；</text>
+            <text class="overview-intro-line">我们会通过空间、习惯等细节信息，用心打磨每个灯光细节，设计适合长期生活的光；</text>
+            <text class="overview-intro-line">这是要陪伴你很多年的家，每个反馈都决定设计方向，所以「务必认真填写」，好用的光就在细节里；</text>
+          </view>
         </view>
         <view class="module-list overview-list">
           <view wx:for="{{moduleCards}}" wx:key="id" class="module-card" data-index="{{index}}" bindtap="onModuleTap">
@@ -43,7 +47,7 @@
 
       <block wx:elif="{{view === 'question'}}">
         <view class="question-topline">
-          <view class="module-tag">{{currentModule.code}} 模块</view>
+          <view class="module-tag">{{currentModuleTagTitle}}</view>
           <text class="question-count">{{currentQuestionIndex + 1}}/{{visibleQuestionCount}}</text>
         </view>
         <view class="progress-track"><view class="progress-fill" style="width: {{progressWidth}}%;"></view></view>

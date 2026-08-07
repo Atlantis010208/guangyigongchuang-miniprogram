@@ -7,16 +7,31 @@ const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
 // 全局注入分享：所有未自定义 onShareAppMessage 的页面自动获得默认分享
 ;(function() {
   const _Page = Page
+
+  /**
+   * 拼出带 query 的完整分享路径
+   * currentPage.route 不含查询参数，参数在 currentPage.options 里，
+   * 只取 route 会导致详情页分享后接收方拿不到 id 而无法加载数据。
+   * @param {object} page getCurrentPages() 返回的页面实例
+   * @returns {string} 形如 /pages/xxx/xxx?id=1 的绝对路径
+   */
+  const buildSharePath = function(page) {
+    if (!page || !page.route) return '/pages/products/products'
+    const options = page.options || {}
+    const query = Object.keys(options)
+      .filter((key) => options[key] !== undefined && options[key] !== null && options[key] !== '')
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(options[key])}`)
+      .join('&')
+    return '/' + page.route + (query ? '?' + query : '')
+  }
+
   Page = function(options) {
     if (!options.onShareAppMessage) {
       options.onShareAppMessage = function() {
         const pages = getCurrentPages()
-        const currentPage = pages[pages.length - 1]
-        const route = currentPage ? '/' + currentPage.route : '/pages/products/products'
         return {
           title: '光乙共创平台',
-          path: route,
-          imageUrl: '/images/share-logo.png'
+          path: buildSharePath(pages[pages.length - 1])
         }
       }
     }

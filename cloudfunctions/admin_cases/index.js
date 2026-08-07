@@ -8,6 +8,7 @@
  *   - update: 更新案例
  *   - delete: 逻辑删除（status=inactive）
  *   - list: 分页列表
+ *   - stats: 案例状态统计
  */
 const cloud = require('wx-server-sdk')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
@@ -43,6 +44,30 @@ function validateOfficialAccountUrl(url) {
   if (!trimmed) return true
   // 必须是 http/https 协议，且建议是公众号文章域名
   return /^https?:\/\/.+/i.test(trimmed)
+}
+
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function buildCaseWhere(event) {
+  const conditions = []
+  if (event.status === 'active' || event.status === 'inactive') {
+    conditions.push({ status: event.status })
+  }
+
+  const keyword = typeof event.keyword === 'string' ? event.keyword.trim().slice(0, 60) : ''
+  if (keyword) {
+    const regex = db.RegExp({ regexp: escapeRegExp(keyword), options: 'i' })
+    conditions.push(_.or([
+      { title: regex },
+      { desc: regex },
+      { services: regex }
+    ]))
+  }
+
+  if (conditions.length === 0) return {}
+  return conditions.length === 1 ? conditions[0] : _.and(conditions)
 }
 
 async function addCase(event) {
@@ -136,10 +161,7 @@ async function deleteCase(event) {
 async function listCases(event) {
   const page = Math.max(1, parseInt(event.page || 1, 10))
   const pageSize = Math.min(100, Math.max(1, parseInt(event.pageSize || 20, 10)))
-  const status = event.status
-
-  const where = {}
-  if (status) where.status = status
+  const where = buildCaseWhere(event)
 
   try {
     const countRes = await db.collection(COLLECTION).where(where).count()
@@ -164,6 +186,24 @@ async function listCases(event) {
   }
 }
 
+async function statsCases() {
+  try {
+    const [totalRes, activeRes, inactiveRes] = await Promise.all([
+      db.collection(COLLECTION).count(),
+      db.collection(COLLECTION).where({ status: 'active' }).count(),
+      db.collection(COLLECTION).where({ status: 'inactive' }).count()
+    ])
+
+    return resp(true, 'OK', '统计成功', {
+      total: totalRes.total || 0,
+      active: activeRes.total || 0,
+      inactive: inactiveRes.total || 0
+    })
+  } catch (e) {
+    return resp(false, 'DB_ERROR', e.message || '数据库异常')
+  }
+}
+
 exports.main = async (event) => {
   try {
     const authResult = await requireAdmin(db, _)
@@ -179,6 +219,7 @@ exports.main = async (event) => {
       case 'update': return await updateCase(event)
       case 'delete': return await deleteCase(event)
       case 'list': return await listCases(event)
+      case 'stats': return await statsCases()
       default: return resp(false, 'INVALID_ACTION', `不支持的操作类型: ${action}`)
     }
   } catch (e) {

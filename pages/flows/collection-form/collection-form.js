@@ -3,6 +3,22 @@ const { loadFormTemplate, isValidTemplate } = require('../../../utils/collection
 
 const SPACE_TYPES = ['residential', 'wellness', 'office', 'fitness']
 const AUTO_ADVANCE_TYPES = new Set(['single', 'shortText', 'longText'])
+const MODULE_TAG_TITLES = {
+  '空间愿景与长期生活状态': '长期生活状态',
+  '基础信息与家庭结构': '家庭结构',
+  '装修、施工与资料条件': '施工与资料',
+  '风格、亮度与灯光感受': '灯光感受',
+  '时间线、重点空间与生活场景': '重点空间场景',
+  '柜体、展示、智能与预算': '智能与预算',
+}
+
+function getModuleTagTitle(module) {
+  if (!module) return ''
+  const customTitle = String(module.tagTitle || '').trim()
+  if (customTitle) return customTitle
+  const moduleTitle = String(module.title || '').trim()
+  return MODULE_TAG_TITLES[moduleTitle] || moduleTitle || `${module.code || ''} 模块`.trim()
+}
 
 function isChoiceAnswer(answer) {
   return Boolean(answer && typeof answer === 'object' && !Array.isArray(answer) && Object.prototype.hasOwnProperty.call(answer, 'selected'))
@@ -151,6 +167,7 @@ Page({
     answers: {},
     moduleCards: [],
     currentModule: null,
+    currentModuleTagTitle: '',
     currentModuleIndex: 0,
     currentQuestion: null,
     currentQuestionIndex: 0,
@@ -368,6 +385,7 @@ Page({
       motionClass: this.nextMotionClass(),
       view: 'module',
       currentModule,
+      currentModuleTagTitle: getModuleTagTitle(currentModule),
       currentModuleIndex: safeIndex,
       visibleQuestions,
       scrollLocked: false,
@@ -397,6 +415,7 @@ Page({
       answers,
       view: 'question',
       currentModule,
+      currentModuleTagTitle: getModuleTagTitle(currentModule),
       currentModuleIndex: moduleIndex,
       currentQuestion,
       currentQuestionIndex: safeIndex,
@@ -724,4 +743,4 @@ Page({
   },
 })
 
-module.exports = { hasAnswer, isVisible, getVisibleQuestions, validateQuestion }
+module.exports = { hasAnswer, isVisible, getVisibleQuestions, validateQuestion, getModuleTagTitle }

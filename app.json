@@ -3,17 +3,7 @@
     "pages/splash/splash",
     "pages/products/products",
     "pages/course/index/index",
-    "pages/search/search",
-    "pages/color-temp/color-temp",
-    "pages/color-temp/color-temp-result/color-temp-result",
-    "pages/color-temp/history/history",
     "pages/toolbox/toolbox",
-    "pages/search/calc-result/calc-result",
-    "pages/search/help/help",
-    "pages/search/help/help-lamp-to-lux/help-lamp-to-lux",
-    "pages/search/help/help-lux-to-count/help-lux-to-count",
-    "pages/search/help/help-lux-to-params/help-lux-to-params",
-    "pages/search/history/history",
     "pages/cart/cart",
     "pages/identity/identity",
     "pages/web-login-confirm/index",
@@ -43,6 +33,26 @@
     "pages/designer-invites/designer-invites"
   ],
   "subpackages": [
+    {
+      "root": "pages/color-temp/",
+      "pages": [
+        "color-temp",
+        "color-temp-result/color-temp-result",
+        "history/history"
+      ]
+    },
+    {
+      "root": "pages/search/",
+      "pages": [
+        "search",
+        "calc-result/calc-result",
+        "help/help",
+        "help/help-lamp-to-lux/help-lamp-to-lux",
+        "help/help-lux-to-count/help-lux-to-count",
+        "help/help-lux-to-params/help-lux-to-params",
+        "history/history"
+      ]
+    },
     {
       "root": "pages/order/",
       "pages": [

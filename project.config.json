@@ -165,6 +165,26 @@
       {
         "value": "xhs_order_sync",
         "type": "folder"
+      },
+      {
+        "value": "tmp",
+        "type": "folder"
+      },
+      {
+        "value": ".figma-ref",
+        "type": "folder"
+      },
+      {
+        "value": "deploy",
+        "type": "folder"
+      },
+      {
+        "value": ".cloudbase-deploy",
+        "type": "folder"
+      },
+      {
+        "value": "小程序-照度计算工具说明.pdf",
+        "type": "file"
       }
     ],
     "include": []

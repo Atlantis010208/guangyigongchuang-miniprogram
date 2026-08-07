@@ -7,10 +7,20 @@ const {
   getVisibleQuestions,
   isVisible,
   validateQuestion,
+  getModuleTagTitle,
 } = require('../pages/flows/collection-form/collection-form')
 const { getFormTemplate } = require('../pages/flows/collection-form/form-template')
 
 const form = getFormTemplate('residential')
+
+assert.strictEqual(getModuleTagTitle({ code: 'A', title: '空间愿景与长期生活状态' }), '长期生活状态')
+assert.strictEqual(getModuleTagTitle({ code: 'B', title: '基础信息与家庭结构' }), '家庭结构')
+assert.strictEqual(getModuleTagTitle({ code: 'C', title: '装修、施工与资料条件' }), '施工与资料')
+assert.strictEqual(getModuleTagTitle({ code: 'D', title: '风格、亮度与灯光感受' }), '灯光感受')
+assert.strictEqual(getModuleTagTitle({ code: 'E', title: '时间线、重点空间与生活场景' }), '重点空间场景')
+assert.strictEqual(getModuleTagTitle({ code: 'F', title: '柜体、展示、智能与预算' }), '智能与预算')
+assert.strictEqual(getModuleTagTitle({ code: 'A', title: '项目概况' }), '项目概况')
+assert.strictEqual(getModuleTagTitle({ code: 'A', title: '项目概况', tagTitle: '自定义标题' }), '自定义标题')
 
 assert.deepStrictEqual(form.modules.map((module) => module.questions.length), [4, 5, 6, 5])
 assert.deepStrictEqual(
