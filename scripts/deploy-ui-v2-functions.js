@@ -11,6 +11,8 @@ const V2_FUNCTIONS = Object.freeze([
   'designer_portal_v2'
 ])
 const TEST_SUPPORT_FUNCTIONS = Object.freeze([
+  // 登录链路：独立测试环境是全新环境，联调必须能从登录页完整走一遍，缺一个都进不去
+  'login', 'getPhoneNumber', 'check_designer_whitelist',
   'lighting_cases_list', 'gallery_list', 'gallery_favorites',
   'collection_form_public', 'virtual_categories', 'products_list',
   'requests_list', 'orders_list', 'designer_projects', 'designer_demands',
