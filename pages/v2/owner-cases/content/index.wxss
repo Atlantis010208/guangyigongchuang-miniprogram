@@ -253,17 +253,17 @@
 }
 
 .case-title-row {
-  position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-width: 0;
-  height: 34rpx;
   margin-top: 10rpx;
+  padding-right: 4rpx;
 }
 
 .case-title {
+  flex: 1;
   min-width: 0;
-  padding-right: 34rpx;
   overflow: hidden;
   color: #111111;
   font-size: 24rpx;
@@ -274,6 +274,7 @@
 }
 
 .case-description {
+  margin-top: 4rpx;
   overflow: hidden;
   color: #767676;
   font-size: 22rpx;
@@ -284,15 +285,13 @@
 }
 
 .bookmark-button {
-  position: absolute;
-  z-index: 2;
-  top: -25rpx;
-  right: -18rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88rpx;
-  height: 88rpx;
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  margin-left: 12rpx;
 }
 
 .bookmark-image {
