@@ -1,0 +1,11 @@
+{
+  "_id": "miniprogram_ui_v2",
+  "enabled": false,
+  "uiVersion": "v2",
+  "ownerEnabled": false,
+  "designerEnabled": false,
+  "ownerPercent": 0,
+  "designerPercent": 0,
+  "ownerWhitelistHashes": [],
+  "designerWhitelistHashes": []
+}

@@ -1,0 +1,176 @@
+<view class="owner-services" data-preview-content="services">
+  <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+  <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+    <button
+      class="service-button avatar-button"
+      bindtap="goProfile"
+      hover-class="tap-soft"
+      aria-label="{{copy.profileAria}}"
+    >
+      <image
+        class="avatar"
+        src="/pages/v2/owner-home/assets/avatar.png"
+        mode="aspectFill"
+        fade-in="{{false}}"
+      />
+    </button>
+  </view>
+
+  <view class="services-content">
+    <view class="services-intro">
+      <view class="page-title">{{copy.title}}</view>
+      <view class="page-subtitle">{{copy.subtitle}}</view>
+    </view>
+
+    <view class="collection-card">
+      <view class="collection-copy">
+        <view class="collection-label">
+          <view class="document-icon" aria-hidden="true">
+            <view class="document-icon__line document-icon__line--short"></view>
+            <view class="document-icon__line"></view>
+            <view class="document-icon__line"></view>
+          </view>
+          <text>{{copy.collectionLabel}}</text>
+        </view>
+
+        <view class="collection-title">{{copy.collectionTitle}}</view>
+        <view class="collection-description">{{copy.collectionDescription}}</view>
+
+        <view class="collection-features">
+          <view class="feature-item">
+            <view class="grid-icon" aria-hidden="true">
+              <view></view><view></view><view></view><view></view>
+            </view>
+            <text>{{copy.collectionTypes}}</text>
+          </view>
+          <view class="feature-item">
+            <image
+              class="draft-icon"
+              src="/pages/v2/owner-services/assets/icon-draft-edit-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+            <text>{{copy.draftSupport}}</text>
+          </view>
+        </view>
+
+        <button
+          class="service-button collection-button"
+          bindtap="openCollection"
+          hover-class="primary-pressed"
+        >
+          {{copy.collectionAction}}
+        </button>
+      </view>
+
+      <view class="collection-image-wrap" aria-hidden="true">
+        <image
+          class="collection-image"
+          src="/pages/v2/owner-case-detail/assets/highlight-dining.webp"
+          mode="aspectFill"
+          fade-in="{{false}}"
+        />
+      </view>
+    </view>
+
+    <button
+      class="service-button mall-card"
+      bindtap="openMall"
+      hover-class="card-pressed"
+    >
+      <image
+        class="mall-card-image"
+        src="/pages/v2/owner-services/assets/professional-store-v1.webp"
+        mode="aspectFill"
+        fade-in="{{false}}"
+        aria-hidden="true"
+      />
+      <view class="mall-course-label" aria-hidden="true">{{copy.mallCourseLabel}}</view>
+      <view class="mall-card-copy">
+        <view class="mall-card-label">{{copy.mallLabel}}</view>
+        <view class="mall-card-title">{{copy.mallTitle}}</view>
+        <view class="mall-card-description">{{copy.mallDescription}}</view>
+        <view class="mall-card-action">{{copy.mallAction}}</view>
+      </view>
+    </button>
+
+    <view class="professional-section">
+      <view class="section-title">{{copy.professionalTitle}}</view>
+
+      <view class="service-grid">
+        <button
+          class="service-button service-card"
+          bindtap="openDesignService"
+          hover-class="card-pressed"
+        >
+          <view class="service-card-title">{{copy.designTitle}}</view>
+          <view class="service-card-subtitle">{{copy.designSubtitle}}</view>
+          <image
+            class="service-card-image"
+            src="/pages/v2/owner-home/assets/case-nanjing.png"
+            mode="aspectFill"
+            fade-in="{{false}}"
+          />
+          <view class="service-card-action">
+            <text>{{copy.designAction}}</text>
+            <view class="action-arrow" aria-hidden="true"></view>
+          </view>
+        </button>
+
+        <button
+          class="service-button service-card"
+          bindtap="openConsultation"
+          hover-class="card-pressed"
+        >
+          <view class="service-card-title">{{copy.consultTitle}}</view>
+          <view class="service-card-subtitle">{{copy.consultSubtitle}}</view>
+          <image
+            class="service-card-image"
+            src="/pages/v2/designer-tools/assets/quiz.webp"
+            mode="aspectFill"
+            fade-in="{{false}}"
+          />
+          <view class="service-card-action">
+            <text>{{copy.consultAction}}</text>
+            <view class="action-arrow" aria-hidden="true"></view>
+          </view>
+        </button>
+      </view>
+    </view>
+
+    <view class="process-section">
+      <view class="section-title">{{copy.processTitle}}</view>
+
+      <view class="process-row">
+        <view
+          wx:for="{{processSteps}}"
+          wx:key="number"
+          class="process-step"
+        >
+          <view class="process-heading">
+            <text class="process-number">{{item.number}}</text>
+            <text class="process-name">{{item.title}}</text>
+          </view>
+          <view class="process-description">{{item.description}}</view>
+          <view
+            wx:if="{{index < processSteps.length - 1}}"
+            class="process-connector"
+            aria-hidden="true"
+          ></view>
+        </view>
+      </view>
+
+      <button
+        class="service-button continue-link"
+        bindtap="openCollection"
+        hover-class="tap-soft"
+      >
+        <text class="continue-lead">{{copy.continueLead}}</text>
+        <text>{{copy.continueAction}}</text>
+        <view class="action-arrow action-arrow--muted" aria-hidden="true"></view>
+      </button>
+    </view>
+  </view>
+</view>

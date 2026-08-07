@@ -1,5 +1,5 @@
 {
-  "envId": "cloud1-5gb9c5u2c58ad6d7",
+  "envId": "__SET_EXPLICIT_TEST_ENV_ID_BEFORE_DEPLOY__",
   "functionRoot": "./cloudfunctions",
   "functions": [
     {
@@ -75,7 +75,21 @@
       "name": "admin_collection_form_submissions",
       "runtime": "Nodejs18.15",
       "installDependency": true
+    },
+    {
+      "name": "ui_release_gate",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "owner_portal_v2",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
+    },
+    {
+      "name": "designer_portal_v2",
+      "runtime": "Nodejs18.15",
+      "installDependency": true
     }
   ]
 }
-

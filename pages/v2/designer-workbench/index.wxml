@@ -1,0 +1,242 @@
+<view class="designer-workbench">
+  <scroll-view
+    class="workbench-scroller"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view class="workbench-content">
+      <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+      <view class="workbench-header" style="height: {{headerHeight}}px;">
+        <button
+          class="avatar-button"
+          bindtap="goProfile"
+          hover-class="tap-soft"
+          aria-label="进入设计师个人中心"
+        >
+          <image
+            class="avatar-image"
+            src="./assets/avatar.webp"
+            mode="aspectFill"
+            fade-in="{{false}}"
+          />
+        </button>
+
+        <view class="workbench-heading">
+          <view class="workbench-title">{{copy.workbenchTitle}}</view>
+          <view class="pending-summary">{{copy.pendingSummary}}</view>
+        </view>
+
+      </view>
+
+      <view class="summary-metrics" style="height: {{summaryHeight}}px;">
+        <view wx:for="{{stats}}" wx:key="label" class="summary-metric">
+          <view class="summary-label">{{item.label}}</view>
+          <view class="summary-value">{{item.value}}</view>
+        </view>
+      </view>
+
+      <view class="next-action-card" style="height: {{nextActionHeight}}px;">
+        <view class="next-action-copy">
+          <view class="next-eyebrow">{{copy.nextEyebrow}}</view>
+          <view class="next-title-row">
+            <view class="next-title">{{copy.nextTitle}}</view>
+            <view class="next-tag">{{copy.nextTag}}</view>
+          </view>
+          <view class="next-task">{{copy.nextTask}}</view>
+          <view class="next-deadline">{{copy.nextDeadline}}</view>
+        </view>
+
+        <image
+          class="next-project-image"
+          src="./assets/project-residential.webp"
+          mode="aspectFill"
+          fade-in="{{false}}"
+          aria-label="住宅灯光设计方案项目图片"
+        />
+
+        <view class="next-progress" style="top: {{nextProgressTop}}px;">
+          <view class="progress-copy">
+            <text>{{copy.progressLabel}}</text>
+            <text>{{nextProgress}}%</text>
+          </view>
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{nextProgress}}%;"></view>
+          </view>
+        </view>
+
+        <view class="next-action-buttons">
+          <button
+            class="next-action-primary"
+            bindtap="continueTask"
+            hover-class="next-action-primary--pressed"
+          >
+            <text class="next-action-primary__label">{{copy.continueLabel}}</text>
+          </button>
+          <button
+            class="next-action-secondary"
+            bindtap="viewProject"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.viewProjectLabel}}</text>
+            <image
+              class="chevron chevron--action"
+              src="./assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+      </view>
+
+      <view class="today-todo-section">
+        <view class="section-heading">
+          <view class="section-title">{{copy.todayTodoTitle}}</view>
+          <button
+            class="section-more"
+            bindtap="openTodo"
+            data-id="submission"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.allTodos}}</text>
+            <image
+              class="chevron chevron--small"
+              src="./assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+
+        <view class="todo-list" style="height: {{todoListHeight}}px;">
+          <button
+            wx:for="{{todos}}"
+            wx:key="id"
+            class="todo-item"
+            data-id="{{item.id}}"
+            bindtap="openTodo"
+            hover-class="todo-item--pressed"
+          >
+            <view class="todo-dot todo-dot--{{item.tone}}" aria-hidden="true"></view>
+            <view class="todo-copy">
+              <view class="todo-title">{{item.title}}</view>
+              <view class="todo-subtitle">{{item.subtitle}}</view>
+            </view>
+            <view class="todo-time">{{item.time}}</view>
+            <image
+              class="chevron chevron--todo"
+              src="./assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+      </view>
+
+      <view class="ongoing-projects-section">
+        <view class="section-heading">
+          <view class="section-title">{{copy.projectsTitle}}</view>
+          <button
+            class="section-more"
+            bindtap="openAllProjects"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.viewAll}}</text>
+            <image
+              class="chevron chevron--small"
+              src="./assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+
+        <view class="project-grid">
+          <button
+            wx:for="{{projects}}"
+            wx:key="id"
+            class="project-card"
+            style="height: {{projectCardHeight}}px;"
+            data-id="{{item.id}}"
+            bindtap="viewProject"
+            hover-class="project-card--pressed"
+          >
+            <image
+              class="project-image"
+              src="{{item.image}}"
+              mode="aspectFill"
+              fade-in="{{false}}"
+            />
+            <view class="project-copy">
+              <view class="project-title">{{item.title}}</view>
+              <view class="project-tag">{{item.tag}}</view>
+              <view class="project-progress-copy">
+                <text>{{copy.progressLabel}}</text>
+                <text>{{item.progress}}%</text>
+              </view>
+              <view class="project-progress-track">
+                <view
+                  class="project-progress-fill"
+                  style="width: {{item.progress}}%;"
+                ></view>
+              </view>
+            </view>
+          </button>
+        </view>
+      </view>
+
+      <view class="quick-tools-section">
+        <view class="section-heading">
+          <view class="section-title">{{copy.toolsTitle}}</view>
+        </view>
+
+        <view class="quick-tool-list" style="height: {{quickToolListHeight}}px;">
+          <button
+            wx:for="{{quickTools}}"
+            wx:key="id"
+            class="quick-tool"
+            data-id="{{item.id}}"
+            bindtap="openQuickTool"
+            hover-class="quick-tool--pressed"
+          >
+            <image
+              class="quick-tool-icon"
+              src="{{item.icon}}"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+            <view class="quick-tool-label">{{item.label}}</view>
+          </button>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="preview-tabbar">
+    <view class="preview-tabbar__inner">
+      <button
+        wx:for="{{tabs}}"
+        wx:key="id"
+        class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchTab"
+        hover-class="tap-soft"
+      >
+        <image
+          class="designer-tab-icon"
+          src="{{item.icon}}"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+        <text class="tab-label">{{item.label}}</text>
+      </button>
+    </view>
+  </view>
+</view>

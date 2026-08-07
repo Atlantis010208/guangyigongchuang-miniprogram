@@ -1,0 +1,588 @@
+@import "../shared/preview-tabbar.wxss";
+
+page {
+  min-height: 100%;
+  color: #111111;
+  font-family: "PingFang SC", "Noto Sans CJK SC";
+  background: #fafaf9;
+}
+
+button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+button::after {
+  border: 0;
+}
+
+.designer-profile-preview {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #fafaf9;
+}
+
+.profile-scroller {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.profile-content {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding-bottom: calc(108rpx + env(safe-area-inset-bottom));
+}
+
+.status-space,
+.profile-header {
+  position: relative;
+  z-index: 2;
+}
+
+.profile-heading {
+  position: absolute;
+  top: 12px;
+  left: 30rpx;
+}
+
+.profile-page-title {
+  color: #050505;
+  font-size: 56rpx;
+  font-weight: 700;
+  line-height: 68rpx;
+  letter-spacing: 1rpx;
+}
+
+.profile-page-subtitle {
+  color: #707074;
+  font-size: 24rpx;
+  font-weight: 400;
+  line-height: 34rpx;
+  letter-spacing: 1rpx;
+}
+
+.identity-card {
+  box-sizing: border-box;
+  height: 308rpx;
+  margin: 0 28rpx;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1rpx solid #dfdfdf;
+  border-radius: 20rpx;
+}
+
+.identity-top {
+  position: relative;
+  display: grid;
+  grid-template-columns: 154rpx minmax(0, 1fr);
+  column-gap: 28rpx;
+  box-sizing: border-box;
+  height: 216rpx;
+  padding: 22rpx 24rpx 0;
+}
+
+.profile-avatar {
+  display: block;
+  width: 154rpx;
+  height: 154rpx;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.identity-copy {
+  min-width: 0;
+  padding-top: 4rpx;
+  padding-right: 112rpx;
+}
+
+.identity-role {
+  color: #090909;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 46rpx;
+}
+
+.identity-profession {
+  margin-top: 5rpx;
+  color: #606167;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.mode-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 34rpx;
+  margin-top: 8rpx;
+  padding: 0 16rpx;
+  color: #3478f6;
+  font-size: 20rpx;
+  font-weight: 500;
+  border: 2rpx solid #3478f6;
+  border-radius: 10rpx;
+}
+
+.identity-intro {
+  overflow: hidden;
+  margin-top: 10rpx;
+  color: #606167;
+  font-size: 21rpx;
+  line-height: 31rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-profile {
+  position: absolute;
+  top: 28rpx;
+  right: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 106rpx;
+  height: 44px;
+  color: #5f6065;
+  font-size: 21rpx;
+}
+
+.chevron {
+  display: block;
+  flex: none;
+  opacity: 0.78;
+}
+
+.chevron--edit {
+  width: 14rpx;
+  height: 14rpx;
+  margin-left: 14rpx;
+}
+
+.identity-divider {
+  height: 1rpx;
+  margin: 0 24rpx;
+  background: #e1e1e1;
+}
+
+.profile-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: 91rpx;
+}
+
+.profile-shortcut {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56rpx minmax(0, 1fr);
+  column-gap: 16rpx;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 34rpx;
+}
+
+.profile-shortcut + .profile-shortcut::before {
+  position: absolute;
+  top: 20rpx;
+  bottom: 20rpx;
+  left: 0;
+  width: 1rpx;
+  background: #dedede;
+  content: "";
+}
+
+.id-card-glyph {
+  position: relative;
+  box-sizing: border-box;
+  width: 42rpx;
+  height: 52rpx;
+  margin-left: 5rpx;
+  border: 4rpx solid #111111;
+  border-radius: 7rpx;
+}
+
+.id-card-glyph__head {
+  position: absolute;
+  top: 8rpx;
+  left: 12rpx;
+  box-sizing: border-box;
+  width: 12rpx;
+  height: 12rpx;
+  border: 3rpx solid #111111;
+  border-radius: 50%;
+}
+
+.id-card-glyph__body {
+  position: absolute;
+  top: 23rpx;
+  left: 8rpx;
+  box-sizing: border-box;
+  width: 20rpx;
+  height: 12rpx;
+  border: 3rpx solid #111111;
+  border-bottom: 0;
+  border-radius: 12rpx 12rpx 0 0;
+}
+
+.id-card-glyph__line {
+  position: absolute;
+  right: 8rpx;
+  bottom: 7rpx;
+  left: 8rpx;
+  height: 2rpx;
+  background: #111111;
+  border-radius: 999rpx;
+}
+
+.home-glyph {
+  position: relative;
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.home-glyph__roof {
+  position: absolute;
+  top: 4rpx;
+  left: 8rpx;
+  box-sizing: border-box;
+  width: 36rpx;
+  height: 36rpx;
+  border-top: 4rpx solid #111111;
+  border-left: 4rpx solid #111111;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+.home-glyph__body {
+  position: absolute;
+  right: 8rpx;
+  bottom: 3rpx;
+  left: 8rpx;
+  box-sizing: border-box;
+  height: 31rpx;
+  background: #ffffff;
+  border: 4rpx solid #111111;
+  border-top: 0;
+  border-radius: 0 0 5rpx 5rpx;
+}
+
+.shortcut-copy {
+  min-width: 0;
+}
+
+.shortcut-title {
+  overflow: hidden;
+  color: #111111;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 34rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut-subtitle {
+  overflow: hidden;
+  color: #707074;
+  font-size: 19rpx;
+  line-height: 28rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.works-section {
+  margin: 38rpx 36rpx 0;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50rpx;
+}
+
+.section-title {
+  color: #0b0b0b;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 44rpx;
+}
+
+.section-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 112rpx;
+  height: 44px;
+  color: #5f6065;
+  font-size: 21rpx;
+}
+
+.chevron--section {
+  width: 14rpx;
+  height: 14rpx;
+  margin-left: 14rpx;
+}
+
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 18rpx;
+  margin-top: 12rpx;
+}
+
+.work-item {
+  min-width: 0;
+}
+
+.work-image {
+  display: block;
+  width: 100%;
+  height: 196rpx;
+  overflow: hidden;
+  border-radius: 17rpx;
+}
+
+.work-label {
+  margin-top: 10rpx;
+  color: #111111;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+
+.settings-section {
+  margin: 40rpx 28rpx 0;
+}
+
+.settings-section > .section-title {
+  margin-left: 8rpx;
+}
+
+.settings-card {
+  height: 164rpx;
+  margin-top: 12rpx;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1rpx solid #dfdfdf;
+  border-radius: 20rpx;
+}
+
+.setting-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 60rpx minmax(0, 1fr) 18rpx;
+  column-gap: 16rpx;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 82rpx;
+  padding: 0 24rpx;
+}
+
+.setting-item + .setting-item::before {
+  position: absolute;
+  top: 0;
+  right: 24rpx;
+  left: 24rpx;
+  height: 1rpx;
+  background: #e1e1e1;
+  content: "";
+}
+
+.setting-item--pressed {
+  background: #f4f4f2;
+}
+
+.person-glyph,
+.bell-glyph {
+  position: relative;
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.person-glyph__head {
+  position: absolute;
+  top: 1rpx;
+  left: 15rpx;
+  box-sizing: border-box;
+  width: 22rpx;
+  height: 22rpx;
+  border: 3rpx solid #111111;
+  border-radius: 50%;
+}
+
+.person-glyph__body {
+  position: absolute;
+  right: 4rpx;
+  bottom: 1rpx;
+  left: 4rpx;
+  box-sizing: border-box;
+  height: 26rpx;
+  border: 3rpx solid #111111;
+  border-bottom: 0;
+  border-radius: 26rpx 26rpx 0 0;
+}
+
+.bell-glyph__body {
+  position: absolute;
+  top: 4rpx;
+  left: 8rpx;
+  box-sizing: border-box;
+  width: 36rpx;
+  height: 38rpx;
+  border: 3rpx solid #111111;
+  border-radius: 20rpx 20rpx 9rpx 9rpx;
+}
+
+.bell-glyph__body::before {
+  position: absolute;
+  top: -7rpx;
+  left: 13rpx;
+  width: 6rpx;
+  height: 8rpx;
+  background: #111111;
+  border-radius: 999rpx;
+  content: "";
+}
+
+.bell-glyph__clapper {
+  position: absolute;
+  bottom: 1rpx;
+  left: 22rpx;
+  width: 8rpx;
+  height: 5rpx;
+  background: #111111;
+  border-radius: 0 0 999rpx 999rpx;
+}
+
+.setting-copy {
+  min-width: 0;
+}
+
+.setting-title {
+  overflow: hidden;
+  color: #111111;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 34rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-subtitle {
+  overflow: hidden;
+  color: #707074;
+  font-size: 19rpx;
+  line-height: 28rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron--setting {
+  width: 14rpx;
+  height: 14rpx;
+}
+
+.completeness-note {
+  margin: 18rpx 28rpx 26rpx;
+  color: #6b6b70;
+  font-size: 19rpx;
+  line-height: 30rpx;
+  text-align: center;
+}
+
+.designer-tab-icon {
+  display: block;
+  width: 56rpx;
+  height: 52rpx;
+  opacity: 0.42;
+}
+
+.tab-item--active .designer-tab-icon {
+  opacity: 1;
+}
+
+.designer-profile-preview .tab-label {
+  font-size: 22rpx;
+  line-height: 30rpx;
+}
+
+.tap-soft {
+  opacity: 0.58;
+}
+
+@media (min-height: 760px) {
+  .identity-card {
+    height: 348rpx;
+  }
+
+  .identity-top {
+    height: 236rpx;
+  }
+
+  .profile-shortcuts {
+    height: 111rpx;
+  }
+
+  .works-section {
+    margin-top: 78rpx;
+  }
+
+  .work-image {
+    height: 236rpx;
+  }
+
+  .settings-section {
+    margin-top: 80rpx;
+  }
+
+  .settings-card {
+    height: 196rpx;
+  }
+
+  .setting-item {
+    height: 98rpx;
+  }
+
+  .completeness-note {
+    margin-top: 32rpx;
+    margin-bottom: 48rpx;
+  }
+}
+@media (max-width: 340px) {
+  .identity-card {
+    height: 320rpx;
+  }
+
+  .identity-copy {
+    padding-right: 96rpx;
+  }
+
+  .profile-shortcut {
+    padding-right: 20rpx;
+    padding-left: 20rpx;
+  }
+
+  .shortcut-title {
+    font-size: 22rpx;
+  }
+}
+
+@media (min-width: 430px) {
+  .designer-profile-preview {
+    max-width: 430px;
+    margin: 0 auto;
+    box-shadow: 0 0 0 1rpx rgba(0, 0, 0, 0.03);
+  }
+}

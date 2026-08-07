@@ -5,6 +5,8 @@ const { fetchMembershipStatus } = require('../../utils/membership.js')
 // 避坑指南 PDF 文件地址（压缩版）
 const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/（已压缩）2、工具包｜装修灯光注意事项-避坑指南（最新）.pdf'
 
+const { enterV2IfEnabled } = require('../../services/v2/navigation-gate')
+
 Page({
 
   /**
@@ -24,7 +26,8 @@ Page({
   /**
    * 生命周期函数--监听页面加载
    */
-  onLoad(options) {
+  async onLoad(options) {
+    if (await enterV2IfEnabled('owner', options || {})) return
     // 检查是否需要选择身份
     this.checkIdentitySelection()
     // 从数据库动态获取工具包和课程的封面图片

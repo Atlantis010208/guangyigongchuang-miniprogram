@@ -1,0 +1,314 @@
+<view class="preview-shell">
+  <view
+    class="preview-panel {{activePreviewTab === 'home' ? 'preview-panel--active' : ''}}"
+    data-preview-panel="home"
+    aria-hidden="{{activePreviewTab !== 'home'}}"
+  >
+    <scroll-view
+      class="preview-panel__scroller"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <view class="owner-home">
+  <view class="hero" style="height: {{heroHeight}}px;">
+    <view class="hero-atmosphere"></view>
+    <image
+      class="hero-scene"
+      style="top: {{sceneTop}}px;"
+      src="./assets/hero-room.png"
+      mode="aspectFill"
+      aria-label="{{copy.heroImageLabel}}"
+    />
+
+    <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+    <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+      <button
+        class="avatar-button"
+        bindtap="goProfile"
+        hover-class="tap-soft"
+        aria-label="{{copy.profileAria}}"
+      >
+        <image class="avatar" src="{{userAvatar}}" mode="aspectFill" />
+      </button>
+    </view>
+
+    <view class="hero-copy" style="top: {{copyTop}}px;">
+      <view class="hero-title">
+        <text>{{copy.heroLine1}}</text>
+        <text>{{copy.heroLine2}}</text>
+      </view>
+      <view
+        class="hero-subtitle"
+        style="margin-top: calc(16rpx + {{heroSubtitleGap}}px);"
+      >{{copy.heroSubtitle}}</view>
+      <button
+        class="hero-primary"
+        style="margin-top: calc(34rpx + {{heroPrimaryGap}}px);"
+        bindtap="goPublish"
+        hover-class="hero-primary--pressed"
+      >
+        {{copy.heroCta}}
+      </button>
+      <button
+        class="case-link"
+        style="margin-top: calc(18rpx + {{heroCaseGap}}px);"
+        bindtap="goCases"
+        hover-class="tap-soft"
+      >
+        <text>{{copy.caseLead}}</text>
+        <view class="line-arrow" aria-hidden="true"></view>
+      </button>
+    </view>
+  </view>
+
+  <view class="page-content" style="min-height: {{contentMinHeight}}px;">
+    <button
+      class="next-card"
+      bindtap="goPublish"
+      style="height: calc(158rpx + {{nextCardStretch}}px);"
+      hover-class="next-card--pressed"
+    >
+      <view class="next-copy" style="padding-top: calc(6rpx + {{nextCopyOffset}}px);">
+        <view class="next-eyebrow">{{copy.nextEyebrow}}</view>
+        <view class="next-title">{{copy.nextTitle}}</view>
+        <view class="next-meta">{{copy.nextMeta}}</view>
+        <view class="next-step">1 / 3</view>
+      </view>
+      <view class="circle-arrow" style="top: calc(41rpx + {{nextArrowOffset}}px);" aria-hidden="true">
+        <view class="chevron chevron--large"></view>
+      </view>
+    </button>
+
+    <view
+      class="section cases-section"
+      style="margin-top: calc(30rpx + {{casesGapStretch}}px);"
+    >
+      <view class="section-heading">
+        <view class="section-title">{{copy.casesTitle}}</view>
+        <button
+          class="section-more"
+          bindtap="goCases"
+          hover-class="tap-soft"
+        >
+          <text>{{copy.viewAll}}</text>
+          <view class="chevron chevron--small" aria-hidden="true"></view>
+        </button>
+      </view>
+
+      <view
+        class="case-grid"
+        style="margin-top: calc(10rpx + {{caseGridGapStretch}}px);"
+      >
+        <button
+          wx:for="{{featuredCases}}"
+          wx:key="id"
+          class="case-item"
+          bindtap="goCases"
+          hover-class="case-item--pressed"
+          aria-label="??{{item.title}}"
+        >
+          <image
+            class="case-image"
+            src="{{item.imageUrl}}"
+            mode="aspectFill"
+            style="height: calc(276rpx + {{caseImageStretch}}px);"
+          />
+          <view class="case-name">{{item.title}}</view>
+        </button>
+        <view wx:if="{{!portalLoading && featuredCases.length === 0}}" class="case-empty">??????</view>
+      </view>
+    </view>
+
+    <view
+      class="section tools-section"
+      style="margin-top: calc(10rpx + {{toolsGapStretch}}px);"
+    >
+      <view class="section-heading">
+        <view class="section-title">{{copy.toolsTitle}}</view>
+        <button
+          class="section-more"
+          bindtap="goTools"
+          hover-class="tap-soft"
+        >
+          <text>{{copy.viewAll}}</text>
+          <view class="chevron chevron--small" aria-hidden="true"></view>
+        </button>
+      </view>
+
+      <view
+        class="tool-grid"
+        style="margin-top: calc(10rpx + {{toolGridGapStretch}}px);"
+      >
+        <button
+          class="tool-card"
+          bindtap="goIlluminance"
+          hover-class="tool-card--pressed"
+          style="height: calc(90rpx + {{toolCardStretch}}px);"
+        >
+          <image
+            class="tool-icon"
+            src="./assets/icon-calculator.png"
+            mode="aspectFit"
+          />
+          <view class="tool-copy">
+            <view class="tool-title">{{copy.illuminanceTitle}}</view>
+            <view class="tool-description">{{copy.illuminanceDescription}}</view>
+          </view>
+          <view class="tool-arrow" aria-hidden="true">
+            <view class="chevron chevron--tool"></view>
+          </view>
+        </button>
+
+        <button
+          class="tool-card"
+          bindtap="goColorTemperature"
+          hover-class="tool-card--pressed"
+          style="height: calc(90rpx + {{toolCardStretch}}px);"
+        >
+          <image
+            class="tool-icon"
+            src="./assets/icon-temperature.png"
+            mode="aspectFit"
+          />
+          <view class="tool-copy">
+            <view class="tool-title">{{copy.colorTitle}}</view>
+            <view class="tool-description">{{copy.colorDescription}}</view>
+          </view>
+          <view class="tool-arrow" aria-hidden="true">
+            <view class="chevron chevron--tool"></view>
+          </view>
+        </button>
+      </view>
+    </view>
+  </view>
+
+      </view>
+    </scroll-view>
+  </view>
+
+  <view
+    class="preview-panel {{activePreviewTab === 'cases' ? 'preview-panel--active' : ''}}"
+    data-preview-panel="cases"
+    aria-hidden="{{activePreviewTab !== 'cases'}}"
+  >
+    <scroll-view
+      class="preview-panel__scroller"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <owner-cases-content />
+    </scroll-view>
+  </view>
+
+  <view
+    class="preview-panel {{activePreviewTab === 'services' ? 'preview-panel--active' : ''}}"
+    data-preview-panel="services"
+    aria-hidden="{{activePreviewTab !== 'services'}}"
+  >
+    <scroll-view
+      class="preview-panel__scroller"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <owner-services-content data-module-version="mall-v2" />
+    </scroll-view>
+  </view>
+  <view
+    class="preview-panel {{activePreviewTab === 'tools' ? 'preview-panel--active' : ''}}"
+    data-preview-panel="tools"
+    aria-hidden="{{activePreviewTab !== 'tools'}}"
+  >
+    <scroll-view
+      class="preview-panel__scroller"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+    >
+      <owner-tools-content />
+    </scroll-view>
+  </view>
+
+  <view class="preview-tabbar">
+    <view class="preview-tabbar__inner">
+      <button
+        class="tab-item {{activePreviewTab === 'home' ? 'tab-item--active' : ''}}"
+        bindtap="switchToHome"
+        hover-class="none"
+      >
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activePreviewTab === 'home' ? 'tab-icon-layer--visible' : ''}}"
+            src="./assets/tab-home.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activePreviewTab !== 'home' ? 'tab-icon-layer--visible' : ''}}"
+            src="../owner-cases/assets/tab-home.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
+        <text class="tab-label">{{copy.tabHome}}</text>
+      </button>
+      <button
+        class="tab-item {{activePreviewTab === 'cases' ? 'tab-item--active' : ''}}"
+        bindtap="switchToCases"
+        hover-class="none"
+      >
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activePreviewTab !== 'cases' ? 'tab-icon-layer--visible' : ''}}"
+            src="./assets/tab-cases.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activePreviewTab === 'cases' ? 'tab-icon-layer--visible' : ''}}"
+            src="../owner-cases/assets/tab-cases.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
+        <text class="tab-label">{{copy.tabCases}}</text>
+      </button>
+      <button
+        class="tab-item {{activePreviewTab === 'services' ? 'tab-item--active' : ''}}"
+        bindtap="switchToServices"
+        hover-class="none"
+      >
+        <image class="tab-icon" src="./assets/tab-service.png" mode="aspectFit" />
+        <text class="tab-label">{{copy.tabService}}</text>
+      </button>
+      <button
+        class="tab-item {{activePreviewTab === 'tools' ? 'tab-item--active' : ''}}"
+        bindtap="switchToTools"
+        hover-class="none"
+      >
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activePreviewTab !== 'tools' ? 'tab-icon-layer--visible' : ''}}"
+            src="./assets/tab-tools.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activePreviewTab === 'tools' ? 'tab-icon-layer--visible' : ''}}"
+            src="./assets/tab-tools-active.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
+        <text class="tab-label">{{copy.tabTools}}</text>
+      </button>
+      <button class="tab-item" bindtap="goProfile" hover-class="tap-soft">
+        <image class="tab-icon" src="./assets/tab-profile.png" mode="aspectFit" />
+        <text class="tab-label">{{copy.tabProfile}}</text>
+      </button>
+    </view>
+  </view>
+</view>
+

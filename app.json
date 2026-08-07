@@ -183,6 +183,21 @@
         "lighting-result/lighting-result",
         "lighting-history/lighting-history"
       ]
+    },
+    {
+      "root": "pages/v2/",
+      "pages": [
+        "owner-home/index",
+        "owner-cases/index",
+        "owner-case-detail/index",
+        "owner-tools/index",
+        "owner-services/index",
+        "designer-workbench/index",
+        "designer-projects/index",
+        "designer-profile/index",
+        "designer-learning/index",
+        "designer-tools/index"
+      ]
     }
   ],
   "window": {

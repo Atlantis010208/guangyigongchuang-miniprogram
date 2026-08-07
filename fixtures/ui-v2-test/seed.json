@@ -1,0 +1,25 @@
+{
+  "users": [
+    {"_id":"test_owner_001","_openid":"test_openid_owner_001","nickname":"测试业主A","roles":1,"identitySelected":true},
+    {"_id":"test_designer_user_001","_openid":"test_openid_designer_001","nickname":"测试设计师A","roles":2,"identitySelected":true}
+  ],
+  "designers": [
+    {"_id":"test_designer_001","_openid":"test_openid_designer_001","userId":"test_designer_user_001","name":"测试设计师A","status":"active"}
+  ],
+  "lighting_cases": [
+    {"_id":"test_case_001","title":"匿名住宅灯光案例","status":"active","sortOrder":100,"spaceType":"住宅","imageFileIds":[]}
+  ],
+  "courses": [
+    {"_id":"test_course_001","courseId":"TEST_COURSE_001","title":"灯光设计测试课程","status":"published","price":1}
+  ],
+  "products": [
+    {"_id":"test_product_001","title":"测试设计服务","type":"service","status":"active","price":1},
+    {"_id":"test_product_002","title":"测试工具包","type":"toolkit","status":"active","price":1}
+  ],
+  "requests": [
+    {"_id":"test_request_owner_001","_openid":"test_openid_owner_001","userId":"test_owner_001","designerId":"test_designer_001","title":"匿名住宅灯光设计方案","status":"design","progress":40,"createdAt":1785888000000,"updatedAt":1785888000000}
+  ],
+  "collection_form_types": [
+    {"_id":"test_form_type_001","name":"住宅长期生活状态","status":"published","sortOrder":1}
+  ]
+}

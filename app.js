@@ -1,5 +1,6 @@
 // app.js
 const util = require('./utils/util')
+const { resolveCloudEnvironment } = require('./config/cloud-env')
 
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
@@ -43,25 +44,14 @@ App({
   onLaunch(options) {
     console.log('小程序启动', options)
     
-    // 初始化云开发（用于将 cloud:// fileID 转为 https 临时链接）
-    try {
-      if (wx && wx.cloud && wx.cloud.init) {
-        wx.cloud.init({
-          env: 'cloud1-5gb9c5u2c58ad6d7',
-          traceUser: true
-        })
-      }
-    } catch (e) {
-      console.warn('wx.cloud 初始化失败或不可用', e)
-    }
-
+    // Initialize global state first, then route CloudBase by envVersion (fail closed).
+    this.initGlobalData()
+    this.initCloudEnvironment()
     this.initCollectionsIfDev()
 
     // 检查更新
     this.checkForUpdate()
     
-    // 初始化全局数据
-    this.initGlobalData()
     this.captureInviteCode(options)
     
     // 获取系统信息
@@ -69,6 +59,30 @@ App({
 
     // 检查登录状态
     this.checkLoginStatus()
+  },
+
+  initCloudEnvironment() {
+    const state = resolveCloudEnvironment(wx)
+    this.globalData.cloudEnvironment = state
+    if (!state.ok) {
+      console.error('[cloud-env] blocked:', state.code, state.message)
+      return false
+    }
+    try {
+      if (!wx.cloud || !wx.cloud.init) throw new Error('wx.cloud unavailable')
+      wx.cloud.init({ env: state.envId, traceUser: true })
+      this.globalData.cloudReady = true
+      console.info('[cloud-env]', state.envVersion, state.isProduction ? 'production' : 'test')
+      return true
+    } catch (error) {
+      this.globalData.cloudReady = false
+      this.globalData.cloudEnvironment = Object.assign({}, state, {
+        ok: false, code: 'CLOUD_INIT_FAILED',
+        message: error && error.message ? error.message : 'Cloud initialization failed'
+      })
+      console.error('[cloud-env] init failed', error)
+      return false
+    }
   },
 
   onShow(options) {
@@ -147,7 +161,9 @@ App({
       isFirstLaunch: false,
       cartCount: 0,
       favoriteCount: 0,
-      searchHistory: []
+      searchHistory: [],
+      cloudReady: false,
+      cloudEnvironment: null
     }
 
     // 检查是否首次启动
@@ -163,8 +179,8 @@ App({
 
   initCollectionsIfDev() {
     try {
-      const info = wx.getAccountInfoSync()
-      const envVersion = info && info.miniProgram && info.miniProgram.envVersion ? info.miniProgram.envVersion : ''
+      const cloudEnvironment = this.globalData && this.globalData.cloudEnvironment
+      if (!cloudEnvironment || !cloudEnvironment.ok || !cloudEnvironment.isTest) return
       if (wx.cloud && wx.cloud.database) {
         const REQUIRED_VER = 'v3'
         const currentVer = wx.getStorageSync('collections_inited_ver') || ''

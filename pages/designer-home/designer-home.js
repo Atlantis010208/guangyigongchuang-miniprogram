@@ -1,3 +1,5 @@
+const { enterV2IfEnabled } = require('../../services/v2/navigation-gate')
+
 Page({
   data: {
     categories: ['全部', '住宅', '商业', '办公', '户外'],
@@ -18,7 +20,8 @@ Page({
   // 比单纯比较 total 更稳定（接单+新发布会让 total 互相抵消导致误判）。
   _lastLatestCreatedAt: 0,
 
-  onLoad(options) {
+  async onLoad(options) {
+    if (await enterV2IfEnabled('designer', options || {})) return
     // 隐藏返回首页按钮，因为这是设计师的首页
     wx.hideHomeButton();
     this.loadDemands();

@@ -1,0 +1,12 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#faf9f8",
+  "backgroundTextStyle": "dark",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "owner-cases-content": "/pages/v2/owner-cases/content/index",
+    "owner-services-content": "/pages/v2/owner-services/content/index",
+    "owner-tools-content": "/pages/v2/owner-tools/content/index"
+  }
+}

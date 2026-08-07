@@ -1,0 +1,136 @@
+<view class="case-detail">
+  <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+  <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+    <button
+      class="plain-button back-button"
+      bindtap="goBack"
+      hover-class="tap-soft"
+      aria-label="{{copy.backAria}}"
+    >
+      <view class="back-chevron" aria-hidden="true"></view>
+    </button>
+    <view class="nav-title">{{copy.navTitle}}</view>
+  </view>
+
+  <view class="detail-content">
+    <view class="hero-wrap">
+      <swiper
+        class="hero-swiper"
+        current="{{currentSlide}}"
+        circular
+        bindchange="handleSwiperChange"
+      >
+        <swiper-item wx:for="{{slides}}" wx:key="index">
+          <image
+            class="hero-image"
+            src="{{item.src}}"
+            mode="aspectFill"
+            fade-in="{{false}}"
+            data-index="{{item.previewIndex}}"
+            bindtap="previewImage"
+            aria-label="{{item.aria}}"
+          />
+        </swiper-item>
+      </swiper>
+      <view class="slide-counter">
+        {{galleryIndex}} / {{galleryTotal}}
+      </view>
+    </view>
+
+    <view class="intro-block">
+      <view class="case-category">{{copy.category}}</view>
+      <view class="case-title">{{copy.title}}</view>
+      <view class="case-meta">{{copy.meta}}</view>
+    </view>
+
+    <view class="summary-grid">
+      <view
+        wx:for="{{summaryItems}}"
+        wx:key="label"
+        class="summary-item"
+      >
+        <view class="summary-label">{{item.label}}</view>
+        <view class="summary-value">{{item.value}}</view>
+      </view>
+    </view>
+
+    <view class="content-section concept-section">
+      <view class="section-title">{{copy.designTitle}}</view>
+      <view class="concept-copy">
+        <text>{{copy.conceptLine1}}</text>
+        <text>{{copy.conceptLine2}}</text>
+      </view>
+    </view>
+
+    <view class="content-section highlights-section">
+      <view class="section-title">{{copy.highlightsTitle}}</view>
+      <view class="highlight-grid">
+        <button
+          wx:for="{{highlights}}"
+          wx:key="src"
+          class="plain-button highlight-item"
+          data-index="{{item.previewIndex}}"
+          bindtap="previewImage"
+          hover-class="image-pressed"
+          aria-label="{{item.aria}}"
+        >
+          <image
+            class="highlight-image"
+            src="{{item.src}}"
+            mode="widthFix"
+            fade-in="{{false}}"
+          />
+        </button>
+      </view>
+    </view>
+
+    <view class="content-section project-section">
+      <view class="section-title">{{copy.projectInfoTitle}}</view>
+      <view class="project-table">
+        <view
+          wx:for="{{projectRows}}"
+          wx:key="label"
+          class="project-row"
+        >
+          <text class="project-label">{{item.label}}</text>
+          <text class="project-value">{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="closing-block">
+      <view class="closing-title">{{copy.closingTitle}}</view>
+      <view class="closing-copy">{{copy.closingText}}</view>
+    </view>
+  </view>
+
+  <view class="detail-action-bar">
+    <view class="detail-action-inner">
+      <button
+        class="plain-button favorite-action"
+        bindtap="toggleBookmark"
+        hover-class="tap-soft"
+        aria-label="{{isBookmarked ? copy.unfavorite : copy.favorite}}"
+      >
+        <image
+          class="favorite-icon"
+          src="{{bookmarkIcon}}"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+        <text class="favorite-label">{{copy.favorite}}</text>
+      </button>
+
+      <button
+        class="plain-button consult-action"
+        bindtap="goConsultation"
+        hover-class="consult-action--pressed"
+      >
+        <text class="consult-action__label">{{copy.consult}}</text>
+      </button>
+    </view>
+  </view>
+</view>
+
+

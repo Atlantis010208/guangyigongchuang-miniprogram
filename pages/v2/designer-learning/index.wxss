@@ -1,0 +1,380 @@
+@import "../shared/preview-tabbar.wxss";
+
+page {
+  min-height: 100%;
+  color: #111111;
+  font-family: "PingFang SC", "Noto Sans CJK SC", sans-serif;
+  background: #fafaf9;
+}
+
+button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+button::after {
+  border: 0;
+}
+
+.designer-learning-preview {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #fafaf9;
+}
+
+.learning-scroller {
+  width: 100%;
+  height: 100%;
+}
+
+.learning-content {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding-bottom: calc(126rpx + env(safe-area-inset-bottom));
+}
+
+.learning-header {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 36rpx;
+}
+
+.learning-page-title {
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -2rpx;
+}
+
+.learning-page-subtitle {
+  margin-top: 8rpx;
+  color: #66666b;
+  font-size: 24rpx;
+  font-weight: 400;
+  line-height: 30rpx;
+}
+
+.course-feature {
+  margin: 0 36rpx;
+}
+
+.course-hero {
+  display: block;
+  width: 100%;
+  height: 272rpx;
+  border-radius: 20rpx 20rpx 0 0;
+}
+
+.course-card {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  min-height: 276rpx;
+  margin-top: -2rpx;
+  padding: 24rpx 34rpx 20rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e2e2;
+  border-top: 0;
+  border-radius: 24rpx;
+}
+
+.course-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 46rpx;
+  letter-spacing: -1rpx;
+}
+
+.course-subtitle {
+  margin-top: 6rpx;
+  color: #525258;
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.instructor-summary {
+  display: flex;
+  align-items: center;
+  height: 50rpx;
+  margin-top: 14rpx;
+  color: #5e5e64;
+  font-size: 23rpx;
+  line-height: 30rpx;
+}
+
+.instructor-avatar {
+  display: block;
+  flex: 0 0 auto;
+  background: #ececec;
+  border-radius: 50%;
+}
+
+.instructor-avatar--small {
+  width: 46rpx;
+  height: 46rpx;
+  margin-right: 12rpx;
+}
+
+.instructor-name {
+  color: #151515;
+  font-weight: 500;
+}
+
+.instructor-separator {
+  margin: 0 10rpx;
+  color: #99999d;
+}
+
+.start-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 88rpx;
+  margin-top: 12rpx;
+  color: #ffffff;
+  font-size: 31rpx;
+  font-weight: 600;
+}
+
+.start-button::before {
+  position: absolute;
+  z-index: -1;
+  top: 10rpx;
+  right: 0;
+  bottom: 10rpx;
+  left: 0;
+  content: "";
+  background: #050505;
+  border-radius: 999rpx;
+}
+
+.start-button--pressed {
+  opacity: 0.72;
+}
+
+.course-intro-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: -2rpx;
+  color: #222222;
+  font-size: 23rpx;
+}
+
+.chevron {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.chevron--intro {
+  width: 22rpx;
+  height: 28rpx;
+  margin-left: 10rpx;
+}
+
+.highlights-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  box-sizing: border-box;
+  min-height: 104rpx;
+  margin: 20rpx 36rpx 0;
+  background: #ffffff;
+  border: 1rpx solid #e2e2e2;
+  border-radius: 18rpx;
+}
+
+.highlight-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.highlight-item + .highlight-item::before {
+  position: absolute;
+  top: 20rpx;
+  bottom: 20rpx;
+  left: 0;
+  width: 1rpx;
+  content: "";
+  background: #dedede;
+}
+
+.highlight-title {
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 34rpx;
+}
+
+.highlight-subtitle {
+  margin-top: 4rpx;
+  color: #6d6d72;
+  font-size: 22rpx;
+  line-height: 26rpx;
+}
+
+.section {
+  margin: 24rpx 36rpx 0;
+}
+
+.section-title {
+  margin: 0 2rpx 12rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 38rpx;
+}
+
+.content-card {
+  padding: 0 20rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e2e2;
+  border-radius: 18rpx;
+}
+
+.content-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 84rpx;
+  text-align: left;
+}
+
+.content-row + .content-row {
+  border-top: 1rpx solid #ececec;
+}
+
+.content-row--pressed,
+.tap-soft {
+  opacity: 0.58;
+}
+
+.content-icon {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 36rpx;
+  height: 36rpx;
+  margin: 0 24rpx 0 8rpx;
+  color: #111111;
+}
+
+.content-icon--play,
+.content-icon--clock {
+  border: 2rpx solid currentColor;
+  border-radius: 50%;
+}
+
+.play-triangle {
+  position: absolute;
+  top: 10rpx;
+  left: 13rpx;
+  width: 0;
+  height: 0;
+  border-top: 7rpx solid transparent;
+  border-bottom: 7rpx solid transparent;
+  border-left: 10rpx solid currentColor;
+}
+
+.content-icon--document {
+  border: 2rpx solid currentColor;
+  border-radius: 4rpx;
+}
+
+.document-lines::before,
+.document-lines::after {
+  position: absolute;
+  left: 8rpx;
+  width: 17rpx;
+  height: 2rpx;
+  content: "";
+  background: currentColor;
+}
+
+.document-lines::before {
+  top: 10rpx;
+}
+
+.document-lines::after {
+  top: 18rpx;
+}
+
+.clock-hands::before,
+.clock-hands::after {
+  position: absolute;
+  content: "";
+  background: currentColor;
+  transform-origin: bottom center;
+}
+
+.clock-hands::before {
+  top: 7rpx;
+  left: 16rpx;
+  width: 2rpx;
+  height: 11rpx;
+}
+
+.clock-hands::after {
+  top: 14rpx;
+  left: 16rpx;
+  width: 2rpx;
+  height: 10rpx;
+  transform: rotate(120deg);
+}
+
+.content-copy {
+  min-width: 0;
+}
+
+.content-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 32rpx;
+}
+
+.content-subtitle {
+  color: #707075;
+  font-size: 21rpx;
+  line-height: 28rpx;
+}
+
+.chevron--row {
+  width: 22rpx;
+  height: 28rpx;
+  margin-left: auto;
+}
+
+.designer-tab-icon {
+  display: block;
+  width: 56rpx;
+  height: 52rpx;
+  opacity: 0.42;
+}
+
+.tab-item--active .designer-tab-icon {
+  opacity: 1;
+}
+
+@media (min-width: 430px) {
+  .designer-learning-preview {
+    width: 430px;
+    margin: 0 auto;
+  }
+}

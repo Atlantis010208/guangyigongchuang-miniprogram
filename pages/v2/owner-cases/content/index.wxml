@@ -1,0 +1,130 @@
+<view class="owner-cases" data-preview-content="cases">
+  <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+  <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+    <button
+      class="case-panel-button avatar-button"
+      bindtap="goProfile"
+      hover-class="tap-soft"
+      aria-label="{{copy.profileAria}}"
+    >
+      <image
+        class="avatar"
+        src="/pages/v2/owner-cases/assets/avatar.png"
+        mode="aspectFill"
+        fade-in="{{false}}"
+      />
+    </button>
+  </view>
+
+  <view
+    class="case-content"
+    style="min-height: {{contentMinHeight}}px; padding-bottom: calc(108rpx + env(safe-area-inset-bottom) + {{contentBottomStretch}}px);"
+  >
+    <view
+      class="intro"
+      style="margin-top: calc(50rpx + {{introStretch}}px);"
+    >
+      <view class="page-title">{{copy.title}}</view>
+      <view class="page-subtitle">{{copy.subtitle}}</view>
+
+      <view
+        class="search-box"
+        style="margin-top: calc(20rpx + {{searchStretch}}px);"
+      >
+        <view class="search-icon" aria-hidden="true"></view>
+        <input
+          class="search-input"
+          placeholder-class="search-placeholder"
+          placeholder="{{copy.searchPlaceholder}}"
+          value="{{searchValue}}"
+          confirm-type="search"
+          bindinput="handleSearch"
+        />
+      </view>
+
+      <view
+        class="category-row"
+        style="margin-top: calc(20rpx + {{categoryStretch}}px);"
+      >
+        <button
+          wx:for="{{categories}}"
+          wx:key="value"
+          class="case-panel-button {{item.className}}"
+          data-value="{{item.value}}"
+          bindtap="selectCategory"
+          hover-class="category--pressed"
+        >
+          {{item.label}}
+        </button>
+      </view>
+    </view>
+
+    <view
+      class="cases-section"
+      style="margin-top: calc(24rpx + {{sectionStretch}}px);"
+    >
+      <view class="section-heading">
+        <view class="section-title">{{copy.featured}}</view>
+        <button
+          class="case-panel-button filter-button"
+          bindtap="showFilterPreview"
+          hover-class="tap-soft"
+        >
+          <text>{{copy.filter}}</text>
+          <image
+            class="filter-image"
+            src="/pages/v2/owner-cases/assets/icon-filter.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+        </button>
+      </view>
+
+      <view
+        wx:if="{{hasCases}}"
+        class="case-grid"
+        style="margin-top: calc(14rpx + {{gridHeadingStretch}}px); row-gap: calc(18rpx + {{rowGapStretch}}px);"
+      >
+        <view
+          wx:for="{{cases}}"
+          wx:key="id"
+          class="case-card"
+          data-id="{{item.id}}"
+          bindtap="openCase"
+          hover-class="case-card--pressed"
+        >
+          <image
+            class="case-image"
+            src="{{item.image}}"
+            mode="aspectFill"
+            fade-in="{{false}}"
+            style="height: calc(274rpx + {{caseImageStretch}}px);"
+          />
+          <view class="case-title-row">
+            <view class="case-title">{{item.title}}</view>
+            <button
+              class="case-panel-button bookmark-button"
+              data-id="{{item.id}}"
+              catchtap="toggleBookmark"
+              hover-class="tap-soft"
+              aria-label="{{item.bookmarkAria}}"
+            >
+              <image
+                class="bookmark-image"
+                src="{{item.bookmarkIcon}}"
+                mode="aspectFit"
+                fade-in="{{false}}"
+                aria-hidden="true"
+              />
+            </button>
+          </view>
+          <view class="case-description">{{item.description}}</view>
+        </view>
+      </view>
+
+      <view wx:else class="empty-state">{{copy.empty}}</view>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,101 @@
+<view class="owner-tools" data-preview-content="tools">
+  <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+  <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+    <button
+      class="owner-tool-button avatar-button"
+      bindtap="goProfile"
+      hover-class="tap-soft"
+      aria-label="{{copy.profileAria}}"
+    >
+      <image
+        class="avatar"
+        src="/pages/v2/owner-home/assets/avatar.png"
+        mode="aspectFill"
+        fade-in="{{false}}"
+      />
+    </button>
+  </view>
+
+  <view class="tools-header" style="height: {{headerHeight}}px;">
+    <view class="tools-page-title">{{copy.title}}</view>
+    <view class="tools-page-subtitle">{{copy.subtitle}}</view>
+  </view>
+
+  <view class="common-section">
+    <view class="section-heading">
+      <view class="section-title">{{copy.commonTitle}}</view>
+      <view class="section-count">{{copy.commonCount}}</view>
+    </view>
+
+    <view class="common-card">
+      <button
+        wx:for="{{commonTools}}"
+        wx:key="id"
+        class="owner-tool-button common-tool"
+        data-route="{{item.route}}"
+        bindtap="openTool"
+        hover-class="tool-pressed"
+      >
+        <image
+          class="common-tool-image"
+          src="{{item.image}}"
+          mode="aspectFill"
+          fade-in="{{false}}"
+        />
+        <view class="common-tool-copy">
+          <view class="common-tool-title">{{item.title}}</view>
+          <view class="common-tool-subtitle">{{item.subtitle}}</view>
+        </view>
+        <image
+          class="tool-chevron-image tool-chevron-image--common"
+          src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+      </button>
+    </view>
+  </view>
+
+  <view class="feature-section">
+    <view class="section-title">{{copy.inspirationTitle}}</view>
+
+    <view class="feature-grid">
+      <button
+        wx:for="{{featureTools}}"
+        wx:key="id"
+        class="owner-tool-button feature-tool"
+        data-route="{{item.route}}"
+        bindtap="openTool"
+        hover-class="tool-pressed"
+      >
+        <view class="feature-tool-title">{{item.title}}</view>
+        <view class="feature-tool-subtitle">{{item.subtitle}}</view>
+
+        <view class="feature-image-wrap">
+          <image
+            class="feature-tool-image"
+            src="{{item.image}}"
+            mode="aspectFill"
+            fade-in="{{false}}"
+          />
+          <view wx:if="{{item.badge}}" class="feature-badge">
+            {{item.badge}}
+          </view>
+        </view>
+
+        <view class="feature-action">
+          <text>{{item.action}}</text>
+          <image
+            class="tool-chevron-image tool-chevron-image--feature"
+            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+        </view>
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,131 @@
+<view class="designer-learning-preview">
+  <scroll-view
+    class="learning-scroller"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view class="learning-content">
+      <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+      <view class="learning-header" style="height: {{headerHeight}}px;">
+        <view class="learning-page-title">{{copy.title}}</view>
+        <view class="learning-page-subtitle">{{copy.subtitle}}</view>
+      </view>
+
+      <view class="course-feature">
+        <image
+          class="course-hero"
+          src="./assets/course-hero.webp"
+          mode="aspectFill"
+          fade-in="{{false}}"
+        />
+
+        <view class="course-card">
+          <view class="course-title">{{copy.courseTitle}}</view>
+          <view class="course-subtitle">{{copy.courseSubtitle}}</view>
+
+          <view class="instructor-summary">
+            <image
+              class="instructor-avatar instructor-avatar--small"
+              src="/pages/v2/designer-profile/assets/profile-avatar.png"
+              mode="aspectFill"
+              fade-in="{{false}}"
+            />
+            <text class="instructor-name">{{copy.instructor}}</text>
+            <text class="instructor-separator">·</text>
+            <text class="instructor-experience">{{copy.experience}}</text>
+          </view>
+
+          <button
+            class="start-button"
+            bindtap="startLearning"
+            hover-class="start-button--pressed"
+          >
+            {{copy.startLearning}}
+          </button>
+
+          <button
+            class="course-intro-link"
+            bindtap="openCourseIntro"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.courseIntroLink}}</text>
+            <image
+              class="chevron chevron--intro"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+      </view>
+
+      <view class="highlights-card">
+        <view
+          wx:for="{{highlights}}"
+          wx:key="id"
+          class="highlight-item"
+        >
+          <view class="highlight-title">{{item.title}}</view>
+          <view class="highlight-subtitle">{{item.subtitle}}</view>
+        </view>
+      </view>
+
+      <view class="section">
+        <view class="section-title">{{copy.courseContent}}</view>
+        <view class="content-card">
+          <button
+            wx:for="{{contentItems}}"
+            wx:key="id"
+            class="content-row"
+            data-id="{{item.id}}"
+            bindtap="openContentItem"
+            hover-class="content-row--pressed"
+          >
+            <view class="content-icon content-icon--{{item.icon}}" aria-hidden="true">
+              <view wx:if="{{item.icon === 'play'}}" class="play-triangle"></view>
+              <view wx:elif="{{item.icon === 'document'}}" class="document-lines"></view>
+              <view wx:else class="clock-hands"></view>
+            </view>
+            <view class="content-copy">
+              <view class="content-title">{{item.title}}</view>
+              <view class="content-subtitle">{{item.subtitle}}</view>
+            </view>
+            <image
+              class="chevron chevron--row"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+      </view>
+
+    </view>
+  </scroll-view>
+
+  <view class="preview-tabbar">
+    <view class="preview-tabbar__inner">
+      <button
+        wx:for="{{tabs}}"
+        wx:key="id"
+        class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchTab"
+        hover-class="tap-soft"
+      >
+        <image
+          class="designer-tab-icon"
+          src="{{item.icon}}"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+        <text class="tab-label">{{item.label}}</text>
+      </button>
+    </view>
+  </view>
+</view>

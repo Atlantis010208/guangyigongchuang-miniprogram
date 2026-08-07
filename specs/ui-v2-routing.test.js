@@ -1,0 +1,15 @@
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'app.json'), 'utf8').replace(/^\uFEFF/,''))
+const v2 = (app.subpackages || []).find(item => item.root === 'pages/v2/')
+assert.ok(v2, 'V2 must be isolated in pages/v2 subpackage')
+assert.strictEqual(v2.pages.length, 10)
+assert.ok(!JSON.stringify(app).includes('pages/preview/'))
+const legacy = ['pages/products/products','pages/designer-home/designer-home','pages/designer-projects/designer-projects']
+legacy.forEach(route => assert.ok(app.pages.includes(route), `legacy route missing: ${route}`))
+
+const searchPackage = (app.subpackages || []).find(item => item.root === 'pages/search/')
+const colorTempPackage = (app.subpackages || []).find(item => item.root === 'pages/color-temp/')
+assert.ok(searchPackage && searchPackage.pages.includes('search'), 'legacy search route must remain available')
+assert.ok(colorTempPackage && colorTempPackage.pages.includes('color-temp'), 'legacy color-temp route must remain available')

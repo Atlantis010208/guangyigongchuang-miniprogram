@@ -1,0 +1,382 @@
+<view class="designer-projects-preview">
+  <scroll-view
+    class="projects-scroller"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view class="projects-content">
+      <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+      <view class="projects-header" style="height: {{headerHeight}}px;">
+        <view class="projects-heading">
+          <view class="projects-title">{{copy.title}}</view>
+          <view class="projects-subtitle">{{headerSubtitle}}</view>
+        </view>
+      </view>
+
+      <view class="category-tabs">
+        <button
+          wx:for="{{categories}}"
+          wx:key="id"
+          class="category-tab {{activeCategory === item.id ? 'category-tab--active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="switchCategory"
+          hover-class="tap-soft"
+        >
+          <text>{{item.label}}</text>
+          <view
+            wx:if="{{activeCategory === item.id}}"
+            class="category-indicator"
+          ></view>
+        </button>
+      </view>
+
+      <block wx:if="{{activeCategory === 'mine'}}">      <view class="project-stats">
+        <view wx:for="{{stats}}" wx:key="label" class="project-stat">
+          <view class="stat-label">{{item.label}}</view>
+          <view class="stat-value">{{item.value}}</view>
+        </view>
+      </view>
+
+      <view class="projects-section-heading">
+        <view class="section-title">{{copy.sectionTitle}}</view>
+        <button
+          class="section-more"
+          bindtap="openAllProjects"
+          hover-class="tap-soft"
+        >
+          <text>{{copy.allProjects}}</text>
+          <image
+            class="chevron chevron--section"
+            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+        </button>
+      </view>
+
+      <view class="project-list">
+        <view
+          wx:for="{{projects}}"
+          wx:key="id"
+          class="project-card {{item.primary ? 'project-card--primary' : 'project-card--secondary'}}"
+        >
+          <view class="project-card__top">
+            <image
+              class="project-image"
+              src="{{item.image}}"
+              mode="aspectFill"
+              fade-in="{{false}}"
+            />
+            <view class="project-summary">
+              <view class="project-title">{{item.title}}</view>
+              <view class="project-meta">
+                {{copy.clientLabel}}{{copy.separator}}{{item.client}}{{copy.separator}}{{item.space}}
+              </view>
+              <view class="project-tag">{{item.tag}}</view>
+            </view>
+          </view>
+
+          <view class="project-divider"></view>
+
+          <view class="project-task">
+            <view class="task-eyebrow">{{copy.nextStep}}</view>
+            <view class="task-title">{{item.nextTask}}</view>
+            <view class="task-deadline">{{item.deadline}}</view>
+            <view class="project-progress">
+              <view class="progress-copy">
+                <text>{{copy.progress}}</text>
+                <text>{{item.progress}}%</text>
+              </view>
+              <view class="progress-track">
+                <view
+                  class="progress-fill"
+                  style="width: {{item.progress}}%;"
+                ></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="project-actions {{item.primary ? '' : 'project-actions--single'}}">
+            <button
+              wx:if="{{item.primary}}"
+              class="primary-action"
+              data-id="{{item.id}}"
+              bindtap="continueProject"
+              hover-class="primary-action--pressed"
+            >
+              <text class="primary-action__label">{{item.primaryLabel}}</text>
+            </button>
+            <button
+              class="detail-action"
+              data-id="{{item.id}}"
+              bindtap="viewProject"
+              hover-class="tap-soft"
+            >
+              <text>{{item.detailLabel}}</text>
+              <image
+                class="chevron chevron--action"
+                src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+                mode="aspectFit"
+                fade-in="{{false}}"
+                aria-hidden="true"
+              />
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view class="management-panel">
+        <button
+          wx:for="{{management}}"
+          wx:key="id"
+          class="management-item"
+          data-id="{{item.id}}"
+          bindtap="openManagement"
+          hover-class="management-item--pressed"
+        >
+          <image
+            wx:if="{{item.kind === 'image'}}"
+            class="management-icon"
+            src="{{item.icon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+          <view wx:else class="wallet-glyph" aria-hidden="true">
+            <view class="wallet-glyph__flap"></view>
+            <view class="wallet-glyph__dot"></view>
+          </view>
+          <view class="management-copy">
+            <view class="management-title">{{item.title}}</view>
+            <view class="management-subtitle">{{item.subtitle}}</view>
+          </view>
+          <image
+            class="chevron chevron--management"
+            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+        </button>
+      </view>
+      </block>
+
+      <block wx:elif="{{activeCategory === 'marketplace'}}">
+        <view class="opportunity-filters">
+          <button
+            wx:for="{{opportunityFilters}}"
+            wx:key="id"
+            class="opportunity-filter {{activeOpportunityFilter === item.id ? 'opportunity-filter--active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="switchOpportunityFilter"
+            hover-class="tap-soft"
+          >
+            <text class="opportunity-filter__label">{{item.label}}</text>
+          </button>
+        </view>
+
+        <view class="opportunity-heading">
+          <view class="section-title">{{copy.opportunitySection}}</view>
+        </view>
+
+        <view class="opportunity-list">
+          <view
+            wx:for="{{visibleOpportunities}}"
+            wx:key="id"
+            class="opportunity-card"
+          >
+            <view class="opportunity-top">
+              <image
+                class="opportunity-image"
+                src="{{item.image}}"
+                mode="aspectFill"
+                fade-in="{{false}}"
+              />
+              <view class="opportunity-summary">
+                <view class="opportunity-title">{{item.title}}</view>
+                <view class="opportunity-owner">{{copy.ownerLabel}}{{copy.separator}}{{item.owner}}</view>
+                <view class="opportunity-description">{{item.summary}}</view>
+              </view>
+              <view class="eligibility-tag">{{copy.eligibleLabel}}</view>
+            </view>
+
+            <view class="opportunity-metrics">
+              <view class="opportunity-metric">
+                <view class="metric-label">{{copy.budgetLabel}}</view>
+                <view class="metric-value">{{item.budget}}</view>
+              </view>
+              <view class="opportunity-metric">
+                <view class="metric-label">{{copy.areaLabel}}</view>
+                <view class="metric-value">{{item.area}}</view>
+              </view>
+              <view class="opportunity-metric">
+                <view class="metric-label">{{copy.spaceLabel}}</view>
+                <view class="metric-value">{{item.space}}</view>
+              </view>
+            </view>
+
+            <view class="opportunity-need">
+              <view class="document-glyph" aria-hidden="true">
+                <view class="document-glyph__fold"></view>
+                <view class="document-glyph__line document-glyph__line--one"></view>
+                <view class="document-glyph__line document-glyph__line--two"></view>
+              </view>
+              <view class="opportunity-need__text">{{copy.needLabel}}{{copy.separator}}{{item.need}}</view>
+            </view>
+
+            <view class="opportunity-actions">
+              <button
+                class="opportunity-detail"
+                data-id="{{item.id}}"
+                bindtap="viewOpportunity"
+                hover-class="tap-soft"
+              >
+                <text>{{copy.opportunityDetail}}</text>
+                <image
+                  class="chevron chevron--opportunity"
+                  src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+                  mode="aspectFit"
+                  fade-in="{{false}}"
+                  aria-hidden="true"
+                />
+              </button>
+              <button
+                class="opportunity-apply {{item.featured ? 'opportunity-apply--featured' : ''}} {{item.applied ? 'opportunity-apply--applied' : ''}}"
+                data-id="{{item.id}}"
+                bindtap="applyOpportunity"
+                hover-class="opportunity-apply--pressed"
+                disabled="{{item.applied}}"
+              >
+                <text class="opportunity-apply__label">{{item.applied ? copy.appliedLabel : copy.applyLabel}}</text>
+              </button>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{visibleOpportunities.length === 0}}" class="opportunity-empty">
+          {{copy.emptyOpportunities}}
+        </view>
+
+        <view class="application-note">
+          <view class="info-glyph" aria-hidden="true">i</view>
+          <text>{{copy.applicationNote}}</text>
+        </view>
+      </block>
+      <block wx:elif="{{activeCategory === 'completed'}}">
+        <view class="completed-search">
+          <view class="completed-search-glyph" aria-hidden="true"></view>
+          <input
+            class="completed-input"
+            value="{{completedSearch}}"
+            placeholder="{{copy.completedSearchPlaceholder}}"
+            placeholder-class="completed-placeholder"
+            bindinput="searchCompleted"
+            confirm-type="search"
+          />
+        </view>
+
+        <view class="completed-heading">
+          <view class="section-title">{{copy.completedSection}}</view>
+          <button class="completed-sort" bindtap="toggleCompletedSort" hover-class="tap-soft">
+            <text>{{copy.sortByTime}}</text>
+            <image
+              class="chevron chevron--completed-sort {{completedSortDesc ? '' : 'chevron--ascending'}}"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+
+        <view class="completed-list">
+          <view wx:for="{{visibleCompletedProjects}}" wx:key="id" class="completed-card">
+            <view class="completed-card__top">
+              <image class="completed-image" src="{{item.image}}" mode="aspectFill" fade-in="{{false}}" />
+              <view class="completed-summary">
+                <view class="completed-title">{{item.title}}</view>
+                <view class="completed-meta">{{copy.clientLabel}}{{copy.separator}}{{item.client}}{{copy.separator}}{{item.space}}</view>
+                <view class="completed-tag">{{copy.completedLabel}}</view>
+                <view class="completed-description">{{item.summary}}</view>
+              </view>
+            </view>
+
+            <view class="completed-metrics">
+              <view class="completed-metric">
+                <view class="completed-metric__label">{{copy.completedTimeLabel}}</view>
+                <view class="completed-metric__value">{{item.completedAt}}</view>
+              </view>
+              <view class="completed-metric">
+                <view class="completed-metric__label">{{copy.settlementStatusLabel}}</view>
+                <view class="settled-tag">{{copy.settledLabel}}</view>
+              </view>
+            </view>
+
+            <view class="completed-delivery">
+              <view class="document-glyph" aria-hidden="true">
+                <view class="document-glyph__fold"></view>
+                <view class="document-glyph__line document-glyph__line--one"></view>
+                <view class="document-glyph__line document-glyph__line--two"></view>
+              </view>
+              <text class="completed-delivery__text">{{copy.deliveryStatusLabel}}{{copy.separator}}{{item.delivery}}</text>
+            </view>
+
+            <view class="completed-actions">
+              <button class="completed-detail" data-id="{{item.id}}" bindtap="viewCompletedProject" hover-class="tap-soft">
+                <text>{{copy.viewCompletedProject}}</text>
+                <image class="chevron chevron--completed-action" src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
+              </button>
+              <button class="completed-files" data-id="{{item.id}}" bindtap="viewDeliveryFiles" hover-class="tap-soft">
+                <text>{{copy.viewDeliveryFiles}}</text>
+              </button>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{visibleCompletedProjects.length === 0}}" class="completed-empty">{{copy.emptyCompleted}}</view>
+
+        <view class="completed-history">
+          <button wx:for="{{completedHistory}}" wx:key="id" class="completed-history__item" data-id="{{item.id}}" bindtap="openCompletedHistory" hover-class="management-item--pressed">
+            <view wx:if="{{item.kind === 'folder'}}" class="folder-glyph" aria-hidden="true"><view class="folder-glyph__tab"></view></view>
+            <view wx:else class="wallet-glyph" aria-hidden="true"><view class="wallet-glyph__flap"></view><view class="wallet-glyph__dot"></view></view>
+            <view class="completed-history__copy">
+              <view class="completed-history__title">{{item.title}}</view>
+              <view class="completed-history__subtitle">{{item.subtitle}}</view>
+            </view>
+            <image class="chevron chevron--history" src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
+          </button>
+        </view>
+
+        <view class="completed-note">
+          <view class="info-glyph" aria-hidden="true">i</view>
+          <text>{{copy.completedNote}}</text>
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+
+  <view class="preview-tabbar">
+    <view class="preview-tabbar__inner">
+      <button
+        wx:for="{{tabs}}"
+        wx:key="id"
+        class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchTab"
+        hover-class="tap-soft"
+      >
+        <image
+          class="designer-tab-icon"
+          src="{{item.icon}}"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+        <text class="tab-label">{{item.label}}</text>
+      </button>
+    </view>
+  </view>
+</view>

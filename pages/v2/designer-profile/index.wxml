@@ -1,0 +1,190 @@
+<view class="designer-profile-preview">
+  <scroll-view
+    class="profile-scroller"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view class="profile-content">
+      <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+
+      <view class="profile-header" style="height: {{headerHeight}}px;">
+        <view class="profile-heading">
+          <view class="profile-page-title">{{copy.title}}</view>
+          <view class="profile-page-subtitle">{{copy.subtitle}}</view>
+        </view>
+      </view>
+
+      <view class="identity-card">
+        <view class="identity-top">
+          <image
+            class="profile-avatar"
+            src="{{avatarUrl || './assets/profile-avatar.png'}}"
+            mode="aspectFill"
+            fade-in="{{false}}"
+          />
+
+          <view class="identity-copy">
+            <view class="identity-role">{{copy.role}}</view>
+            <view class="identity-profession">{{copy.profession}}</view>
+            <view class="mode-tag">{{copy.mode}}</view>
+            <view class="identity-intro">{{copy.intro}}</view>
+          </view>
+
+          <button
+            class="edit-profile"
+            bindtap="editProfile"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.editProfile}}</text>
+            <image
+              class="chevron chevron--edit"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+
+        <view class="identity-divider"></view>
+
+        <view class="profile-shortcuts">
+          <button
+            class="profile-shortcut"
+            bindtap="openPersonalProfile"
+            hover-class="tap-soft"
+          >
+            <view class="id-card-glyph" aria-hidden="true">
+              <view class="id-card-glyph__head"></view>
+              <view class="id-card-glyph__body"></view>
+              <view class="id-card-glyph__line"></view>
+            </view>
+            <view class="shortcut-copy">
+              <view class="shortcut-title">{{copy.personalProfile}}</view>
+              <view class="shortcut-subtitle">{{copy.personalProfileHint}}</view>
+            </view>
+          </button>
+
+          <button
+            class="profile-shortcut"
+            bindtap="previewHomepage"
+            hover-class="tap-soft"
+          >
+            <view class="home-glyph" aria-hidden="true">
+              <view class="home-glyph__roof"></view>
+              <view class="home-glyph__body"></view>
+            </view>
+            <view class="shortcut-copy">
+              <view class="shortcut-title">{{copy.personalHomepage}}</view>
+              <view class="shortcut-subtitle">{{copy.personalHomepageHint}}</view>
+            </view>
+          </button>
+        </view>
+      </view>
+
+      <view class="works-section">
+        <view class="section-heading">
+          <view class="section-title">{{copy.works}}</view>
+          <button
+            class="section-action"
+            bindtap="manageWorks"
+            hover-class="tap-soft"
+          >
+            <text>{{copy.manageWorks}}</text>
+            <image
+              class="chevron chevron--section"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+
+        <view class="works-grid">
+          <button
+            wx:for="{{works}}"
+            wx:key="id"
+            class="work-item"
+            data-id="{{item.id}}"
+            bindtap="openWork"
+            hover-class="tap-soft"
+          >
+            <image
+              class="work-image"
+              src="{{item.image}}"
+              mode="aspectFill"
+              fade-in="{{false}}"
+            />
+            <view class="work-label">{{item.label}}</view>
+          </button>
+        </view>
+      </view>
+
+      <view class="settings-section">
+        <view class="section-title">{{copy.accountSettings}}</view>
+        <view class="settings-card">
+          <button
+            wx:for="{{settings}}"
+            wx:key="id"
+            class="setting-item"
+            data-id="{{item.id}}"
+            bindtap="openSetting"
+            hover-class="setting-item--pressed"
+          >
+            <view
+              wx:if="{{item.icon === 'profile'}}"
+              class="person-glyph"
+              aria-hidden="true"
+            >
+              <view class="person-glyph__head"></view>
+              <view class="person-glyph__body"></view>
+            </view>
+            <view wx:else class="bell-glyph" aria-hidden="true">
+              <view class="bell-glyph__body"></view>
+              <view class="bell-glyph__clapper"></view>
+            </view>
+
+            <view class="setting-copy">
+              <view class="setting-title">{{item.title}}</view>
+              <view class="setting-subtitle">{{item.subtitle}}</view>
+            </view>
+
+            <image
+              class="chevron chevron--setting"
+              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </button>
+        </view>
+      </view>
+
+      <view class="completeness-note">{{copy.completeness}}</view>
+    </view>
+  </scroll-view>
+
+  <view class="preview-tabbar">
+    <view class="preview-tabbar__inner">
+      <button
+        wx:for="{{tabs}}"
+        wx:key="id"
+        class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchTab"
+        hover-class="tap-soft"
+      >
+        <image
+          class="designer-tab-icon"
+          src="{{item.icon}}"
+          mode="aspectFit"
+          fade-in="{{false}}"
+          aria-hidden="true"
+        />
+        <text class="tab-label">{{item.label}}</text>
+      </button>
+    </view>
+  </view>
+</view>
