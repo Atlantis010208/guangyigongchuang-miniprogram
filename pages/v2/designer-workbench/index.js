@@ -1,5 +1,20 @@
 ﻿const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
 const designerApi = typeof require === 'function' ? require('../../../services/v2/designer') : { overview: async () => ({ ok: false }) }
+
+/**
+ * 判断远程封面是否值得尝试加载。
+ * 云存储公开域未带 sign 时会 403，当真值会挡住本地占位图。
+ */
+function usableImageUrl(url) {
+  if (typeof url !== 'string') return ''
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (trimmed.indexOf('/pages/') === 0 || trimmed.indexOf('./') === 0) return trimmed
+  if (trimmed.indexOf('cloud://') === 0) return ''
+  if (/tcb\.qcloud\.la/i.test(trimmed) && trimmed.indexOf('sign=') === -1) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return ''
+}
 const COPY = Object.freeze({
   workbenchTitle: '\u5de5\u4f5c\u53f0',
   pendingSummary: '\u4eca\u5929\u6709 3 \u9879\u5f85\u5904\u7406',
@@ -304,9 +319,29 @@ Page({
         { label: '\u5f85\u7ed3\u7b97', value: String(Number(data.stats && data.stats.pendingSettlement) || 0) },
       ],
       todos: (data.todos || []).map((item, index) => ({ id: item.id, title: item.title, subtitle: item.projectTitle || '', time: item.deadline || '', tone: index ? 'blue' : 'dark' })),
-      projects: (data.projects || []).map((item, index) => ({ id: item.id, title: item.title, tag: item.statusText || item.nextAction, progress: item.progress || 0, image: item.imageUrl || PROJECTS[index % PROJECTS.length].image })),
+      projects: (data.projects || []).map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        tag: item.statusText || item.nextAction,
+        progress: item.progress || 0,
+        // 未签名的云存储直链会 403；仅接受可用的临时链/本地图，否则回退本地封面
+        image: usableImageUrl(item.imageUrl) || PROJECTS[index % PROJECTS.length].image,
+      })),
       nextProgress: Number(firstProject.progress) || 0,
     })
+  },
+
+  /**
+   * 远程封面加载失败时回退到本地占位图，避免卡片出现空白块
+   */
+  handleProjectImageError(event) {
+    const index = Number(event.currentTarget.dataset.index)
+    if (!Number.isInteger(index) || index < 0) return
+    const projects = this.data.projects.slice()
+    const fallback = PROJECTS[index % PROJECTS.length].image
+    if (!projects[index] || projects[index].image === fallback) return
+    projects[index] = Object.assign({}, projects[index], { image: fallback })
+    this.setData({ projects })
   },
 
   onResize() {

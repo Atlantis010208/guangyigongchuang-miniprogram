@@ -171,6 +171,8 @@
               src="{{item.image}}"
               mode="aspectFill"
               fade-in="{{false}}"
+              data-index="{{index}}"
+              binderror="handleProjectImageError"
             />
             <view class="project-copy">
               <view class="project-title">{{item.title}}</view>

@@ -1,5 +1,19 @@
 const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
 const designerApi = typeof require === 'function' ? require('../../../services/v2/designer') : { projects: async () => ({ ok: false }), demands: async () => ({ ok: false }) }
+
+/**
+ * 未签名的云存储直链会 403，不能当作有效封面。
+ */
+function usableImageUrl(url) {
+  if (typeof url !== 'string') return ''
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (trimmed.indexOf('/pages/') === 0 || trimmed.indexOf('./') === 0) return trimmed
+  if (trimmed.indexOf('cloud://') === 0) return ''
+  if (/tcb\.qcloud\.la/i.test(trimmed) && trimmed.indexOf('sign=') === -1) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return ''
+}
 const COPY = Object.freeze({
   title: '\u9879\u76ee',
   subtitle: '\u7ba1\u7406\u8fdb\u5ea6\u3001\u4ea4\u4ed8\u4e0e\u7ed3\u7b97',
@@ -321,7 +335,7 @@ Page({
       nextTask: item.currentStepText || '\u7ee7\u7eed\u5904\u7406',
       deadline: item.timeText || '',
       progress: Number(item.progress) || 0,
-      image: item.coverUrl || item.imageUrl || PROJECTS[index % PROJECTS.length].image,
+      image: usableImageUrl(item.coverUrl || item.imageUrl) || PROJECTS[index % PROJECTS.length].image,
       primary: index === 0,
       primaryLabel: '\u7ee7\u7eed\u5904\u7406',
       detailLabel: '\u67e5\u770b\u8be6\u60c5',
@@ -335,7 +349,7 @@ Page({
       completedAt: item.completedAtText || item.timeText || '',
       completedOrder: Number(item.completedAt) || 0,
       delivery: item.deliveryText || '\u65b9\u6848\u4e0e\u706f\u5177\u6e05\u5355\u5df2\u4ea4\u4ed8',
-      image: item.coverUrl || item.imageUrl || COMPLETED_PROJECTS[index % COMPLETED_PROJECTS.length].image,
+      image: usableImageUrl(item.coverUrl || item.imageUrl) || COMPLETED_PROJECTS[index % COMPLETED_PROJECTS.length].image,
     }))
     const opportunities = listOf(demandsResponse).map((item, index) => ({
       id: item._id || item.id,
@@ -346,7 +360,7 @@ Page({
       area: item.area || '',
       space: item.space || item.categoryText || '',
       need: item.note || item.description || '',
-      image: item.coverUrl || item.imageUrl || OPPORTUNITIES[index % OPPORTUNITIES.length].image,
+      image: usableImageUrl(item.coverUrl || item.imageUrl) || OPPORTUNITIES[index % OPPORTUNITIES.length].image,
       applied: item.isCollected === true,
     }))
     this.setData({ projectsLoading: false, projectsError: ongoingResponse.ok ? '' : ongoingResponse.message, projects: ongoing, completedProjects: completed, visibleCompletedProjects: completed, opportunities, visibleOpportunities: opportunities })
