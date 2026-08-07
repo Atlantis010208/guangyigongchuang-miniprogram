@@ -3,8 +3,9 @@
 ## 当前保护点
 
 - 回滚 Tag：`pre-ui-v2-20260805`
-- 集成分支：`codex/ui-backend-integration`
-- `develop`、`trial` 只接受独立测试环境；缺少配置时前端直接终止云请求。
+- 集成分支：`feat/ui-v2`，为叠在正式分支之上的**纯增量**（单一提交），不含任何非 V2 改动
+- 正式分支基线：`fix/split-out-ui-v2`
+- `develop`、`trial` 只接受独立测试环境；缺少配置时前端直接终止云请求并弹窗引导。
 - `release` 才解析生产环境 `cloud1-5gb9c5u2c58ad6d7`。
 - `cloudbaserc.json` 不设置真实默认环境，所有部署必须显式传 `--env-id`。
 - 部署脚本只允许三个 V2 云函数，无法部署 `admin_cases` 等旧函数。
@@ -57,6 +58,24 @@ node scripts/create-ui-v2-gate-config.js --owner-openids <OWNER_OPENID> --design
 - 设计师：接单并发、进度、完成与结算展示。
 - `npm run check:package` 主包估算必须小于 2MB。
 - 旧 UI 全链路回归通过。
+
+## 5.5 合并回正式分支（联调通过后、生产部署之前）
+
+`feat/ui-v2` 是叠在正式分支之上的纯增量，合并应当无冲突：
+
+```powershell
+git switch fix/split-out-ui-v2
+git merge --no-ff feat/ui-v2
+npm run verify:v2
+```
+
+合并后 `pages/v2` 进入正式分支，`project.private.config.json` 中的十条 V2 自定义编译条件不再指向不存在的页面，联调期间"切分支要改编译模式"的摩擦随之消失。
+
+合并后需同步确认：
+
+- 新克隆仓库的同学必须按 README「本地开发环境配置」创建 `config/cloud-env.local.js`，否则开发版云能力全部不可用。
+- `cloudbaserc.json` 不含默认环境，所有 CLI 部署必须显式传 `--env-id`。
+- 主包体积仍有余量（当前约 1724KB / 2048KB）。
 
 ## 6. 生产灰度（联调全部通过后才执行）
 

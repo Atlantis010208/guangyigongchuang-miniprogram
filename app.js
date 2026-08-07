@@ -65,7 +65,20 @@ App({
     const state = resolveCloudEnvironment(wx)
     this.globalData.cloudEnvironment = state
     if (!state.ok) {
-      console.error('[cloud-env] blocked:', state.code, state.message)
+      console.error('[cloud-env] blocked:', state.code, '\n' + state.message)
+      // 缺少本地测试环境配置是开发期最常见的卡点，控制台日志容易被淹没，这里额外弹窗
+      if (state.code === 'TEST_ENV_NOT_CONFIGURED') {
+        try {
+          wx.showModal({
+            title: '云环境未配置',
+            content: state.message,
+            showCancel: false,
+            confirmText: '知道了'
+          })
+        } catch (error) {
+          console.warn('[cloud-env] 弹窗提示失败', error)
+        }
+      }
       return false
     }
     try {

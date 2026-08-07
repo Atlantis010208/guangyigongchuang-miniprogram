@@ -79,6 +79,27 @@
 ### 🚀 启动页 (`/pages/splash/`)
 - 品牌启动动画，展示 5 秒后自动进入主页
 
+## ⚙️ 本地开发环境配置（首次克隆必读）
+
+本项目按小程序版本（`envVersion`）路由云环境，**开发版与体验版禁止连接生产环境**：
+
+| 版本 | 连接的云环境 |
+| --- | --- |
+| `release`（正式版） | 生产环境 `cloud1-5gb9c5u2c58ad6d7` |
+| `develop`（开发版）、`trial`（体验版） | `config/cloud-env.local.js` 中配置的独立测试环境 |
+
+`config/cloud-env.local.js` 含本机专属配置、**不纳入版本管理**，新克隆的仓库没有这个文件。缺少它时小程序会**主动阻断云初始化并弹窗提示**，此时所有云函数与数据库调用都不可用。这是刻意设计的安全兜底，不是 bug。
+
+首次克隆后请执行：
+
+```powershell
+Copy-Item config/cloud-env.example.js config/cloud-env.local.js
+```
+
+然后把文件里的 `TEST_ENV_ID` 改成 CloudBase 控制台中你的测试环境 ID（注意要用完整 ID 而非别名，例如 `guangyi-ui-v2-test-d2cep6559479c`），重新编译即可。
+
+由于 `cloudbaserc.json` 不设默认环境，所有 CLI 部署都必须显式传 `--env-id`，避免误发生产。
+
 ## 技术特点
 
 ### 🛠 技术栈
