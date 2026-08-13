@@ -1,18 +1,19 @@
 {
-    "devDependencies":  {
-                            "@cloudbase/cli":  "^2.11.6",
-                            "shadcn":  "^3.5.0"
-                        },
-    "dependencies":  {
-                         "@vant/weapp":  "^1.11.7"
-                     },
-    "scripts":  {
-                    "test":  "node scripts/run-specs.js",
-                    "check:package":  "node scripts/check-package-size.js",
-                    "check:prod-safety":  "node scripts/check-production-safety.js",
-                    "seed:v2-test":  "node scripts/seed-ui-v2-test-data.js",
-                    "deploy:v2":  "node scripts/deploy-ui-v2-functions.js",
-                    "gate:v2":  "node scripts/create-ui-v2-gate-config.js",
-                    "verify:v2":  "npm run check:prod-safety \u0026\u0026 npm test \u0026\u0026 npm run check:package"
-                }
+  "devDependencies": {
+    "@cloudbase/cli": "^2.11.6",
+    "shadcn": "^3.5.0"
+  },
+  "dependencies": {
+    "@vant/weapp": "^1.11.7"
+  },
+  "scripts": {
+    "test": "node scripts/run-specs.js",
+    "check:package": "node scripts/check-package-size.js",
+    "check:prod-safety": "node scripts/check-production-safety.js",
+    "seed:v2-test": "node scripts/seed-ui-v2-test-data.js",
+    "deploy:v2": "node scripts/deploy-ui-v2-functions.js",
+    "gate:v2": "node scripts/create-ui-v2-gate-config.js",
+    "verify:v2": "npm run check:app-pages && npm run check:prod-safety && npm test && npm run check:package",
+    "check:app-pages": "node scripts/check-app-page-files.js"
+  }
 }
