@@ -114,6 +114,18 @@ exports.main = async (event) => {
     await db.collection('designers').doc(id).update({
       data: updateData
     })
+
+    // 设计师与业主端共享 users 登录资料，后台更新基础信息时同步同一账号。
+    if (oldDesigner.userId && (data.name !== undefined || data.avatar !== undefined)) {
+      const userData = { updatedAt: Date.now() }
+      if (data.name !== undefined) userData.nickname = data.name
+      if (data.avatar !== undefined) userData.avatarUrl = data.avatar
+      try {
+        await db.collection('users').doc(oldDesigner.userId).update({ data: userData })
+      } catch (syncError) {
+        console.warn('[admin_designers_update] 同步 users 失败:', syncError.message)
+      }
+    }
     
     // 删除云存储文件（异步，不阻塞主流程）
     if (filesToDelete.length > 0) {

@@ -367,6 +367,7 @@
         <view class="review-card" wx:for="{{casesData}}" wx:key="_id" wx:for-index="idx">
           <view class="card-thumb" catchtap="onPreviewImage" data-urls="{{item.imageUrls}}" data-current="{{item.imageUrls[0]}}">
             <image class="review-img" src="{{item.imageUrls[0]}}" mode="aspectFill" />
+            <view class="case-space-badge" wx:if="{{item.spaceTypeLabel}}">{{item.spaceTypeLabel}}</view>
             <view class="dots" wx:if="{{item.imageUrls.length > 1}}">
               <view class="dot {{dotIdx === 0 ? 'active' : ''}}" wx:for="{{item.imageUrls}}" wx:for-item="_dotUrl" wx:for-index="dotIdx" wx:key="dotIdx"></view>
             </view>
@@ -387,6 +388,12 @@
             <view class="review-desc">{{item.desc}}</view>
           </view>
         </view>
+      </view>
+
+      <view class="case-more-wrap">
+        <button class="case-more-btn" hover-class="case-more-btn-hover" bindtap="goMoreCases">
+          <text class="case-more-main">查看更多案例</text>
+        </button>
       </view>
     </view>
 
@@ -437,7 +444,6 @@
   <view class="cta-wrap">
     <view class="cta-btn" bindtap="showContact">
       <text>立即咨询二哥</text>
-      <view class="arrow-right">→</view>
     </view>
   </view>
 

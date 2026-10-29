@@ -15,6 +15,39 @@
         </view>
       </view>
 
+      <view wx:if="{{projectAccessStatus === 'checking'}}" class="project-access-state project-access-state--checking" style="min-height: {{accessContentHeight}}px;">
+        <view class="project-access-state__icon-surface" aria-hidden="true">
+          <view class="project-access-state__indicator"></view>
+        </view>
+        <view class="project-access-state__title">{{copy.accessCheckingTitle}}</view>
+        <view class="project-access-state__message">{{projectAccessMessage || copy.accessCheckingMessage}}</view>
+      </view>
+
+      <view wx:elif="{{projectAccessStatus === 'denied' || projectAccessStatus === 'error'}}" class="project-access-state project-access-state--blocked" style="min-height: {{accessContentHeight}}px;">
+        <view class="project-access-state__icon-surface" aria-hidden="true">
+          <view class="project-access-state__shield"></view>
+          <view class="project-access-state__error-badge">
+            <view class="project-access-state__error-line project-access-state__error-line--one"></view>
+            <view class="project-access-state__error-line project-access-state__error-line--two"></view>
+          </view>
+        </view>
+        <view class="project-access-state__status">{{projectAccessStatus === 'denied' ? copy.accessDeniedStatus : copy.accessErrorStatus}}</view>
+        <view class="project-access-state__title">{{projectAccessStatus === 'denied' ? copy.accessDeniedTitle : copy.accessErrorTitle}}</view>
+        <view class="project-access-state__message">{{projectAccessMessage}}</view>
+        <button class="project-access-retry" bindtap="retryProjectAccess" hover-class="tap-soft">{{copy.accessRetry}}</button>
+        <button class="project-access-guide" bindtap="showCertificationGuide" hover-class="tap-soft">
+          <text>{{copy.accessGuide}}</text>
+          <image
+            class="project-access-guide__chevron"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+            aria-hidden="true"
+          />
+        </button>
+      </view>
+
+      <block wx:else>
       <view class="category-tabs">
         <button
           wx:for="{{categories}}"
@@ -49,7 +82,7 @@
           <text>{{copy.allProjects}}</text>
           <image
             class="chevron chevron--section"
-            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
             mode="aspectFit"
             fade-in="{{false}}"
             aria-hidden="true"
@@ -118,7 +151,7 @@
               <text>{{item.detailLabel}}</text>
               <image
                 class="chevron chevron--action"
-                src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+                src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
                 mode="aspectFit"
                 fade-in="{{false}}"
                 aria-hidden="true"
@@ -155,7 +188,7 @@
           </view>
           <image
             class="chevron chevron--management"
-            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
             mode="aspectFit"
             fade-in="{{false}}"
             aria-hidden="true"
@@ -237,7 +270,7 @@
                 <text>{{copy.opportunityDetail}}</text>
                 <image
                   class="chevron chevron--opportunity"
-                  src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+                  src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
                   mode="aspectFit"
                   fade-in="{{false}}"
                   aria-hidden="true"
@@ -284,7 +317,7 @@
             <text>{{copy.sortByTime}}</text>
             <image
               class="chevron chevron--completed-sort {{completedSortDesc ? '' : 'chevron--ascending'}}"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -327,7 +360,7 @@
             <view class="completed-actions">
               <button class="completed-detail" data-id="{{item.id}}" bindtap="viewCompletedProject" hover-class="tap-soft">
                 <text>{{copy.viewCompletedProject}}</text>
-                <image class="chevron chevron--completed-action" src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
+                <image class="chevron chevron--completed-action" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
               </button>
               <button class="completed-files" data-id="{{item.id}}" bindtap="viewDeliveryFiles" hover-class="tap-soft">
                 <text>{{copy.viewDeliveryFiles}}</text>
@@ -346,7 +379,7 @@
               <view class="completed-history__title">{{item.title}}</view>
               <view class="completed-history__subtitle">{{item.subtitle}}</view>
             </view>
-            <image class="chevron chevron--history" src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
+            <image class="chevron chevron--history" src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png" mode="aspectFit" fade-in="{{false}}" aria-hidden="true" />
           </button>
         </view>
 
@@ -355,26 +388,34 @@
           <text>{{copy.completedNote}}</text>
         </view>
       </block>
+      </block>
     </view>
   </scroll-view>
 
   <view class="preview-tabbar">
-    <view class="preview-tabbar__inner">
+    <view class="preview-tabbar__inner preview-tabbar__inner--designer-four">
       <button
         wx:for="{{tabs}}"
         wx:key="id"
         class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
         data-id="{{item.id}}"
         bindtap="switchTab"
-        hover-class="tap-soft"
+        hover-class="none"
       >
-        <image
-          class="designer-tab-icon"
-          src="{{item.icon}}"
-          mode="aspectFit"
-          fade-in="{{false}}"
-          aria-hidden="true"
-        />
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activeTab !== item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.icon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activeTab === item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.activeIcon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
         <text class="tab-label">{{item.label}}</text>
       </button>
     </view>

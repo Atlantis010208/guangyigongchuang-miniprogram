@@ -2,6 +2,7 @@ const { enterV2IfEnabled } = require('../../services/v2/navigation-gate')
 
 Page({
   data: {
+    legacyVisible: false,
     categories: ['全部', '住宅', '商业', '办公', '户外'],
     currentCategory: 0,
     showFilter: false, // 控制筛选弹窗显示
@@ -22,12 +23,15 @@ Page({
 
   async onLoad(options) {
     if (await enterV2IfEnabled('designer', options || {})) return
+    this.setData({ legacyVisible: true })
+    this.onShow()
     // 隐藏返回首页按钮，因为这是设计师的首页
     wx.hideHomeButton();
     this.loadDemands();
   },
 
   onShow() {
+    if (!this.data.legacyVisible) return
     // 更新自定义 tabBar 的选中状态和角色
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateRole()

@@ -1,6 +1,6 @@
 Component({
   data: {
-    show: true, // 控制 tabBar 显隐
+    show: false, // 确认当前页面后再显示，避免旧首页跳转时闪现
     selected: 0,
     color: '#999999',
     selectedColor: '#007AFF',
@@ -11,12 +11,6 @@ Component({
         text: '首页',
         iconPath: '/images/product.png',
         selectedIconPath: '/images/product-active.png'
-      },
-      {
-        pagePath: '/pages/mall/mall',
-        text: '商城',
-        iconPath: '/images/积分商城.png',
-        selectedIconPath: '/images/积分商城_选中.png'
       },
       {
         pagePath: '/pages/course/index/index',
@@ -69,7 +63,6 @@ Component({
       this._updateRole()
     },
 
-    // 根据全局角色信息更新 Tab 列表
     _updateRole() {
       const app = getApp()
       const userDoc = (app && app.globalData && app.globalData.userDoc) || wx.getStorageSync('userDoc')
@@ -83,9 +76,13 @@ Component({
         role = 'designer'
       }
 
-      const list = role === 'designer' ? this.data.designerList : this.data.ownerList
+      const list = role === 'designer' ? this.data.designerList : this.data.ownerList.filter(item => item.pagePath !== '/pages/cart/cart')
 
-      this.setData({ role, list })
+      const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+      const page = pages[pages.length - 1]
+      const legacyHome = page && ['pages/products/products', 'pages/designer-home/designer-home'].includes(page.route)
+      const show = !legacyHome || !!(page.data && page.data.legacyVisible)
+      this.setData({ role, list, show })
     },
 
     switchTab(e) {

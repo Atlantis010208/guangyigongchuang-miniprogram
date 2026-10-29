@@ -58,11 +58,10 @@ assert.strictEqual(
   '/pages/v2/owner-services/content/index'
 )
 assert(homeWxml.includes('data-preview-panel="services"'))
-assert(
-  homeWxml.includes(
-    '<owner-services-content data-module-version="mall-v2" />'
-  )
-)
+assert(homeWxml.includes('<owner-services-content'))
+assert(homeWxml.includes('data-module-version="mall-v2"'))
+assert(homeWxml.includes('user-avatar="{{userAvatar}}"'))
+assert(homeWxml.includes('bind:switchprofile="switchToProfile"'))
 assert(homeWxml.includes('bindtap="switchToServices"'))
 assert(homeJs.includes("'services'"))
 assert(!homeJs.includes('showServicePreview'))
@@ -89,7 +88,15 @@ assert.strictEqual(componentConfig.styleIsolation, 'isolated')
 assert(!componentWxml.includes('preview-tabbar'))
 assert(!componentWxml.includes('tab-item'))
 assert(componentWxml.includes('bindtap="goProfile"'))
-assert(componentWxml.includes('/pages/v2/owner-home/assets/avatar.png'))
+assert(componentWxml.includes('src="{{userAvatar}}"'))
+assert(componentWxml.includes('wx:if="{{userAvatar}}"'))
+assert(componentWxml.includes('class="avatar avatar-skeleton"'))
+assert(componentWxml.includes('binderror="handleAvatarError"'))
+assert(componentWxss.includes('.avatar-skeleton'))
+assert(componentJs.includes("value: ''"))
+assert(componentJs.includes('handleAvatarError()'))
+assert(!componentJs.includes('owner-home/assets/avatar.png'))
+assert(componentJs.includes('ownerApi.profile'))
 assert(!componentWxml.includes('{{copy.navTitle}}'))
 assert(
   componentWxml.includes(
@@ -106,11 +113,15 @@ for (const routePath of [
   '/pages/flows/collection-type/collection-type',
   '/pages/lighting-manual/index',
   '/pages/support/contact/contact',
-  '/pages/profile/home/home',
   '/pages/mall/mall',
 ]) {
   assert(componentJs.includes(routePath), `missing route: ${routePath}`)
 }
+assert(
+  componentJs.includes("const MALL_ROUTE = '/pages/mall/mall'"),
+  'mall must use the standalone mall page route'
+)
+assert(!componentJs.includes('/pages/v2/owner-mall'), 'service mall entry must not use a V2 mall page')
 
 for (const asset of [
   '/pages/v2/owner-case-detail/assets/highlight-dining.webp',
@@ -142,6 +153,7 @@ assert(!componentWxss.includes('#7C3AED'))
 let componentDefinition
 const routes = []
 const tabRoutes = []
+const relaunchRoutes = []
 vm.runInNewContext(componentJs, {
   Component(definition) {
     componentDefinition = definition
@@ -159,6 +171,9 @@ vm.runInNewContext(componentJs, {
     switchTab(options) {
       tabRoutes.push(options.url)
     },
+    reLaunch(options) {
+      relaunchRoutes.push(options.url)
+    },
     showToast() {},
   },
 })
@@ -166,11 +181,15 @@ vm.runInNewContext(componentJs, {
 assert(componentDefinition)
 assert.strictEqual(componentDefinition.data.processSteps.length, 3)
 
+let profileSwitchPayload
 const component = {
   ...componentDefinition.methods,
   data: { ...componentDefinition.data },
   setData(patch) {
     Object.assign(this.data, patch)
+  },
+  triggerEvent(name, detail, options) {
+    profileSwitchPayload = { name, detail, options }
   },
 }
 componentDefinition.lifetimes.attached.call(component)
@@ -186,8 +205,13 @@ assert.deepStrictEqual(routes, [
   '/pages/flows/collection-type/collection-type',
   '/pages/lighting-manual/index',
   '/pages/support/contact/contact',
-  '/pages/profile/home/home',
+  '/pages/mall/mall',
 ])
-assert.deepStrictEqual(tabRoutes, ['/pages/mall/mall'])
+assert.strictEqual(profileSwitchPayload.name, 'switchprofile')
+assert.strictEqual(Object.keys(profileSwitchPayload.detail).length, 0)
+assert.strictEqual(profileSwitchPayload.options.bubbles, true)
+assert.strictEqual(profileSwitchPayload.options.composed, true)
+assert.deepStrictEqual(tabRoutes, [])
+assert.deepStrictEqual(relaunchRoutes, [])
 
 console.log('owner services preview checks passed')

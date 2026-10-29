@@ -601,17 +601,6 @@ button::after {
   line-height: 26rpx;
 }
 
-.designer-tab-icon {
-  display: block;
-  width: 56rpx;
-  height: 52rpx;
-  opacity: 0.42;
-}
-
-.tab-item--active .designer-tab-icon {
-  opacity: 1;
-}
-
 .designer-workbench .tab-label {
   font-size: 22rpx;
   line-height: 30rpx;

@@ -1,0 +1,22 @@
+{
+  "case": {
+    "_id": "case-five",
+    "title": "光的留白",
+    "city": "杭州",
+    "spaceType": "住宅空间",
+    "services": ["照明设计", "灯具选型"],
+    "desc": "在自然材料之间控制光的节奏。",
+    "status": "active",
+    "imageFileIds": ["cloud://case/five-01.jpg", "cloud://case/five-02.jpg", "cloud://case/five-03.jpg", "cloud://case/five-04.jpg", "cloud://case/five-05.jpg"]
+  },
+  "slides": [
+    { "id": "five-cover", "type": "cover", "layout": "cover-full", "sectionNo": "", "imageFileIds": ["cloud://case/five-01.jpg"], "imageFocals": { "cloud://case/five-01.jpg": { "x": 0.45, "y": 0.42 } }, "label": "杭州 · 私宅", "title": "光的留白", "body": "", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "five-concept", "type": "concept", "layout": "image-top-copy-bottom", "sectionNo": "01", "imageFileIds": ["cloud://case/five-02.jpg"], "imageFocals": { "cloud://case/five-02.jpg": { "x": 0.5, "y": 0.45 } }, "label": "DESIGN CONCEPT", "title": "留白也是光的一部分", "body": "控制亮度边界，让视线在明暗之间获得呼吸。", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "five-strategy", "type": "strategy", "layout": "strategy-image70", "sectionNo": "02", "imageFileIds": ["cloud://case/five-03.jpg"], "imageFocals": { "cloud://case/five-03.jpg": { "x": 0.52, "y": 0.43 } }, "label": "LIGHTING STRATEGY", "title": "光线被分成三种速度", "body": "", "strategyItems": [{ "title": "漫射", "body": "保持整体安静" }, { "title": "聚焦", "body": "回应材质节点" }, { "title": "低位", "body": "陪伴夜间动线" }], "dominantColor": "#1D1B19" },
+    { "id": "five-space-1", "type": "space", "layout": "space-overlay", "sectionNo": "03", "imageFileIds": ["cloud://case/five-04.jpg"], "imageFocals": { "cloud://case/five-04.jpg": { "x": 0.48, "y": 0.5 } }, "label": "LIVING", "title": "光沿着生活展开", "body": "从会客到独处，亮度随场景自然退让。", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "five-split", "type": "split", "layout": "split-editorial", "sectionNo": "04", "imageFileIds": ["cloud://case/five-05.jpg", "cloud://case/five-01.jpg"], "imageFocals": { "cloud://case/five-05.jpg": { "x": 0.5, "y": 0.42 }, "cloud://case/five-01.jpg": { "x": 0.62, "y": 0.46 } }, "label": "DETAIL", "title": "细节在低照度中显现", "body": "", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "five-space-2", "type": "space", "layout": "image-top-copy-bottom", "sectionNo": "05", "imageFileIds": ["cloud://case/five-02.jpg"], "imageFocals": { "cloud://case/five-02.jpg": { "x": 0.38, "y": 0.5 } }, "label": "NIGHT", "title": "夜晚保留必要的光", "body": "低位照明让回家的路径更轻，也更有安全感。", "strategyItems": [], "dominantColor": "#1B1917" },
+    { "id": "five-closing", "type": "closing", "layout": "closing-full", "sectionNo": "", "imageFileIds": ["cloud://case/five-01.jpg"], "imageFocals": { "cloud://case/five-01.jpg": { "x": 0.72, "y": 0.56 } }, "label": "", "title": "", "body": "", "strategyItems": [], "dominantColor": "#090909" }
+  ]
+}
+

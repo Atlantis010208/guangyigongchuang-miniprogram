@@ -4,8 +4,31 @@
  */
 const util = require('../../utils/util')
 
+/**
+ * 计算自定义导航栏尺寸，兼容不同机型的状态栏与胶囊位置。
+ * @returns {{statusBarHeight: number, navigationBarHeight: number}} 导航栏尺寸
+ */
+function getNavigationMetrics() {
+  const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const statusBarHeight = windowInfo.statusBarHeight || 20
+  let navigationBarHeight = 44
+
+  try {
+    const menuRect = wx.getMenuButtonBoundingClientRect()
+    if (menuRect && menuRect.height) {
+      navigationBarHeight = menuRect.height + Math.max(menuRect.top - statusBarHeight, 0) * 2
+    }
+  } catch (error) {
+    console.warn('[mall] 获取胶囊位置失败，使用默认导航栏高度:', error)
+  }
+
+  return { statusBarHeight, navigationBarHeight }
+}
+
 Page({
   data: {
+    statusBarHeight: 20,
+    navigationBarHeight: 44,
     products: [],           // 商品列表
     loading: false,         // 加载状态
     loadingMore: false,     // 加载更多状态
@@ -22,6 +45,7 @@ Page({
   },
 
   onLoad() {
+    this.setData(getNavigationMetrics())
     this.loadCategories()
   },
 
@@ -29,7 +53,7 @@ Page({
    * 动态加载分类列表
    */
   async loadCategories() {
-    const DEFAULT_CATEGORIES = ['设计服务', '资料工具']
+    const DEFAULT_CATEGORIES = ['设计服务', '资料工具', '课程']
     try {
       const res = await util.callCf('virtual_categories', {})
       if (res && res.success && res.data && res.data.categories && res.data.categories.length > 0) {
@@ -53,17 +77,17 @@ Page({
       this.checkLoginStatus();
     }
     
-    // 设置自定义 tabBar 的选中状态
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({
-        selected: 1 // 1 是商城在 ownerList 中的索引
-      })
-    }
-    
     // 页面显示时刷新数据
     if (this.data.products.length === 0) {
       this.loadProducts()
     }
+  },
+
+  /**
+   * 仅同步搜索框输入，按下搜索键后再请求云端，避免频繁查询。
+   */
+  onKeywordInput(e) {
+    this.setData({ keyword: e.detail.value || '' })
   },
 
   /**
@@ -292,6 +316,17 @@ Page({
   onProductTap(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/mall/product-detail/product-detail?id=${id}` })
+  },
+
+  /**
+   * 返回商城入口页面；页面栈不可用时回到首页。
+   */
+  goBack() {
+    wx.navigateBack({
+      fail() {
+        wx.reLaunch({ url: '/pages/products/products' })
+      }
+    })
   }
 })
 

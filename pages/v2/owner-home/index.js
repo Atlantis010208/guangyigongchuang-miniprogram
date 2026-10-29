@@ -1,4 +1,4 @@
-﻿const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
+const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
 const ownerApi = typeof require === 'function' ? require('../../../services/v2/owner') : { overview: async () => ({ ok: false }) }
 const BASELINE_TOP_INSET = 64
 const BASELINE_HERO_HEIGHT = 273
@@ -45,7 +45,6 @@ const COPY = Object.freeze({
   tabCases: '\u6848\u4f8b',
   tabService: '\u670d\u52a1',
   tabTools: '\u5de5\u5177',
-  tabProfile: '\u6211\u7684',
   routeError: '\u9875\u9762\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
   toolRouteError: '\u5de5\u5177\u9875\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
 })
@@ -179,7 +178,7 @@ Page({
     sceneTop: BASELINE_SCENE_TOP,
     portalLoading: true,
     portalError: '',
-    userAvatar: './assets/avatar.png',
+    userAvatar: '',
     featuredCases: [],
   },
 
@@ -211,7 +210,7 @@ Page({
     this.setData({
       copy,
       portalLoading: false,
-      userAvatar: overview.user && overview.user.avatarUrl || './assets/avatar.png',
+      userAvatar: overview.user && overview.user.avatarUrl || '',
       featuredCases: Array.isArray(overview.featuredCases) ? overview.featuredCases.slice(0, 2) : [],
     })
   },
@@ -276,6 +275,10 @@ Page({
     this.setPreviewTab('tools')
   },
 
+  switchToProfile() {
+    this.goProfile()
+  },
+
   goIlluminance() {
     openPage('/pages/search/search')
   },
@@ -290,6 +293,10 @@ Page({
 
   goProfile() {
     openPage('/pages/profile/home/home')
+  },
+
+  handleAvatarError() {
+    this.setData({ userAvatar: '' })
   },
 
 })

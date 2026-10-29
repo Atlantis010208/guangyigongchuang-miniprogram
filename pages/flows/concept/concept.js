@@ -91,8 +91,7 @@ Page({
     }
     
     wx.showToast({ title:'已提交', icon:'success' })
-    setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }) }, 400)
+    setTimeout(()=>{ wx.navigateTo({ url:'/pages/profile/orders/orders' }) }, 400)
   }
 })
-
 

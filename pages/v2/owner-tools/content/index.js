@@ -1,3 +1,5 @@
+const ownerApi = typeof require === 'function' ? require('../../../../services/v2/owner') : { profile: async () => ({ ok: false }) }
+
 const COPY = Object.freeze({
   title: '\u5de5\u5177',
   subtitle: '\u4e13\u4e1a\u5de5\u5177\u4e0e\u8bbe\u8ba1\u7075\u611f',
@@ -13,14 +15,14 @@ const COMMON_TOOLS = Object.freeze([
     id: 'illuminance',
     title: '\u7167\u5ea6\u8ba1\u7b97\u5668',
     subtitle: '\u8ba1\u7b97\u7a7a\u95f4\u7167\u5ea6\u4e0e\u706f\u5177\u6570\u91cf',
-    image: '/pages/v2/designer-tools/assets/illuminance.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-tools/assets/illuminance.webp',
     route: '/pages/search/search',
   },
   {
     id: 'temperature',
     title: '\u8272\u6e29\u9009\u62e9\u5668',
     subtitle: '\u5bf9\u6bd4\u4e0d\u540c\u8272\u6e29\u7684\u7a7a\u95f4\u6548\u679c',
-    image: '/pages/v2/designer-tools/assets/temperature.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-tools/assets/temperature.webp',
     route: '/pages/color-temp/color-temp',
   },
 ])
@@ -31,7 +33,7 @@ const FEATURE_TOOLS = Object.freeze([
     title: '\u8bbe\u8ba1\u7075\u611f\u5e93',
     subtitle: '\u63a2\u7d22\u9ad8\u7aef\u7167\u660e\u8bbe\u8ba1\u7075\u611f',
     action: '\u6d4f\u89c8\u7075\u611f',
-    image: '/pages/v2/designer-tools/assets/inspiration.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-tools/assets/inspiration.webp',
     route: '/pages/gallery/gallery',
   },
   {
@@ -40,7 +42,7 @@ const FEATURE_TOOLS = Object.freeze([
     subtitle: '\u6d4b\u4e00\u6d4b\u4f60\u7684\u706f\u5149\u8bbe\u8ba1\u8ba4\u77e5\u9636\u6bb5',
     action: '\u5f00\u59cb\u6d4b\u8bd5',
     badge: '\u7ea65\u5206\u949f',
-    image: '/pages/v2/designer-tools/assets/quiz.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-tools/assets/quiz.webp',
     route: '/pages/quiz/lighting-intro/lighting-intro',
   },
 ])
@@ -95,6 +97,13 @@ function openPage(url) {
 }
 
 Component({
+  properties: {
+    userAvatar: {
+      type: String,
+      value: '',
+    },
+  },
+
   data: {
     copy: COPY,
     commonTools: COMMON_TOOLS,
@@ -107,17 +116,31 @@ Component({
   lifetimes: {
     attached() {
       this.setData(getLayout())
+      this.loadOwnerProfile()
     },
   },
 
   methods: {
+    async loadOwnerProfile() {
+      if (this.data.userAvatar) return
+      if (!ownerApi.profile) return
+
+      const response = await ownerApi.profile()
+      const avatarUrl = response.ok && response.data && response.data.user && response.data.user.avatarUrl
+      if (avatarUrl) this.setData({ userAvatar: avatarUrl })
+    },
+
+    handleAvatarError() {
+      this.setData({ userAvatar: '' })
+    },
+
     openTool(event) {
       const route = event.currentTarget.dataset.route
       if (route) openPage(route)
     },
 
     goProfile() {
-      openPage('/pages/profile/home/home')
+      this.triggerEvent('switchprofile', {}, { bubbles: true, composed: true })
     },
   },
 })

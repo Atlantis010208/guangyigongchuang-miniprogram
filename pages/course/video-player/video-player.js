@@ -1934,6 +1934,10 @@ Page({
   onMaterialDownloadTap(e) {
     const chapterIndex = e.currentTarget.dataset.chapterIndex;
     console.log('[material] 点击资料下载按钮, chapterIndex:', chapterIndex);
+    if (!this.data.materialPackage || !this.data.materialPackage.link) {
+      wx.showToast({ title: '课程资料暂未配置，请联系管理员', icon: 'none' });
+      return;
+    }
     this.setData({ showMaterialModal: true });
   },
 
@@ -1956,7 +1960,10 @@ Page({
    */
   onCopyMaterialLink() {
     const { materialPackage } = this.data;
-    if (!materialPackage || !materialPackage.link) return;
+    if (!materialPackage || !materialPackage.link) {
+      wx.showToast({ title: '课程资料暂未配置，请联系管理员', icon: 'none' });
+      return;
+    }
 
     wx.setClipboardData({
       data: materialPackage.link,
@@ -1974,7 +1981,10 @@ Page({
    */
   onCopyMaterialPassword() {
     const { materialPackage } = this.data;
-    if (!materialPackage || !materialPackage.password) return;
+    if (!materialPackage || !materialPackage.password) {
+      wx.showToast({ title: '此资料未配置访问密码', icon: 'none' });
+      return;
+    }
 
     wx.setClipboardData({
       data: materialPackage.password,
@@ -1992,7 +2002,10 @@ Page({
    */
   onCopyMaterialAll() {
     const { materialPackage } = this.data;
-    if (!materialPackage || !materialPackage.link) return;
+    if (!materialPackage || !materialPackage.link) {
+      wx.showToast({ title: '课程资料暂未配置，请联系管理员', icon: 'none' });
+      return;
+    }
 
     const lines = [`分享内容：${materialPackage.title}`, `分享链接：${materialPackage.link}`];
     if (materialPackage.password) {

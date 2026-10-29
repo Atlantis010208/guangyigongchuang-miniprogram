@@ -9,11 +9,14 @@
       aria-label="{{copy.profileAria}}"
     >
       <image
+        wx:if="{{userAvatar}}"
         class="avatar"
-        src="/pages/v2/owner-home/assets/avatar.png"
+        src="{{userAvatar}}"
         mode="aspectFill"
         fade-in="{{false}}"
+        binderror="handleAvatarError"
       />
+      <view wx:else class="avatar avatar-skeleton" aria-hidden="true"></view>
     </button>
   </view>
 
@@ -47,7 +50,7 @@
           <view class="feature-item">
             <image
               class="draft-icon"
-              src="/pages/v2/owner-services/assets/icon-draft-edit-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-services/assets/icon-draft-edit-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -68,7 +71,7 @@
       <view class="collection-image-wrap" aria-hidden="true">
         <image
           class="collection-image"
-          src="/pages/v2/owner-case-detail/assets/highlight-dining.webp"
+          src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-case-detail/assets/highlight-dining.webp"
           mode="aspectFill"
           fade-in="{{false}}"
         />
@@ -82,7 +85,7 @@
     >
       <image
         class="mall-card-image"
-        src="/pages/v2/owner-services/assets/professional-store-v1.webp"
+        src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-services/assets/professional-store-v1.webp"
         mode="aspectFill"
         fade-in="{{false}}"
         aria-hidden="true"
@@ -109,7 +112,7 @@
           <view class="service-card-subtitle">{{copy.designSubtitle}}</view>
           <image
             class="service-card-image"
-            src="/pages/v2/owner-home/assets/case-nanjing.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-home/assets/case-nanjing.png"
             mode="aspectFill"
             fade-in="{{false}}"
           />
@@ -128,7 +131,7 @@
           <view class="service-card-subtitle">{{copy.consultSubtitle}}</view>
           <image
             class="service-card-image"
-            src="/pages/v2/designer-tools/assets/quiz.webp"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-tools/assets/quiz.webp"
             mode="aspectFill"
             fade-in="{{false}}"
           />

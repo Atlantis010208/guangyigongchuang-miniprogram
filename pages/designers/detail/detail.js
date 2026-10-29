@@ -10,7 +10,8 @@ Page({
     // 从订单列表预选的需求
     preselectedRequestId: '',
     // 是否从已接单订单进入（from=order）：隐藏邀请抢单，改为联系设计师
-    fromOrder: false
+    fromOrder: false,
+    fromSelf: false
   },
 
   onLoad(options) {
@@ -26,6 +27,9 @@ Page({
     if (from === 'order') {
       this.setData({ fromOrder: true })
       console.log('[designer/detail] 来源: 已接单订单，隐藏邀请抢单按钮')
+    }
+    if (from === 'self') {
+      this.setData({ fromSelf: true })
     }
     
     if (id) {

@@ -1,5 +1,8 @@
 {
-  "navigationBarTitleText": "电子商城",
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#f6f4ef",
+  "backgroundTextStyle": "dark",
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 100
 }

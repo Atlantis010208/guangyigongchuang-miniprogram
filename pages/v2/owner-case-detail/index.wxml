@@ -101,7 +101,7 @@
   </view>
 
   <view class="detail-action-bar">
-    <view class="detail-action-inner">
+    <view class="detail-action-inner {{presentationAvailable ? 'detail-action-inner--immersive' : ''}}">
       <button
         class="plain-button favorite-action"
         bindtap="toggleBookmark"
@@ -119,6 +119,17 @@
       </button>
 
       <button
+        wx:if="{{presentationAvailable}}"
+        class="plain-button immersive-action"
+        bindtap="goPresentation"
+        hover-class="immersive-action--pressed"
+      >
+        <view class="immersive-action__line"></view>
+        <text class="immersive-action__label">{{copy.immersive}}</text>
+        <view class="immersive-action__line"></view>
+      </button>
+
+      <button
         class="plain-button consult-action"
         bindtap="goConsultation"
         hover-class="consult-action--pressed"
@@ -127,4 +138,6 @@
       </button>
     </view>
   </view>
+
+  <view wx:if="{{enteringPresentation}}" class="presentation-transition" aria-hidden="true"></view>
 </view>

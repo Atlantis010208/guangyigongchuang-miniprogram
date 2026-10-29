@@ -238,6 +238,22 @@ test('owner preview keeps home, cases, services and tools mounted behind one tab
   assert.deepStrictEqual(problems, [])
 })
 
+test('inactive resident tab content is gated to prevent native input bleed-through', () => {
+  const problems = []
+
+  for (const panelName of ['cases', 'services', 'tools']) {
+    const pattern = new RegExp(
+      '<scroll-view\\b(?=[^>]*\\bwx:if="{{activePreviewTab === \'' + panelName + '\'}}")(?=[^>]*\\bclass="preview-panel__scroller")[^>]*>',
+      'i'
+    )
+    if (!pattern.test(homeWxml)) {
+      problems.push(panelName + ' panel content must be rendered only when active')
+    }
+  }
+
+  assert.deepStrictEqual(problems, [])
+})
+
 test('case component exposes search and category interactions', () => {
   const problems = []
 

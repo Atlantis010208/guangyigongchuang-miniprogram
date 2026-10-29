@@ -15,6 +15,16 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const { queryOrderByOutTradeNo } = require('../utils/wechatpay');
+const {
+  DESIGN_PAYMENT_TYPE,
+  getPaymentRequestNoFromOrder,
+  syncDesignPaymentSuccess
+} = require('../design_payment_domain');
+const {
+  GENERAL_COLLECTION_TYPE,
+  getCollectionNoFromOrder,
+  syncGeneralCollectionSuccess
+} = require('../payment_collection_domain');
 
 // 云函数入口函数
 exports.main = async (event, context) => {
@@ -127,6 +137,76 @@ exports.main = async (event, context) => {
  * @param {Object} wechatOrder - 微信支付订单
  */
 async function syncLocalOrderStatus(localOrder, wechatOrder) {
+  if (localOrder.category === GENERAL_COLLECTION_TYPE || localOrder.type === GENERAL_COLLECTION_TYPE || String(localOrder.orderNo || '').startsWith('COL')) {
+    const collectionNo = getCollectionNoFromOrder(localOrder);
+    if (wechatOrder.tradeState === 'SUCCESS') {
+      console.log('同步通用收款订单状态:', localOrder.orderNo);
+      await syncGeneralCollectionSuccess(db, db.command, localOrder, {
+        transactionId: wechatOrder.transactionId,
+        successTime: wechatOrder.successTime,
+        tradeState: wechatOrder.tradeState,
+        amount: wechatOrder.amount
+      }, 'query');
+    } else if (wechatOrder.tradeState === 'CLOSED') {
+      if (collectionNo) {
+        await db.collection('collection_payment_requests')
+          .where({ collectionNo })
+          .update({
+            data: {
+              lastClosedOutTradeNo: localOrder.orderNo,
+              lastQueryAt: new Date(),
+              lastQueryResult: wechatOrder,
+              updatedAt: new Date()
+            }
+          });
+      }
+      await db.collection('orders').doc(localOrder._id).update({
+        data: {
+          status: 'closed',
+          closedAt: new Date(),
+          updatedAt: new Date(),
+          closeReason: '微信支付订单已关闭'
+        }
+      });
+    }
+    return;
+  }
+
+  if (localOrder.category === DESIGN_PAYMENT_TYPE || localOrder.type === DESIGN_PAYMENT_TYPE || String(localOrder.orderNo || '').startsWith('DRP')) {
+    const paymentRequestNo = getPaymentRequestNoFromOrder(localOrder);
+    if (wechatOrder.tradeState === 'SUCCESS') {
+      console.log('同步设计请求收款订单状态:', localOrder.orderNo);
+      await syncDesignPaymentSuccess(db, db.command, localOrder, {
+        transactionId: wechatOrder.transactionId,
+        successTime: wechatOrder.successTime,
+        tradeState: wechatOrder.tradeState,
+        amount: wechatOrder.amount
+      }, 'query');
+    } else if (wechatOrder.tradeState === 'CLOSED') {
+      if (paymentRequestNo) {
+        await db.collection('design_payment_requests')
+          .where({ paymentRequestNo })
+          .update({
+            data: {
+              lastClosedOutTradeNo: localOrder.orderNo,
+              lastQueryAt: new Date(),
+              lastQueryResult: wechatOrder,
+              updatedAt: new Date()
+            }
+          });
+      }
+      await db.collection('orders').doc(localOrder._id).update({
+        data: {
+          status: 'closed',
+          closedAt: new Date(),
+          updatedAt: new Date(),
+          closeReason: '微信支付订单已关闭'
+        }
+      });
+    }
+    return;
+  }
+
   // 只有当微信侧已支付，但本地未更新时才同步
   if (wechatOrder.tradeState === 'SUCCESS' && !localOrder.paid) {
     console.log('同步更新订单状态为已支付:', localOrder.orderNo);

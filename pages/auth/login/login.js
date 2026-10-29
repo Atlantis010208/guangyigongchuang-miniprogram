@@ -110,6 +110,11 @@ Page({
   navigateAfterLogin(userDoc) {
     // 如果来自设计师身份验证，需要通过手机号白名单校验
     if (this.fromSource === 'designer') {
+      this.setIdentityAndEnterDesigner(userDoc)
+      return
+    }
+
+    if (false && this.fromSource === 'designer') {
       const doc = userDoc || wx.getStorageSync('userDoc') || {}
       const phone = doc.phoneNumber || ''
 
@@ -133,7 +138,7 @@ Page({
     // - 命中且原本不是设计师/管理员 → 自动升级为 roles=2
     // - 原本是 roles=2 但白名单已失效 → 自动降级为 roles=1（云函数侧已实现）
     const doc = userDoc || wx.getStorageSync('userDoc') || {}
-    if (doc.phoneNumber) {
+    if (false && doc.phoneNumber) {
       this.revalidateDesignerStatus(doc)
       // 不阻塞跳转，静默校验
     }
@@ -146,7 +151,7 @@ Page({
           // 如果是 tabBar 页面，使用 switchTab
           wx.switchTab({ 
             url: this.redirectUrl,
-            fail: () => wx.reLaunch({ url: '/pages/products/products' })
+            fail: () => wx.reLaunch({ url: '/pages/v2/owner-home/index' })
           })
         }
       })
@@ -161,7 +166,40 @@ Page({
     }
 
     // 没有上一页，跳转到首页
-    wx.reLaunch({ url: '/pages/products/products' })
+    wx.reLaunch({ url: '/pages/v2/owner-home/index' })
+  },
+
+  async setIdentityAndEnterDesigner(userDoc) {
+    try {
+      wx.showLoading({ title: '切换中...', mask: true })
+      const res = await wx.cloud.callFunction({
+        name: 'user_set_identity',
+        data: { role: 2 }
+      })
+      wx.hideLoading()
+
+      if (!res.result || !res.result.success) {
+        throw new Error(res.result && (res.result.errorMessage || res.result.message) || '设置失败')
+      }
+
+      const user = res.result.user || Object.assign({}, userDoc || {}, {
+        roles: 2,
+        identitySelected: true
+      })
+      const app = getApp()
+      if (app && app.globalData) {
+        app.globalData.userDoc = user
+        app.globalData.userRole = 'designer'
+        app.globalData.isFirstLaunch = false
+      }
+      wx.setStorageSync('userDoc', user)
+      wx.setStorageSync('userRole', 'designer')
+      wx.reLaunch({ url: '/pages/v2/designer-learning/index' })
+    } catch (err) {
+      wx.hideLoading()
+      console.error('[login] set designer identity failed:', err)
+      wx.showToast({ title: '切换失败，请重试', icon: 'none' })
+    }
   },
 
   /**
@@ -194,8 +232,8 @@ Page({
         
         // 跳转到设计师端首页
         setTimeout(() => {
-          wx.switchTab({
-            url: '/pages/designer-home/designer-home'
+          wx.reLaunch({
+            url: '/pages/v2/designer-learning/index'
           })
         }, 1500)
       } else {

@@ -1,0 +1,72 @@
+<view class="payment-page">
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="loading-dot"></view>
+    <text>加载收款信息</text>
+  </view>
+
+  <block wx:else>
+    <view class="page-content">
+      <view class="payment-card" wx:if="{{collection}}">
+        <text class="amount-label">应付金额</text>
+        <text class="amount">{{amountText}}</text>
+        <text class="payment-desc">{{collection.description || '服务收款'}}</text>
+
+        <view class="client-block">
+          <text class="client-label">客户</text>
+          <text class="client-name">{{collection.customerName || '-'}}</text>
+        </view>
+
+        <view class="order-row" bindtap="onCopyCollectionNo">
+          <text class="order-label">收款单号：</text>
+          <text class="order-value">{{collection.collectionNo}}</text>
+          <view class="copy-icon" aria-label="复制单号">
+            <view class="copy-back"></view>
+            <view class="copy-front"></view>
+          </view>
+        </view>
+
+        <view class="divider"></view>
+
+        <view class="info-row">
+          <text class="info-label">收款方</text>
+          <text class="info-value">光乙照明</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">有效期</text>
+          <text class="info-value">{{expireText}}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">付款状态</text>
+          <text class="info-value status-text {{statusClass}}">{{statusText}}</text>
+        </view>
+      </view>
+
+      <view class="payment-card empty-card" wx:else>
+        <text class="empty-title">{{statusText || '付款信息不可用'}}</text>
+        <text class="empty-subtitle">请返回聊天或联系工作人员重新发送收款链接</text>
+      </view>
+    </view>
+
+    <view class="bottom-bar">
+      <button
+        wx:if="{{canPay}}"
+        class="wechat-pay-btn"
+        loading="{{paying}}"
+        disabled="{{paying}}"
+        bindtap="onPay"
+      >
+        <view class="wechat-mark">
+          <view class="wechat-dot left"></view>
+          <view class="wechat-dot right"></view>
+        </view>
+        <text>{{paying ? '正在调起支付' : '微信支付'}}</text>
+      </button>
+      <button wx:else class="wechat-pay-btn disabled" disabled>{{statusText || '暂不可支付'}}</button>
+
+      <view class="safe-tip">
+        <view class="shield-icon"></view>
+        <text>微信安全支付，一张收款单仅可成功支付一次</text>
+      </view>
+    </view>
+  </block>
+</view>

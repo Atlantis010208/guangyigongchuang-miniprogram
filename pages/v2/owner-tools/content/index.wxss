@@ -56,6 +56,11 @@
   border-radius: 50%;
 }
 
+.avatar-skeleton {
+  background: #e4e5e7;
+  border-color: #dedfe1;
+}
+
 .tools-header {
   box-sizing: border-box;
   display: flex;

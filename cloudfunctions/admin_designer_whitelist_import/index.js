@@ -210,7 +210,7 @@ exports.main = async (event) => {
     }
     
     // 4. 查询已存在的手机号（去重）
-    const existingPhones = new Set()
+    const existingByPhone = new Map()
     const batchSize = 100
     const phoneList = validRecords.map(r => r.phone)
     
@@ -218,24 +218,60 @@ exports.main = async (event) => {
       const batch = phoneList.slice(i, i + batchSize)
       const existRes = await db.collection('designer_whitelist')
         .where({ phone: _.in(batch) })
-        .field({ phone: true })
+        .field({ _id: true, phone: true, status: true, name: true, remark: true })
         .get()
       
       for (const doc of existRes.data) {
-        existingPhones.add(doc.phone)
+        existingByPhone.set(doc.phone, doc)
       }
     }
     
-    // 5. 过滤出需要新增的记录
-    const newRecords = validRecords.filter(r => !existingPhones.has(r.phone))
-    const duplicateRecords = validRecords.filter(r => existingPhones.has(r.phone))
+    // 5. 过滤出新增、重新启用和保持不变的记录，同时去除本次输入内重复项。
+    const uniqueRecords = []
+    const inputDuplicateRecords = []
+    const inputPhones = new Set()
+    for (const record of validRecords) {
+      if (inputPhones.has(record.phone)) inputDuplicateRecords.push(record)
+      else {
+        inputPhones.add(record.phone)
+        uniqueRecords.push(record)
+      }
+    }
+    const newRecords = uniqueRecords.filter(r => !existingByPhone.has(r.phone))
+    const reactivatedRecords = uniqueRecords.filter(r => {
+      const existing = existingByPhone.get(r.phone)
+      return existing && existing.status !== 'active'
+    })
+    const duplicateRecords = uniqueRecords.filter(r => {
+      const existing = existingByPhone.get(r.phone)
+      return existing && existing.status === 'active'
+    }).concat(inputDuplicateRecords)
     
     console.log('[admin_designer_whitelist_import] 需要新增:', newRecords.length, '重复跳过:', duplicateRecords.length)
     
     // 6. 批量插入新记录
     const now = Date.now()
     const adminId = authResult.user._id || authResult.user.userId || 'admin'
-    let successCount = 0
+    let insertedCount = 0
+    let reactivatedCount = 0
+
+    for (const record of reactivatedRecords) {
+      const existing = existingByPhone.get(record.phone)
+      try {
+        await db.collection('designer_whitelist').doc(existing._id).update({
+          data: {
+            status: 'active',
+            name: record.name || existing.name || '',
+            remark: record.remark || source || existing.remark || '重新启用',
+            updatedAt: now,
+            updatedBy: adminId
+          }
+        })
+        reactivatedCount++
+      } catch (reactivateErr) {
+        console.error('[admin_designer_whitelist_import] 重新启用失败:', reactivateErr)
+      }
+    }
     
     for (let i = 0; i < newRecords.length; i += batchSize) {
       const batch = newRecords.slice(i, i + batchSize)
@@ -257,7 +293,7 @@ exports.main = async (event) => {
               createdBy: adminId
             }
           })
-          successCount++
+          insertedCount++
         } catch (insertErr) {
           if (insertErr.errCode === -502001 || (insertErr.message && insertErr.message.includes('duplicate'))) {
             console.log('[admin_designer_whitelist_import] 重复记录跳过:', record.phone)
@@ -268,7 +304,8 @@ exports.main = async (event) => {
       }
     }
     
-    console.log('[admin_designer_whitelist_import] 导入完成，成功:', successCount)
+    const successCount = insertedCount + reactivatedCount
+    console.log('[admin_designer_whitelist_import] 导入完成，新增:', insertedCount, '重新启用:', reactivatedCount)
     
     // 7. 返回结果
     return {
@@ -277,6 +314,8 @@ exports.main = async (event) => {
       data: {
         total: records.length,
         successCount,
+        insertedCount,
+        reactivatedCount,
         duplicateCount: duplicateRecords.length,
         invalidCount: invalidPhones.length,
         details: {
@@ -284,7 +323,7 @@ exports.main = async (event) => {
           invalids: invalidPhones.slice(0, 10)
         }
       },
-      message: `导入完成：成功 ${successCount} 条，重复跳过 ${duplicateRecords.length} 条，格式无效 ${invalidPhones.length} 条`
+      message: `导入完成：新增 ${insertedCount} 条，重新启用 ${reactivatedCount} 条，重复跳过 ${duplicateRecords.length} 条，格式无效 ${invalidPhones.length} 条`
     }
     
   } catch (err) {

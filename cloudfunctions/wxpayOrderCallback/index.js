@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 微信支付V3回调处理云函数
  * 
  * 支持两种触发方式：
@@ -9,6 +9,14 @@
  */
 const cloud = require('wx-server-sdk');
 const crypto = require('crypto');
+const {
+  DESIGN_PAYMENT_TYPE,
+  syncDesignPaymentSuccess
+} = require('./design_payment_domain');
+const {
+  GENERAL_COLLECTION_TYPE,
+  syncGeneralCollectionSuccess
+} = require('./payment_collection_domain');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
@@ -17,6 +25,9 @@ const _ = db.command;
 
 // APIv3 密钥（需要与 wxpayFunctions 保持一致）
 const APIV3_KEY = process.env.WX_APIV3_KEY || '';
+const PLATFORM_CERTIFICATE = process.env.WX_PLATFORM_CERTIFICATE || '';
+const WECHATPAY_PUBLIC_KEY = process.env.WX_WECHATPAY_PUBLIC_KEY || '';
+const WECHATPAY_PUBLIC_KEY_ID = process.env.WX_WECHATPAY_PUBLIC_KEY_ID || '';
 
 /**
  * 云函数入口
@@ -83,6 +94,8 @@ async function handleHttpCallback(event) {
   } catch (e) {
     throw new Error('请求体 JSON 解析失败');
   }
+
+  verifyWechatpaySignature(headers || {}, typeof body === 'string' ? body : JSON.stringify(body));
   
   console.log('请求体:', JSON.stringify(requestBody, null, 2));
   
@@ -123,6 +136,72 @@ async function handleHttpCallback(event) {
   } else {
     // 数据未加密或已解密
     return requestBody;
+  }
+}
+
+function getHeader(headers, name) {
+  const target = name.toLowerCase();
+  const key = Object.keys(headers || {}).find(k => k.toLowerCase() === target);
+  return key ? headers[key] : '';
+}
+
+function formatCertificate(raw) {
+  if (!raw) return '';
+  let cert = raw.trim();
+  if (cert.includes('\\n')) cert = cert.replace(/\\n/g, '\n');
+  if (!cert.includes('-----BEGIN CERTIFICATE-----')) {
+    const body = cert.replace(/\s/g, '').match(/.{1,64}/g)?.join('\n') || cert;
+    cert = `-----BEGIN CERTIFICATE-----\n${body}\n-----END CERTIFICATE-----`;
+  }
+  return cert;
+}
+
+function formatPublicKey(raw) {
+  if (!raw) return '';
+  let key = raw.trim();
+  if (key.includes('\\n')) key = key.replace(/\\n/g, '\n');
+  if (!key.includes('-----BEGIN PUBLIC KEY-----')) {
+    const body = key.replace(/\s/g, '').match(/.{1,64}/g)?.join('\n') || key;
+    key = `-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----`;
+  }
+  return key;
+}
+
+function resolveWechatpayVerifyKey(serial) {
+  if (serial && serial.startsWith('PUB_KEY_ID_')) {
+    if (WECHATPAY_PUBLIC_KEY_ID && serial !== WECHATPAY_PUBLIC_KEY_ID) {
+      throw new Error('微信支付回调公钥ID不匹配');
+    }
+
+    const publicKey = formatPublicKey(WECHATPAY_PUBLIC_KEY);
+    if (!publicKey) {
+      throw new Error('微信支付公钥未配置，无法验签');
+    }
+    return publicKey;
+  }
+
+  const cert = formatCertificate(PLATFORM_CERTIFICATE);
+  if (!cert) {
+    throw new Error('微信支付平台证书未配置，无法验签');
+  }
+  return cert;
+}
+
+function verifyWechatpaySignature(headers, rawBody) {
+  const timestamp = getHeader(headers, 'Wechatpay-Timestamp');
+  const nonce = getHeader(headers, 'Wechatpay-Nonce');
+  const signature = getHeader(headers, 'Wechatpay-Signature');
+  const serial = getHeader(headers, 'Wechatpay-Serial');
+
+  if (!timestamp || !nonce || !signature || !serial) {
+    throw new Error('微信支付回调签名头缺失');
+  }
+
+  const verifyKey = resolveWechatpayVerifyKey(serial);
+  const message = `${timestamp}\n${nonce}\n${rawBody}\n`;
+  const ok = crypto.verify('RSA-SHA256', Buffer.from(message), verifyKey, Buffer.from(signature, 'base64'));
+  if (!ok) {
+    throw new Error('微信支付回调签名验证失败');
   }
 }
 
@@ -228,6 +307,32 @@ async function processPaymentNotification(paymentData) {
       paymentData
     });
   }
+
+  if (order.category === DESIGN_PAYMENT_TYPE || order.type === DESIGN_PAYMENT_TYPE || outTradeNo.startsWith('DRP')) {
+    console.log('===== 处理设计请求客户收款 =====');
+    return await processDesignRequestPayment(order, {
+      transactionId,
+      successTime,
+      tradeState,
+      amount,
+      payer,
+      mchid: resource.mchid || resource.mch_id,
+      paymentData
+    });
+  }
+
+  if (order.category === GENERAL_COLLECTION_TYPE || order.type === GENERAL_COLLECTION_TYPE || (outTradeNo.startsWith('COL') && order.collectionNo)) {
+    console.log('===== 处理通用发起收款 =====');
+    return await processGeneralCollectionPayment(order, {
+      transactionId,
+      successTime,
+      tradeState,
+      amount,
+      payer,
+      mchid: resource.mchid || resource.mch_id,
+      paymentData
+    });
+  }
   
   // 4. 外层幂等性检查（仅适用于押金/普通订单分支）
   if (order.paid === true && order.transactionId === transactionId) {
@@ -309,6 +414,30 @@ async function processPaymentNotification(paymentData) {
   console.log('============================================');
   
   return { success: true, orderNo: outTradeNo };
+}
+
+async function processDesignRequestPayment(order, payInfo) {
+  const mchid = payInfo.mchid || '';
+  return await syncDesignPaymentSuccess(db, _, order, {
+    transactionId: payInfo.transactionId,
+    successTime: payInfo.successTime,
+    tradeState: payInfo.tradeState,
+    mchid,
+    amount: payInfo.amount,
+    payer: payInfo.payer
+  }, 'wxpay_v3_callback');
+}
+
+async function processGeneralCollectionPayment(order, payInfo) {
+  const mchid = payInfo.mchid || '';
+  return await syncGeneralCollectionSuccess(db, _, order, {
+    transactionId: payInfo.transactionId,
+    successTime: payInfo.successTime,
+    tradeState: payInfo.tradeState,
+    mchid,
+    amount: payInfo.amount,
+    payer: payInfo.payer
+  }, 'wxpay_v3_callback');
 }
 
 /**

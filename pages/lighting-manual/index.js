@@ -84,6 +84,7 @@ Page({
 
     // 由云函数 lighting_cases_list / lighting_reviews_list 填充
     casesData: [],
+    casesTotal: 0,
     reviewsData: [],
 
     teamFlow: [
@@ -430,7 +431,13 @@ Page({
       const deliveryItems = (deliveryRes && deliveryRes.result && deliveryRes.result.data && deliveryRes.result.data.items) || [];
       const avatarUrl = (configRes && configRes.result && configRes.result.data && configRes.result.data.avatarUrl) || '';
 
-      this.setData({ casesData, reviewsData, deliveryStandards: deliveryItems, avatarUrl });
+      this.setData({
+        casesData: casesData.slice(0, 4),
+        casesTotal: casesData.length,
+        reviewsData,
+        deliveryStandards: deliveryItems,
+        avatarUrl,
+      });
     } catch (e) {
       console.error('[lighting-manual] 加载数据失败', e);
     }
@@ -574,6 +581,18 @@ Page({
           title: (err && err.errMsg) ? '跳转失败，请检查公众号关联' : '跳转失败，请稍后重试',
           icon: 'none',
           duration: 2000,
+        });
+      },
+    });
+  },
+
+  goMoreCases() {
+    wx.navigateTo({
+      url: '/pages/v2/owner-home/index?tab=cases',
+      fail() {
+        wx.showToast({
+          title: '页面暂时无法打开',
+          icon: 'none',
         });
       },
     });

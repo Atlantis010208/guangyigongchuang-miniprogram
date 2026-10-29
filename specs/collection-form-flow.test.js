@@ -88,7 +88,8 @@ const submittedActiveDraftKey = page.activeDraftKey
 await page.onConfirm()
 assert.strictEqual(page.data.submitted, true)
 assert.strictEqual(toasts.at(-1).title, '提交成功')
-assert.deepStrictEqual(navigations.at(-1), { type: 'redirectTo', url: '/pages/flows/collection-type/collection-type' })
+assert.strictEqual(navigations.at(-1).type, 'redirectTo')
+assert.match(navigations.at(-1).url, /^\/pages\/flows\/collection-form-result\/collection-form-result\?id=submission-1&requestId=/)
 assert.strictEqual(storage.has(submittedStorageKey), false)
 assert.strictEqual(storage.has(submittedActiveDraftKey), false)
 

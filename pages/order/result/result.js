@@ -75,7 +75,7 @@ Page({
   goOrders() {
     // 跳转到 TabBar 的订单管理页面
     wx.switchTab({
-      url: '/pages/cart/cart'
+      url: '/pages/profile/orders/orders'
     })
   },
 

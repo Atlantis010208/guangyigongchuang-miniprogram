@@ -104,13 +104,18 @@ exports.main = async (event, context) => {
       amount
     } = notifyData;
     
-    // 判断是否是押金退款（通过退款单号前缀）
+    // 判断退款类型（通过退款单号前缀）
     const isDepositRefund = out_refund_no && out_refund_no.startsWith('DEP_REF_');
+    const isCollectionRefund = out_refund_no && out_refund_no.startsWith('RFCOL');
     
     if (isDepositRefund) {
       // 押金退款处理
       console.log('===== 处理押金退款 =====');
       await processDepositRefund(out_refund_no, out_trade_no, refund_status, refund_id, success_time, amount);
+    } else if (isCollectionRefund) {
+      // 通用发起收款退款处理
+      console.log('===== 处理发起收款退款 =====');
+      await processCollectionRefund(out_refund_no, out_trade_no, refund_status, refund_id, success_time, amount);
     } else {
       // 普通退款处理
       await processNormalRefund(out_refund_no, out_trade_no, refund_status, refund_id, success_time, amount);
@@ -134,6 +139,105 @@ exports.main = async (event, context) => {
     };
   }
 };
+
+/**
+ * 处理通用发起收款退款回调
+ */
+async function processCollectionRefund(outRefundNo, outTradeNo, refundStatus, refundId, successTime, amount) {
+  const now = new Date();
+
+  const collectionRes = await db.collection('collection_payment_requests').where({
+    refundNo: outRefundNo
+  }).limit(1).get();
+
+  if (!collectionRes.data || collectionRes.data.length === 0) {
+    console.error('发起收款退款记录不存在:', outRefundNo);
+    return;
+  }
+
+  const collection = collectionRes.data[0];
+  if (collection.status === 'refunded') {
+    console.log('发起收款退款已处理，跳过:', collection.collectionNo);
+    return;
+  }
+
+  let nextStatus = 'refunding';
+  let remark = '退款处理中';
+  if (refundStatus === 'SUCCESS') {
+    nextStatus = 'refunded';
+    remark = `退款成功，金额：¥${((amount && amount.refund) || collection.refundAmountFen || collection.amountFen || 0) / 100}`;
+  } else if (refundStatus === 'ABNORMAL' || refundStatus === 'CLOSED') {
+    nextStatus = 'refund_failed';
+    remark = refundStatus === 'ABNORMAL' ? '退款异常，请检查微信商户平台' : '退款已关闭';
+  }
+
+  const updateData = {
+    status: nextStatus,
+    wxRefundId: refundId,
+    refundWxStatus: refundStatus,
+    lastRefundCallbackAt: now,
+    lastRefundCallbackPayload: {
+      outRefundNo,
+      outTradeNo,
+      refundStatus,
+      refundId,
+      successTime,
+      amount
+    },
+    updatedAt: now
+  };
+  if (nextStatus === 'refunded') {
+    updateData.refundedAt = successTime ? new Date(successTime) : now;
+    updateData.refundError = '';
+  }
+  if (nextStatus === 'refund_failed') {
+    updateData.refundFailedAt = now;
+    updateData.refundError = remark;
+  }
+
+  await db.collection('collection_payment_requests').doc(collection._id).update({
+    data: updateData
+  });
+
+  await db.collection('orders').where({ orderNo: outTradeNo }).update({
+    data: {
+      status: nextStatus,
+      refundNo: outRefundNo,
+      wxRefundId: refundId,
+      refundAmount: (amount && amount.refund) || collection.refundAmountFen || collection.amountFen || 0,
+      refundedAt: nextStatus === 'refunded' ? updateData.refundedAt : collection.refundedAt || null,
+      updatedAt: now
+    }
+  });
+
+  await addPaymentLog({
+    paymentType: 'general_collection_payment',
+    businessNo: collection.collectionNo,
+    outTradeNo,
+    action: nextStatus === 'refunded' ? 'refund_success' : nextStatus === 'refund_failed' ? 'refund_failed' : 'refund_processing',
+    source: 'refund_callback',
+    beforeStatus: collection.status,
+    afterStatus: nextStatus,
+    reason: nextStatus === 'refund_failed' ? remark : '',
+    detail: {
+      refundNo: outRefundNo,
+      refundStatus,
+      refundId,
+      amount
+    },
+    createdAt: now
+  });
+
+  console.log('发起收款退款回调已处理:', collection.collectionNo, nextStatus);
+}
+
+async function addPaymentLog(data) {
+  try {
+    await db.collection('payment_operation_logs').add({ data });
+  } catch (err) {
+    console.warn('写入退款操作日志失败:', err.message);
+  }
+}
 
 /**
  * 处理押金退款回调

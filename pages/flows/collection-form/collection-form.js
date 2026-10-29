@@ -34,6 +34,86 @@ function choiceSelections(answer) {
   return typeof value === 'string' && value ? [value] : []
 }
 
+function normalizeComparable(value) {
+  return String(value === undefined || value === null ? '' : value).trim()
+}
+
+function findOptionId(options, value) {
+  const text = normalizeComparable(value)
+  if (!text) return ''
+  const list = Array.isArray(options) ? options : []
+  const exact = list.find((option) => normalizeComparable(option && option.id) === text)
+  if (exact) return exact.id
+  const byLabel = list.find((option) => normalizeComparable(option && option.label) === text)
+  if (byLabel) return byLabel.id
+  return text
+}
+
+function normalizeChoiceAnswer(question, answer) {
+  if (!question || !['single', 'multiple'].includes(question.type)) return answer
+  const structured = isChoiceAnswer(answer)
+  const selected = choiceSelections(answer)
+  const normalized = selected
+    .map((value) => findOptionId(question.options, value))
+    .filter(Boolean)
+  const unique = normalized.filter((value, index) => normalized.indexOf(value) === index)
+  const hasOtherOption = (question.options || []).some((option) => option.isOther)
+  if (question.type === 'single') {
+    const value = unique[0] || ''
+    if (structured || hasOtherOption) {
+      return {
+        selected: value,
+        otherText: structured && typeof answer.otherText === 'string' ? answer.otherText : '',
+      }
+    }
+    return value
+  }
+  if (structured || hasOtherOption) {
+    return {
+      selected: unique,
+      otherText: structured && typeof answer.otherText === 'string' ? answer.otherText : '',
+    }
+  }
+  return unique
+}
+
+function normalizeTableAnswer(question, answer) {
+  if (!question || question.type !== 'table' || !Array.isArray(answer)) return answer
+  const columns = (question.table && question.table.columns) || []
+  return answer.map((row) => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return row
+    const next = { ...row }
+    columns.forEach((column) => {
+      if (!['single', 'multiple'].includes(column.type) || next[column.id] === undefined) return
+      const normalized = normalizeChoiceAnswer(column, next[column.id])
+      next[column.id] = isChoiceAnswer(normalized) ? normalized.selected : normalized
+    })
+    return next
+  })
+}
+
+function normalizeQuestionAnswer(question, answer) {
+  if (!question) return answer
+  if (['single', 'multiple'].includes(question.type)) return normalizeChoiceAnswer(question, answer)
+  if (question.type === 'table') return normalizeTableAnswer(question, answer)
+  if (question.type === 'ranking' && Array.isArray(answer)) {
+    return answer.map((value) => findOptionId(question.options, value)).filter(Boolean)
+  }
+  return answer
+}
+
+function normalizeFormAnswers(form, answers) {
+  const source = answers && typeof answers === 'object' && !Array.isArray(answers) ? answers : {}
+  if (!form || !Array.isArray(form.modules)) return { ...source }
+  const normalized = { ...source }
+  form.modules.forEach((module) => (module.questions || []).forEach((question) => {
+    if (Object.prototype.hasOwnProperty.call(normalized, question.id)) {
+      normalized[question.id] = normalizeQuestionAnswer(question, normalized[question.id])
+    }
+  }))
+  return normalized
+}
+
 function isLocationAnswer(answer) {
   return Boolean(answer && typeof answer === 'object' && !Array.isArray(answer)
     && (String(answer.name || '').trim() || String(answer.address || '').trim())
@@ -67,8 +147,9 @@ function validateQuestion(question, answer) {
   if (question.required && !hasAnswer(answer)) return '请完成本题后继续'
   if (!hasAnswer(answer)) return ''
 
+  const normalizedAnswer = normalizeQuestionAnswer(question, answer)
   const optionIds = (question.options || []).map((option) => option.id)
-  const selected = choiceSelections(answer)
+  const selected = choiceSelections(normalizedAnswer)
   if (question.type === 'single' && (selected.length !== 1 || !optionIds.includes(selected[0]))) return '选项已失效，请重新选择'
   if (question.type === 'multiple') {
     const uniqueIds = new Set(selected)
@@ -80,7 +161,7 @@ function validateQuestion(question, answer) {
   if (question.type === 'single' || question.type === 'multiple') {
     const otherOption = (question.options || []).find((option) => option.isOther && selected.includes(option.id))
     if (otherOption) {
-      const otherText = isChoiceAnswer(answer) && typeof answer.otherText === 'string' ? answer.otherText.trim() : ''
+      const otherText = isChoiceAnswer(normalizedAnswer) && typeof normalizedAnswer.otherText === 'string' ? normalizedAnswer.otherText.trim() : ''
       if (otherOption.otherRequired !== false && !otherText) return '请填写其他内容'
       if (otherText.length > (otherOption.otherMaxLength || 100)) return `其他内容最多输入 ${otherOption.otherMaxLength || 100} 个字`
     }
@@ -92,12 +173,12 @@ function validateQuestion(question, answer) {
   }
   if (question.type === 'location' && !isLocationAnswer(answer)) return '请选择有效位置'
   if (question.type === 'table') {
-    if (!Array.isArray(answer)) return '请至少填写一行'
+    if (!Array.isArray(normalizedAnswer)) return '请至少填写一行'
     const table = question.table || { columns: [], minRows: 0 }
-    if (answer.length < Number(table.minRows || 0)) return `请至少填写 ${table.minRows} 行`
-    if (answer.length > 100 || (table.maxRows && answer.length > table.maxRows)) return `最多填写 ${table.maxRows || 100} 行`
-    for (let rowIndex = 0; rowIndex < answer.length; rowIndex += 1) {
-      const row = answer[rowIndex]
+    if (normalizedAnswer.length < Number(table.minRows || 0)) return `请至少填写 ${table.minRows} 行`
+    if (normalizedAnswer.length > 100 || (table.maxRows && normalizedAnswer.length > table.maxRows)) return `最多填写 ${table.maxRows || 100} 行`
+    for (let rowIndex = 0; rowIndex < normalizedAnswer.length; rowIndex += 1) {
+      const row = normalizedAnswer[rowIndex]
       if (!row || typeof row !== 'object' || Array.isArray(row)) return `第 ${rowIndex + 1} 行数据无效`
       for (const column of table.columns || []) {
         const value = row[column.id]
@@ -234,6 +315,11 @@ Page({
     }
     this.configureForm(loaded.template)
     const draft = this.readDraft()
+    const cloudDraft = draft ? null : await this.fetchCloudDraft()
+    if (cloudDraft && cloudDraft.answers && Object.keys(cloudDraft.answers).length) {
+      this.restoreDraft(cloudDraft)
+      return
+    }
     if (draft && draft.submitted && draft.answers) {
       this.restoreDraft({ ...draft, position: { view: 'review' } })
       return
@@ -264,6 +350,7 @@ Page({
     }
     this.keyboardHeightHandler = null
     this.cancelAutoAdvance()
+    if (typeof this.cancelCloudDraftSave === 'function') this.cancelCloudDraftSave()
   },
 
   handleKeyboardHeightChange(event) {
@@ -286,8 +373,85 @@ Page({
     }
   },
 
+  canUseCloudDraft() {
+    return Boolean(wx.cloud && wx.cloud.callFunction && this.form && !this.data.offlineMode)
+  },
+
+  ensureRequestId() {
+    const draft = this.readDraft()
+    this.requestId = this.requestId || (draft && draft.requestId) || this.createRequestId()
+    return this.requestId
+  },
+
+  async fetchCloudDraft() {
+    if (!this.canUseCloudDraft()) return null
+    try {
+      const call = await wx.cloud.callFunction({
+        name: 'collection_form_public',
+        data: { action: 'getDraft', spaceType: this.spaceType, versionId: this.form.versionId },
+      })
+      const draft = call && call.result && call.result.success && call.result.data && call.result.data.draft
+      if (!draft || !draft.answers) return null
+      return {
+        answers: draft.answers,
+        position: draft.position || { view: 'overview' },
+        requestId: draft.requestId || '',
+        submitted: false,
+        spaceType: draft.spaceType || this.spaceType,
+        versionId: draft.versionId || this.form.versionId,
+      }
+    } catch (error) {
+      return null
+    }
+  },
+
+  cancelCloudDraftSave() {
+    if (this.cloudDraftSaveTimer) clearTimeout(this.cloudDraftSaveTimer)
+    this.cloudDraftSaveTimer = null
+  },
+
+  scheduleCloudDraftSave() {
+    if (!this.canUseCloudDraft() || this.data.submitted) return
+    this.cancelCloudDraftSave()
+    this.cloudDraftSaveTimer = setTimeout(() => {
+      this.cloudDraftSaveTimer = null
+      this.pushCloudDraft().catch(() => {})
+    }, 900)
+  },
+
+  async pushCloudDraft() {
+    if (!this.canUseCloudDraft() || this.data.submitted) return null
+    const position = {
+      view: this.data.view,
+      moduleIndex: this.data.currentModuleIndex,
+      questionIndex: this.data.currentQuestionIndex,
+    }
+    const call = await wx.cloud.callFunction({
+      name: 'collection_form_public',
+      data: {
+        action: 'saveDraft',
+        requestId: this.ensureRequestId(),
+        spaceType: this.spaceType,
+        versionId: this.form.versionId,
+        answers: this.data.answers,
+        position,
+      },
+    })
+    return call && call.result
+  },
+
+  async clearCloudDraft() {
+    if (!this.canUseCloudDraft()) return null
+    this.cancelCloudDraftSave()
+    const call = await wx.cloud.callFunction({
+      name: 'collection_form_public',
+      data: { action: 'clearDraft', spaceType: this.spaceType, versionId: this.form.versionId },
+    })
+    return call && call.result
+  },
+
   restoreDraft(draft) {
-    const answers = this.revalidateCachedFiles(draft.answers || {})
+    const answers = normalizeFormAnswers(this.form, this.revalidateCachedFiles(draft.answers || {}))
     this.requestId = draft.requestId || ''
     this.setData({ answers, submitted: Boolean(draft.submitted) })
     const position = draft.position || {}
@@ -343,6 +507,7 @@ Page({
 
   restartForm() {
     try { wx.removeStorageSync(this.storageKey) } catch (error) {}
+    this.clearCloudDraft().catch(() => {})
     this.setData({ answers: {}, submitted: false })
     this.showOverview()
   },
@@ -543,9 +708,9 @@ Page({
   },
 
   onAnswerChange(event) {
-    const value = event.detail.value
-    const confirmed = Boolean(event.detail.confirmed)
     const currentQuestion = this.data.currentQuestion
+    const value = normalizeQuestionAnswer(currentQuestion, event.detail.value)
+    const confirmed = Boolean(event.detail.confirmed)
     const answers = { ...this.data.answers, [currentQuestion.id]: value }
     this.setData({ answers, currentAnswer: value, submitted: false })
     this.saveDraft()
@@ -669,6 +834,18 @@ Page({
     wx.redirectTo({ url })
   },
 
+  openSubmissionResult(submission) {
+    const data = submission || {}
+    const params = [
+      ['id', data.id || ''],
+      ['requestId', data.requestId || this.requestId || ''],
+      ['spaceType', this.spaceType || ''],
+      ['pdfStatus', data.pdfStatus || 'pending'],
+      ['submittedAt', data.submittedAt || ''],
+    ].map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`).join('&')
+    wx.redirectTo({ url: `/pages/flows/collection-form-result/collection-form-result?${params}` })
+  },
+
   getVisibleUploadEntries() {
     const entries = []
     this.form.modules.forEach((module) => getVisibleQuestions(module, this.data.answers).forEach((question) => {
@@ -710,7 +887,7 @@ Page({
       this.showModule(incomplete)
       return
     }
-    this.requestId = this.requestId || (this.readDraft() && this.readDraft().requestId) || this.createRequestId()
+    this.ensureRequestId()
     this.setData({ submitting: true, uploadProgress: 0, submitButtonText: '提交中' })
     this.saveDraft()
     try {
@@ -729,12 +906,18 @@ Page({
       if (!response || !response.success) throw new Error((response && response.errorMessage) || '提交失败，请稍后重试')
       this.setData({ submitted: true, submitting: false, uploadProgress: 100, submitButtonText: '已提交' })
       this.saveDraft()
+      await this.clearCloudDraft().catch(() => null)
       try {
         wx.removeStorageSync(this.activeDraftKey)
         wx.removeStorageSync(this.storageKey)
       } catch (error) {}
       wx.showToast({ title: response.data && response.data.duplicate ? '已提交，请勿重复操作' : '提交成功', icon: 'success' })
-      this.returnToTypeSelection()
+      this.openSubmissionResult({
+        id: response.data && response.data.id,
+        requestId: this.requestId,
+        pdfStatus: 'pending',
+        submittedAt: response.data && response.data.submittedAt,
+      })
     } catch (error) {
       this.setData({ submitting: false, submitButtonText: '重试提交' })
       this.saveDraft()
@@ -743,4 +926,13 @@ Page({
   },
 })
 
-module.exports = { hasAnswer, isVisible, getVisibleQuestions, validateQuestion, getModuleTagTitle }
+module.exports = {
+  hasAnswer,
+  isVisible,
+  getVisibleQuestions,
+  validateQuestion,
+  getModuleTagTitle,
+  normalizeChoiceAnswer,
+  normalizeQuestionAnswer,
+  normalizeFormAnswers,
+}

@@ -311,6 +311,6 @@ Page({
       }
     }catch(err){}
     wx.showToast({ title:'已下单', icon:'success' })
-    setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }) }, 500)
+    setTimeout(()=>{ wx.navigateTo({ url:'/pages/profile/orders/orders' }) }, 500)
   }
 })

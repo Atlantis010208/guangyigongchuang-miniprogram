@@ -7,12 +7,15 @@ const PDF_BIKENG_GUIDE = 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c5
 
 const { enterV2IfEnabled } = require('../../services/v2/navigation-gate')
 
+const COLLECTION_PAYMENT_PAGE = '/pages/collection/payment/payment'
+
 Page({
 
   /**
    * 页面的初始数据
    */
   data: {
+    legacyVisible: false,
     userAvatar: '', // 用户头像URL（临时链接）
     avatarFileID: '', // 用户头像 cloud:// fileID（用于重试）
     assistantToolkitCover: '',
@@ -27,7 +30,10 @@ Page({
    * 生命周期函数--监听页面加载
    */
   async onLoad(options) {
+    if (this.routeCollectionPaymentFromEntry(options || {})) return
     if (await enterV2IfEnabled('owner', options || {})) return
+    this.setData({ legacyVisible: true })
+    this.onShow()
     // 检查是否需要选择身份
     this.checkIdentitySelection()
     // 从数据库动态获取工具包和课程的封面图片
@@ -131,6 +137,8 @@ Page({
    * 每次显示时刷新用户头像（用户可能刚登录或修改了头像）
    */
   onShow() {
+    if (!this.data.legacyVisible) return
+    this.routePendingCollectionPayment()
     // 更新自定义 tabBar 的选中状态和角色
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateRole()
@@ -142,6 +150,52 @@ Page({
     // 预加载避坑指南 PDF（后台静默下载）
     this.preloadPdfFile(PDF_BIKENG_GUIDE)
     this._loadMembership()
+  },
+
+  routeCollectionPaymentFromEntry(options = {}) {
+    const rawToken = options.collectionPaymentToken || options.collection_payment_token || options.scene || ''
+    const paymentToken = String(rawToken || '').trim()
+    if (!paymentToken) return false
+
+    this._pendingCollectionPaymentToken = paymentToken
+    const app = getApp()
+    if (app && app.globalData) {
+      app.globalData.pendingCollectionPaymentToken = paymentToken
+    }
+    this.routePendingCollectionPayment()
+    return true
+  },
+
+  routePendingCollectionPayment() {
+    const app = getApp()
+    const paymentToken = String(
+      this._pendingCollectionPaymentToken ||
+      (app && app.globalData && app.globalData.pendingCollectionPaymentToken) ||
+      ''
+    ).trim()
+    if (!paymentToken) return
+
+    if (this._routedCollectionPaymentToken === paymentToken) return
+    this._routedCollectionPaymentToken = paymentToken
+
+    const url = `${COLLECTION_PAYMENT_PAGE}?t=${encodeURIComponent(paymentToken)}`
+    wx.navigateTo({
+      url,
+      success: () => {
+        this._pendingCollectionPaymentToken = ''
+        if (app && app.globalData) {
+          app.globalData.pendingCollectionPaymentToken = ''
+        }
+      },
+      fail: (err) => {
+        console.warn('[products] route collection payment failed:', err)
+        this._routedCollectionPaymentToken = ''
+        wx.showToast({
+          title: '付款页打开失败',
+          icon: 'none'
+        })
+      }
+    })
   },
 
   async _loadMembership() {
@@ -468,7 +522,7 @@ Page({
 
   // 电子商城入口
   onMallTap(){
-    wx.switchTab({ url: '/pages/mall/mall' })
+    wx.navigateTo({ url: '/pages/mall/mall' })
   },
 
   // 英雄卡片点击：进入发布照明需求

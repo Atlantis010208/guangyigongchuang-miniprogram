@@ -869,5 +869,11 @@
   border: none;
 }
 
+.collection-card { min-height: 120rpx; }
+.collection-icon { width: 92rpx; height: 92rpx; border-radius: 20rpx; background: #111; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24rpx; font-weight: 700; margin-right: 22rpx; flex-shrink: 0; }
+.collection-card .item-title-row { display: flex; align-items: center; gap: 14rpx; }
+.collection-card .tag-status { font-size: 22rpx; color: #34c759; background: #eaf8ee; padding: 5rpx 12rpx; border-radius: 18rpx; }
+.collection-card .item-specs { display: block; margin-top: 9rpx; }
+
 /* 只有当订单已取消/关闭时，删除按钮才显示，但这会和状态标签冲突 */
 /* 建议将删除按钮移到底部操作区，或者仅在左滑时显示，这里先保持在卡片内但不覆盖状态 */

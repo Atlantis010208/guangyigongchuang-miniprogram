@@ -1,0 +1,24 @@
+<view class="page">
+  <view class="hero">
+    <view class="success-icon">✓</view>
+    <text class="title">需求提交成功</text>
+    <text class="subtitle">我们已收到你的需求，PDF 版本会同步生成</text>
+  </view>
+
+  <view class="card">
+    <view class="row"><text class="label">需求单号</text><text class="value">{{requestId || '-'}}</text></view>
+    <view class="row"><text class="label">提交时间</text><text class="value">{{submittedAtText || '-'}}</text></view>
+    <view wx:if="{{pdfFileName}}" class="row"><text class="label">PDF 文件名</text><text class="value">{{pdfFileName}}</text></view>
+    <view class="pdf-status {{pdfStatus}}">
+      <view class="status-dot"></view>
+      <text>{{statusText}}</text>
+    </view>
+    <button class="primary" loading="{{opening}}" disabled="{{opening || pdfStatus !== 'ready'}}" bindtap="onOpenPdf">{{pdfStatus === 'ready' ? '查看 / 导出 PDF' : 'PDF 生成中'}}</button>
+    <button wx:if="{{pdfStatus === 'failed'}}" class="secondary" loading="{{generating}}" bindtap="onRetry">重新生成 PDF</button>
+  </view>
+
+  <view class="actions">
+    <button class="link-button" bindtap="onHistory">查看历史需求</button>
+    <button class="link-button" bindtap="onHome">返回首页</button>
+  </view>
+</view>

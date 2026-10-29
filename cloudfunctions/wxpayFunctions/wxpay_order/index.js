@@ -17,6 +17,19 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const { jsapiOrder, generatePayParams } = require('../utils/wechatpay');
+const {
+  DESIGN_PAYMENT_TYPE,
+  ACTIVE_STATUSES,
+  getPaymentByNo,
+  getPaymentRequestNoFromOrder,
+  isExpired
+} = require('../design_payment_domain');
+const {
+  GENERAL_COLLECTION_TYPE,
+  getCollectionByNo,
+  getCollectionNoFromOrder,
+  isExpired: isCollectionExpired
+} = require('../payment_collection_domain');
 
 // 云函数入口函数
 exports.main = async (event, context) => {
@@ -93,6 +106,24 @@ exports.main = async (event, context) => {
     }
 
     if (order.status === 'closed' || order.status === 'cancelled') {
+      const designPaymentRecovery = await recoverClosedDesignPaymentOrder(order, OPENID);
+      if (designPaymentRecovery.ok) {
+        Object.assign(order, designPaymentRecovery.order);
+      } else {
+        const collectionPaymentRecovery = await recoverClosedCollectionPaymentOrder(order, OPENID);
+        if (collectionPaymentRecovery.ok) {
+          Object.assign(order, collectionPaymentRecovery.order);
+        } else {
+        return { 
+          code: -4, 
+            message: designPaymentRecovery.message || collectionPaymentRecovery.message || '订单已关闭，请重新下单',
+          data: null 
+        };
+        }
+      }
+    }
+
+    if (order.status === 'closed' || order.status === 'cancelled') {
       return { 
         code: -4, 
         message: '订单已关闭，请重新下单',
@@ -130,7 +161,7 @@ exports.main = async (event, context) => {
     // 7. 调用微信支付V3 JSAPI下单
     // 使用订单中的 attach 字段（如果有），否则使用默认值
     // 这样押金订单可以传递 type: 'deposit' 标识
-    const attachData = order.attach || JSON.stringify({ orderId: order._id });
+    const attachData = buildAttachData(order);
     
     const orderResult2 = await jsapiOrder({
       orderNo: orderNo,
@@ -192,3 +223,124 @@ exports.main = async (event, context) => {
     };
   }
 };
+
+async function recoverClosedDesignPaymentOrder(order, openid) {
+  if (!isDesignPaymentOrder(order)) {
+    return { ok: false };
+  }
+
+  const paymentRequestNo = getPaymentRequestNoFromOrder(order);
+  const payment = await getPaymentByNo(db, paymentRequestNo);
+  if (!payment) {
+    return { ok: false, message: '收款请求不存在或已失效' };
+  }
+  if (payment.customerOpenid && payment.customerOpenid !== openid) {
+    return { ok: false, message: '该付款入口仅限发布需求客户使用' };
+  }
+  if (!ACTIVE_STATUSES.includes(payment.status) || isExpired(payment)) {
+    return { ok: false, message: '付款入口已过期，请联系工作人员重新发送' };
+  }
+
+  const updateData = {
+    status: 'pending',
+    paid: false,
+    userId: openid,
+    _openid: openid,
+    reopenedAt: new Date(),
+    reopenedReason: 'wxpay_order_active_design_payment',
+    updatedAt: new Date(),
+    closedAt: null,
+    closeReason: '',
+    closedReason: ''
+  };
+  await db.collection('orders').doc(order._id).update({ data: updateData });
+
+  return {
+    ok: true,
+    order: {
+      ...order,
+      ...updateData
+    }
+  };
+}
+
+function isDesignPaymentOrder(order) {
+  return Boolean(
+    order &&
+    (
+      order.type === DESIGN_PAYMENT_TYPE ||
+      order.category === DESIGN_PAYMENT_TYPE ||
+      String(order.orderNo || '').startsWith('DRP') ||
+      String(order.attach || '').indexOf(DESIGN_PAYMENT_TYPE) >= 0
+    )
+  );
+}
+
+async function recoverClosedCollectionPaymentOrder(order, openid) {
+  if (!isCollectionPaymentOrder(order)) {
+    return { ok: false };
+  }
+
+  const collectionNo = getCollectionNoFromOrder(order);
+  const collection = await getCollectionByNo(db, collectionNo);
+  if (!collection) {
+    return { ok: false, message: '收款单不存在或已失效' };
+  }
+  if (collection.status === 'paid') {
+    return { ok: false, message: '该收款单已支付' };
+  }
+  if (!ACTIVE_STATUSES.includes(collection.status) || isCollectionExpired(collection)) {
+    return { ok: false, message: '付款入口已过期，请联系工作人员重新发送' };
+  }
+
+  const updateData = {
+    status: 'pending',
+    paid: false,
+    userId: openid,
+    _openid: openid,
+    reopenedAt: new Date(),
+    reopenedReason: 'wxpay_order_active_general_collection',
+    updatedAt: new Date(),
+    closedAt: null,
+    closeReason: '',
+    closedReason: ''
+  };
+  await db.collection('orders').doc(order._id).update({ data: updateData });
+
+  return {
+    ok: true,
+    order: {
+      ...order,
+      ...updateData
+    }
+  };
+}
+
+function isCollectionPaymentOrder(order) {
+  return Boolean(
+    order &&
+    (
+      order.type === GENERAL_COLLECTION_TYPE ||
+      order.category === GENERAL_COLLECTION_TYPE ||
+      String(order.orderNo || '').startsWith('COL') ||
+      String(order.attach || '').indexOf(GENERAL_COLLECTION_TYPE) >= 0 ||
+      String(order.attach || '').indexOf('"t":"c"') >= 0
+    )
+  );
+}
+
+function buildAttachData(order) {
+  if (isCollectionPaymentOrder(order)) {
+    const collectionNo = getCollectionNoFromOrder(order);
+    if (collectionNo) {
+      return JSON.stringify({ t: 'c', p: collectionNo });
+    }
+  }
+  if (isDesignPaymentOrder(order)) {
+    const paymentRequestNo = getPaymentRequestNoFromOrder(order);
+    if (paymentRequestNo) {
+      return JSON.stringify({ t: 'd', p: paymentRequestNo });
+    }
+  }
+  return order.attach || JSON.stringify({ orderId: order._id });
+}

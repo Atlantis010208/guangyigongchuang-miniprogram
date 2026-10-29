@@ -4,39 +4,16 @@ const { resolveCloudEnvironment } = require('./config/cloud-env')
 
 // 登录有效期：1天（毫秒）
 const LOGIN_EXPIRE_DURATION = 24 * 60 * 60 * 1000
+const DESIGN_PAYMENT_PAGE = '/pages/request/payment/payment'
+const COLLECTION_PAYMENT_PAGE = '/pages/collection/payment/payment'
 
-// 全局注入分享：所有未自定义 onShareAppMessage 的页面自动获得默认分享
+// 所有页面统一使用当前导航栏标题，保留各页面的分享路径和封面。
+const { wrapPageShare, trackNavigationTitles } = require('./utils/page-share')
+trackNavigationTitles(wx, getCurrentPages)
 ;(function() {
-  const _Page = Page
-
-  /**
-   * 拼出带 query 的完整分享路径
-   * currentPage.route 不含查询参数，参数在 currentPage.options 里，
-   * 只取 route 会导致详情页分享后接收方拿不到 id 而无法加载数据。
-   * @param {object} page getCurrentPages() 返回的页面实例
-   * @returns {string} 形如 /pages/xxx/xxx?id=1 的绝对路径
-   */
-  const buildSharePath = function(page) {
-    if (!page || !page.route) return '/pages/products/products'
-    const options = page.options || {}
-    const query = Object.keys(options)
-      .filter((key) => options[key] !== undefined && options[key] !== null && options[key] !== '')
-      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(options[key])}`)
-      .join('&')
-    return '/' + page.route + (query ? '?' + query : '')
-  }
-
+  const originalPage = Page
   Page = function(options) {
-    if (!options.onShareAppMessage) {
-      options.onShareAppMessage = function() {
-        const pages = getCurrentPages()
-        return {
-          title: '光乙共创平台',
-          path: buildSharePath(pages[pages.length - 1])
-        }
-      }
-    }
-    return _Page(options)
+    return originalPage(wrapPageShare(options))
   }
 })()
 
@@ -59,6 +36,8 @@ App({
 
     // 检查登录状态
     this.checkLoginStatus()
+    this.routeDesignPaymentLink(options)
+    this.routeCollectionPaymentLink(options)
   },
 
   initCloudEnvironment() {
@@ -85,7 +64,11 @@ App({
       if (!wx.cloud || !wx.cloud.init) throw new Error('wx.cloud unavailable')
       wx.cloud.init({ env: state.envId, traceUser: true })
       this.globalData.cloudReady = true
-      console.info('[cloud-env]', state.envVersion, state.isProduction ? 'production' : 'test')
+      if (state.usedProductionOverride) {
+        console.warn('[cloud-env]', state.envVersion, '已用本机覆盖直连生产', state.envId)
+      } else {
+        console.info('[cloud-env]', state.envVersion, state.isProduction ? 'production' : 'test', state.envId)
+      }
       return true
     } catch (error) {
       this.globalData.cloudReady = false
@@ -101,6 +84,8 @@ App({
   onShow(options) {
     console.log('小程序显示', options)
     this.captureInviteCode(options)
+    this.routeDesignPaymentLink(options)
+    this.routeCollectionPaymentLink(options)
     // 每次切到前台时，静默检查工具包白名单激活状态
     // 解决"先注册后导入白名单"导致已登录用户无法自动激活的问题
     this.silentCheckToolkitWhitelist()
@@ -121,6 +106,82 @@ App({
     } catch (e) {
       console.warn('保存邀请码失败', e)
     }
+  },
+
+  routeDesignPaymentLink(options = {}) {
+    const query = options.query || {}
+    const rawNo = query.paymentRequestNo || query.payment_request_no || ''
+    const paymentRequestNo = String(rawNo || '').trim()
+    if (!paymentRequestNo) return
+
+    this.globalData.pendingDesignPaymentRequestNo = paymentRequestNo
+
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+    const currentPage = pages[pages.length - 1]
+    if (
+      currentPage &&
+      currentPage.route === DESIGN_PAYMENT_PAGE.replace(/^\//, '') &&
+      currentPage.options &&
+      currentPage.options.paymentRequestNo === paymentRequestNo
+    ) {
+      return
+    }
+
+    if (!this._handledDesignPaymentNos) this._handledDesignPaymentNos = {}
+    if (this._handledDesignPaymentNos[paymentRequestNo]) return
+    this._handledDesignPaymentNos[paymentRequestNo] = true
+
+    const url = `${DESIGN_PAYMENT_PAGE}?paymentRequestNo=${encodeURIComponent(paymentRequestNo)}`
+    setTimeout(() => {
+      wx.navigateTo({
+        url,
+        fail: (err) => {
+          console.warn('[design-payment] navigate from url link failed:', err)
+          wx.redirectTo({
+            url,
+            fail: () => wx.reLaunch({ url: '/pages/products/products' })
+          })
+        }
+      })
+    }, 80)
+  },
+
+  routeCollectionPaymentLink(options = {}) {
+    const query = options.query || {}
+    const rawToken = query.collectionPaymentToken || query.collection_payment_token || query.scene || ''
+    const paymentToken = String(rawToken || '').trim()
+    if (!paymentToken) return
+
+    this.globalData.pendingCollectionPaymentToken = paymentToken
+
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+    const currentPage = pages[pages.length - 1]
+    if (
+      currentPage &&
+      currentPage.route === COLLECTION_PAYMENT_PAGE.replace(/^\//, '') &&
+      currentPage.options &&
+      currentPage.options.t === paymentToken
+    ) {
+      return
+    }
+
+    if (!this._handledCollectionPaymentTokens) this._handledCollectionPaymentTokens = {}
+    if (this._handledCollectionPaymentTokens[paymentToken]) return
+    this._handledCollectionPaymentTokens[paymentToken] = true
+
+    const url = `${COLLECTION_PAYMENT_PAGE}?t=${encodeURIComponent(paymentToken)}`
+    setTimeout(() => {
+      wx.navigateTo({
+        url,
+        fail: (err) => {
+          console.warn('[collection-payment] navigate from url link failed:', err)
+          wx.redirectTo({
+            url,
+            fail: () => wx.reLaunch({ url: '/pages/products/products' })
+          })
+        }
+      })
+    }, 80)
   },
 
   onError(msg) {

@@ -43,7 +43,7 @@ const TEST_SUPPORT_FUNCTIONS = Object.freeze([
   // 互动
   'favorites_operations', 'feedback_operations',
   // 首次启动时按需建集合
-  'initCollections'
+  'initCollections', 'admin_mall_init'
 ])
 const ALLOWED_FUNCTIONS = Object.freeze([...V2_FUNCTIONS, ...TEST_SUPPORT_FUNCTIONS])
 

@@ -87,6 +87,7 @@
         "publish/publish",
         "collection-type/collection-type",
         "collection-form/collection-form",
+        "collection-form-result/collection-form-result",
         "collection/collection",
         "lighting-selection/lighting-selection",
         "survey/survey",
@@ -123,8 +124,15 @@
       "root": "pages/request/",
       "pages": [
         "progress/progress",
+        "payment/payment",
         "edit/edit",
         "params-edit/params-edit"
+      ]
+    },
+    {
+      "root": "pages/collection/",
+      "pages": [
+        "payment/payment"
       ]
     },
     {
@@ -190,12 +198,14 @@
         "owner-home/index",
         "owner-cases/index",
         "owner-case-detail/index",
+        "owner-case-presentation/index",
         "owner-tools/index",
         "owner-services/index",
         "designer-workbench/index",
         "designer-projects/index",
         "designer-profile/index",
         "designer-learning/index",
+        "designer-learning-content/index",
         "designer-tools/index"
       ]
     }
@@ -217,12 +227,6 @@
         "text": "首页",
         "iconPath": "images/product.png",
         "selectedIconPath": "images/product-active.png"
-      },
-      {
-        "pagePath": "pages/mall/mall",
-        "text": "商城",
-        "iconPath": "images/积分商城.png",
-        "selectedIconPath": "images/积分商城_选中.png"
       },
       {
         "pagePath": "pages/course/index/index",

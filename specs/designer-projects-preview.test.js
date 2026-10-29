@@ -121,6 +121,8 @@ for (const interaction of [
   'continueProject',
   'viewProject',
   'openManagement',
+  'retryProjectAccess',
+  'showCertificationGuide',
   'switchTab',
 ]) {
   assert(
@@ -130,6 +132,13 @@ for (const interaction of [
 }
 
 assert(pageJs.includes('marketplaceSubtitle'))
+assert(pageJs.includes('designerApi.projectAccess()'))
+assert(pageJs.includes("projectAccessStatus: 'checking'"))
+assert(pageWxml.includes("projectAccessStatus === 'denied'"))
+assert(pageWxml.includes('class="project-access-state'))
+assert(pageWxml.includes('class="project-access-state__icon-surface"'))
+assert(pageWxml.includes('class="project-access-state__status"'))
+assert(!pageWxml.includes('project-access-state__mark'))
 assert(pageWxml.includes('bindinput="searchCompleted"'))
 assert(pageWxss.includes('@import "./completed.wxss"'))
 assert(!pageWxml.includes('{{copy.clientLabel}}?'), 'client metadata must not contain broken separators')
@@ -184,11 +193,6 @@ for (const spacing of [
 const referencedAssets = [
   'project-residential-card.webp',
   'project-commercial.webp',
-  'icon-tab-workbench-v2.png',
-  'icon-tab-learning-v2.png',
-  'icon-tab-tools-v2.png',
-  'icon-tab-projects-v2.png',
-  'icon-tab-profile-v2.png',
   'icon-chevron-right-v2.png',
 ]
 for (const asset of referencedAssets) {
@@ -201,6 +205,24 @@ for (const asset of referencedAssets) {
   assert(fs.existsSync(assetPath), 'missing reused local asset: ' + asset)
   assert(pageJs.includes(asset) || pageWxml.includes(asset), 'unused asset: ' + asset)
 }
+
+for (const asset of [
+  'tab-learning-default.png',
+  'tab-learning-active.png',
+  'tab-designer-tools-default.png',
+  'tab-designer-tools-active.png',
+  'tab-projects-default.png',
+  'tab-projects-active.png',
+  'tab-profile-default.png',
+  'tab-profile-active.png',
+]) {
+  assert(
+    fs.existsSync(path.join(previewRoot, 'shared', 'assets', 'tabbar', asset)),
+    'missing shared tab asset: ' + asset
+  )
+  assert(pageJs.includes(asset), 'unused tab asset: ' + asset)
+}
+assert(pageWxml.includes('src="{{item.activeIcon}}"'))
 
 for (const nativeApi of [
   'getWindowInfo',
@@ -238,6 +260,9 @@ function createRuntime(windowInfo) {
       showToast(options = {}) {
         calls.push({ api: 'showToast', options })
       },
+      showModal(options = {}) {
+        calls.push({ api: 'showModal', options })
+      },
     },
   }
 
@@ -269,6 +294,7 @@ runtime.page.onLoad()
 assert.strictEqual(runtime.page.data.statusBarHeight, 20)
 assert.strictEqual(runtime.page.data.navigationBarHeight, 44)
 assert.strictEqual(runtime.page.data.headerHeight, 94)
+assert.strictEqual(runtime.page.data.accessContentHeight, 640)
 assert.strictEqual(runtime.page.data.categories.length, 3)
 assert.strictEqual(runtime.page.data.stats.length, 3)
 assert.strictEqual(runtime.page.data.projects.length, 0)
@@ -279,7 +305,8 @@ assert.strictEqual(runtime.page.data.management.length, 0)
 assert.strictEqual(runtime.page.data.completedProjects.length, 0)
 assert.strictEqual(runtime.page.data.visibleCompletedProjects.length, 0)
 assert.strictEqual(runtime.page.data.completedHistory.length, 0)
-assert.strictEqual(runtime.page.data.tabs.length, 5)
+assert.strictEqual(runtime.page.data.tabs.length, 4)
+assert.strictEqual(runtime.page.data.tabs.map((item) => item.id).join(','), 'learning,tools,projects,profile')
 assert.strictEqual(runtime.page.data.activeTab, 'projects')
 assert.strictEqual(runtime.page.data.activeCategory, 'completed')
 assert.strictEqual(runtime.page.data.headerSubtitle, runtime.page.data.copy.marketplaceSubtitle)
@@ -289,17 +316,17 @@ runtime.page.viewDeliveryFiles()
 assert(runtime.calls.some((call) => call.api === 'showToast'))
 
 runtime.calls.length = 0
+runtime.page.showCertificationGuide()
+assert.strictEqual(
+  runtime.calls.find((call) => call.api === 'showModal')?.options.title,
+  runtime.page.data.copy.accessGuideTitle
+)
+
+runtime.calls.length = 0
 runtime.page.openAllProjects()
 assert.strictEqual(
   runtime.calls.find((call) => call.api === 'switchTab')?.options.url,
   '/pages/designer-projects/designer-projects'
-)
-
-runtime.calls.length = 0
-runtime.page.switchTab({ currentTarget: { dataset: { id: 'workbench' } } })
-assert.strictEqual(
-  runtime.calls.find((call) => call.api === 'redirectTo')?.options.url,
-  '/pages/v2/designer-workbench/index'
 )
 
 runtime.calls.length = 0
@@ -337,6 +364,7 @@ for (const responsiveWindow of [
   responsiveRuntime.page.onLoad()
   assert.strictEqual(responsiveRuntime.page.data.navigationBarHeight, 44)
   assert.strictEqual(responsiveRuntime.page.data.headerHeight, 94)
+  assert(responsiveRuntime.page.data.accessContentHeight >= 390)
 }
 
 const productionFingerprints = {

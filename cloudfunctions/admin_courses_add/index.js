@@ -9,6 +9,7 @@
  */
 const cloud = require('wx-server-sdk')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
+const { validateCourseContent } = require('./course-validator')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -118,6 +119,11 @@ exports.main = async (event) => {
       
       /** 适用人群描述 */
       targetAudience: data.targetAudience || ''
+    }
+
+    const validation = validateCourseContent(courseData, { publishing: courseData.status === 'published' })
+    if (!validation.ok) {
+      return { success: false, code: 'INVALID_PARAMS', errorMessage: validation.message }
     }
     
     // 添加课程

@@ -14,6 +14,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+const DESIGN_PAYMENT_TYPE = 'design_request_payment';
+
 // 订单超时时间（毫秒）: 10分钟
 const ORDER_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -64,6 +66,11 @@ exports.main = async (event, context) => {
     
     for (const order of timeoutOrders) {
       try {
+        if (isDesignPaymentOrder(order)) {
+          console.log('跳过设计请求收款订单:', order.orderNo);
+          continue;
+        }
+
         // 更新订单状态为已关闭
         await db.collection('orders').doc(order._id).update({
           data: {
@@ -126,3 +133,14 @@ exports.main = async (event, context) => {
   }
 };
 
+function isDesignPaymentOrder(order) {
+  return Boolean(
+    order &&
+    (
+      order.type === DESIGN_PAYMENT_TYPE ||
+      order.category === DESIGN_PAYMENT_TYPE ||
+      String(order.orderNo || '').startsWith('DRP') ||
+      String(order.attach || '').indexOf(DESIGN_PAYMENT_TYPE) >= 0
+    )
+  );
+}

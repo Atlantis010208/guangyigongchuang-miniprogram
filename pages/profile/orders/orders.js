@@ -5,12 +5,25 @@
  */
 const util = require('../../../utils/util')
 
+// 数据库存储英文枚举，界面展示统一使用中文标题。
+const SPACE_TYPE_TITLES = {
+  residential: '住宅空间需求收集',
+  wellness: '疗愈服务空间需求收集',
+  office: '辅助办公空间需求收集',
+  fitness: '运动健身空间需求收集',
+}
+
 // 订单超时时间（毫秒）: 30分钟
 const ORDER_TIMEOUT_MS = 30 * 60 * 1000
 
 Page({
   data: {
     orders: [],
+    collectionSubmissions: [],
+    visibleOrders: [],
+    visibleCollections: [],
+    filterType: 'all',
+    summary: { mall: 0, service: 0, collection: 0, all: 0 },
     loading: false,
     // 倒计时定时器ID
     countdownTimer: null
@@ -18,10 +31,12 @@ Page({
 
   onLoad() {
     this.loadOrders()
+    this.loadCollectionSubmissions()
   },
 
   onShow() {
     this.loadOrders()
+    this.loadCollectionSubmissions()
     this.startCountdown()
   },
 
@@ -33,11 +48,17 @@ Page({
     this.stopCountdown()
   },
 
+  goBack() {
+    const pages = getCurrentPages()
+    if (pages.length > 1) wx.navigateBack()
+    else wx.switchTab({ url: '/pages/products/products' })
+  },
+
   /**
    * 下拉刷新
    */
   onPullDownRefresh() {
-    this.loadOrders().then(() => {
+    Promise.all([this.loadOrders(), this.loadCollectionSubmissions()]).then(() => {
       wx.stopPullDownRefresh()
     })
   },
@@ -101,7 +122,10 @@ Page({
         )
       }
 
-      this.setData({ orders: deduped })
+      this.setData({ orders: deduped }, () => {
+        this.updateSummary(deduped, this.data.collectionSubmissions)
+        this.refreshVisible()
+      })
 
     } catch (err) {
       console.error('加载订单失败:', err)
@@ -112,13 +136,91 @@ Page({
     }
   },
 
+  async loadCollectionSubmissions() {
+    try {
+      const call = await wx.cloud.callFunction({ name: 'collection_form_public', data: { action: 'listSubmissions', limit: 50 } })
+      const result = call && call.result
+      const submissions = result && result.success && result.data && result.data.submissions || []
+      const mapped = submissions.map(item => ({
+        ...item,
+        id: item.id || item._id,
+        title: SPACE_TYPE_TITLES[item.spaceType] || '需求收集表',
+        timeText: this.formatCollectionTime(item.createdAt || item.submittedAt),
+        pdfStatusText: item.pdfStatus === 'ready' ? 'PDF 已生成' : (item.pdfStatus === 'failed' ? 'PDF 生成失败' : 'PDF 生成中'),
+        _type: 'collection'
+      }))
+      this.setData({ collectionSubmissions: mapped }, () => {
+        this.updateSummary(this.data.orders, mapped)
+        this.refreshVisible()
+      })
+    } catch (error) {
+      console.warn('[orders] loadCollectionSubmissions', error)
+      this.setData({ collectionSubmissions: [] }, () => this.refreshVisible())
+      this.updateSummary(this.data.orders, [])
+    }
+  },
+
+  updateSummary(orders, submissions) {
+    const mall = (orders || []).filter(item => item._type === 'mall').length
+    const service = (orders || []).filter(item => item._type !== 'mall').length
+    const collection = (submissions || []).length
+    this.setData({ summary: { mall, service, collection, all: mall + service + collection } })
+  },
+
+  onFilterTap(e) {
+    const filterType = e.currentTarget.dataset.type || 'all'
+    this.setData({ filterType }, () => this.refreshVisible())
+  },
+
+  refreshVisible() {
+    const type = this.data.filterType
+    const visibleOrders = type === 'collection' ? [] : (type === 'mall'
+      ? this.data.orders.filter(item => item._type === 'mall')
+      : type === 'service' ? this.data.orders.filter(item => item._type !== 'mall') : this.data.orders)
+    const visibleCollections = type === 'collection' || type === 'all' ? this.data.collectionSubmissions : []
+    this.setData({ visibleOrders, visibleCollections })
+  },
+
+  getVisibleOrders() {
+    const type = this.data.filterType
+    if (type === 'collection') return []
+    if (type === 'mall') return this.data.orders.filter(item => item._type === 'mall')
+    if (type === 'service') return this.data.orders.filter(item => item._type !== 'mall')
+    return this.data.orders
+  },
+
+  getVisibleCollections() {
+    const type = this.data.filterType
+    return type === 'collection' || type === 'all' ? this.data.collectionSubmissions : []
+  },
+
+  formatCollectionTime(value) {
+    const date = new Date(Number(value) || value || Date.now())
+    if (Number.isNaN(date.getTime())) return ''
+    const pad = n => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  },
+
+  onCollectionTap(e) {
+    const item = e.currentTarget.dataset.item || {}
+    const query = `id=${encodeURIComponent(item.id || '')}&requestId=${encodeURIComponent(item.requestId || '')}&spaceType=${encodeURIComponent(item.spaceType || '')}&pdfStatus=${encodeURIComponent(item.pdfStatus || 'pending')}&submittedAt=${encodeURIComponent(item.createdAt || item.submittedAt || '')}`
+    wx.navigateTo({ url: `/pages/flows/collection-form-result/collection-form-result?${query}` })
+  },
+
+  goMall() {
+    wx.navigateTo({ url: '/pages/products/products' })
+  },
+
   /**
    * 加载本地订单（降级方案）
    */
   loadLocalOrders() {
     const mallOrders = wx.getStorageSync('mall_orders') || []
     const mapped = mallOrders.map(o => this.formatLocalOrder(o))
-    this.setData({ orders: mapped })
+    this.setData({ orders: mapped }, () => {
+      this.updateSummary(mapped, this.data.collectionSubmissions)
+      this.refreshVisible()
+    })
   },
 
   /**
@@ -371,8 +473,13 @@ Page({
     const orderNo = e.currentTarget.dataset.orderno
     const type = e.currentTarget.dataset.type
 
-    if (type === 'mall') {
-      wx.navigateTo({ url: `/pages/order/detail/detail?id=${orderNo || id}` })
+    if (type === 'mall' || type === 'toolkit') {
+      const orderId = orderNo || id
+      if (!orderId) {
+        wx.showToast({ title: '订单信息错误', icon: 'none' })
+        return
+      }
+      wx.navigateTo({ url: `/pages/order/detail/detail?id=${encodeURIComponent(orderId)}` })
       return
     }
     
@@ -393,22 +500,6 @@ Page({
       return
     }
     
-    // 工具包订单跳转到工具包详情页
-    if (type === 'toolkit') {
-      const order = this.data.orders.find(o => o.orderNo === orderNo || o.id === id)
-      if (order && order._raw && order._raw.params && order._raw.params.items) {
-        const firstItem = order._raw.params.items[0] || {}
-        const toolkitId = firstItem.id || firstItem.productId
-        if (toolkitId) {
-          wx.navigateTo({ url: `/pages/toolkit/toolkit-detail/toolkit-detail?id=${toolkitId}` })
-          return
-        }
-      }
-      // 如果找不到工具包ID，跳转到产品页
-      wx.navigateTo({ url: '/pages/products/products' })
-      return
-    }
-
     wx.showModal({ 
       title: '订单详情', 
       content: `订单 ${id} 详情展示（演示）`, 

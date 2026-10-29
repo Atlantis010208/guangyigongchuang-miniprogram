@@ -1,0 +1,11 @@
+{
+  "name": "admin_case_presentation",
+  "version": "1.0.0",
+  "description": "案例沉浸演示草稿、生成、预览与发布",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "@cloudbase/node-sdk": "^3.16.0"
+  }
+}
+

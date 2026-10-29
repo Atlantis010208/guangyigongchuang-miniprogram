@@ -58,27 +58,6 @@ button::after {
   height: 100%;
 }
 
-.tab-icon-stack {
-  position: relative;
-  display: block;
-  width: 56rpx;
-  height: 52rpx;
-}
-
-.tab-icon-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 56rpx;
-  height: 52rpx;
-  opacity: 0;
-}
-
-.tab-icon-layer--visible {
-  opacity: 1;
-}
-
 .owner-home {
   min-height: 100vh;
   overflow-x: hidden;
@@ -140,6 +119,11 @@ button::after {
   overflow: hidden;
   border: 1rpx solid rgba(0, 0, 0, 0.04);
   border-radius: 50%;
+}
+
+.avatar-skeleton {
+  background: #e4e5e7;
+  border-color: #dedfe1;
 }
 
 .hero-copy {

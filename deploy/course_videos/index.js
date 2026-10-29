@@ -226,6 +226,8 @@ exports.main = async (event) => {
         courseId: course.courseId || course._id,
         title: course.title,
         coverUrl: courseCoverUrl,   // 新增：课程封面URL，用作视频 poster
+        driveLink: course.driveLink || '',
+        drivePassword: course.drivePassword || '',
         isPurchased: true,
         chapters: chapters,
         currentLesson: currentLesson,

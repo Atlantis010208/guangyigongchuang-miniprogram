@@ -78,12 +78,32 @@ exports.main = async (event) => {
       return { success: false, code: 'INVALID_TYPE', errorMessage: '该商品不是虚拟商品，无法通过此接口更新' }
     }
     
-    // 执行更新
-    const result = await db.collection('products')
-      .doc(id)
-      .update({
-        data: updateData
+    // 已发布的小程序仍读取迁移前的 toolkits。仅按迁移关联同步，
+    // 与主商品同事务提交，避免后台提示成功而订单继续展示旧发货内容。
+    let result
+    if (data.virtualContent !== undefined && targetProduct._migratedFrom === 'toolkits' && targetProduct._originalToolkitId) {
+      if (!data.virtualContent || typeof data.virtualContent !== 'object' || Array.isArray(data.virtualContent)) {
+        return { success: false, code: 'INVALID_PARAMS', errorMessage: '发货配置格式错误' }
+      }
+      result = await db.runTransaction(async tx => {
+        const latest = (await tx.collection('products').doc(id).get()).data
+        if (!latest || latest.type !== 'virtual' || latest._migratedFrom !== 'toolkits' || !latest._originalToolkitId) {
+          throw new Error('商品迁移关联已变更，请刷新重试')
+        }
+        const legacyPatch = { updatedAt: updateData.updatedAt }
+        for (const key of ['driveLink', 'drivePassword', 'driveContent', 'driveAltContact']) {
+          if (Object.prototype.hasOwnProperty.call(data.virtualContent, key)) {
+            legacyPatch[key] = data.virtualContent[key] || ''
+          }
+        }
+        await tx.collection('toolkits').doc(latest._originalToolkitId).get()
+        const updated = await tx.collection('products').doc(id).update({ data: updateData })
+        await tx.collection('toolkits').doc(latest._originalToolkitId).update({ data: legacyPatch })
+        return updated
       })
+    } else {
+      result = await db.collection('products').doc(id).update({ data: updateData })
+    }
     
     if (result.stats.updated === 0) {
       return { success: false, code: 'UPDATE_FAILED', errorMessage: '更新失败' }

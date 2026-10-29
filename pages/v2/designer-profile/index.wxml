@@ -1,4 +1,4 @@
-<view class="designer-profile-preview">
+<view class="designer-profile-preview {{profileState !== 'ready' ? 'designer-profile-preview--login' : ''}}">
   <scroll-view
     class="profile-scroller"
     scroll-y
@@ -8,21 +8,125 @@
     <view class="profile-content">
       <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
 
-      <view class="profile-header" style="height: {{headerHeight}}px;">
-        <view class="profile-heading">
+      <view class="profile-header {{profileState !== 'ready' ? 'profile-header--login' : ''}}" style="height: {{headerHeight}}px;">
+        <view class="profile-heading {{profileState !== 'ready' ? 'profile-heading--center' : ''}}">
           <view class="profile-page-title">{{copy.title}}</view>
           <view class="profile-page-subtitle">{{copy.subtitle}}</view>
         </view>
       </view>
 
-      <view class="identity-card">
+      <view wx:if="{{profileState === 'loading'}}" class="designer-checking-panel">
+        <view class="designer-checking-card">
+          <view class="checking-spinner" aria-hidden="true"></view>
+          <view class="checking-title">{{copy.checkingTitle}}</view>
+          <view class="checking-subtitle">{{copy.checkingSubtitle}}</view>
+          <view class="checking-progress" aria-hidden="true">
+            <view class="checking-progress-fill"></view>
+          </view>
+          <view class="checking-hint">{{copy.checkingHint}}</view>
+        </view>
+      </view>
+
+      <view wx:elif="{{profileState === 'login' || profileState === 'error'}}" class="designer-login-panel">
+        <view class="designer-login-card">
+          <view class="designer-login-title">{{copy.loginTitle}}</view>
+          <view class="designer-login-subtitle">{{copy.loginSubtitle}}</view>
+
+          <button
+            class="login-avatar-picker"
+            open-type="chooseAvatar"
+            bindchooseavatar="onChooseLoginAvatar"
+            hover-class="tap-soft"
+          >
+            <image
+              wx:if="{{loginAvatarUrl}}"
+              class="login-avatar-image"
+              src="{{loginAvatarUrl}}"
+              mode="aspectFill"
+              fade-in="{{false}}"
+            />
+            <view wx:else class="login-avatar-empty" aria-hidden="true">
+              <image
+                class="login-camera-icon"
+                src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-profile/assets/login-camera.png"
+                mode="aspectFit"
+                fade-in="{{false}}"
+              />
+            </view>
+            <view class="login-avatar-label">{{copy.loginAvatar}}</view>
+          </button>
+
+          <view class="login-form">
+            <view class="login-field">
+              <view class="login-field-label">{{copy.loginNickname}}</view>
+              <input
+                class="login-field-input"
+                type="nickname"
+                value="{{loginNickname}}"
+                placeholder="{{copy.loginNicknamePlaceholder}}"
+                placeholder-class="login-field-placeholder"
+                bindinput="onLoginNicknameInput"
+              />
+            </view>
+
+            <view class="login-field login-field--phone">
+              <view class="login-field-label">{{copy.loginPhone}}</view>
+              <view class="login-field-value {{loginPhoneDisplay ? '' : 'login-field-value--empty'}}">
+                {{loginPhoneDisplay || copy.loginPhonePlaceholder}}
+              </view>
+              <button
+                class="login-phone-button {{loginPhoneDisplay ? 'login-phone-button--done' : ''}}"
+                open-type="getPhoneNumber"
+                bindgetphonenumber="onGetLoginPhoneNumber"
+                loading="{{phoneAuthorizing}}"
+                disabled="{{phoneAuthorizing}}"
+              >
+                {{loginPhoneDisplay ? copy.loginPhoneDone : copy.loginPhoneAction}}
+              </button>
+            </view>
+          </view>
+
+          <view class="login-meta">
+            <image
+              class="login-meta-icon"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-profile/assets/login-shield.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+            <text>{{copy.loginMeta}}</text>
+          </view>
+        </view>
+
+        <button
+          class="login-confirm-button"
+          bindtap="submitDesignerLogin"
+          loading="{{loginSubmitting}}"
+          disabled="{{loginSubmitting}}"
+          hover-class="tap-soft"
+        >
+          {{copy.loginConfirm}}
+        </button>
+
+        <button
+          class="login-later-button"
+          bindtap="deferDesignerLogin"
+          hover-class="tap-soft"
+        >
+          {{copy.loginLater}}
+        </button>
+      </view>
+
+      <view wx:else class="identity-card">
         <view class="identity-top">
           <image
+            wx:if="{{avatarUrl}}"
             class="profile-avatar"
-            src="{{avatarUrl || './assets/profile-avatar.png'}}"
+            src="{{avatarUrl}}"
             mode="aspectFill"
             fade-in="{{false}}"
           />
+          <view wx:else class="profile-avatar profile-avatar--empty"></view>
 
           <view class="identity-copy">
             <view class="identity-role">{{copy.role}}</view>
@@ -39,7 +143,7 @@
             <text>{{copy.editProfile}}</text>
             <image
               class="chevron chevron--edit"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -83,7 +187,7 @@
         </view>
       </view>
 
-      <view class="works-section">
+      <view wx:if="{{profileState === 'ready'}}" class="works-section">
         <view class="section-heading">
           <view class="section-title">{{copy.works}}</view>
           <button
@@ -94,7 +198,7 @@
             <text>{{copy.manageWorks}}</text>
             <image
               class="chevron chevron--section"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -102,7 +206,7 @@
           </button>
         </view>
 
-        <view class="works-grid">
+        <view wx:if="{{works.length > 0}}" class="works-grid">
           <button
             wx:for="{{works}}"
             wx:key="id"
@@ -120,9 +224,10 @@
             <view class="work-label">{{item.label}}</view>
           </button>
         </view>
+        <view wx:else class="works-empty">{{copy.emptyWorks}}</view>
       </view>
 
-      <view class="settings-section">
+      <view wx:if="{{profileState === 'ready'}}" class="settings-section">
         <view class="section-title">{{copy.accountSettings}}</view>
         <view class="settings-card">
           <button
@@ -153,7 +258,7 @@
 
             <image
               class="chevron chevron--setting"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -162,27 +267,64 @@
         </view>
       </view>
 
-      <view class="completeness-note">{{copy.completeness}}</view>
+      <view wx:if="{{profileState === 'ready'}}" class="owner-entry-section">
+        <button
+          class="owner-entry-card {{ownerSwitching ? 'owner-entry-card--loading' : ''}}"
+          bindtap="switchToOwner"
+          loading="{{ownerSwitching}}"
+          disabled="{{ownerSwitching}}"
+          hover-class="setting-item--pressed"
+        >
+          <view class="owner-entry-content">
+            <view class="home-glyph owner-entry-glyph" aria-hidden="true">
+              <view class="home-glyph__roof"></view>
+              <view class="home-glyph__body"></view>
+            </view>
+
+            <view class="owner-entry-copy">
+              <view class="owner-entry-title">{{copy.ownerPortal}}</view>
+              <view class="owner-entry-subtitle">{{copy.ownerPortalHint}}</view>
+            </view>
+
+            <image
+              class="chevron chevron--setting"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              mode="aspectFit"
+              fade-in="{{false}}"
+              aria-hidden="true"
+            />
+          </view>
+        </button>
+      </view>
+
+      <view wx:if="{{profileState === 'ready'}}" class="completeness-note">{{copy.completeness}}</view>
     </view>
   </scroll-view>
 
   <view class="preview-tabbar">
-    <view class="preview-tabbar__inner">
+    <view class="preview-tabbar__inner preview-tabbar__inner--designer-four">
       <button
         wx:for="{{tabs}}"
         wx:key="id"
         class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
         data-id="{{item.id}}"
         bindtap="switchTab"
-        hover-class="tap-soft"
+        hover-class="none"
       >
-        <image
-          class="designer-tab-icon"
-          src="{{item.icon}}"
-          mode="aspectFit"
-          fade-in="{{false}}"
-          aria-hidden="true"
-        />
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activeTab !== item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.icon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activeTab === item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.activeIcon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
         <text class="tab-label">{{item.label}}</text>
       </button>
     </view>

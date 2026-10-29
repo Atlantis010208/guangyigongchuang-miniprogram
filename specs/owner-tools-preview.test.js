@@ -58,9 +58,12 @@ assert.strictEqual(
   '/pages/v2/owner-tools/content/index'
 )
 assert(homeWxml.includes('data-preview-panel="tools"'))
-assert(homeWxml.includes('<owner-tools-content />'))
+assert(homeWxml.includes('<owner-tools-content'))
+assert(homeWxml.includes('owner-tools-content user-avatar="{{userAvatar}}"'))
+assert(homeWxml.includes('bind:switchprofile="switchToProfile"'))
 assert(homeWxml.includes('bindtap="switchToTools"'))
-assert(homeWxml.includes('tab-tools-active.png'))
+assert(homeWxml.includes('/pages/v2/shared/assets/tabbar/tab-tools-default.png'))
+assert(homeWxml.includes('/pages/v2/shared/assets/tabbar/tab-tools-active.png'))
 
 for (const moduleName of [
   'owner-tools',
@@ -81,7 +84,15 @@ assert(componentWxml.includes('wx:for="{{commonTools}}"'))
 assert(componentWxml.includes('wx:for="{{featureTools}}"'))
 assert(componentWxml.includes('bindtap="openTool"'))
 assert(componentWxml.includes('bindtap="goProfile"'))
-assert(componentWxml.includes('/pages/v2/owner-home/assets/avatar.png'))
+assert(componentWxml.includes('src="{{userAvatar}}"'))
+assert(componentWxml.includes('wx:if="{{userAvatar}}"'))
+assert(componentWxml.includes('class="avatar avatar-skeleton"'))
+assert(componentWxml.includes('binderror="handleAvatarError"'))
+assert(componentWxss.includes('.avatar-skeleton'))
+assert(componentJs.includes("value: ''"))
+assert(componentJs.includes('handleAvatarError()'))
+assert(!componentJs.includes('owner-home/assets/avatar.png'))
+assert(componentJs.includes('ownerApi.profile'))
 assert(
   componentWxml.includes(
     '/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png'
@@ -117,7 +128,6 @@ for (const destination of [
   '/pages/color-temp/color-temp',
   '/pages/gallery/gallery',
   '/pages/quiz/lighting-intro/lighting-intro',
-  '/pages/profile/home/home',
 ]) {
   assert(componentJs.includes(destination), `missing route: ${destination}`)
 }
@@ -185,6 +195,16 @@ for (const item of allTools) {
   assert.strictEqual(componentCalls.at(-1), item.route)
 }
 
+let profileSwitchPayload
+component.triggerEvent = function(name, detail, options) {
+  profileSwitchPayload = { name, detail, options }
+}
+component.goProfile()
+assert.strictEqual(profileSwitchPayload.name, 'switchprofile')
+assert.strictEqual(Object.keys(profileSwitchPayload.detail).length, 0)
+assert.strictEqual(profileSwitchPayload.options.bubbles, true)
+assert.strictEqual(profileSwitchPayload.options.composed, true)
+
 let homeDefinition
 const homeCalls = []
 vm.runInNewContext(homeJs, {
@@ -231,7 +251,9 @@ function pngDimensions(filePath) {
 }
 
 assert.deepStrictEqual(
-  pngDimensions(path.join(homeRoot, 'assets', 'tab-tools-active.png')),
+  pngDimensions(
+    path.join(previewRoot, 'shared', 'assets', 'tabbar', 'tab-tools-active.png')
+  ),
   [64, 60]
 )
 assert.deepStrictEqual(

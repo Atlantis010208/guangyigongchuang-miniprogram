@@ -1,0 +1,91 @@
+<view class="deck-page {{reducedMotion ? 'deck-page--reduced' : ''}}">
+  <view wx:if="{{loading}}" class="deck-state deck-state--loading">
+    <view class="deck-loading-line"></view>
+    <text>{{copy.loading}}</text>
+  </view>
+
+  <view wx:elif="{{loadFailed}}" class="deck-state">
+    <view class="deck-state__eyebrow">{{expired ? copy.expired : 'PRESENTATION'}}</view>
+    <view class="deck-state__title">{{expired ? copy.expired : copy.unavailable}}</view>
+    <view wx:if="{{errorMessage}}" class="deck-state__hint">{{errorMessage}}</view>
+    <view class="deck-state__actions">
+      <button wx:if="{{!expired}}" class="deck-state__button" bindtap="loadPresentation">{{copy.retry}}</button>
+      <button class="deck-state__button deck-state__button--quiet" bindtap="goCaseList">{{copy.backToCases}}</button>
+    </view>
+  </view>
+
+  <block wx:else>
+    <swiper
+      class="deck-swiper"
+      vertical="{{true}}"
+      circular="{{false}}"
+      autoplay="{{false}}"
+      current="{{current}}"
+      duration="{{reducedMotion ? 0 : 520}}"
+      easing-function="easeOutCubic"
+      bindchange="handleSlideChange"
+    >
+      <swiper-item wx:for="{{slides}}" wx:key="id">
+        <view
+          class="deck-slide deck-slide--{{item.layout}} {{index === current ? 'deck-slide--active' : ''}}"
+          style="background-color: {{item.dominantColor || '#24221F'}};"
+          bindtap="toggleControls"
+        >
+          <block wx:if="{{item.layout === 'split-editorial'}}">
+            <view class="deck-split-media">
+              <view class="deck-image-slot deck-image-slot--first">
+                <image wx:if="{{item.images[0].src && !item.images[0].failed}}" class="deck-image" src="{{item.images[0].src}}" mode="aspectFill" style="object-position: {{item.images[0].position}};" data-slide="{{index}}" data-image="0" binderror="handleImageError" fade-in="{{false}}" />
+                <view wx:elif="{{item.images[0].failed}}" class="deck-image-error"><text>{{copy.imageFailed}}</text><button catchtap="retryImage" data-slide="{{index}}" data-image="0">{{copy.imageRetry}}</button></view>
+                <view wx:else class="deck-image-placeholder"></view>
+              </view>
+              <view class="deck-image-slot deck-image-slot--second">
+                <image wx:if="{{item.images[1].src && !item.images[1].failed}}" class="deck-image" src="{{item.images[1].src}}" mode="aspectFill" style="object-position: {{item.images[1].position}};" data-slide="{{index}}" data-image="1" binderror="handleImageError" fade-in="{{false}}" />
+                <view wx:elif="{{item.images[1].failed}}" class="deck-image-error"><text>{{copy.imageFailed}}</text><button catchtap="retryImage" data-slide="{{index}}" data-image="1">{{copy.imageRetry}}</button></view>
+                <view wx:else class="deck-image-placeholder"></view>
+              </view>
+            </view>
+          </block>
+
+          <view wx:else class="deck-primary-media">
+            <image wx:if="{{item.images[0].src && !item.images[0].failed}}" class="deck-image" src="{{item.images[0].src}}" mode="aspectFill" style="object-position: {{item.images[0].position}};" data-slide="{{index}}" data-image="0" binderror="handleImageError" fade-in="{{false}}" />
+            <view wx:elif="{{item.images[0].failed}}" class="deck-image-error"><text>{{copy.imageFailed}}</text><button catchtap="retryImage" data-slide="{{index}}" data-image="0">{{copy.imageRetry}}</button></view>
+            <view wx:else class="deck-image-placeholder"></view>
+          </view>
+
+          <view wx:if="{{item.layout === 'strategy-image70'}}" class="deck-strategy-copy">
+            <view class="deck-strategy-heading">
+              <view class="deck-kicker"><text>{{item.displayNo}}</text><view></view><text>{{item.label}}</text></view>
+              <view class="deck-title">{{item.title}}</view>
+            </view>
+            <view class="deck-strategy-list">
+              <view wx:for="{{item.strategyItems}}" wx:for-item="strategy" wx:for-index="strategyIndex" wx:key="title" class="deck-strategy-item">
+                <text class="deck-strategy-index">0{{strategyIndex + 1}}</text>
+                <view><text class="deck-strategy-title">{{strategy.title}}</text><text class="deck-strategy-body">{{strategy.body}}</text></view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:elif="{{item.layout === 'closing-full'}}" class="deck-closing">
+            <view class="deck-closing__line"></view>
+            <button class="deck-consult" catchtap="goConsultation">{{copy.consult}}</button>
+          </view>
+
+          <view wx:else class="deck-copy">
+            <view class="deck-kicker"><text>{{item.displayNo}}</text><view></view><text>{{item.label}}</text></view>
+            <view class="deck-title">{{item.title}}</view>
+            <view wx:if="{{item.body}}" class="deck-body">{{item.body}}</view>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <view wx:if="{{isPreview}}" class="deck-preview-badge" style="top: {{statusBarHeight + 12}}px;">{{copy.preview}}</view>
+
+    <view class="deck-controls {{controlsVisible ? 'deck-controls--visible' : ''}}">
+      <button class="deck-back" catchtap="goBack" aria-label="{{copy.backToCases}}"><view></view></button>
+      <view class="deck-page-no"><text>{{current + 1}}</text><i></i><text>{{total}}</text></view>
+    </view>
+
+    <view class="deck-progress"><view style="width: {{total ? ((current + 1) * 100 / total) : 0}}%;"></view></view>
+  </block>
+</view>

@@ -1,0 +1,10 @@
+{
+  "name": "admin_collection_payment",
+  "version": "1.0.0",
+  "description": "通用发起收款管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

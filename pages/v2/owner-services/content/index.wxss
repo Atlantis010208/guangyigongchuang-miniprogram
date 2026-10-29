@@ -56,6 +56,11 @@
   border-radius: 50%;
 }
 
+.avatar-skeleton {
+  background: #e4e5e7;
+  border-color: #dedfe1;
+}
+
 .services-content {
   box-sizing: border-box;
   padding: 50rpx 36rpx 0;

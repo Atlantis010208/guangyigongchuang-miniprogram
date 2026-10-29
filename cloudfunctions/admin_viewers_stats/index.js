@@ -1,8 +1,10 @@
 // 云函数：admin_viewers_stats
 // 功能：获取观看统计数据（总人数、课程分布、平均时长）
 // 权限：仅管理员可访问
+// 支持 Web 后台自定义登录和小程序登录态
 
 const cloud = require('wx-server-sdk');
+const { requireAdmin, getErrorMessage } = require('./admin_auth');
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV,
@@ -19,21 +21,18 @@ exports.main = async (event, context) => {
 
   try {
     // ========== 1. 权限验证：仅管理员可访问 ==========
-    const { OPENID } = cloud.getWXContext();
+    const authResult = await requireAdmin(db, _);
 
-    const adminUser = await db.collection('users')
-      .where({ openid: OPENID, roles: 0 })
-      .get();
-
-    if (!adminUser.data || adminUser.data.length === 0) {
-      console.log('[admin_viewers_stats] 权限不足，openid:', OPENID);
+    if (!authResult.ok) {
+      console.log('[admin_viewers_stats] 权限验证失败:', authResult.errorCode);
       return {
         success: false,
-        errorMessage: '无权限访问，仅管理员可查看观看统计'
+        code: authResult.errorCode,
+        errorMessage: getErrorMessage(authResult.errorCode)
       };
     }
 
-    console.log('[admin_viewers_stats] 权限验证通过，管理员:', adminUser.data[0].nickname);
+    console.log('[admin_viewers_stats] 权限验证通过，管理员:', authResult.user.nickname || authResult.user.name || authResult.user.username);
 
     // ========== 2. 查询活跃观看记录 ==========
     const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5分钟

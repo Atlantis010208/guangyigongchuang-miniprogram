@@ -381,6 +381,6 @@ Page({
       }
     }catch(err){}
     wx.showToast({ title:'已下单', icon:'success' })
-    setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }); this._submitting = false; this.setData({ submitting:false }) }, 500)
+    setTimeout(()=>{ wx.navigateTo({ url:'/pages/profile/orders/orders' }); this._submitting = false; this.setData({ submitting:false }) }, 500)
   }
 })

@@ -54,6 +54,37 @@
 - 推荐商品展示
 - 结算功能
 
+### 🏛️ 专业商城 (`/pages/mall/mall`)
+- 采用紧凑型双列商品流，复刻电子商城参考稿的搜索、分类与商品信息层级
+- 提供专业服务、课程和资料工具的动态分类、搜索与分页浏览
+- 作为独立普通页面打开，顶部提供返回按钮且不显示底部导航栏
+- 支持进入商品详情；云端商品不可用时显示空状态，不注入测试商品
+
+#### 商城后端
+
+| 云函数 | 权限 | 功能 |
+|--------|------|------|
+| `products_list` | 公开只读 | 商品列表：分类筛选、关键词搜索、价格区间、分页排序 |
+| `virtual_categories` | 公开只读 | 分类栏数据源，集合为空时降级为默认分类 |
+| `product_detail` | 公开只读 | 商品详情，虚拟内容需校验已购后才下发 |
+| `admin_mall_init` | 仅管理员 | 幂等初始化：建集合、种子分类、建立索引 |
+
+数据库集合：
+
+- **products**：商品主集合，商城只读取 `status='active'` 且 `isDelete!=1` 的文档
+  - 商城相关字段：`name`、`description`、`tags`、`price`、`type`、`virtualCategory`、`deliveryType`、`coverImage`、`images`、`sales`、`viewCount`、`createdAt`
+  - `virtualContent`（网盘链接、提取码、客服微信）属于交付内容，**列表接口不下发**，仅 `product_detail` 校验已购后返回
+- **virtual_categories**：分类配置，字段 `name`、`sort`、`isDelete`，由后台 `admin_virtual_categories` 维护
+
+接口约定：
+
+- 分类筛选兼容中文名与历史英文枚举（如 `资料工具` / `data_tool`）
+- `pageSize` 上限 50，`sortBy` 仅接受 `createdAt`/`updatedAt`/`price`/`sales`/`viewCount`
+- 关键词做正则转义，匹配名称、描述与标签
+- 图片按整页批量换取临时链接；换取失败时降级返回原始 `cloud://` ID，不影响列表可用性
+
+首次部署后执行一次 `admin_mall_init` 完成初始化。若云函数环境没有 `CLOUDBASE_ACCESS_TOKEN`，函数会在返回值的 `indexes.plan` 中给出索引清单，需在云开发控制台手动创建。
+
 ### 🖼️ 灵感库页面 (`/pages/gallery/`)
 - 瀑布流图片列表，支持"全部 / 收藏 / 业务标签"切换
 - 标签云：Torus 无限滚动 + 六边形螺旋网格，惯性滑动与鱼眼透视
@@ -97,6 +128,8 @@ Copy-Item config/cloud-env.example.js config/cloud-env.local.js
 ```
 
 然后把文件里的 `TEST_ENV_ID` 改成 CloudBase 控制台中你的测试环境 ID（注意要用完整 ID 而非别名，例如 `guangyi-ui-v2-test-d2cep6559479c`），重新编译即可。
+
+本机临时联调生产数据时，可在 `cloud-env.local.js` 把 `USE_PRODUCTION` 设为 `true`（该文件不入库）。仓库默认仍禁止开发版/体验版直连生产。改回测试环境时把该开关改回 `false` 并重新编译。
 
 由于 `cloudbaserc.json` 不设默认环境，所有 CLI 部署都必须显式传 `--env-id`，避免误发生产。
 

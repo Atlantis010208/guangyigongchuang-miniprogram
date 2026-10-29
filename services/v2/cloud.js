@@ -30,4 +30,28 @@ function callCloud(name, data, timeoutMs) {
   })
 }
 
-module.exports = { DEFAULT_TIMEOUT, getCloudState, callCloud }
+function callCloudRaw(name, data, timeoutMs) {
+  const state = getCloudState()
+  if (!state || !state.ok) {
+    return Promise.resolve({ ok: false, code: state && state.code || 'CLOUD_ENV_BLOCKED', message: state && state.message || '云环境不可用', data: null, raw: null })
+  }
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = value => { if (!settled) { settled = true; resolve(value) } }
+    const timer = setTimeout(() => finish({ ok: false, code: 'CLOUD_TIMEOUT', message: '请求超时', data: null, raw: null }), timeoutMs || DEFAULT_TIMEOUT)
+    wx.cloud.callFunction({ name, data: data || {} }).then(response => {
+      clearTimeout(timer)
+      const result = response && response.result || {}
+      if (result.success === true) {
+        finish({ ok: true, code: result.code || 'OK', message: result.message || '', data: result.data || result, raw: result })
+      } else {
+        finish({ ok: false, code: result.code || 'CLOUD_FUNCTION_FAILED', message: result.message || result.errorMessage || '请求失败', data: result.data || result, raw: result })
+      }
+    }).catch(error => {
+      clearTimeout(timer)
+      finish({ ok: false, code: 'CLOUD_CALL_FAILED', message: error && (error.errMsg || error.message) || '请求失败', data: null, raw: null })
+    })
+  })
+}
+
+module.exports = { DEFAULT_TIMEOUT, getCloudState, callCloud, callCloudRaw }

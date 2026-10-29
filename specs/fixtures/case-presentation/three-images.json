@@ -1,0 +1,84 @@
+{
+  "case": {
+    "_id": "case-three",
+    "title": "静谧之境",
+    "city": "上海",
+    "spaceType": "住宅空间",
+    "services": ["全案灯光设计"],
+    "desc": "以克制的光层次重塑居住空间。",
+    "status": "active",
+    "imageFileIds": ["cloud://case/three-01.jpg", "cloud://case/three-02.jpg", "cloud://case/three-03.jpg"]
+  },
+  "slides": [
+    {
+      "id": "three-cover",
+      "type": "cover",
+      "layout": "cover-full",
+      "sectionNo": "",
+      "imageFileIds": ["cloud://case/three-01.jpg"],
+      "imageFocals": { "cloud://case/three-01.jpg": { "x": 0.42, "y": 0.45 } },
+      "label": "上海 · 私宅",
+      "title": "静谧之境",
+      "body": "",
+      "strategyItems": [],
+      "dominantColor": "#24221F"
+    },
+    {
+      "id": "three-concept",
+      "type": "concept",
+      "layout": "image-top-copy-bottom",
+      "sectionNo": "01",
+      "imageFileIds": ["cloud://case/three-02.jpg"],
+      "imageFocals": { "cloud://case/three-02.jpg": { "x": 0.5, "y": 0.45 } },
+      "label": "DESIGN CONCEPT",
+      "title": "让光先于装饰抵达",
+      "body": "用柔和的明暗过渡建立空间秩序，让材质与生活自然浮现。",
+      "strategyItems": [],
+      "dominantColor": "#1E1C1A"
+    },
+    {
+      "id": "three-strategy",
+      "type": "strategy",
+      "layout": "strategy-image70",
+      "sectionNo": "02",
+      "imageFileIds": ["cloud://case/three-03.jpg"],
+      "imageFocals": { "cloud://case/three-03.jpg": { "x": 0.55, "y": 0.42 } },
+      "label": "LIGHTING STRATEGY",
+      "title": "三层光序",
+      "body": "",
+      "strategyItems": [
+        { "title": "基础光", "body": "柔和铺陈整体亮度" },
+        { "title": "重点光", "body": "强调艺术与材质细节" },
+        { "title": "氛围光", "body": "在夜晚保留安静层次" }
+      ],
+      "dominantColor": "#201D1A"
+    },
+    {
+      "id": "three-space",
+      "type": "space",
+      "layout": "space-overlay",
+      "sectionNo": "03",
+      "imageFileIds": ["cloud://case/three-01.jpg"],
+      "imageFocals": { "cloud://case/three-01.jpg": { "x": 0.62, "y": 0.48 } },
+      "label": "LIVING ROOM",
+      "title": "客厅成为一段柔和的停顿",
+      "body": "光线沿墙面和家具边缘展开，视线始终保持松弛。",
+      "strategyItems": [],
+      "dominantColor": "#24221F"
+    },
+    {
+      "id": "three-closing",
+      "type": "closing",
+      "layout": "closing-full",
+      "sectionNo": "",
+      "imageFileIds": ["cloud://case/three-01.jpg"],
+      "imageFocals": { "cloud://case/three-01.jpg": { "x": 0.72, "y": 0.54 } },
+      "label": "",
+      "title": "",
+      "body": "",
+      "strategyItems": [],
+      "dominantColor": "#090909"
+    }
+  ]
+}
+

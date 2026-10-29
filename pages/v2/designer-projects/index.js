@@ -1,5 +1,9 @@
 const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
-const designerApi = typeof require === 'function' ? require('../../../services/v2/designer') : { projects: async () => ({ ok: false }), demands: async () => ({ ok: false }) }
+const designerApi = typeof require === 'function' ? require('../../../services/v2/designer') : {
+  projectAccess: async () => ({ ok: false, code: 'CLOUD_ENV_BLOCKED' }),
+  projects: async () => ({ ok: false }),
+  demands: async () => ({ ok: false })
+}
 
 /**
  * 未签名的云存储直链会 403，不能当作有效封面。
@@ -54,6 +58,18 @@ const COPY = Object.freeze({
   deliveryUnavailable: '\u4ea4\u4ed8\u7ba1\u7406\u529f\u80fd\u91cd\u6784\u4e2d',
   settlementUnavailable: '\u6536\u76ca\u7ed3\u7b97\u529f\u80fd\u91cd\u6784\u4e2d',
   routeError: '\u9875\u9762\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
+  accessCheckingTitle: '\u6b63\u5728\u9a8c\u8bc1\u8bbe\u8ba1\u5e08\u8d44\u8d28',
+  accessCheckingMessage: '\u8bf7\u7a0d\u5019',
+  accessDeniedStatus: '\u672a\u8ba4\u8bc1',
+  accessDeniedTitle: '\u9879\u76ee\u6682\u672a\u5f00\u653e',
+  accessDeniedMessage: '\u5f53\u524d\u8d26\u53f7\u5c1a\u672a\u901a\u8fc7\u8bbe\u8ba1\u5e08\u8ba4\u8bc1\uff0c\u5b8c\u6210\u5e73\u53f0\u8ba4\u8bc1\u540e\u5373\u53ef\u4f7f\u7528\u9879\u76ee\u7ba1\u7406\u4e0e\u63a5\u5355\u5927\u5385\u3002',
+  accessErrorStatus: '\u9a8c\u8bc1\u5931\u8d25',
+  accessErrorTitle: '\u8d44\u8d28\u9a8c\u8bc1\u5931\u8d25',
+  accessErrorMessage: '\u6682\u65f6\u65e0\u6cd5\u9a8c\u8bc1\u8bbe\u8ba1\u5e08\u8d44\u8d28\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002',
+  accessRetry: '\u91cd\u65b0\u9a8c\u8bc1',
+  accessGuide: '\u67e5\u770b\u8ba4\u8bc1\u8bf4\u660e',
+  accessGuideTitle: '\u8bbe\u8ba1\u5e08\u8ba4\u8bc1\u8bf4\u660e',
+  accessGuideContent: '\u9879\u76ee\u529f\u80fd\u4ec5\u9762\u5411\u5df2\u901a\u8fc7\u5e73\u53f0\u8ba4\u8bc1\u7684\u8bbe\u8ba1\u5e08\u5f00\u653e\u3002\u5982\u9700\u5f00\u901a\uff0c\u8bf7\u8054\u7cfb\u5e73\u53f0\u7ba1\u7406\u5458\u5c06\u5f53\u524d\u624b\u673a\u53f7\u52a0\u5165\u8bbe\u8ba1\u5e08\u767d\u540d\u5355\u3002',
 })
 
 const CATEGORIES = Object.freeze([
@@ -81,7 +97,7 @@ const OPPORTUNITIES = Object.freeze([
     area: '90m\u00b2',
     space: '\u4f4f\u5b85',
     need: '\u5168\u5c4b\u706f\u5149\u65b9\u6848\u4e0e\u706f\u5177\u6e05\u5355',
-    image: '/pages/v2/designer-workbench/assets/project-residential-card.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-residential-card.webp',
     featured: true,
     applied: false,
   },
@@ -95,7 +111,7 @@ const OPPORTUNITIES = Object.freeze([
     area: '30m\u00b2',
     space: '\u5546\u4e1a',
     need: '\u65bd\u5de5\u56fe\u6df1\u5316\u4e0e\u706f\u5177\u70b9\u4f4d\u786e\u8ba4',
-    image: '/pages/v2/designer-workbench/assets/project-commercial.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-commercial.webp',
     featured: false,
     applied: false,
   },
@@ -116,7 +132,7 @@ const PROJECTS = Object.freeze([
     nextTask: '\u63d0\u4ea4\u521d\u7248\u706f\u5149\u65b9\u6848',
     deadline: '\u4eca\u5929 18:00 \u622a\u6b62',
     progress: 65,
-    image: '/pages/v2/designer-workbench/assets/project-residential-card.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-residential-card.webp',
     primary: true,
     primaryLabel: '\u7ee7\u7eed\u5904\u7406',
     detailLabel: '\u67e5\u770b\u8be6\u60c5',
@@ -130,7 +146,7 @@ const PROJECTS = Object.freeze([
     nextTask: '\u4fee\u6539\u65bd\u5de5\u56fe',
     deadline: '7\u670826\u65e5 \u622a\u6b62',
     progress: 40,
-    image: '/pages/v2/designer-workbench/assets/project-commercial.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-commercial.webp',
     primary: false,
     primaryLabel: '',
     detailLabel: '\u67e5\u770b\u9879\u76ee',
@@ -147,7 +163,7 @@ const COMPLETED_PROJECTS = Object.freeze([
     completedAt: '2026\u5e746\u670818\u65e5',
     completedOrder: 20260618,
     delivery: '\u65b9\u6848\u4e0e\u706f\u5177\u6e05\u5355\u5df2\u4ea4\u4ed8',
-    image: '/pages/v2/designer-workbench/assets/project-residential-card.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-residential-card.webp',
   },
   {
     id: 'completed-commercial',
@@ -158,7 +174,7 @@ const COMPLETED_PROJECTS = Object.freeze([
     completedAt: '2026\u5e745\u670826\u65e5',
     completedOrder: 20260526,
     delivery: '\u65bd\u5de5\u56fe\u4e0e\u70b9\u4f4d\u6e05\u5355\u5df2\u4ea4\u4ed8',
-    image: '/pages/v2/designer-workbench/assets/project-commercial.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-commercial.webp',
   },
 ])
 
@@ -171,7 +187,7 @@ const MANAGEMENT = Object.freeze([
     id: 'delivery',
     title: '\u4ea4\u4ed8\u7ba1\u7406',
     subtitle: '1\u9879\u5f85\u5ba2\u6237\u786e\u8ba4',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-tools-v2.png',
+    icon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-tab-tools-v2.png',
     kind: 'image',
   },
   {
@@ -185,29 +201,28 @@ const MANAGEMENT = Object.freeze([
 
 const TABS = Object.freeze([
   {
-    id: 'workbench',
-    label: '\u5de5\u4f5c\u53f0',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-workbench-v2.png',
-  },
-  {
     id: 'learning',
     label: '\u5b66\u4e60',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-learning-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-learning-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-learning-active.png',
   },
   {
     id: 'tools',
     label: '\u5de5\u5177',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-tools-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-active.png',
   },
   {
     id: 'projects',
     label: '\u9879\u76ee',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-projects-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-projects-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-projects-active.png',
   },
   {
     id: 'profile',
     label: '\u6211\u7684',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-profile-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-profile-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-profile-active.png',
   },
 ])
 
@@ -215,14 +230,26 @@ function calculateLayout(windowInfo, menuButton) {
   const statusBarHeight = Number(windowInfo.statusBarHeight) || 20
   const menuTop = Number(menuButton.top) || statusBarHeight + 6
   const menuHeight = Number(menuButton.height) || 32
+  const windowWidth = Number(windowInfo.windowWidth) || 375
+  const windowHeight = Number(windowInfo.windowHeight) || 844
+  const safeAreaBottom = windowInfo.safeArea && Number(windowInfo.safeArea.bottom)
+  const safeAreaInsetBottom = safeAreaBottom
+    ? Math.max(0, windowHeight - safeAreaBottom)
+    : 0
   const navigationBarHeight = Math.max(
     44,
     (menuTop - statusBarHeight) * 2 + menuHeight
   )
+  const headerHeight = Math.max(94, navigationBarHeight + 50)
+  const tabbarHeight = windowWidth * 108 / 750
   return {
     statusBarHeight,
     navigationBarHeight,
-    headerHeight: Math.max(94, navigationBarHeight + 50),
+    headerHeight,
+    accessContentHeight: Math.max(
+      390,
+      Math.round(windowHeight - statusBarHeight - headerHeight - tabbarHeight - safeAreaInsetBottom)
+    ),
   }
 }
 
@@ -306,20 +333,90 @@ Page({
     statusBarHeight: 20,
     navigationBarHeight: 44,
     headerHeight: 94,
+    accessContentHeight: 640,
     projectsLoading: true,
     projectsError: '',
+    projectAccessStatus: 'checking',
+    projectAccessMessage: '',
   },
 
   onLoad() {
     this.setData(getLayout())
-    this.loadProjectData()
+    this.checkProjectAccess()
   },
 
   onShow() {
     enforceV2Gate('designer')
   },
 
+  clearProjectData() {
+    this.setData({
+      projectsLoading: false,
+      projectsError: '',
+      projects: [],
+      completedProjects: [],
+      visibleCompletedProjects: [],
+      opportunities: [],
+      visibleOpportunities: [],
+      management: [],
+      completedHistory: [],
+    })
+  },
+
+  async checkProjectAccess() {
+    this.setData({
+      projectAccessStatus: 'checking',
+      projectAccessMessage: COPY.accessCheckingMessage,
+      projectsLoading: true,
+    })
+    try {
+      const response = await designerApi.projectAccess()
+      if (response.ok && response.data && response.data.allowed === true) {
+        this.setData({ projectAccessStatus: 'allowed', projectAccessMessage: '' })
+        await this.loadProjectData()
+        return true
+      }
+
+      const deniedCodes = ['DESIGNER_NOT_CERTIFIED', 'NOT_DESIGNER_PROFILE', 'NOT_DESIGNER', 'NOT_FOUND']
+      const denied = deniedCodes.indexOf(response.code) !== -1
+      this.clearProjectData()
+      this.setData({
+        projectAccessStatus: denied ? 'denied' : 'error',
+        projectAccessMessage: denied
+          ? COPY.accessDeniedMessage
+          : response.message || COPY.accessErrorMessage,
+      })
+      return false
+    } catch (error) {
+      this.clearProjectData()
+      this.setData({
+        projectAccessStatus: 'error',
+        projectAccessMessage: COPY.accessErrorMessage,
+      })
+      return false
+    }
+  },
+
+  retryProjectAccess() {
+    this.checkProjectAccess()
+  },
+
+  showCertificationGuide() {
+    if (typeof wx.showModal === 'function') {
+      wx.showModal({
+        title: COPY.accessGuideTitle,
+        content: COPY.accessGuideContent,
+        showCancel: false,
+        confirmText: '\u6211\u77e5\u9053\u4e86',
+      })
+      return
+    }
+    showFeedback(COPY.accessGuideContent)
+  },
+
   async loadProjectData() {
+    if (this.data.projectAccessStatus !== 'allowed') return
+    this.setData({ projectsLoading: true, projectsError: '' })
     const [ongoingResponse, completedResponse, demandsResponse] = await Promise.all([
       designerApi.projects({ statusFilter: 'ongoing', pageSize: 20 }),
       designerApi.projects({ statusFilter: 'completed', pageSize: 20 }),
@@ -472,10 +569,6 @@ Page({
   switchTab(event) {
     const id = event.currentTarget.dataset.id
     if (id === 'projects') return
-    if (id === 'workbench') {
-      redirectTo('/pages/v2/designer-workbench/index')
-      return
-    }
     if (id === 'learning') {
       redirectTo('/pages/v2/designer-learning/index')
       return

@@ -361,17 +361,6 @@ button::after {
   margin-left: auto;
 }
 
-.designer-tab-icon {
-  display: block;
-  width: 56rpx;
-  height: 52rpx;
-  opacity: 0.42;
-}
-
-.tab-item--active .designer-tab-icon {
-  opacity: 1;
-}
-
 @media (min-width: 430px) {
   .designer-learning-preview {
     width: 430px;

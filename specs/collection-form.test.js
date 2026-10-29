@@ -8,6 +8,8 @@ const {
   isVisible,
   validateQuestion,
   getModuleTagTitle,
+  normalizeChoiceAnswer,
+  normalizeFormAnswers,
 } = require('../pages/flows/collection-form/collection-form')
 const { getFormTemplate } = require('../pages/flows/collection-form/form-template')
 
@@ -46,6 +48,25 @@ assert.strictEqual(specialQuestions.some((question) => question.code === 'C2'), 
 const redlineQuestion = form.modules[1].questions.find((question) => question.code === 'B2')
 assert.strictEqual(validateQuestion(redlineQuestion, ['glare']), '请至少选择 2 项')
 assert.strictEqual(validateQuestion(redlineQuestion, ['glare', 'flat', 'waste', 'complex']), '')
+const redlineLabels = redlineQuestion.options.slice(0, 2).map((option) => option.label)
+assert.strictEqual(validateQuestion(redlineQuestion, redlineLabels), '')
+assert.deepStrictEqual(normalizeChoiceAnswer(redlineQuestion, redlineLabels), { selected: ['glare', 'flat'], otherText: '' })
+
+const stageQuestion = form.modules[0].questions.find((question) => question.code === 'A4')
+assert.strictEqual(
+  normalizeChoiceAnswer(stageQuestion, stageQuestion.options[0].label),
+  stageQuestion.options[0].id
+)
+assert.deepStrictEqual(
+  normalizeFormAnswers(form, {
+    [stageQuestion.id]: stageQuestion.options[0].label,
+    [redlineQuestion.id]: redlineLabels,
+  }),
+  {
+    [stageQuestion.id]: stageQuestion.options[0].id,
+    [redlineQuestion.id]: { selected: ['glare', 'flat'], otherText: '' },
+  }
+)
 
 const locationQuestion = form.modules[0].questions.find((question) => question.code === 'A2')
 assert.strictEqual(validateQuestion(locationQuestion, { name: '项目位置', address: '深圳市', latitude: 22.5431, longitude: 114.0579 }), '')

@@ -1,59 +1,69 @@
-<scroll-view class="page" scroll-y refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
-  <view class="header">
-    <text class="title">我的订单</text>
-  </view>
-  
-  <!-- 加载提示 -->
-  <view class="loading-tip" wx:if="{{loading}}">
-    <text>加载中...</text>
-  </view>
-  
-  <!-- 订单列表 -->
-  <view class="list">
-    <view wx:for="{{orders}}" wx:key="id" class="card">
-      <!-- 订单标题和状态 -->
-      <view class="row between">
-        <view class="name-wrap">
-        <text class="name">{{item.title}}</text>
-          <text wx:if="{{item.priority}}" class="tag-priority">优先</text>
-        </view>
-        <view class="status-wrap">
-          <van-tag wx:if="{{item.afterSaleStatus === '待售后'}}" type="warning" plain size="small">售后中</van-tag>
-          <van-tag wx:if="{{item.afterSaleStatus === '售后完成'}}" type="success" plain size="small">售后完成</van-tag>
-        <text class="status status-{{item.statusType}}">{{item.status}}</text>
-        </view>
+<view class="page">
+  <scroll-view class="content" scroll-y refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh">
+    <view class="summary-card">
+      <text class="summary-title">我的订单</text>
+      <view class="summary-grid">
+        <view class="summary-item"><text class="summary-number">{{summary.mall}}</text><text class="summary-label">商品订单</text></view>
+        <view class="summary-divider"></view>
+        <view class="summary-item"><text class="summary-number">{{summary.service}}</text><text class="summary-label">共创订单</text></view>
+        <view class="summary-divider"></view>
+        <view class="summary-item"><text class="summary-number">{{summary.collection}}</text><text class="summary-label">需求收集</text></view>
+        <view class="summary-divider"></view>
+        <view class="summary-item"><text class="summary-number">{{summary.all}}</text><text class="summary-label">全部订单</text></view>
       </view>
-      
-      <!-- 订单描述 -->
-      <text class="desc">{{item.desc}}</text>
-      
-      <!-- 底部操作区 -->
-      <view class="row between footer">
-        <text class="time">{{item.time}}</text>
-        <view class="actions">
-          <!-- 待支付订单显示去支付按钮 -->
-          <button 
-            wx:if="{{item.canPay}}" 
-            class="btn btn-pay" 
-            data-orderno="{{item.orderNo}}" 
-            bindtap="onPay"
-          >去支付</button>
-          <!-- 订单详情按钮 -->
-          <button 
-            class="btn btn-detail" 
-            data-id="{{item.id}}" 
-            data-orderno="{{item.orderNo}}" 
-            data-type="{{item._type}}" 
-            bindtap="onDetail"
-          >订单详情</button>
+    </view>
+
+    <scroll-view class="filters" scroll-x="true" show-scrollbar="false">
+      <view class="filter-row">
+        <view class="filter {{filterType === 'all' ? 'filter-active' : ''}}" data-type="all" bindtap="onFilterTap">全部</view>
+        <view class="filter {{filterType === 'mall' ? 'filter-active' : ''}}" data-type="mall" bindtap="onFilterTap">商品订单</view>
+        <view class="filter {{filterType === 'service' ? 'filter-active' : ''}}" data-type="service" bindtap="onFilterTap">共创订单</view>
+        <view class="filter {{filterType === 'collection' ? 'filter-active' : ''}}" data-type="collection" bindtap="onFilterTap">需求收集</view>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{loading}}" class="loading">正在加载订单…</view>
+
+    <view wx:for="{{visibleOrders}}" wx:key="id" class="order-card">
+      <view class="order-icon {{item._type === 'mall' ? 'icon-mall' : 'icon-service'}}">{{item._type === 'mall' ? '购' : '创'}}</view>
+      <view class="order-main">
+        <view class="order-head">
+          <text class="order-type">{{item._type === 'mall' ? '商品订单' : '共创订单'}}</text>
+          <text class="order-status status-{{item.statusType}}">{{item.status}}</text>
+        </view>
+        <text class="order-title">{{item.title}}</text>
+        <text class="order-desc">{{item.desc}}</text>
+        <view class="order-foot">
+          <text class="order-time">{{item.time}}</text>
+          <view class="order-actions">
+            <button wx:if="{{item.canPay}}" class="action-button action-pay" data-orderno="{{item.orderNo}}" bindtap="onPay">去支付</button>
+            <button class="action-button" data-id="{{item.id}}" data-orderno="{{item.orderNo}}" data-type="{{item._type}}" bindtap="onDetail">查看详情</button>
+          </view>
         </view>
       </view>
     </view>
-    
-    <!-- 空状态 -->
-    <view class="empty" wx:if="{{!loading && orders.length === 0}}">
-      <text class="empty-text">暂无订单</text>
-      <button class="btn btn-mall" bindtap="goMall">去购物</button>
+
+    <view wx:for="{{visibleCollections}}" wx:key="id" class="order-card collection-order-card">
+      <view class="order-icon icon-collection">PDF</view>
+      <view class="order-main">
+        <view class="order-head">
+          <text class="order-type">需求收集</text>
+          <text class="order-status collection-status-{{item.pdfStatus}}">{{item.pdfStatusText}}</text>
+        </view>
+        <text class="order-title">{{item.title}}</text>
+        <text class="order-desc">需求单编号：{{item.requestId || item.id}}</text>
+        <view class="order-foot">
+          <text class="order-time">{{item.timeText}}</text>
+          <button class="action-button" data-item="{{item}}" bindtap="onCollectionTap">查看 PDF</button>
+        </view>
+      </view>
     </view>
-  </view>
-</scroll-view>
+
+    <view wx:if="{{!loading && visibleOrders.length === 0 && visibleCollections.length === 0}}" class="empty">
+      <text class="empty-title">暂无订单</text>
+      <text class="empty-desc">完成一次购买或需求收集后，记录会显示在这里</text>
+      <button class="primary-button" bindtap="goMall">去探索服务</button>
+    </view>
+    <view class="safe-bottom"></view>
+  </scroll-view>
+</view>

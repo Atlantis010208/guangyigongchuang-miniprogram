@@ -1,0 +1,10 @@
+{
+  "name": "admin_design_payment",
+  "version": "1.0.0",
+  "description": "设计请求客户收款管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "@cloudbase/node-sdk": "^3.0.0"
+  }
+}

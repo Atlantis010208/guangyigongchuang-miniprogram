@@ -9,11 +9,14 @@
       aria-label="{{copy.profileAria}}"
     >
       <image
+        wx:if="{{userAvatar}}"
         class="avatar"
-        src="/pages/v2/owner-home/assets/avatar.png"
+        src="{{userAvatar}}"
         mode="aspectFill"
         fade-in="{{false}}"
+        binderror="handleAvatarError"
       />
+      <view wx:else class="avatar avatar-skeleton" aria-hidden="true"></view>
     </button>
   </view>
 
@@ -49,7 +52,7 @@
         </view>
         <image
           class="tool-chevron-image tool-chevron-image--common"
-          src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+          src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
           mode="aspectFit"
           fade-in="{{false}}"
           aria-hidden="true"
@@ -89,7 +92,7 @@
           <text>{{item.action}}</text>
           <image
             class="tool-chevron-image tool-chevron-image--feature"
-            src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
             mode="aspectFit"
             fade-in="{{false}}"
             aria-hidden="true"

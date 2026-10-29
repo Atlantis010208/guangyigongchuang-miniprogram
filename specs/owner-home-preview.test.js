@@ -112,6 +112,30 @@ for (const binding of [
 }
 
 assert(wxml.includes('wx:for="{{featuredCases}}"'), 'featured cases must be data-driven')
+assert(wxml.includes('src="{{userAvatar}}"'), 'owner home avatar must be data-driven')
+assert(wxml.includes('wx:if="{{userAvatar}}"'))
+assert(wxml.includes('class="avatar avatar-skeleton"'))
+assert(wxml.includes('binderror="handleAvatarError"'))
+assert(wxss.includes('.avatar-skeleton'))
+assert(js.includes("userAvatar: ''"))
+assert(js.includes('handleAvatarError()'))
+assert(!js.includes('owner-home/assets/avatar.png'))
+assert(!wxml.includes('owner-home/assets/avatar.png'))
+assert(wxml.includes('owner-cases-content user-avatar="{{userAvatar}}"'))
+assert(wxml.includes('owner-services-content data-module-version="mall-v2" user-avatar="{{userAvatar}}"'))
+assert(wxml.includes('owner-tools-content user-avatar="{{userAvatar}}"'))
+assert(wxml.includes('preview-tabbar__inner--owner-four'))
+assert(!wxml.includes('{{copy.tabProfile}}'))
+assert(!wxml.includes("activePreviewTab === 'profile'"))
+assert(!wxml.includes('tab-profile-default.png'))
+assert(!wxml.includes('tab-profile-active.png'))
+
+for (const residentPanel of ['cases', 'services', 'tools']) {
+  assert(
+    wxml.includes('wx:if="{{activePreviewTab === \'' + residentPanel + '\'}}"'),
+    'inactive resident tab content must be conditionally rendered: ' + residentPanel
+  )
+}
 
 for (const binding of [
   'contentMinHeight',
@@ -143,23 +167,35 @@ for (const residentPanel of ['cases', 'services', 'tools']) {
 assert(wxml.includes('bindtap="switchToServices"'))
 
 for (const asset of [
-  'avatar.png',
   'hero-room.png',
   'case-nanjing.png',
   'case-shanghai.png',
   'icon-calculator.png',
   'icon-temperature.png',
-  'tab-home.png',
-  'tab-cases.png',
-  'tab-service.png',
-  'tab-tools.png',
-  'tab-profile.png',
 ]) {
   assert(
     fs.existsSync(path.join(pageRoot, 'assets', asset)),
     'missing preview asset: ' + asset
   )
 }
+
+for (const asset of [
+  'tab-home-default.png',
+  'tab-home-active.png',
+  'tab-cases-default.png',
+  'tab-cases-active.png',
+  'tab-services-default.png',
+  'tab-services-active.png',
+  'tab-tools-default.png',
+  'tab-tools-active.png',
+]) {
+  assert(
+    fs.existsSync(path.join(root, 'pages', 'v2', 'shared', 'assets', 'tabbar', asset)),
+    'missing shared tab asset: ' + asset
+  )
+  assert(wxml.includes(asset), 'unused shared tab asset: ' + asset)
+}
+assert.strictEqual((wxml.match(/class="tab-icon-stack"/g) || []).length, 4)
 
 assert(
   !wxml.includes('codex-clipboard-979c8b91'),

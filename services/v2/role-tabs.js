@@ -8,11 +8,10 @@ const ROLE_TABS = Object.freeze({
     { slot: 5, text: '我的', url: '/pages/profile/home/home' }
   ]),
   designer: Object.freeze([
-    { slot: 1, text: '工作台', url: '/pages/v2/designer-workbench/index' },
-    { slot: 2, text: '学习', url: '/pages/v2/designer-learning/index' },
-    { slot: 3, text: '工具', url: '/pages/v2/designer-tools/index' },
-    { slot: 4, text: '项目', url: '/pages/v2/designer-projects/index' },
-    { slot: 5, text: '我的', url: '/pages/v2/designer-profile/index' }
+    { slot: 1, text: '学习', url: '/pages/v2/designer-learning/index' },
+    { slot: 2, text: '工具', url: '/pages/v2/designer-tools/index' },
+    { slot: 3, text: '项目', url: '/pages/v2/designer-projects/index' },
+    { slot: 4, text: '我的', url: '/pages/v2/designer-profile/index' }
   ])
 })
 function getRoleTabs(role) { return ROLE_TABS[role] || [] }

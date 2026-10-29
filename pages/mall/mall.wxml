@@ -1,57 +1,96 @@
 <view class="mall-page">
-  <!-- Search Bar -->
-  <view class="search-container">
-    <view class="search-box">
-      <icon class="search-icon" type="search" size="18" color="#94a3b8"></icon>
-      <input class="search-input" placeholder="搜索商品..." placeholder-class="search-placeholder" bindconfirm="onSearch" confirm-type="search" value="{{keyword}}" />
+  <view class="navigation">
+    <view class="status-space" style="height: {{statusBarHeight}}px;"></view>
+    <view class="custom-nav" style="height: {{navigationBarHeight}}px;">
+      <button class="back-button" bindtap="goBack" hover-class="tap-pressed" aria-label="返回上一页">
+        <view class="back-arrow" aria-hidden="true"></view>
+      </button>
+      <view class="nav-title">电子商城</view>
     </view>
   </view>
 
-  <!-- Categories Tabs -->
+  <view class="search-area">
+    <view class="search-box">
+      <view class="search-icon" aria-hidden="true"></view>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜索商品..."
+        placeholder-class="search-placeholder"
+        bindinput="onKeywordInput"
+        bindconfirm="onSearch"
+        confirm-type="search"
+      />
+      <button
+        wx:if="{{keyword}}"
+        class="clear-button"
+        bindtap="onClearSearch"
+        hover-class="tap-pressed"
+        aria-label="清除搜索"
+      >×</button>
+    </view>
+  </view>
+
   <scroll-view class="tabs-scroll" scroll-x="{{true}}" show-scrollbar="{{false}}" enhanced="{{true}}" bounces="{{true}}">
     <view class="tabs">
-      <view
+      <button
         wx:for="{{categories}}"
         wx:key="*this"
-        class="tab-item {{category === item ? 'active' : ''}}"
+        class="tab-item {{category === item ? 'tab-item--active' : ''}}"
         bindtap="onCategoryChange"
         data-category="{{item}}"
-      >{{item}}</view>
+        hover-class="tap-pressed"
+      >{{item}}</button>
     </view>
   </scroll-view>
 
-  <!-- Main Product Grid -->
-  <view class="main-content">
-    <!-- Loading State -->
+  <view class="product-section">
     <view class="loading-state" wx:if="{{loading && products.length === 0}}">
       <view class="loading-spinner"></view>
       <text class="loading-text">正在加载商品...</text>
     </view>
 
-    <!-- Empty State -->
     <view class="empty-state" wx:if="{{!loading && products.length === 0}}">
       <text class="empty-title">暂无商品</text>
       <text class="empty-desc">商品即将上架，敬请期待</text>
     </view>
 
     <view class="product-grid" wx:if="{{products.length > 0}}">
-      <view class="product-card" wx:for="{{products}}" wx:key="id" bindtap="onProductTap" data-id="{{item.id}}">
+      <button
+        class="product-card"
+        wx:for="{{products}}"
+        wx:key="id"
+        bindtap="onProductTap"
+        data-id="{{item.id}}"
+        hover-class="tap-pressed"
+      >
         <view class="product-image-wrap">
-          <image class="product-image" src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImageError" data-index="{{index}}"></image>
-          <view class="image-placeholder" wx:if="{{!item.image}}">
+          <image
+            wx:if="{{item.image}}"
+            class="product-image"
+            src="{{item.image}}"
+            mode="aspectFill"
+            lazy-load="{{true}}"
+            binderror="onImageError"
+            data-index="{{index}}"
+          />
+          <view class="image-placeholder" wx:else>
             <text class="placeholder-text">暂无图片</text>
           </view>
         </view>
+
         <view class="product-info">
-          <text class="product-name">{{item.name}}</text>
-          <text class="product-desc">{{item.shortDesc || '专业团队 · 多对一服务'}}</text>
+          <view class="product-name">{{item.name}}</view>
+          <view class="product-desc">{{item.shortDesc || '专业团队 · 多对一服务'}}</view>
           <view class="product-price-wrap">
             <text class="price-symbol">¥</text>
             <text class="price-value">{{item.price}}</text>
             <text class="price-suffix" wx:if="{{item.type === 'service' || item.price > 1000}}">起</text>
           </view>
         </view>
-      </view>
+      </button>
     </view>
+
+    <view class="loading-more" wx:if="{{loadingMore}}">正在加载更多...</view>
   </view>
 </view>

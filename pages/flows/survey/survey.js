@@ -25,8 +25,7 @@ Page({
     list.unshift(req)
     wx.setStorageSync('lighting_requests', list)
     wx.showToast({ title:'已预约', icon:'success' })
-    setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }) }, 400)
+    setTimeout(()=>{ wx.navigateTo({ url:'/pages/profile/orders/orders' }) }, 400)
   }
 })
-
 

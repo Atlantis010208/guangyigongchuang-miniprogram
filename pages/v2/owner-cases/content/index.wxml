@@ -8,11 +8,14 @@
       aria-label="{{copy.profileAria}}"
     >
       <image
+        wx:if="{{userAvatar}}"
         class="avatar"
-        src="/pages/v2/owner-cases/assets/avatar.png"
+        src="{{userAvatar}}"
         mode="aspectFill"
         fade-in="{{false}}"
+        binderror="handleAvatarError"
       />
+      <view wx:else class="avatar avatar-skeleton" aria-hidden="true"></view>
     </button>
   </view>
 
@@ -42,21 +45,26 @@
         />
       </view>
 
-      <view
+      <scroll-view
         class="category-row"
+        scroll-x="true"
+        enable-flex="true"
+        show-scrollbar="{{false}}"
         style="margin-top: calc(20rpx + {{categoryStretch}}px);"
       >
-        <button
-          wx:for="{{categories}}"
-          wx:key="value"
-          class="case-panel-button {{item.className}}"
-          data-value="{{item.value}}"
-          bindtap="selectCategory"
-          hover-class="category--pressed"
-        >
-          {{item.label}}
-        </button>
-      </view>
+        <view class="category-track">
+          <button
+            wx:for="{{categories}}"
+            wx:key="value"
+            class="case-panel-button {{item.className}}"
+            data-value="{{item.value}}"
+            bindtap="selectCategory"
+            hover-class="category--pressed"
+          >
+            <text class="category-label">{{item.label}}</text>
+          </button>
+        </view>
+      </scroll-view>
     </view>
 
     <view
@@ -73,7 +81,7 @@
           <text>{{copy.filter}}</text>
           <image
             class="filter-image"
-            src="/pages/v2/owner-cases/assets/icon-filter.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-filter.png"
             mode="aspectFit"
             fade-in="{{false}}"
             aria-hidden="true"
@@ -101,6 +109,7 @@
             fade-in="{{false}}"
             style="height: calc(274rpx + {{caseImageStretch}}px);"
           />
+          <view wx:if="{{item.spaceTypeLabel}}" class="case-space-tag">{{item.spaceTypeLabel}}</view>
           <view class="case-title-row">
             <view class="case-title">{{item.title}}</view>
             <button

@@ -1,0 +1,9 @@
+{
+  "name": "designer_learning_content",
+  "version": "1.0.0",
+  "description": "设计师端课程介绍、课程目录和学习记录",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

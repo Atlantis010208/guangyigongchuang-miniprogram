@@ -1,108 +1,44 @@
-.page { min-height: 100vh; background: #f2f2f7; }
-.header { padding: 30rpx; }
-.title { font-size: 44rpx; font-weight: 700; }
-
-.loading-tip {
-  text-align: center;
-  padding: 40rpx;
-  color: #8e8e93;
-  font-size: 28rpx;
-}
-
-.list { padding: 0 30rpx; }
-.card { 
-  background: #fff; 
-  border-radius: 30rpx; 
-  padding: 24rpx 20rpx; 
-  margin-bottom: 20rpx; 
-}
-.row { display: flex; align-items: center; }
-.between { justify-content: space-between; }
-.name-wrap { display: flex; align-items: center; flex: 1; margin-right: 16rpx; }
-.name { font-size: 30rpx; font-weight: 600; }
-
-/* 优先标签 */
-.tag-priority {
-  margin-left: 12rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 999rpx;
-  background: #000;
-  color: #d4af37;
-  font-size: 20rpx;
-  border: 1rpx solid #d4af37;
-}
-.desc { font-size: 26rpx; color: #8e8e93; margin: 10rpx 0; display: block; }
-.time { font-size: 24rpx; color: #c7c7cc; }
-
-/* 状态样式 */
-.status { 
-  font-size: 24rpx; 
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  white-space: nowrap;
-}
-.status-paid { 
-  color: #34c759; 
-  background: rgba(52, 199, 89, 0.1);
-}
-.status-pending { 
-  color: #ff9500; 
-  background: rgba(255, 149, 0, 0.1);
-}
-.status-closed { 
-  color: #8e8e93; 
-  background: rgba(142, 142, 147, 0.1);
-}
-.status-processing { 
-  color: #007aff; 
-  background: rgba(0, 122, 255, 0.1);
-}
-.status-completed { 
-  color: #34c759; 
-  background: rgba(52, 199, 89, 0.1);
-}
-
-/* 底部操作区 */
-.footer { 
-  margin-top: 16rpx; 
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f2f2f7;
-}
-.actions { 
-  display: flex; 
-  gap: 16rpx; 
-}
-
-/* 按钮样式 */
-.btn {
-  border: none;
-  border-radius: 40rpx;
-  padding: 12rpx 22rpx;
-  font-size: 26rpx;
-  line-height: 1.4;
-}
-.btn-pay {
-  background: #007aff;
-  color: #fff;
-}
-.btn-detail {
-  background: #1c1c1e;
-  color: #fff;
-}
-.btn-mall {
-  background: #1c1c1e;
-  color: #fff;
-  margin-top: 20rpx;
-}
-
-/* 空状态 */
-.empty {
-  text-align: center;
-  padding: 80rpx 40rpx;
-}
-.empty-text {
-  font-size: 28rpx;
-  color: #8e8e93;
-  display: block;
-  margin-bottom: 30rpx;
-}
+.page { min-height: 100vh; background: #f7f7f5; color: #111; }
+.content { height: 100vh; box-sizing: border-box; }
+.summary-card { margin: 30rpx 34rpx 0; padding: 40rpx 28rpx 34rpx; border-radius: 34rpx; background: #fff; border: 1rpx solid #ececea; box-shadow: 0 10rpx 30rpx rgba(0,0,0,.03); }
+.summary-title { display: block; margin: 0 0 34rpx 14rpx; font-size: 38rpx; font-weight: 700; }
+.summary-grid { display: flex; align-items: stretch; justify-content: space-around; }
+.summary-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.summary-number { font-size: 48rpx; font-weight: 600; line-height: 1.1; }
+.summary-label { margin-top: 14rpx; font-size: 23rpx; color: #6f6f6c; white-space: nowrap; }
+.summary-divider { width: 1rpx; margin: 4rpx 0; background: #e5e5e1; }
+.filters { margin-top: 30rpx; padding: 0 34rpx; white-space: nowrap; }
+.filter-row { display: inline-flex; gap: 18rpx; padding-bottom: 4rpx; }
+.filter { min-width: 128rpx; height: 72rpx; padding: 0 26rpx; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 999rpx; border: 1rpx solid #dededb; background: #fff; font-size: 28rpx; }
+.filter-active { color: #fff; border-color: #111; background: #111; }
+.loading { padding: 54rpx; text-align: center; color: #888; font-size: 26rpx; }
+.order-card { display: flex; margin: 28rpx 34rpx 0; padding: 30rpx 28rpx; border-radius: 32rpx; background: #fff; border: 1rpx solid #ececea; box-shadow: 0 10rpx 26rpx rgba(0,0,0,.035); }
+.order-icon { width: 104rpx; height: 104rpx; flex: 0 0 104rpx; border-radius: 24rpx; display: flex; align-items: center; justify-content: center; margin-right: 24rpx; font-size: 34rpx; font-weight: 700; }
+.icon-mall { background: #ecebe8; color: #111; }
+.icon-service { background: #dedbd5; color: #111; }
+.icon-collection { background: #171717; color: #fff; font-size: 25rpx; }
+.order-main { flex: 1; min-width: 0; }
+.order-head { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
+.order-type { color: #555550; font-size: 25rpx; }
+.order-status { font-size: 26rpx; white-space: nowrap; }
+.status-pending { color: #bd7214; }
+.status-paid, .status-completed { color: #2b8a57; }
+.status-processing { color: #356fd0; }
+.status-closed { color: #90908a; }
+.collection-status-ready { color: #2b8a57; }
+.collection-status-failed { color: #c94a3a; }
+.collection-status-pending, .collection-status-processing { color: #bd7214; }
+.order-title { display: block; margin-top: 18rpx; font-size: 34rpx; font-weight: 700; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-desc { display: block; margin-top: 12rpx; color: #777771; font-size: 24rpx; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 16rpx; margin-top: 24rpx; }
+.order-time { color: #9a9a94; font-size: 22rpx; white-space: nowrap; }
+.order-actions { display: flex; gap: 14rpx; }
+.action-button, .primary-button { margin: 0; padding: 0 26rpx; height: 62rpx; line-height: 62rpx; border: none; border-radius: 999rpx; background: #111; color: #fff; font-size: 24rpx; }
+.action-button::after, .primary-button::after { border: none; }
+.action-pay { background: #fff; color: #111; border: 1rpx solid #111; }
+.collection-order-card { margin-top: 22rpx; }
+.empty { margin: 80rpx 34rpx; padding: 70rpx 34rpx; text-align: center; background: #fff; border-radius: 32rpx; }
+.empty-title { display: block; font-size: 34rpx; font-weight: 700; }
+.empty-desc { display: block; margin: 16rpx 0 30rpx; color: #888; font-size: 24rpx; line-height: 1.5; }
+.primary-button { display: inline-block; padding: 0 44rpx; }
+.safe-bottom { height: calc(40rpx + env(safe-area-inset-bottom)); }

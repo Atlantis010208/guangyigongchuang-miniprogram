@@ -1,4 +1,4 @@
-﻿'use strict'
+'use strict'
 
 const PRODUCTION_ENV_ID = 'cloud1-5gb9c5u2c58ad6d7'
 
@@ -21,20 +21,26 @@ function getEnvVersion(wxApi) {
   } catch (_) { return '' }
 }
 
+function isUseProduction(overrides) {
+  if (overrides && Object.prototype.hasOwnProperty.call(overrides, 'useProduction')) {
+    return Boolean(overrides.useProduction)
+  }
+  return Boolean(local.USE_PRODUCTION)
+}
+
 function resolveCloudEnvironment(wxApi, overrides) {
   const envVersion = getEnvVersion(wxApi)
-  const testEnvId = String(overrides && overrides.testEnvId !== undefined ? overrides.testEnvId : TEST_ENV_ID).trim()
-  if (envVersion === 'release') {
-    return { ok: true, envVersion, envId: PRODUCTION_ENV_ID, isProduction: true, isTest: false }
-  }
-  if (envVersion === 'develop' || envVersion === 'trial') {
-    if (!testEnvId || testEnvId === PRODUCTION_ENV_ID) {
-      return {
-        ok: false, envVersion, envId: '', isProduction: false, isTest: true,
-        code: 'TEST_ENV_NOT_CONFIGURED', message: SETUP_HINT
-      }
+  // 三种可发布版本统一使用生产 CloudBase。
+  // 新版 UI 的入口策略统一由 services/v2/release-gate.js 管理。
+  if (envVersion === 'release' || envVersion === 'develop' || envVersion === 'trial') {
+    return {
+      ok: true,
+      envVersion,
+      envId: PRODUCTION_ENV_ID,
+      isProduction: true,
+      isTest: false,
+      source: 'production'
     }
-    return { ok: true, envVersion, envId: testEnvId, isProduction: false, isTest: true }
   }
   return {
     ok: false, envVersion, envId: '', isProduction: false, isTest: false,

@@ -327,7 +327,7 @@
 
 /* Tab Content */
 .tab-content {
-  padding: 0 30rpx;
+  padding: 40rpx 30rpx 0;
   box-sizing: border-box;
   width: 100%;
 }

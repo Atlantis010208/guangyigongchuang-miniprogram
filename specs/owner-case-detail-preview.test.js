@@ -22,6 +22,10 @@ assert(
   previewPackage.pages.includes('owner-case-detail/index'),
   'owner-case-detail preview route must be registered'
 )
+assert(
+  previewPackage.pages.includes('owner-case-presentation/index'),
+  'owner-case-presentation route must be registered'
+)
 
 for (const extension of ['js', 'json', 'wxml', 'wxss']) {
   assert(
@@ -131,6 +135,16 @@ assert(
   'fixed action bar must expose consultation interaction'
 )
 assert(
+  detailWxml.includes('wx:if="{{presentationAvailable}}"')
+    && detailWxml.includes('bindtap="goPresentation"'),
+  'published presentations must expose the immersive action conditionally'
+)
+assert(
+  detailWxml.indexOf('bindtap="toggleBookmark"') < detailWxml.indexOf('bindtap="goPresentation"')
+    && detailWxml.indexOf('bindtap="goPresentation"') < detailWxml.indexOf('bindtap="goConsultation"'),
+  'action order must stay favorite, immersive, consultation'
+)
+assert(
   !detailWxml.includes('codex-clipboard-9dcb5450'),
   'the full prototype screenshot must not be rendered by the page'
 )
@@ -181,6 +195,11 @@ function createDetailRuntime(windowInfo, initialPages) {
   const calls = []
 
   const context = {
+    setTimeout(callback) {
+      callback()
+      return 1
+    },
+    clearTimeout() {},
     Page(pageDefinition) {
       definition = pageDefinition
     },
@@ -265,6 +284,7 @@ const mockCase = {
   area: '180m\u00b2',
   style: '\u73b0\u4ee3\u7b80\u7ea6',
   officialAccountUrl: 'https://mp.weixin.qq.com/s/example',
+  presentationAvailable: true,
 }
 
 async function main() {
@@ -360,6 +380,11 @@ async function main() {
     rendered.detail.desc,
     mockCase.desc,
     'the design concept must render the backend description'
+  )
+  assert.strictEqual(
+    rendered.presentationAvailable,
+    true,
+    'the immersive entry must follow the public presentation availability flag'
   )
 
   // 空间亮点固定取封面之后的四张
@@ -465,6 +490,23 @@ async function main() {
     detailRuntime.page.data.isBookmarked,
     !bookmarkBefore,
     'bookmark interaction must toggle local page state'
+  )
+
+  detailRuntime.calls.length = 0
+  detailRuntime.page.goPresentation()
+  assert.strictEqual(
+    detailRuntime.calls.find((call) => call.api === 'navigateTo')?.options.url,
+    '/pages/v2/owner-case-presentation/index?id=' + encodeURIComponent(realCaseId) + '&from=detail',
+    'immersive entry must open the deck with the current case id and detail origin'
+  )
+
+  const unavailableRuntime = createDetailRuntime(compactWindow, [{ route: detailRoute }])
+  unavailableRuntime.page.data.caseId = realCaseId
+  unavailableRuntime.page.goPresentation()
+  assert.strictEqual(
+    unavailableRuntime.calls.some((call) => call.api === 'navigateTo'),
+    false,
+    'a case without a published presentation must keep the existing detail behavior'
   )
 
   detailRuntime.calls.length = 0

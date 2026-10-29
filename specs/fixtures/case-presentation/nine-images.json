@@ -1,0 +1,25 @@
+{
+  "case": {
+    "_id": "case-nine",
+    "title": "层叠光庭",
+    "city": "苏州",
+    "spaceType": "商业空间",
+    "services": ["全案灯光设计"],
+    "desc": "通过层叠光线建立连续的商业空间体验。",
+    "status": "active",
+    "imageFileIds": ["cloud://case/nine-01.jpg", "cloud://case/nine-02.jpg", "cloud://case/nine-03.jpg", "cloud://case/nine-04.jpg", "cloud://case/nine-05.jpg", "cloud://case/nine-06.jpg", "cloud://case/nine-07.jpg", "cloud://case/nine-08.jpg", "cloud://case/nine-09.jpg"]
+  },
+  "slides": [
+    { "id": "nine-cover", "type": "cover", "layout": "cover-full", "sectionNo": "", "imageFileIds": ["cloud://case/nine-01.jpg"], "imageFocals": { "cloud://case/nine-01.jpg": { "x": 0.44, "y": 0.43 } }, "label": "苏州 · 商业空间", "title": "层叠光庭", "body": "", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "nine-concept", "type": "concept", "layout": "image-top-copy-bottom", "sectionNo": "01", "imageFileIds": ["cloud://case/nine-02.jpg"], "imageFocals": { "cloud://case/nine-02.jpg": { "x": 0.5, "y": 0.45 } }, "label": "DESIGN CONCEPT", "title": "用光建立行走的节奏", "body": "从入口到核心空间，亮度变化引导停留与转折。", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "nine-strategy", "type": "strategy", "layout": "strategy-image70", "sectionNo": "02", "imageFileIds": ["cloud://case/nine-03.jpg"], "imageFocals": { "cloud://case/nine-03.jpg": { "x": 0.5, "y": 0.42 } }, "label": "LIGHTING STRATEGY", "title": "层次而非均匀", "body": "", "strategyItems": [{ "title": "引导", "body": "以光带标记动线" }, { "title": "聚焦", "body": "突出核心展示" }, { "title": "过渡", "body": "柔化空间转折" }], "dominantColor": "#1E1C1A" },
+    { "id": "nine-space-1", "type": "space", "layout": "space-overlay", "sectionNo": "03", "imageFileIds": ["cloud://case/nine-04.jpg"], "imageFocals": { "cloud://case/nine-04.jpg": { "x": 0.46, "y": 0.48 } }, "label": "ENTRANCE", "title": "入口先收住亮度", "body": "降低环境照度，让第一处重点光成为清晰邀请。", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "nine-space-2", "type": "space", "layout": "image-top-copy-bottom", "sectionNo": "04", "imageFileIds": ["cloud://case/nine-05.jpg"], "imageFocals": { "cloud://case/nine-05.jpg": { "x": 0.53, "y": 0.44 } }, "label": "GALLERY", "title": "展示面拥有自己的明暗", "body": "重点照明控制在材质表面，避免背景抢夺视线。", "strategyItems": [], "dominantColor": "#201E1B" },
+    { "id": "nine-split-1", "type": "split", "layout": "split-editorial", "sectionNo": "05", "imageFileIds": ["cloud://case/nine-06.jpg", "cloud://case/nine-07.jpg"], "imageFocals": { "cloud://case/nine-06.jpg": { "x": 0.5, "y": 0.46 }, "cloud://case/nine-07.jpg": { "x": 0.55, "y": 0.45 } }, "label": "MATERIAL", "title": "光把材料连接起来", "body": "", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "nine-space-3", "type": "space", "layout": "space-overlay", "sectionNo": "06", "imageFileIds": ["cloud://case/nine-08.jpg"], "imageFocals": { "cloud://case/nine-08.jpg": { "x": 0.48, "y": 0.5 } }, "label": "TRANSITION", "title": "过渡空间不只是通道", "body": "微弱的垂直照明让节奏得到停顿。", "strategyItems": [], "dominantColor": "#1C1A18" },
+    { "id": "nine-space-4", "type": "space", "layout": "image-top-copy-bottom", "sectionNo": "07", "imageFileIds": ["cloud://case/nine-09.jpg"], "imageFocals": { "cloud://case/nine-09.jpg": { "x": 0.5, "y": 0.45 } }, "label": "CORE", "title": "核心区域明亮但不刺眼", "body": "亮度集中在人与展示之间，空间边界保持克制。", "strategyItems": [], "dominantColor": "#24221F" },
+    { "id": "nine-space-5", "type": "space", "layout": "space-overlay", "sectionNo": "08", "imageFileIds": ["cloud://case/nine-02.jpg"], "imageFocals": { "cloud://case/nine-02.jpg": { "x": 0.35, "y": 0.55 } }, "label": "AFTER DARK", "title": "入夜之后，秩序仍然清晰", "body": "灯光让商业空间在不同时段保持一致气质。", "strategyItems": [], "dominantColor": "#191715" },
+    { "id": "nine-closing", "type": "closing", "layout": "closing-full", "sectionNo": "", "imageFileIds": ["cloud://case/nine-01.jpg"], "imageFocals": { "cloud://case/nine-01.jpg": { "x": 0.73, "y": 0.56 } }, "label": "", "title": "", "body": "", "strategyItems": [], "dominantColor": "#090909" }
+  ]
+}
+

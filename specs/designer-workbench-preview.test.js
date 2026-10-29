@@ -524,7 +524,8 @@ const productionFingerprints = {
   'designer-home.json':
     '9d580c863bd2c2b99c52748fde5a1ea47113a0ad906035f308591204aa977847',
   'designer-home.wxml':
-    'c424b8993fb1aa7eb9c00e7d12028f03bdda324758e64ac96631abd7bd7f8324',
+    // Legacy markup is now wrapped in the startup visibility gate.
+    '2506335a2244f51072da07e87dec4ca646d8221541f1ed7cfaec12966c17d1da',
   'designer-home.wxss':
     '4608e3b25c8cfb9cd6e2d264b6a588ecda1a16aa8a9263f6690e0e61c18d04da',
 }

@@ -16,7 +16,7 @@
       <view class="course-feature">
         <image
           class="course-hero"
-          src="./assets/course-hero.webp"
+          src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-learning/assets/course-hero.webp"
           mode="aspectFill"
           fade-in="{{false}}"
         />
@@ -28,7 +28,7 @@
           <view class="instructor-summary">
             <image
               class="instructor-avatar instructor-avatar--small"
-              src="/pages/v2/designer-profile/assets/profile-avatar.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-profile/assets/profile-avatar.png"
               mode="aspectFill"
               fade-in="{{false}}"
             />
@@ -53,7 +53,7 @@
             <text>{{copy.courseIntroLink}}</text>
             <image
               class="chevron chevron--intro"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -95,7 +95,7 @@
             </view>
             <image
               class="chevron chevron--row"
-              src="/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -108,22 +108,29 @@
   </scroll-view>
 
   <view class="preview-tabbar">
-    <view class="preview-tabbar__inner">
+    <view class="preview-tabbar__inner preview-tabbar__inner--designer-four">
       <button
         wx:for="{{tabs}}"
         wx:key="id"
         class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
         data-id="{{item.id}}"
         bindtap="switchTab"
-        hover-class="tap-soft"
+        hover-class="none"
       >
-        <image
-          class="designer-tab-icon"
-          src="{{item.icon}}"
-          mode="aspectFit"
-          fade-in="{{false}}"
-          aria-hidden="true"
-        />
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activeTab !== item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.icon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activeTab === item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.activeIcon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
         <text class="tab-label">{{item.label}}</text>
       </button>
     </view>

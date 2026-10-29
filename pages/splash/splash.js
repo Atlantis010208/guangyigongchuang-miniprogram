@@ -5,14 +5,41 @@ Page({
 
   onLoad() {
     wx.hideHomeButton && wx.hideHomeButton()
+    if (this.hasPendingDesignPaymentLink()) {
+      console.log('[splash] skip default redirect for design payment link')
+      return
+    }
     
     // 等待动画播放完成后跳转（5秒展示完整动画）
-    setTimeout(() => {
+    this.redirectTimer = setTimeout(() => {
       this.checkAndRedirect()
     }, 5000)
   },
 
+  onHide() {
+    this.clearRedirectTimer()
+  },
+
+  onUnload() {
+    this.clearRedirectTimer()
+  },
+
+  clearRedirectTimer() {
+    if (!this.redirectTimer) return
+    clearTimeout(this.redirectTimer)
+    this.redirectTimer = null
+  },
+
+  hasPendingDesignPaymentLink() {
+    return !!(app.globalData && app.globalData.pendingDesignPaymentRequestNo)
+  },
+
   checkAndRedirect() {
+    if (this.hasPendingDesignPaymentLink()) {
+      console.log('[splash] blocked default redirect for design payment link')
+      return
+    }
+
     // ===== 调试：打印所有关键 Storage =====
     const debugInfo = {
       userRole: wx.getStorageSync('userRole'),
@@ -38,11 +65,11 @@ Page({
     // 1. 如果有 userRole 缓存（用户主动选择过角色），优先使用
     if (userRole === 'designer') {
       console.log('[splash] 设计师（userRole缓存），跳转设计师端首页')
-      wx.switchTab({
-        url: '/pages/designer-home/designer-home',
+      wx.reLaunch({
+        url: '/pages/v2/designer-learning/index',
         fail(err) {
           console.error('[splash] 跳转设计师首页失败:', err)
-          wx.switchTab({ url: '/pages/products/products' })
+          wx.reLaunch({ url: '/pages/v2/owner-home/index' })
         }
       })
       return
@@ -50,7 +77,7 @@ Page({
 
     if (userRole === 'owner') {
       console.log('[splash] 业主（userRole缓存），跳转业主端首页')
-      wx.switchTab({ url: '/pages/products/products' })
+      wx.reLaunch({ url: '/pages/v2/owner-home/index' })
       return
     }
 
@@ -59,11 +86,11 @@ Page({
       if (userDoc.roles === 2) {
         wx.setStorageSync('userRole', 'designer')
         console.log('[splash] 自动补写 userRole: designer，跳转设计师端首页')
-        wx.switchTab({ url: '/pages/designer-home/designer-home' })
+        wx.reLaunch({ url: '/pages/v2/designer-learning/index' })
       } else {
         wx.setStorageSync('userRole', 'owner')
         console.log('[splash] 自动补写 userRole: owner，跳转业主端首页')
-        wx.switchTab({ url: '/pages/products/products' })
+        wx.reLaunch({ url: '/pages/v2/owner-home/index' })
       }
       return
     }

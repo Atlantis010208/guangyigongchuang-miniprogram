@@ -317,6 +317,11 @@ page {
   padding: 0 36rpx;
 }
 
+.detail-action-inner--immersive {
+  grid-template-columns: 96rpx 176rpx minmax(0, 1fr);
+  column-gap: 12rpx;
+}
+
 .favorite-action {
   display: flex;
   flex-direction: column;
@@ -374,6 +379,50 @@ page {
 
 .consult-action--pressed {
   opacity: 0.76;
+}
+
+.immersive-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  color: #24221f;
+}
+
+.immersive-action__line {
+  width: 18rpx;
+  height: 1rpx;
+  background: #b8a57a;
+}
+
+.immersive-action__label {
+  margin: 0 10rpx;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 19rpx;
+  line-height: 28rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+}
+
+.immersive-action--pressed {
+  opacity: 0.55;
+}
+
+.presentation-transition {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: #090909;
+  animation: presentation-fade-in 220ms ease-out both;
+}
+
+@keyframes presentation-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .tap-soft {

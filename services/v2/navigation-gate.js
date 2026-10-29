@@ -2,7 +2,7 @@
 const { shouldUseV2 } = require('./release-gate')
 
 const LEGACY_ROUTES = Object.freeze({ owner: '/pages/products/products?uiV2Fallback=1', designer: '/pages/designer-home/designer-home?uiV2Fallback=1' })
-const V2_ROUTES = Object.freeze({ owner: '/pages/v2/owner-home/index', designer: '/pages/v2/designer-workbench/index' })
+const V2_ROUTES = Object.freeze({ owner: '/pages/v2/owner-home/index', designer: '/pages/v2/designer-learning/index' })
 
 async function enterV2IfEnabled(role, options) {
   if (options && String(options.uiV2Fallback || '') === '1') return false

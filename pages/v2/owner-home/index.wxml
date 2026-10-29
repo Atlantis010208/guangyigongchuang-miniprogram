@@ -16,7 +16,7 @@
     <image
       class="hero-scene"
       style="top: {{sceneTop}}px;"
-      src="./assets/hero-room.png"
+      src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-home/assets/hero-room.png"
       mode="aspectFill"
       aria-label="{{copy.heroImageLabel}}"
     />
@@ -29,7 +29,15 @@
         hover-class="tap-soft"
         aria-label="{{copy.profileAria}}"
       >
-        <image class="avatar" src="{{userAvatar}}" mode="aspectFill" />
+        <image
+          wx:if="{{userAvatar}}"
+          class="avatar"
+          src="{{userAvatar}}"
+          mode="aspectFill"
+          fade-in="{{false}}"
+          binderror="handleAvatarError"
+        />
+        <view wx:else class="avatar avatar-skeleton" aria-hidden="true"></view>
       </button>
     </view>
 
@@ -148,7 +156,7 @@
         >
           <image
             class="tool-icon"
-            src="./assets/icon-calculator.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-home/assets/icon-calculator.png"
             mode="aspectFit"
           />
           <view class="tool-copy">
@@ -168,7 +176,7 @@
         >
           <image
             class="tool-icon"
-            src="./assets/icon-temperature.png"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-home/assets/icon-temperature.png"
             mode="aspectFit"
           />
           <view class="tool-copy">
@@ -193,12 +201,13 @@
     aria-hidden="{{activePreviewTab !== 'cases'}}"
   >
     <scroll-view
+      wx:if="{{activePreviewTab === 'cases'}}"
       class="preview-panel__scroller"
       scroll-y
       enhanced
       show-scrollbar="{{false}}"
     >
-      <owner-cases-content />
+      <owner-cases-content user-avatar="{{userAvatar}}" bind:switchprofile="switchToProfile" />
     </scroll-view>
   </view>
 
@@ -208,12 +217,13 @@
     aria-hidden="{{activePreviewTab !== 'services'}}"
   >
     <scroll-view
+      wx:if="{{activePreviewTab === 'services'}}"
       class="preview-panel__scroller"
       scroll-y
       enhanced
       show-scrollbar="{{false}}"
     >
-      <owner-services-content data-module-version="mall-v2" />
+      <owner-services-content data-module-version="mall-v2" user-avatar="{{userAvatar}}" bind:switchprofile="switchToProfile" />
     </scroll-view>
   </view>
   <view
@@ -222,17 +232,18 @@
     aria-hidden="{{activePreviewTab !== 'tools'}}"
   >
     <scroll-view
+      wx:if="{{activePreviewTab === 'tools'}}"
       class="preview-panel__scroller"
       scroll-y
       enhanced
       show-scrollbar="{{false}}"
     >
-      <owner-tools-content />
+      <owner-tools-content user-avatar="{{userAvatar}}" bind:switchprofile="switchToProfile" />
     </scroll-view>
   </view>
 
   <view class="preview-tabbar">
-    <view class="preview-tabbar__inner">
+    <view class="preview-tabbar__inner preview-tabbar__inner--owner-four">
       <button
         class="tab-item {{activePreviewTab === 'home' ? 'tab-item--active' : ''}}"
         bindtap="switchToHome"
@@ -240,14 +251,14 @@
       >
         <view class="tab-icon-stack" aria-hidden="true">
           <image
-            class="tab-icon-layer {{activePreviewTab === 'home' ? 'tab-icon-layer--visible' : ''}}"
-            src="./assets/tab-home.png"
+            class="tab-icon-layer {{activePreviewTab !== 'home' ? 'tab-icon-layer--visible' : ''}}"
+            src="/pages/v2/shared/assets/tabbar/tab-home-default.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
           <image
-            class="tab-icon-layer {{activePreviewTab !== 'home' ? 'tab-icon-layer--visible' : ''}}"
-            src="../owner-cases/assets/tab-home.png"
+            class="tab-icon-layer {{activePreviewTab === 'home' ? 'tab-icon-layer--visible' : ''}}"
+            src="/pages/v2/shared/assets/tabbar/tab-home-active.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
@@ -262,13 +273,13 @@
         <view class="tab-icon-stack" aria-hidden="true">
           <image
             class="tab-icon-layer {{activePreviewTab !== 'cases' ? 'tab-icon-layer--visible' : ''}}"
-            src="./assets/tab-cases.png"
+            src="/pages/v2/shared/assets/tabbar/tab-cases-default.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
           <image
             class="tab-icon-layer {{activePreviewTab === 'cases' ? 'tab-icon-layer--visible' : ''}}"
-            src="../owner-cases/assets/tab-cases.png"
+            src="/pages/v2/shared/assets/tabbar/tab-cases-active.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
@@ -280,7 +291,20 @@
         bindtap="switchToServices"
         hover-class="none"
       >
-        <image class="tab-icon" src="./assets/tab-service.png" mode="aspectFit" />
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activePreviewTab !== 'services' ? 'tab-icon-layer--visible' : ''}}"
+            src="/pages/v2/shared/assets/tabbar/tab-services-default.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activePreviewTab === 'services' ? 'tab-icon-layer--visible' : ''}}"
+            src="/pages/v2/shared/assets/tabbar/tab-services-active.png"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
         <text class="tab-label">{{copy.tabService}}</text>
       </button>
       <button
@@ -291,22 +315,18 @@
         <view class="tab-icon-stack" aria-hidden="true">
           <image
             class="tab-icon-layer {{activePreviewTab !== 'tools' ? 'tab-icon-layer--visible' : ''}}"
-            src="./assets/tab-tools.png"
+            src="/pages/v2/shared/assets/tabbar/tab-tools-default.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
           <image
             class="tab-icon-layer {{activePreviewTab === 'tools' ? 'tab-icon-layer--visible' : ''}}"
-            src="./assets/tab-tools-active.png"
+            src="/pages/v2/shared/assets/tabbar/tab-tools-active.png"
             mode="aspectFit"
             fade-in="{{false}}"
           />
         </view>
         <text class="tab-label">{{copy.tabTools}}</text>
-      </button>
-      <button class="tab-item" bindtap="goProfile" hover-class="tap-soft">
-        <image class="tab-icon" src="./assets/tab-profile.png" mode="aspectFit" />
-        <text class="tab-label">{{copy.tabProfile}}</text>
       </button>
     </view>
   </view>

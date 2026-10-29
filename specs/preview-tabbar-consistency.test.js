@@ -5,6 +5,7 @@ const path = require('path')
 const root = path.resolve(__dirname, '..')
 const previewRoot = path.join(root, 'pages', 'v2')
 const sharedPath = path.join(previewRoot, 'shared', 'preview-tabbar.wxss')
+const tabbarAssetRoot = path.join(previewRoot, 'shared', 'assets', 'tabbar')
 const sharedWxss = fs.readFileSync(sharedPath, 'utf8')
 const pages = ['owner-home']
 
@@ -23,8 +24,16 @@ for (const page of pages) {
   )
   assert.strictEqual(
     (wxml.match(/class="tab-item/g) || []).length,
-    5,
-    page + ' must render exactly five tab items'
+    4,
+    page + ' must render exactly four tab items'
+  )
+  assert(
+    wxml.includes('preview-tabbar__inner--owner-four'),
+    page + ' must use the owner four-column tab bar layout'
+  )
+  assert(
+    !wxml.includes('tab-profile-default.png') && !wxml.includes('tab-profile-active.png'),
+    page + ' must keep profile access in the avatar instead of the tab bar'
   )
 }
 
@@ -60,36 +69,33 @@ function pngDimensions(filePath) {
 }
 
 const iconNames = [
-  'tab-home.png',
-  'tab-cases.png',
-  'tab-service.png',
-  'tab-tools.png',
-  'tab-profile.png',
+  'home',
+  'cases',
+  'services',
+  'tools',
+  'learning',
+  'designer-tools',
+  'projects',
 ]
-for (const page of pages) {
-  for (const icon of iconNames) {
+for (const icon of iconNames) {
+  for (const state of ['default', 'active']) {
+    const fileName = `tab-${icon}-${state}.png`
     assert.deepStrictEqual(
-      pngDimensions(path.join(previewRoot, page, 'assets', icon)),
+      pngDimensions(path.join(tabbarAssetRoot, fileName)),
       [64, 60],
-      page + '/' + icon + ' must use the canonical canvas'
+      fileName + ' must use the canonical canvas'
     )
   }
 }
 
-assert.deepStrictEqual(
-  pngDimensions(path.join(previewRoot, 'owner-home', 'assets', 'tab-tools-active.png')),
-  [64, 60],
-  'owner tools active icon must use the canonical canvas'
-)
-
-for (const icon of ['tab-service.png', 'tab-tools.png', 'tab-profile.png']) {
-  const homeIcon = fs.readFileSync(
-    path.join(previewRoot, 'owner-home', 'assets', icon)
-  )
-  const casesIcon = fs.readFileSync(
-    path.join(previewRoot, 'owner-cases', 'assets', icon)
-  )
-  assert(homeIcon.equals(casesIcon), icon + ' must not change between pages')
+for (const selector of [
+  '.tab-icon-stack',
+  '.tab-icon-layer',
+  '.tab-icon-layer--visible',
+]) {
+  assert(sharedWxss.includes(selector), 'missing stable icon layer: ' + selector)
 }
+
+assert(!sharedWxss.includes('.designer-tab-icon'))
 
 console.log('preview tab bar consistency: ok')

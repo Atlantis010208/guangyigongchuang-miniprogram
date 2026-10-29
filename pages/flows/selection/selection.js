@@ -225,7 +225,7 @@ Page({
         { key:'done', label:'已完成', done:false }
       ]
     }
-    wx.switchTab({ url:'/pages/cart/cart' })
+    wx.navigateTo({ url:'/pages/profile/orders/orders' })
     // 云端保存：requests + orders
     try{
       const db = api.dbInit()

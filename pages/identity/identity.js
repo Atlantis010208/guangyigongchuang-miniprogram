@@ -3,72 +3,49 @@ const app = getApp()
 
 Page({
   data: {
-    selectedRole: '', // 'owner' 或 'designer'
+    selectedRole: '', // 'owner' | 'designer'
     loading: false
   },
 
   onLoad() {
-    // 隐藏返回按钮（如果从其他页面进入的话），确保用户必须选择
     wx.hideHomeButton && wx.hideHomeButton()
   },
 
-  // 选择角色
   selectRole(e) {
     const role = e.currentTarget.dataset.role
-    this.setData({
-      selectedRole: role
-    })
+    this.setData({ selectedRole: role })
   },
 
-  // 点击申请入驻
   onApplyDesigner() {
     wx.navigateTo({
       url: '/pages/auth/designer-denied/designer-denied'
     })
   },
 
-  // 确认选择
-  async onConfirm() {
-    const { selectedRole } = this.data
-    if (!selectedRole) return
+  async saveIdentity(roleValue) {
+    const roleName = roleValue === 2 ? 'designer' : 'owner'
+    const targetUrl = roleValue === 2 ? '/pages/v2/designer-learning/index' : '/pages/v2/owner-home/index'
 
-    // 设计师身份：跳转登录页进行验证
-    if (selectedRole === 'designer') {
-      wx.navigateTo({
-        url: '/pages/auth/login/login?from=designer'
-      })
-      return
-    }
-
-    // 业主身份：调用云函数保存并跳转
     this.setData({ loading: true })
 
     try {
-      const roleValue = 1 // 1: 业主(普通用户)
-
       const res = await wx.cloud.callFunction({
         name: 'user_set_identity',
-        data: {
-          role: roleValue
-        }
+        data: { role: roleValue }
       })
 
-      if (res.result && res.result.success) {
-        // 更新本地全局变量
-        app.globalData.userDoc = res.result.user
-        wx.setStorageSync('userDoc', res.result.user)
-        // 存储用户角色（用于启动页判断）
-        wx.setStorageSync('userRole', 'owner')
-        // 标记已非首次启动
-        app.globalData.isFirstLaunch = false
-
-        // 直接跳转回主页
-        wx.switchTab({
-          url: '/pages/products/products'
-        })
-      } else {
-        throw new Error(res.result?.errorMessage || '保存失败')
+      if (!res.result || !res.result.success) {
+        throw new Error(res.result && (res.result.errorMessage || res.result.message) || '保存失败')
       }
+
+      const user = res.result.user
+      app.globalData.userDoc = user
+      app.globalData.userRole = roleName
+      app.globalData.isFirstLaunch = false
+      wx.setStorageSync('userDoc', user)
+      wx.setStorageSync('userRole', roleName)
+
+      wx.reLaunch({ url: targetUrl })
     } catch (err) {
       console.error('设置身份失败', err)
       wx.showToast({
@@ -78,5 +55,12 @@ Page({
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  async onConfirm() {
+    const { selectedRole } = this.data
+    if (!selectedRole || this.data.loading) return
+
+    await this.saveIdentity(selectedRole === 'designer' ? 2 : 1)
   }
 })

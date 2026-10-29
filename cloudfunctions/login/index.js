@@ -860,12 +860,19 @@ exports.main = async (event) => {
     const avatarUrl = profile.avatarUrl || ''
 
     const db = cloud.database()
+    const _ = db.command
     const col = db.collection('users')
 
     // 尝试查询用户，如果集合不存在则自动创建
     let existingUser = null
     try {
-      const queryRes = await col.where({ _openid: openid }).limit(1).get()
+      const identityConditions = [
+        { _openid: openid },
+        { openid },
+        { alternateOpenids: openid }
+      ]
+      if (unionId) identityConditions.push({ unionId })
+      const queryRes = await col.where(_.or(identityConditions)).limit(1).get()
       if (queryRes && queryRes.data && queryRes.data.length) {
         existingUser = queryRes.data[0]
       }
@@ -995,6 +1002,13 @@ exports.main = async (event) => {
       // 更新 unionId（如果之前没有）
       if (unionId && !existingUser.unionId) {
         updateData.unionId = unionId
+      }
+      if (existingUser._openid !== openid) {
+        const alternateOpenids = Array.isArray(existingUser.alternateOpenids)
+          ? existingUser.alternateOpenids.slice()
+          : []
+        if (!alternateOpenids.includes(openid)) alternateOpenids.push(openid)
+        updateData.alternateOpenids = alternateOpenids
       }
       // 确保 roles 字段存在
       if (!('roles' in existingUser)) {

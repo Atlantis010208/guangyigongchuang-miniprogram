@@ -296,7 +296,7 @@ Page({
     
     // 订单跳转到购物车tab页
     if (url === '/pages/cart/cart') {
-      wx.switchTab({ url })
+      wx.navigateTo({ url: '/pages/profile/orders/orders' })
       return
     }
     wx.navigateTo({ url })
@@ -305,15 +305,32 @@ Page({
   /**
    * 跳转设计师工作台
    */
-  goDesigner() {
-    if (!this.data.isDesigner && !this.data.isAdmin) {
-      wx.showToast({ title: '仅设计师可进入', icon: 'none' })
-      return
-    }
+  async goDesigner() {
     const app = getApp()
-    wx.setStorageSync('userRole', 'designer')
-    if (app && app.globalData) app.globalData.userRole = 'designer'
-    wx.switchTab({ url: '/pages/designer-home/designer-home' })
+    try {
+      wx.showLoading({ title: '切换中...', mask: true })
+      const res = await wx.cloud.callFunction({
+        name: 'user_set_identity',
+        data: { role: 2 }
+      })
+      wx.hideLoading()
+
+      if (!res.result || !res.result.success) {
+        throw new Error(res.result && (res.result.errorMessage || res.result.message) || '切换失败')
+      }
+
+      wx.setStorageSync('userDoc', res.result.user)
+      wx.setStorageSync('userRole', 'designer')
+      if (app && app.globalData) {
+        app.globalData.userDoc = res.result.user
+        app.globalData.userRole = 'designer'
+      }
+      wx.switchTab({ url: '/pages/designer-home/designer-home' })
+    } catch (err) {
+      wx.hideLoading()
+      console.error('[home] switch designer failed:', err)
+      wx.showToast({ title: '切换失败，请重试', icon: 'none' })
+    }
   },
 
   /**
@@ -342,7 +359,7 @@ Page({
   goTab(e) {
     const url = e.currentTarget.dataset.url
     if (!url) return
-    wx.switchTab({ url })
+    wx.navigateTo({ url })
   },
 
   /**

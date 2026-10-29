@@ -82,14 +82,25 @@ Component({
       }
     },
 
+    normalizeOptionId(options, value) {
+      const text = String(value === undefined || value === null ? '' : value).trim()
+      if (!text) return ''
+      const list = Array.isArray(options) ? options : []
+      const exact = list.find((option) => String(option && option.id || '').trim() === text)
+      if (exact) return exact.id
+      const byLabel = list.find((option) => String(option && option.label || '').trim() === text)
+      return byLabel ? byLabel.id : text
+    },
+
     focusOtherInput() {
       this.setData({ otherInputFocus: false }, () => {
         this.setData({ otherInputFocus: true })
       })
     },
     onOptionTap(event) {
-      const id = event.currentTarget.dataset.id
       const { question, answer } = this.data
+      const id = this.normalizeOptionId(question.options, event.currentTarget.dataset.id)
+      if (!id) return
       const state = this.choiceState(answer)
       const option = (question.options || []).find((item) => item.id === id)
       if (question.type === 'single') {
@@ -169,9 +180,10 @@ Component({
     onTableOptionTap(event) {
       const rowIndex = Number(event.currentTarget.dataset.rowIndex)
       const columnId = event.currentTarget.dataset.columnId
-      const optionId = event.currentTarget.dataset.optionId
       const column = ((this.data.question.table && this.data.question.table.columns) || []).find((item) => item.id === columnId)
       if (!column) return
+      const optionId = this.normalizeOptionId(column.options, event.currentTarget.dataset.optionId)
+      if (!optionId) return
       if (column.type === 'single') {
         this.updateTableCell(rowIndex, columnId, optionId)
         return

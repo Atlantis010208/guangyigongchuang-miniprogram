@@ -151,24 +151,26 @@
   </view>
 
   <!-- 虚拟发货信息卡片（仅已支付的虚拟商品显示：工具包/课程） -->
-  <view class="card virtual-delivery-card" wx:if="{{showVirtualDelivery && virtualDeliveryInfo}}">
+  <view class="card virtual-delivery-card" wx:if="{{showVirtualDelivery}}" wx:for="{{virtualDeliveries}}" wx:for-item="delivery" wx:for-index="deliveryIndex" wx:key="productId">
     <view class="virtual-delivery-header">
-      <text class="card-title">{{virtualDeliveryInfo.title || '虚拟发货信息'}}</text>
+      <text class="card-title">{{delivery.title || '虚拟发货信息'}}</text>
       <view class="virtual-delivery-tag">已发货</view>
     </view>
     <view class="virtual-delivery-content">
-      <text class="virtual-delivery-text">{{virtualDeliveryInfo.content}}</text>
-      <view class="virtual-delivery-link-row">
-        <text class="virtual-delivery-label">{{virtualDeliveryInfo.linkLabel || '链接'}}：</text>
-        <text class="virtual-delivery-link" selectable="true">{{virtualDeliveryInfo.link}}</text>
+      <text class="virtual-delivery-text">{{delivery.productName}}</text>
+      <text class="virtual-delivery-text">{{delivery.content}}</text>
+      <view class="virtual-delivery-link-row" wx:if="{{delivery.link}}">
+        <text class="virtual-delivery-label">{{delivery.linkLabel || '链接'}}：</text>
+        <text class="virtual-delivery-link" selectable="true">{{delivery.link}}</text>
       </view>
-      <view class="virtual-delivery-code-row">
-        <text class="virtual-delivery-label">{{virtualDeliveryInfo.codeLabel || '提取码'}}：</text>
-        <text class="virtual-delivery-code">{{virtualDeliveryInfo.extractCode}}</text>
+      <view class="virtual-delivery-code-row" wx:if="{{delivery.extractCode}}">
+        <text class="virtual-delivery-label">{{delivery.codeLabel || '提取码'}}：</text>
+        <text class="virtual-delivery-code">{{delivery.extractCode}}</text>
       </view>
-      <text class="virtual-delivery-alt">{{virtualDeliveryInfo.altContact}}</text>
+      <text class="virtual-delivery-alt">{{delivery.altContact}}</text>
     </view>
-    <button class="virtual-delivery-copy-btn" bindtap="onCopyVirtualDelivery">一键复制</button>
+    <image wx:if="{{delivery.qrcodeImage}}" src="{{delivery.qrcodeImage}}" mode="widthFix" style="width: 240rpx;" />
+    <button data-index="{{deliveryIndex}}" class="virtual-delivery-copy-btn" bindtap="onCopyVirtualDelivery">一键复制</button>
   </view>
 
   <!-- 退款信息卡片（有退款记录时显示） -->

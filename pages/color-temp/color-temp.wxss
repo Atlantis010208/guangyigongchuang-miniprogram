@@ -1,5 +1,5 @@
 /* pages/color-temp/color-temp.wxss */
-@import "../search/search.wxss";
+@import "../../styles/lighting-tools.wxss";
 
 .color-temp-page {
   padding-bottom: 60rpx;

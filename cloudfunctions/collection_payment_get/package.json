@@ -1,0 +1,9 @@
+{
+  "name": "collection_payment_get",
+  "version": "1.0.0",
+  "description": "通用收款付款页查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

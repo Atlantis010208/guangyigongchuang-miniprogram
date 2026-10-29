@@ -47,7 +47,7 @@
 
     <!-- ③ 四宫格 - 订单管理 / 我的收藏 / 购物车 / 主要发货地址 -->
     <view class="quick-grid">
-      <view class="quick-item" bindtap="goTab" data-url="/pages/cart/cart" hover-class="quick-item-hover">
+      <view class="quick-item" bindtap="goTab" data-url="/pages/profile/orders/orders" hover-class="quick-item-hover">
         <image class="quick-icon" src="/images/订单.png" mode="aspectFit"></image>
         <text class="quick-label">订单管理</text>
       </view>
@@ -115,7 +115,7 @@
         <text class="list-label">设置</text>
         <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
       </view>
-      <view wx:if="{{isDesigner || isAdmin}}" class="list-item" bindtap="goDesigner" hover-class="list-item-hover">
+      <view class="list-item" bindtap="goDesigner" hover-class="list-item-hover">
         <text class="list-label">设计师工作台</text>
         <image class="list-arrow" src="/images/进入箭头.png" mode="aspectFit"></image>
       </view>

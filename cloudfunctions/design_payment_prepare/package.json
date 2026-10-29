@@ -1,0 +1,9 @@
+{
+  "name": "design_payment_prepare",
+  "version": "1.0.0",
+  "description": "小程序设计请求收款支付准备",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

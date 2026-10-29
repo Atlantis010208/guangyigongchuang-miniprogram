@@ -109,7 +109,7 @@
   </view>
 
   <!-- 底部操作栏 -->
-  <view wx:if="{{!loading && designer}}" class="action-bar">
+  <view wx:if="{{!loading && designer && !fromSelf}}" class="action-bar">
     <view class="action-icon-btn" bindtap="onCollect">
       <text class="action-icon-text">♡</text>
       <text class="action-icon-label">收藏</text>

@@ -30,6 +30,7 @@
     <scroll-view class="filter-scroll" scroll-x>
       <view class="filter-chip {{filterType==='mall' ? 'active' : ''}}" data-type="mall" bindtap="onFilterTap">商品订单 ({{mallOrders.length || 0}})</view>
       <view class="filter-chip {{filterType==='scheme' ? 'active' : ''}}" data-type="scheme" bindtap="onFilterTap">共创订单 ({{requests.length || 0}})</view>
+      <view class="filter-chip {{filterType==='collection' ? 'active' : ''}}" data-type="collection" bindtap="onFilterTap">需求收集 ({{collectionSubmissions.length || 0}})</view>
     </scroll-view>
   </view>
 
@@ -224,11 +225,32 @@
     </view>
   </view>
 
+  <view class="cart-content" wx:if="{{filterType==='collection' && collectionSubmissions.length > 0}}">
+    <view class="cart-items">
+      <view class="cart-item collection-card" wx:for="{{collectionSubmissions}}" wx:key="id" data-item="{{item}}" bindtap="onCollectionTap">
+        <view class="item-content">
+          <view class="collection-icon">PDF</view>
+          <view class="item-info">
+            <view class="item-title-row"><text class="item-title">{{item.title}}</text><text class="tag-status">{{item.pdfStatusText}}</text></view>
+            <text class="item-specs">{{item.projectSummary || '已提交需求收集表'}}</text>
+            <text class="item-specs">{{item.timeText}} · {{item.requestId}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- 方案订单空状态 -->
   <view wx:if="{{filterType==='scheme' && requests.length === 0}}" class="empty-cart">
     <image class="empty-icon" src="../../images/cart.png" mode="aspectFit"></image>
     <text class="empty-title strong">暂无方案订单</text>
     <text class="empty-subtitle center">发布照明需求或查看个人中心的订单。</text>
+  </view>
+
+  <view wx:if="{{filterType==='collection' && collectionSubmissions.length === 0}}" class="empty-cart">
+    <image class="empty-icon" src="../../images/cart.png" mode="aspectFit"></image>
+    <text class="empty-title strong">暂无需求收集记录</text>
+    <text class="empty-subtitle center">填写需求收集表后，可在这里查看并导出 PDF。</text>
   </view>
 
   <!-- 商城订单空状态 -->

@@ -17,7 +17,7 @@
         >
           <image
             class="avatar-image"
-            src="./assets/avatar.webp"
+            src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/avatar.webp"
             mode="aspectFill"
             fade-in="{{false}}"
           />
@@ -50,7 +50,7 @@
 
         <image
           class="next-project-image"
-          src="./assets/project-residential.webp"
+          src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-residential.webp"
           mode="aspectFill"
           fade-in="{{false}}"
           aria-label="住宅灯光设计方案项目图片"
@@ -82,7 +82,7 @@
             <text>{{copy.viewProjectLabel}}</text>
             <image
               class="chevron chevron--action"
-              src="./assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -103,7 +103,7 @@
             <text>{{copy.allTodos}}</text>
             <image
               class="chevron chevron--small"
-              src="./assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -128,7 +128,7 @@
             <view class="todo-time">{{item.time}}</view>
             <image
               class="chevron chevron--todo"
-              src="./assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -148,7 +148,7 @@
             <text>{{copy.viewAll}}</text>
             <image
               class="chevron chevron--small"
-              src="./assets/icon-chevron-right-v2.png"
+              src="cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-chevron-right-v2.png"
               mode="aspectFit"
               fade-in="{{false}}"
               aria-hidden="true"
@@ -228,15 +228,22 @@
         class="tab-item {{activeTab === item.id ? 'tab-item--active' : ''}}"
         data-id="{{item.id}}"
         bindtap="switchTab"
-        hover-class="tap-soft"
+        hover-class="none"
       >
-        <image
-          class="designer-tab-icon"
-          src="{{item.icon}}"
-          mode="aspectFit"
-          fade-in="{{false}}"
-          aria-hidden="true"
-        />
+        <view class="tab-icon-stack" aria-hidden="true">
+          <image
+            class="tab-icon-layer {{activeTab !== item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.icon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+          <image
+            class="tab-icon-layer {{activeTab === item.id ? 'tab-icon-layer--visible' : ''}}"
+            src="{{item.activeIcon}}"
+            mode="aspectFit"
+            fade-in="{{false}}"
+          />
+        </view>
         <text class="tab-label">{{item.label}}</text>
       </button>
     </view>

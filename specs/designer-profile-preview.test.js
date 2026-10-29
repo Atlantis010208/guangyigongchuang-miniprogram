@@ -46,12 +46,22 @@ assert.strictEqual(pageConfig.disableScroll, true)
 
 for (const className of [
   'profile-header',
+  'designer-checking-panel',
+  'designer-checking-card',
+  'checking-spinner',
+  'designer-login-panel',
+  'designer-login-card',
+  'login-avatar-picker',
+  'login-confirm-button',
   'identity-card',
   'profile-shortcuts',
   'works-section',
   'works-grid',
   'settings-section',
   'settings-card',
+  'owner-entry-section',
+  'owner-entry-card',
+  'owner-entry-content',
   'completeness-note',
   'preview-tabbar',
 ]) {
@@ -71,7 +81,14 @@ for (const binding of [
   'copy.intro',
   'copy.works',
   'copy.accountSettings',
+  'copy.ownerPortal',
+  'copy.ownerPortalHint',
   'copy.completeness',
+  'copy.checkingTitle',
+  'copy.checkingSubtitle',
+  'copy.checkingHint',
+  'copy.loginTitle',
+  'copy.loginConfirm',
 ]) {
   assert(pageWxml.includes('{{' + binding + '}}'))
 }
@@ -87,13 +104,15 @@ for (const interaction of [
   'manageWorks',
   'openWork',
   'openSetting',
+  'switchToOwner',
   'switchTab',
 ]) {
   assert(pageWxml.includes('bindtap="' + interaction + '"'))
 }
 
 assert(!/certification|professionalCertification/.test(pageJs + pageWxml))
-assert(!/wx\.cloud|callFunction/.test(pageJs))
+assert(!/callFunction/.test(pageJs))
+assert(pageJs.includes('wx.cloud.uploadFile'))
 assert(!pageWxml.includes('9:41') && !pageWxml.includes('4G'))
 assert(!pageWxml.includes('codex-clipboard-d6a112e5'))
 assert(pageWxss.includes('@import "../shared/preview-tabbar.wxss"'))
@@ -112,6 +131,12 @@ for (const tallScreenRule of [
 
 for (const [selector, expected] of [
   ['.profile-page-title', 'font-size: 56rpx'],
+  ['.profile-heading--center .profile-page-title', 'font-size: 38rpx'],
+  ['.designer-login-card', 'height: 814rpx'],
+  ['.login-confirm-button', 'border-radius: 999rpx'],
+  ['.login-confirm-button', 'width: 400rpx'],
+  ['.login-confirm-button', 'height: 84rpx'],
+  ['.login-confirm-button', 'background: #000000'],
   ['.identity-card', 'height: 308rpx'],
   ['.profile-avatar', 'width: 154rpx'],
   ['.profile-avatar', 'height: 154rpx'],
@@ -119,19 +144,13 @@ for (const [selector, expected] of [
   ['.settings-card', 'height: 164rpx'],
 ]) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const rule = pageWxss.match(new RegExp(escaped + '\\s*\\{([^}]*)\\}'))?.[1]
+  const rule = pageWxss.match(new RegExp('(?:^|\\n)' + escaped + '\\s*\\{([^}]*)\\}'))?.[1]
   assert(rule && rule.includes(expected), selector + ' must match ' + expected)
 }
 
 for (const asset of [
-  'profile-avatar.png',
-  'portfolio-bedroom.png',
-  'project-residential-card.webp',
-  'project-commercial.webp',
-  'icon-tab-workbench-v2.png',
-  'icon-tab-learning-v2.png',
-  'icon-tab-tools-v2.png',
-  'icon-tab-projects-v2.png',
+  'login-camera.png',
+  'login-shield.png',
   'icon-chevron-right-v2.png',
 ]) {
   const localAsset = path.join(pageRoot, 'assets', asset)
@@ -144,6 +163,21 @@ for (const asset of [
   assert(fs.existsSync(localAsset) || fs.existsSync(sharedAsset))
   assert(pageJs.includes(asset) || pageWxml.includes(asset))
 }
+
+for (const asset of [
+  'tab-learning-default.png',
+  'tab-learning-active.png',
+  'tab-designer-tools-default.png',
+  'tab-designer-tools-active.png',
+  'tab-projects-default.png',
+  'tab-projects-active.png',
+  'tab-profile-default.png',
+  'tab-profile-active.png',
+]) {
+  assert(fs.existsSync(path.join(previewRoot, 'shared', 'assets', 'tabbar', asset)))
+  assert(pageJs.includes(asset))
+}
+assert(pageWxml.includes('src="{{item.activeIcon}}"'))
 
 for (const nativeApi of [
   'getWindowInfo',
@@ -207,8 +241,55 @@ assert.strictEqual(runtime.page.data.statusBarHeight, 20)
 assert.strictEqual(runtime.page.data.navigationBarHeight, 44)
 assert.strictEqual(runtime.page.data.headerHeight, 94)
 assert.strictEqual(runtime.page.data.works.length, 0)
+assert.strictEqual(runtime.page.data.profileState, 'loading')
+assert.strictEqual(runtime.page.data.profileLoading, true)
+assert.strictEqual(runtime.page.data.copy.checkingTitle, '\u6b63\u5728\u6838\u9a8c\u8bbe\u8ba1\u5e08\u8eab\u4efd')
+assert.strictEqual(runtime.page.data.copy.checkingSubtitle, '\u6b63\u5728\u786e\u8ba4\u4f60\u7684\u8d26\u53f7\u4e0e\u8bbe\u8ba1\u5e08\u6743\u9650\uff0c\u8bf7\u7a0d\u5019')
+assert.strictEqual(runtime.page.data.copy.checkingHint, '\u5df2\u5b8c\u5584\u8d44\u6599\u7684\u8d26\u53f7\u4f1a\u81ea\u52a8\u8fdb\u5165\u8bbe\u8ba1\u5e08\u7aef')
+assert.strictEqual(runtime.page.data.copy.subtitle, '登录后管理你的专业档案')
+assert.strictEqual(runtime.page.data.copy.loginPageSubtitle, '登录后管理你的专业档案')
+assert.strictEqual(runtime.page.data.copy.loginTitle, '完善设计师登录信息')
+assert.strictEqual(runtime.page.data.copy.loginSubtitle, '用于创建你的专业档案与项目联系资料')
+assert.strictEqual(runtime.page.data.copy.loginAvatar, '上传头像')
+assert.strictEqual(runtime.page.data.copy.loginNickname, '昵称')
+assert.strictEqual(runtime.page.data.copy.loginNicknamePlaceholder, '请输入设计师昵称')
+assert.strictEqual(runtime.page.data.copy.loginPhone, '手机号')
+assert.strictEqual(runtime.page.data.copy.loginPhonePlaceholder, '请输入手机号')
+assert.strictEqual(runtime.page.data.copy.loginPhoneAction, '授权手机号')
+assert.strictEqual(runtime.page.data.copy.loginMeta, '认证后可使用专业档案功能')
+assert(pageJs.includes('emptyWorks'))
+assert(pageWxml.includes('open-type="chooseAvatar"'))
+assert(pageWxml.includes('bindchooseavatar="onChooseLoginAvatar"'))
+assert(pageWxml.includes('type="nickname"'))
+assert(pageWxml.includes('open-type="getPhoneNumber"'))
+assert(pageWxml.includes('bindgetphonenumber="onGetLoginPhoneNumber"'))
+assert(pageWxml.includes('bindtap="submitDesignerLogin"'))
+assert(pageWxml.includes('bindtap="deferDesignerLogin"'))
+assert(pageWxml.includes('ui-v2-assets/pages/v2/designer-profile/assets/login-camera.png'))
+assert(pageWxml.includes('ui-v2-assets/pages/v2/designer-profile/assets/login-shield.png'))
+assert(!pageWxml.includes('designer-login-mark'))
+assert(pageWxml.includes('wx:if="{{profileState === \'loading\'}}"'))
+assert(pageWxml.includes('wx:elif="{{profileState === \'login\' || profileState === \'error\'}}"'))
+assert(!pageWxml.includes('wx:if="{{profileState !== \'ready\'}}" class="designer-login-panel"'))
+assert(pageWxml.includes('wx:if="{{works.length > 0}}"'))
+assert(pageWxml.includes('works-empty'))
+assert(pageWxss.includes('.designer-checking-panel'))
+assert(pageWxss.includes('@keyframes checking-spin'))
+assert(pageWxss.includes('@keyframes checking-progress'))
+assert(!pageJs.includes('const WORKS'))
+assert(pageWxml.includes('wx:if="{{avatarUrl}}"'))
+assert(pageWxml.includes('profile-avatar--empty'))
+assert(!pageWxml.includes("avatarUrl || './assets/profile-avatar.png'"))
+assert(pageJs.includes('const response = await designerApi.setIdentity(1)'))
+assert(pageJs.includes("wx.setStorageSync('userRole', 'owner')"))
+assert(pageJs.includes("redirectTo('/pages/v2/owner-home/index')"))
+assert(pageWxml.includes('loading="{{ownerSwitching}}"'))
+assert(pageWxml.includes("ownerSwitching ? 'owner-entry-card--loading' : ''"))
+assert(pageWxss.includes('.owner-entry-card--loading .owner-entry-content'))
+assert(!pageJs.includes('COPY.ownerSwitching'))
 assert.strictEqual(runtime.page.data.settings.length, 2)
-assert.strictEqual(runtime.page.data.tabs.length, 5)
+assert.strictEqual(runtime.page.data.tabs.length, 4)
+assert.strictEqual(runtime.page.data.tabs.map((item) => item.id).join(','), 'learning,tools,projects,profile')
 assert.strictEqual(runtime.page.data.activeTab, 'profile')
 
 runtime.page.editProfile()
@@ -222,6 +303,21 @@ runtime.page.manageWorks()
 assert.strictEqual(
   runtime.calls.find((call) => call.api === 'navigateTo')?.options.url,
   '/pages/designer-portfolios/designer-portfolios'
+)
+
+runtime.calls.length = 0
+runtime.page.previewHomepage()
+assert.strictEqual(
+  runtime.calls.find((call) => call.api === 'showToast')?.options.title,
+  '个人主页暂时无法打开'
+)
+
+runtime.calls.length = 0
+runtime.page.setData({ designerId: 'designer-1' })
+runtime.page.previewHomepage()
+assert.strictEqual(
+  runtime.calls.find((call) => call.api === 'navigateTo')?.options.url,
+  '/pages/designers/detail/detail?id=designer-1&from=self'
 )
 
 runtime.calls.length = 0

@@ -1,4 +1,4 @@
-﻿const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
+const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
 const designerApi = typeof require === 'function' ? require('../../../services/v2/designer') : { overview: async () => ({ ok: false }) }
 
 /**
@@ -64,14 +64,14 @@ const PROJECTS = Object.freeze([
     title: '\u4f4f\u5b85\u706f\u5149\u8bbe\u8ba1\u65b9\u6848',
     tag: '\u65b9\u6848\u8bbe\u8ba1',
     progress: 65,
-    image: '/pages/v2/designer-workbench/assets/project-residential-card.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-residential-card.webp',
   },
   {
     id: 'commercial',
     title: '\u5546\u94fa \u00b7 \u706f\u5149\u65bd\u5de5\u56fe',
     tag: '\u5f85\u4fee\u6539',
     progress: 40,
-    image: '/pages/v2/designer-workbench/assets/project-commercial.webp',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/project-commercial.webp',
   },
 ])
 
@@ -79,17 +79,17 @@ const QUICK_TOOLS = Object.freeze([
   {
     id: 'illuminance',
     label: '\u7167\u5ea6\u8ba1\u7b97',
-    icon: '/pages/v2/designer-workbench/assets/icon-quick-illuminance-v2.png',
+    icon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-quick-illuminance-v2.png',
   },
   {
     id: 'temperature',
     label: '\u8272\u6e29\u8f6c\u6362',
-    icon: '/pages/v2/designer-workbench/assets/icon-quick-temperature-v2.png',
+    icon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-quick-temperature-v2.png',
   },
   {
     id: 'checklist',
     label: '\u6e05\u5355\u751f\u6210',
-    icon: '/pages/v2/designer-workbench/assets/icon-quick-checklist-v2.png',
+    icon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/designer-workbench/assets/icon-quick-checklist-v2.png',
   },
 ])
 
@@ -97,27 +97,32 @@ const TABS = Object.freeze([
   {
     id: 'workbench',
     label: '\u5de5\u4f5c\u53f0',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-workbench-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-home-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-home-active.png',
   },
   {
     id: 'learning',
     label: '\u5b66\u4e60',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-learning-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-learning-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-learning-active.png',
   },
   {
     id: 'tools',
     label: '\u5de5\u5177',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-tools-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-active.png',
   },
   {
     id: 'projects',
     label: '\u9879\u76ee',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-projects-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-projects-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-projects-active.png',
   },
   {
     id: 'profile',
     label: '\u6211\u7684',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-profile-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-profile-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-profile-active.png',
   },
 ])
 
@@ -404,5 +409,3 @@ Page({
     }
   },
 })
-
-

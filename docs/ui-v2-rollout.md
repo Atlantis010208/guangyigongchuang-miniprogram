@@ -1,4 +1,6 @@
-# UI V2 零影响联调与灰度上线 Runbook
+# UI V2 生产双 UI 发布 Runbook
+
+> 当前策略：release 使用旧版 UI；develop/trial 使用新版 UI。三种版本统一连接生产 CloudBase，禁止使用测试环境。下方历史测试环境章节仅作存档，不属于当前发布路径。
 
 ## 当前保护点
 

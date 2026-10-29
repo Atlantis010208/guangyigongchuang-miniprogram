@@ -36,6 +36,9 @@ const pageWxml = fs.readFileSync(path.join(pageRoot, 'index.wxml'), 'utf8')
 const pageWxss = fs
   .readFileSync(path.join(pageRoot, 'index.wxss'), 'utf8')
   .replace(/\r\n/g, '\n')
+const sharedTabbarWxss = fs
+  .readFileSync(path.join(previewRoot, 'shared', 'preview-tabbar.wxss'), 'utf8')
+  .replace(/\r\n/g, '\n')
 
 assert.strictEqual(config.navigationStyle, 'custom')
 assert.strictEqual(config.enablePullDownRefresh, false)
@@ -74,7 +77,6 @@ for (const destination of [
   '/pages/color-temp/color-temp',
   '/pages/gallery/gallery',
   '/pages/quiz/lighting-intro/lighting-intro',
-  '/pages/v2/designer-workbench/index',
   '/pages/v2/designer-learning/index',
   '/pages/v2/designer-projects/index',
   '/pages/v2/designer-profile/index',
@@ -86,8 +88,13 @@ assert(pageWxss.includes('@import "../shared/preview-tabbar.wxss";'))
 assert(pageWxss.includes('min-height: 184rpx;'))
 assert(pageWxss.includes('min-height: 448rpx;'))
 assert(pageWxss.includes('height: 272rpx;'))
-assert(pageWxss.includes('.tab-item--active .designer-tab-icon'))
-assert(!pageWxml.includes('tab-icon--active'))
+assert(sharedTabbarWxss.includes('.tab-icon-layer--visible'))
+assert(pageWxml.includes('class="tab-icon-stack"'))
+assert(pageWxml.includes('src="{{item.icon}}"'))
+assert(pageWxml.includes('src="{{item.activeIcon}}"'))
+assert(pageWxml.includes('fade-in="{{false}}"'))
+assert(pageJs.includes('tab-designer-tools-default.png'))
+assert(pageJs.includes('tab-designer-tools-active.png'))
 
 for (const name of [
   'illuminance.webp',
@@ -154,7 +161,6 @@ for (const destination of [
 }
 
 for (const [id, destination] of [
-  ['workbench', '/pages/v2/designer-workbench/index'],
   ['learning', '/pages/v2/designer-learning/index'],
   ['projects', '/pages/v2/designer-projects/index'],
   ['profile', '/pages/v2/designer-profile/index'],

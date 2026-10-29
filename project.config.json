@@ -59,6 +59,10 @@
         "type": "folder"
       },
       {
+        "value": "output",
+        "type": "folder"
+      },
+      {
         "value": "compressed-videos",
         "type": "folder"
       },

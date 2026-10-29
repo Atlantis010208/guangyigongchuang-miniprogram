@@ -61,6 +61,8 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
+      case 'access':
+        return await checkProjectAccess(openid)
       case 'list':
         return await listProjects(openid, event)
       case 'detail':
@@ -77,6 +79,22 @@ exports.main = async (event, context) => {
     if (err.message === 'NOT_DESIGNER') {
       return { success: false, code: 'NOT_DESIGNER', message: '当前账号不是设计师身份' }
     }
+    if (err.message === 'DESIGNER_NOT_CERTIFIED') {
+      return {
+        success: false,
+        code: 'DESIGNER_NOT_CERTIFIED',
+        message: '当前账号尚未通过设计师认证',
+        data: { allowed: false, certified: false }
+      }
+    }
+    if (err.message === 'NOT_DESIGNER_PROFILE') {
+      return {
+        success: false,
+        code: 'NOT_DESIGNER_PROFILE',
+        message: '设计师档案不存在，请联系管理员处理',
+        data: { allowed: false, certified: true }
+      }
+    }
     if (err.message === 'USER_NOT_FOUND') {
       return { success: false, code: 'NOT_FOUND', message: '用户不存在，请先登录' }
     }
@@ -85,20 +103,78 @@ exports.main = async (event, context) => {
 }
 
 /**
- * 验证用户为设计师，返回 user 和 designer
+ * 生成可兼容历史存储格式的手机号候选值。
  */
-async function verifyDesigner(openid) {
+function getPhoneMatchList(user) {
+  const values = []
+  const add = value => {
+    const text = String(value || '').trim().replace(/[\s\-()]/g, '')
+    if (text && values.indexOf(text) === -1) values.push(text)
+  }
+  const candidates = [user.phone, user.phoneNumber, user.mobile]
+  candidates.forEach(value => {
+    const raw = String(value || '').trim().replace(/[\s\-()]/g, '')
+    if (!raw) return
+    add(raw)
+    let pure = raw
+    if (pure.indexOf('+86') === 0) pure = pure.slice(3)
+    if (pure.indexOf('86') === 0 && pure.length === 13) pure = pure.slice(2)
+    add(pure)
+    if (/^1\d{10}$/.test(pure)) {
+      add('+86' + pure)
+      add('86' + pure)
+    }
+  })
+  return values
+}
+
+/**
+ * 以 active 设计师白名单和设计师档案作为项目页服务端准入条件。
+ */
+async function verifyDesignerWhitelistAccess(openid) {
   const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
   if (!userRes.data || userRes.data.length === 0) throw new Error('USER_NOT_FOUND')
   const user = userRes.data[0]
-  if (user.roles !== 2 && user.roles !== 0) throw new Error('NOT_DESIGNER')
+
+  const whitelistConditions = [
+    { status: 'active', openid },
+    { status: 'active', activatedOpenid: openid },
+    { status: 'active', userOpenid: openid },
+    { status: 'active', designerOpenid: openid }
+  ]
+  const phoneMatchList = getPhoneMatchList(user)
+  if (phoneMatchList.length > 0) {
+    whitelistConditions.push({ status: 'active', phone: _.in(phoneMatchList) })
+  }
+  const whitelistRes = await db.collection('designer_whitelist')
+    .where(_.or(whitelistConditions))
+    .limit(1)
+    .get()
+  if (!whitelistRes.data || whitelistRes.data.length === 0) {
+    throw new Error('DESIGNER_NOT_CERTIFIED')
+  }
 
   const designerRes = await db.collection('designers')
     .where(_.or([{ _openid: openid }, { openid: openid }]))
     .limit(1)
     .get()
   const designer = (designerRes.data && designerRes.data.length > 0) ? designerRes.data[0] : null
-  return { user, designer }
+  if (!designer) throw new Error('NOT_DESIGNER_PROFILE')
+  return { user, designer, whitelist: whitelistRes.data[0] }
+}
+
+async function verifyDesigner(openid) {
+  return verifyDesignerWhitelistAccess(openid)
+}
+
+async function checkProjectAccess(openid) {
+  const { designer } = await verifyDesignerWhitelistAccess(openid)
+  return {
+    success: true,
+    code: 'OK',
+    message: '设计师项目权限验证通过',
+    data: { allowed: true, certified: true, designerId: designer._id }
+  }
 }
 
 /**

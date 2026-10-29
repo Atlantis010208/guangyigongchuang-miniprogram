@@ -36,6 +36,9 @@ const pageWxml = fs.readFileSync(path.join(pageRoot, 'index.wxml'), 'utf8')
 const pageWxss = fs
   .readFileSync(path.join(pageRoot, 'index.wxss'), 'utf8')
   .replace(/\r\n/g, '\n')
+const sharedTabbarWxss = fs
+  .readFileSync(path.join(previewRoot, 'shared', 'preview-tabbar.wxss'), 'utf8')
+  .replace(/\r\n/g, '\n')
 
 assert.strictEqual(config.navigationStyle, 'custom')
 assert.strictEqual(config.enablePullDownRefresh, false)
@@ -77,10 +80,18 @@ for (const metricApi of [
 assert(pageWxss.includes('@import "../shared/preview-tabbar.wxss";'))
 assert(pageWxss.includes('height: 272rpx;'))
 assert(pageWxss.includes('min-height: 276rpx;'))
-assert(pageWxss.includes('.tab-item--active .designer-tab-icon'))
-assert(!pageWxml.includes('tab-icon--active'))
+assert(sharedTabbarWxss.includes('.tab-icon-layer--visible'))
+assert(pageWxml.includes('class="tab-icon-stack"'))
+assert(pageWxml.includes('src="{{item.icon}}"'))
+assert(pageWxml.includes('src="{{item.activeIcon}}"'))
+assert(pageWxml.includes('fade-in="{{false}}"'))
+assert(pageJs.includes('tab-learning-default.png'))
+assert(pageJs.includes('tab-learning-active.png'))
 assert(!pageWxml.includes('instructor-card'))
 assert(!pageJs.includes('openInstructor'))
+assert(pageJs.includes('/pages/v2/designer-learning-content/index?courseId='))
+assert(pageJs.includes('/pages/course/course-detail/course-detail?id='))
+for (const section of ['intro', 'catalog', 'history']) assert(pageJs.includes(`'${section}'`))
 
 const heroPath = path.join(pageRoot, 'assets', 'course-hero.webp')
 const hero = fs.readFileSync(heroPath)
@@ -140,13 +151,14 @@ page.openContentItem({
 })
 assert.strictEqual(calls.at(-1).api, 'showToast')
 
-page.switchTab({
-  currentTarget: { dataset: { id: 'workbench' } },
+page.setData({ courseId: 'COURSE_1' })
+page.openContentItem({
+  currentTarget: { dataset: { id: 'catalog' } },
 })
-assert.strictEqual(calls.at(-1).api, 'redirectTo')
+assert.strictEqual(calls.at(-1).api, 'navigateTo')
 assert.strictEqual(
   calls.at(-1).options.url,
-  '/pages/v2/designer-workbench/index'
+  '/pages/course/course-detail/course-detail?id=COURSE_1&tab=1'
 )
 
 page.switchTab({

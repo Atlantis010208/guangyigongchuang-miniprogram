@@ -291,7 +291,7 @@ Page({
     
     wx.showToast({ title: '提交成功', icon: 'success' })
     setTimeout(() => {
-      wx.switchTab({ url:'/pages/cart/cart' })
+      wx.navigateTo({ url:'/pages/profile/orders/orders' })
     }, 1000)
     this._submitting = false
     this.setData({ submitting:false })

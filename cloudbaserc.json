@@ -1,5 +1,5 @@
 {
-  "envId": "__SET_EXPLICIT_TEST_ENV_ID_BEFORE_DEPLOY__",
+  "envId": "cloud1-5gb9c5u2c58ad6d7",
   "functionRoot": "./cloudfunctions",
   "functions": [
     {
@@ -52,6 +52,12 @@
       "description": "照明计算报告生成云函数 - 生成8页报告数据、CSV数据并持久化"
     },
     {
+      "name": "color_temp_ai",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "AI-driven color temperature recommendation cloud function (MiniMax-M3)"
+    },
+    {
       "name": "toolkit_purchase_check",
       "runtime": "Nodejs18.15",
       "installDependency": true
@@ -72,6 +78,12 @@
       "installDependency": true
     },
     {
+      "name": "collection_form_export_pdf",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "生成需求收集表品牌 PDF"
+    },
+    {
       "name": "admin_collection_form_submissions",
       "runtime": "Nodejs18.15",
       "installDependency": true
@@ -87,9 +99,125 @@
       "installDependency": true
     },
     {
+      "name": "admin_cases",
+      "runtime": "Nodejs16.13",
+      "installDependency": true,
+      "description": "后台案例管理"
+    },
+    {
+      "name": "admin_case_presentation",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "案例沉浸演示生成、编辑、预览与发布",
+      "timeout": 600,
+      "triggers": [
+        {
+          "name": "case_presentation_generation_worker",
+          "type": "timer",
+          "config": "*/10 * * * * * *"
+        }
+      ]
+    },
+    {
+      "name": "lighting_cases_list",
+      "runtime": "Nodejs16.13",
+      "installDependency": true,
+      "description": "lighting cases client list and detail"
+    },
+    {
       "name": "designer_portal_v2",
       "runtime": "Nodejs18.15",
       "installDependency": true
+    },
+    {
+      "name": "designer_profile",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "designer profile backend integration"
+    },
+    {
+      "name": "designer_portfolios",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "designer portfolios backend integration"
+    },
+    {
+      "name": "designer_projects",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "设计师项目管理与白名单准入校验"
+    },
+    {
+      "name": "designer_demands",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "设计师接单大厅与白名单准入校验"
+    },
+    {
+      "name": "admin_design_payment",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "后台设计请求客户收款管理"
+    },
+    {
+      "name": "admin_collection_payment",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "后台通用发起收款管理"
+    },
+    {
+      "name": "design_payment_get",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序设计请求收款查询"
+    },
+    {
+      "name": "design_payment_prepare",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序设计请求收款支付准备"
+    },
+    {
+      "name": "design_payment_confirm",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序设计请求收款支付确认"
+    },
+    {
+      "name": "collection_payment_get",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序通用收款查询"
+    },
+    {
+      "name": "collection_payment_prepare",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序通用收款支付准备"
+    },
+    {
+      "name": "collection_payment_confirm",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "小程序通用收款支付确认"
+    },
+    {
+      "name": "wxpayFunctions",
+      "runtime": "Nodejs16.13",
+      "installDependency": true,
+      "description": "微信支付统一能力"
+    },
+    {
+      "name": "wxpayOrderCallback",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "微信支付回调处理"
+    },
+    {
+      "name": "wxpayRefundCallback",
+      "runtime": "Nodejs18.15",
+      "installDependency": true,
+      "description": "微信退款回调处理"
     }
   ]
 }

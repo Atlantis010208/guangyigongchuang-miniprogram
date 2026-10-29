@@ -1,3 +1,5 @@
+const ownerApi = typeof require === 'function' ? require('../../../../services/v2/owner') : { profile: async () => ({ ok: false }) }
+
 const COPY = Object.freeze({
   profileAria: '\u8fdb\u5165\u6211\u7684\u9875\u9762',
   title: '\u9009\u62e9\u9002\u5408\u4f60\u7684\u706f\u5149\u670d\u52a1',
@@ -25,6 +27,8 @@ const COPY = Object.freeze({
   continueAction: '\u7ee7\u7eed\u586b\u5199',
   routeError: '\u9875\u9762\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
 })
+
+const MALL_ROUTE = '/pages/mall/mall'
 
 const PROCESS_STEPS = Object.freeze([
   {
@@ -92,6 +96,13 @@ function openPage(url) {
 }
 
 Component({
+  properties: {
+    userAvatar: {
+      type: String,
+      value: '',
+    },
+  },
+
   data: {
     copy: COPY,
     processSteps: PROCESS_STEPS,
@@ -102,6 +113,7 @@ Component({
   lifetimes: {
     attached() {
       this.setData(getLayout())
+      this.loadOwnerProfile()
     },
   },
 
@@ -112,6 +124,19 @@ Component({
   },
 
   methods: {
+    async loadOwnerProfile() {
+      if (this.data.userAvatar) return
+      if (!ownerApi.profile) return
+
+      const response = await ownerApi.profile()
+      const avatarUrl = response.ok && response.data && response.data.user && response.data.user.avatarUrl
+      if (avatarUrl) this.setData({ userAvatar: avatarUrl })
+    },
+
+    handleAvatarError() {
+      this.setData({ userAvatar: '' })
+    },
+
     openCollection() {
       openPage('/pages/flows/collection-type/collection-type')
     },
@@ -125,19 +150,11 @@ Component({
     },
 
     openMall() {
-      wx.switchTab({
-        url: '/pages/mall/mall',
-        fail() {
-          wx.showToast({
-            title: COPY.routeError,
-            icon: 'none',
-          })
-        },
-      })
+      openPage(MALL_ROUTE)
     },
 
     goProfile() {
-      openPage('/pages/profile/home/home')
+      this.triggerEvent('switchprofile', {}, { bubbles: true, composed: true })
     },
   },
 })

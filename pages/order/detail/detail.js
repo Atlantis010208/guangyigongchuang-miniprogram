@@ -2,28 +2,6 @@
 const api = require('../../../utils/api')
 const util = require('../../../utils/util')
 
-// 默认工具包发货信息（当数据库未配置时使用）
-const DEFAULT_TOOLKIT_DELIVERY = {
-  title: '虚拟发货信息',
-  content: '【超级会员V4】通过百度网盘分享的文件：工具包-¥69｜...',
-  linkLabel: '链接',
-  link: 'https://pan.baidu.com/s/1oV8s8g1S6pvES5Vl9LWUhw?pwd=1u1E',
-  codeLabel: '提取码',
-  extractCode: '1u1E',
-  altContact: '复制这段内容打开「百度网盘APP 即可获取」\n需要"夸克网盘"或"其他方式"下载，加vx：ceokpi'
-}
-
-// 默认课程发货信息（当数据库未配置时使用）
-const DEFAULT_COURSE_DELIVERY = {
-  title: '虚拟发货信息',
-  content: '分享内容：灯光课程-¥999｜二哥十年经验的灯光课（正课）',
-  linkLabel: '课程链接',
-  link: 'http://ug.link/DXP8800PRO-D50E/filemgr/share-download/?id=fe4e5b0cde3440fe8a59ab56eb8ce49e',
-  codeLabel: '访问密码',
-  extractCode: '2580',
-  altContact: '由于还在预售阶段，课程还在更新中，加V（ceokpi）后续课程更新会同步发送通知，同时添加后会发"课程赠送的内容"给你。'
-}
-
 Page({
   data:{
     order: null,
@@ -39,6 +17,7 @@ Page({
     canModify: false,  // 是否可以修改订单
     refundInfo: null,  // 退款记录
     showVirtualDelivery: false,  // 是否显示虚拟发货信息（仅已支付的虚拟商品）
+    virtualDeliveries: [],
     virtualDeliveryInfo: null    // 虚拟发货信息
   },
 
@@ -135,53 +114,25 @@ Page({
           const unmodifiableStatus = ['shipped', '已发货', 'completed', '已完成', 'cancelled', 'canceled', '已取消', 'refunded', '已退款', 'closed', '已关闭']
           const canModify = !unmodifiableStatus.includes(order.status)
           
-          // 判断是否显示虚拟发货信息（虚拟商品：已支付即可查看，无需发货）
-          const isPaidOrShipped = paidStatus.includes(order.status) || ['shipped', '已发货'].includes(order.status)
-          const hasToolkit = items.some(item => 
-            item.id === 'toolkit' || 
-            (item.name && item.name.includes('灯光设计工具包'))
-          )
-          const hasCourse = items.some(item => 
-            item.id === 'course01' || 
-            (item.name && (item.name.includes('灯光设计课') || item.name.includes('十年经验二哥')))
-          )
-          
-          // 根据商品类型设置虚拟发货信息（虚拟商品支付成功即可查看）
-          let showVirtualDelivery = false
-          let virtualDeliveryInfo = null
-          
-          if (isPaidOrShipped && hasToolkit) {
-            // 工具包：优先从数据库获取，获取不到则使用默认配置
+          // 发货配置由服务端按订单归属和商品 ID 读取，兼容迁移前的工具包订单。
+          let virtualDeliveries = []
+          const deliveryStatuses = ['paid', 'shipped', 'completed', 'delivered', '已支付', '已发货', '已完成', '已送达']
+          if (deliveryStatuses.includes(order.status)) {
             try {
-              const deliveryInfo = await this.fetchDriveLink(true, false)
-              if (deliveryInfo && deliveryInfo.link) {
-                virtualDeliveryInfo = deliveryInfo
+              const result = await util.callCf('orders_list', { action: 'virtual_delivery', orderNo: order.id })
+              if (result && result.success && result.data) {
+                virtualDeliveries = result.data.deliveries || []
               } else {
-                // 使用默认工具包发货信息
-                virtualDeliveryInfo = DEFAULT_TOOLKIT_DELIVERY
+                wx.showToast({ title: '发货信息加载失败，请重试', icon: 'none' })
               }
-            } catch (e) {
-              console.warn('获取网盘链接失败，使用默认配置:', e)
-              virtualDeliveryInfo = DEFAULT_TOOLKIT_DELIVERY
+            } catch (error) {
+              console.warn('获取虚拟发货信息失败:', error)
+              wx.showToast({ title: '发货信息加载失败，请重试', icon: 'none' })
             }
-            showVirtualDelivery = true
-          } else if (isPaidOrShipped && hasCourse) {
-            // 课程：优先从数据库获取，获取不到则使用默认配置
-            try {
-              const deliveryInfo = await this.fetchDriveLink(false, true)
-              if (deliveryInfo && deliveryInfo.link) {
-                virtualDeliveryInfo = deliveryInfo
-              } else {
-                // 使用默认课程发货信息
-                virtualDeliveryInfo = DEFAULT_COURSE_DELIVERY
-              }
-            } catch (e) {
-              console.warn('获取课程网盘链接失败，使用默认配置:', e)
-              virtualDeliveryInfo = DEFAULT_COURSE_DELIVERY
-            }
-            showVirtualDelivery = true
           }
-          
+          const virtualDeliveryInfo = virtualDeliveries[0] || null
+          const showVirtualDelivery = virtualDeliveries.length > 0
+
           this.setData({ 
             order, 
             orderTime: this.formatTime(order.createdAt),
@@ -190,7 +141,8 @@ Page({
             canCancel,
             canModify,
             showVirtualDelivery,
-            virtualDeliveryInfo
+            virtualDeliveryInfo,
+            virtualDeliveries
           })
           
           // 查询退款记录
@@ -288,72 +240,7 @@ Page({
     }catch(e){ return [] }
   },
 
-  // 获取虚拟商品的网盘链接
-  async fetchDriveLink(hasToolkit, hasCourse) {
-    try {
-      const db = api.dbInit()
-      if (!db) return null
-      
-      if (hasToolkit) {
-        // 查询工具包的网盘链接和完整发货信息
-        const toolkitRes = await db.collection('toolkits')
-          .where({ status: 'active', isDelete: 0 })
-          .field({ driveLink: true, drivePassword: true, driveContent: true, driveAltContact: true, title: true })
-          .orderBy('createdAt', 'desc')
-          .limit(1)
-          .get()
-        
-        if (toolkitRes.data && toolkitRes.data.length > 0) {
-          const toolkit = toolkitRes.data[0]
-          if (toolkit.driveLink) {
-            return {
-              title: '虚拟发货信息',
-              // 优先使用数据库配置的内容描述，否则使用默认值
-              content: toolkit.driveContent || `分享内容：${toolkit.title}`,
-              linkLabel: '链接',
-              link: toolkit.driveLink,
-              codeLabel: '提取码',
-              extractCode: toolkit.drivePassword || '无',
-              // 优先使用数据库配置的备用说明，否则使用默认值
-              altContact: toolkit.driveAltContact || '如有问题，请联系客服微信：ceokpi'
-            }
-          }
-        }
-      }
-      
-      if (hasCourse) {
-        // 查询课程的网盘链接和完整发货信息
-        const courseRes = await db.collection('courses')
-          .where({ status: 'published', isDelete: 0 })
-          .field({ driveLink: true, drivePassword: true, driveContent: true, driveAltContact: true, title: true })
-          .orderBy('createdAt', 'desc')
-          .limit(1)
-          .get()
-        
-        if (courseRes.data && courseRes.data.length > 0) {
-          const course = courseRes.data[0]
-          if (course.driveLink) {
-            return {
-              title: '虚拟发货信息',
-              // 优先使用数据库配置的内容描述，否则使用默认值
-              content: course.driveContent || `分享内容：${course.title}`,
-              linkLabel: '课程链接',
-              link: course.driveLink,
-              codeLabel: '访问密码',
-              extractCode: course.drivePassword || '无',
-              // 优先使用数据库配置的备用说明，否则使用默认值
-              altContact: course.driveAltContact || '课程更新通知请添加客服微信：ceokpi'
-            }
-          }
-        }
-      }
-      
-      return null
-    } catch (e) {
-      console.error('获取网盘链接失败:', e)
-      return null
-    }
-  },
+
 
   // 填充缺失的商品图片（从商品库获取）
   async fillMissingImages(items) {
@@ -553,12 +440,13 @@ Page({
   },
 
   // 复制虚拟发货信息
-  onCopyVirtualDelivery() {
-    const info = this.data.virtualDeliveryInfo
+  onCopyVirtualDelivery(e) {
+    const index = Number(e && e.currentTarget && e.currentTarget.dataset.index || 0)
+    const info = this.data.virtualDeliveries[index]
     if (!info) return
     const linkLabel = info.linkLabel || '链接'
     const codeLabel = info.codeLabel || '提取码'
-    const copyText = `${info.content}\n${linkLabel}：${info.link}\n${codeLabel}：${info.extractCode}\n${info.altContact}`
+    const copyText = [info.content, info.link ? `${linkLabel}：${info.link}` : '', info.extractCode ? `${codeLabel}：${info.extractCode}` : '', info.altContact].filter(Boolean).join('\n')
     wx.setClipboardData({
       data: copyText,
       success: () => {

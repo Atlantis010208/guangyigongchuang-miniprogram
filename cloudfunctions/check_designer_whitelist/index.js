@@ -33,110 +33,179 @@ function normalizePhoneLegacy(phone) {
   return phoneStr
 }
 
-exports.main = async (event) => {
+async function getDocument(db, collectionName, id) {
+  if (!id) return null
+  try {
+    const result = await db.collection(collectionName).doc(id).get()
+    return result.data || null
+  } catch (error) {
+    return null
+  }
+}
+
+async function findOrCreateDesigner(db, _, openid, user, whitelist, phoneMatchList) {
+  let designer = await getDocument(db, 'designers', whitelist.designerId || user.designerId)
+  if (designer && designer.isDelete !== 1) return designer
+
+  const conditions = [
+    { _openid: openid, isDelete: _.neq(1) },
+    { openid, isDelete: _.neq(1) },
+    { userId: user._id, isDelete: _.neq(1) }
+  ]
+  if (phoneMatchList.length > 0) {
+    conditions.push({ phone: _.in(phoneMatchList), isDelete: _.neq(1) })
+    conditions.push({ phoneNumber: _.in(phoneMatchList), isDelete: _.neq(1) })
+  }
+  const result = await db.collection('designers').where(_.or(conditions)).limit(1).get()
+  designer = result.data && result.data[0]
+  if (designer) return designer
+
+  const timestamp = Date.now()
+  const data = {
+    _openid: openid,
+    openid,
+    userId: user._id,
+    whitelistId: whitelist._id,
+    name: whitelist.name || user.nickname || user.name || '设计师',
+    title: '专业灯光设计',
+    avatar: user.avatarUrl || user.avatar || '',
+    bio: '',
+    intro: '',
+    experience: 0,
+    styles: '',
+    specialties: [],
+    spaceType: [],
+    phone: user.phoneNumber || user.purePhoneNumber || whitelist.phone || '',
+    wechat: '',
+    rating: 5,
+    projects: 0,
+    portfolioCount: 0,
+    isDelete: 0,
+    createdAt: timestamp,
+    updatedAt: timestamp
+  }
+  const added = await db.collection('designers').add({ data })
+  return Object.assign({ _id: added._id }, data)
+}
+
+async function revokeDesignerRole(db, user) {
+  if (!user || user.roles === 0) return
+  const data = {
+    designerCertified: false,
+    identitySelected: true,
+    availableRoles: ['owner'],
+    updatedAt: Date.now()
+  }
+  if (user.roles === 2) data.roles = 1
+  await db.collection('users').doc(user._id).update({ data })
+}
+
+exports.main = async (event = {}) => {
   const wxContext = cloud.getWXContext()
-  const openid = wxContext.OPENID
+  const openid = wxContext.OPENID || wxContext.openid
 
   if (!openid) {
-    return { success: false, code: 'UNAUTHORIZED', message: '未授权访问' }
-  }
-
-  const { phone, revalidate } = event
-
-  if (!phone) {
-    return { success: false, isDesigner: false, message: '缺少手机号参数' }
+    return { success: false, code: 'UNAUTHORIZED', isDesigner: false, message: '未授权访问' }
   }
 
   try {
     const db = cloud.database()
     const _ = db.command
-
-    // 标准化手机号
-    const normalizedPhone = normalizePhone(phone)
-    const phoneMatchList = phoneUtils.generatePhoneMatchList(phone)
-    if (!phoneMatchList.includes(normalizedPhone)) {
-      phoneMatchList.push(normalizedPhone)
+    const userRes = await db.collection('users').where(_.or([
+      { _openid: openid },
+      { openid },
+      { alternateOpenids: openid }
+    ])).limit(1).get()
+    const user = userRes.data && userRes.data[0]
+    if (!user || user.isDelete === 1) {
+      return { success: false, code: 'USER_NOT_FOUND', isDesigner: false, message: '用户不存在，请先登录' }
     }
 
-    // 查询设计师白名单
-    const res = await db.collection('designer_whitelist')
-      .where({
-        phone: _.in(phoneMatchList),
-        status: 'active'
-      })
+    // 手机号只能来自微信身份对应的 users 记录，忽略客户端传入的 phone。
+    const phoneParts = phoneUtils.getPhoneParts(
+      user.phoneNumber || user.phone || '',
+      user.purePhoneNumber || '',
+      user.countryCode || ''
+    )
+    const phoneMatchList = phoneUtils.generatePhoneMatchList(
+      phoneParts.phoneNumber,
+      phoneParts.purePhone,
+      phoneParts.countryCode
+    )
+    if (phoneMatchList.length === 0) {
+      return { success: false, code: 'PHONE_REQUIRED', isDesigner: false, message: '请先授权手机号' }
+    }
+
+    const whitelistRes = await db.collection('designer_whitelist')
+      .where(_.or([
+        { status: 'active', phone: _.in(phoneMatchList) },
+        { status: 'active', purePhoneNumber: _.in(phoneMatchList) },
+        { status: 'active', fullPhoneNumber: _.in(phoneMatchList) },
+        { status: 'active', activatedOpenid: openid },
+        { status: 'active', userId: user._id }
+      ]))
       .limit(1)
       .get()
+    const whitelist = whitelistRes.data && whitelistRes.data[0]
 
-    if (res.data && res.data.length > 0) {
-      // 在白名单中，同时更新用户角色为设计师
-      const userRes = await db.collection('users')
-        .where({ _openid: openid })
-        .limit(1)
-        .get()
-
-      if (userRes.data && userRes.data.length > 0) {
-        const user = userRes.data[0]
-        // 管理员(roles=0)不覆盖角色
-        if (user.roles !== 0) {
-          await db.collection('users').doc(user._id).update({
-            data: {
-              roles: 2,
-              identitySelected: true,
-              updatedAt: Date.now()
-            }
-          })
-        } else {
-          // 管理员只标记 identitySelected
-          await db.collection('users').doc(user._id).update({
-            data: {
-              identitySelected: true,
-              updatedAt: Date.now()
-            }
-          })
-        }
-      }
-
+    if (!whitelist) {
+      if (event.revalidate) await revokeDesignerRole(db, user)
       return {
         success: true,
-        isDesigner: true,
-        message: '验证通过，您是认证设计师'
-      }
-    } else {
-      // 不在白名单中
-      // 如果是重新验证模式（revalidate），需要降级已有的设计师角色
-      if (revalidate) {
-        const userRes = await db.collection('users')
-          .where({ _openid: openid })
-          .limit(1)
-          .get()
-
-        if (userRes.data && userRes.data.length > 0) {
-          const user = userRes.data[0]
-          // 只降级设计师角色(roles=2)，管理员(roles=0)和业主(roles=1)不受影响
-          if (user.roles === 2) {
-            await db.collection('users').doc(user._id).update({
-              data: {
-                roles: 1,
-                identitySelected: false,
-                updatedAt: Date.now()
-              }
-            })
-            console.log('[check_designer_whitelist] 设计师权限已降级:', openid)
-          }
-        }
-      }
-
-      return {
-        success: true,
+        code: 'DESIGNER_NOT_CERTIFIED',
         isDesigner: false,
         message: '您的手机号不在设计师白名单中，请联系管理员开通设计师权限'
       }
     }
 
+    const designer = await findOrCreateDesigner(db, _, openid, user, whitelist, phoneMatchList)
+    const timestamp = Date.now()
+    const userUpdate = {
+      designerId: designer._id,
+      designerWhitelistId: whitelist._id,
+      designerCertified: true,
+      identitySelected: true,
+      availableRoles: ['owner', 'designer'],
+      updatedAt: timestamp
+    }
+    if (user.roles !== 0) userUpdate.roles = 2
+
+    await Promise.all([
+      db.collection('users').doc(user._id).update({ data: userUpdate }),
+      db.collection('designer_whitelist').doc(whitelist._id).update({
+        data: {
+          userId: user._id,
+          designerId: designer._id,
+          activatedOpenid: openid,
+          activatedAt: whitelist.activatedAt || timestamp,
+          updatedAt: timestamp
+        }
+      }),
+      db.collection('designers').doc(designer._id).update({
+        data: {
+          _openid: openid,
+          openid,
+          userId: user._id,
+          whitelistId: whitelist._id,
+          updatedAt: timestamp
+        }
+      })
+    ])
+
+    return {
+      success: true,
+      code: 'OK',
+      isDesigner: true,
+      designerId: designer._id,
+      whitelistId: whitelist._id,
+      user: Object.assign({}, user, userUpdate),
+      message: '验证通过，您是认证设计师'
+    }
   } catch (err) {
     console.error('[check_designer_whitelist] Error:', err)
     return {
       success: false,
+      code: 'SERVER_ERROR',
       isDesigner: false,
       message: err.message || '验证失败，请稍后重试'
     }

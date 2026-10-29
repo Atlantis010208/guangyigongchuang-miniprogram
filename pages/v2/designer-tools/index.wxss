@@ -238,17 +238,6 @@ button::after {
   opacity: 0.58;
 }
 
-.designer-tab-icon {
-  display: block;
-  width: 56rpx;
-  height: 52rpx;
-  opacity: 0.42;
-}
-
-.tab-item--active .designer-tab-icon {
-  opacity: 1;
-}
-
 @media (min-width: 430px) {
   .designer-tools-preview {
     width: 430px;

@@ -31,6 +31,33 @@ async function batchGetTempUrls(fileIds) {
   }
   return map
 }
+async function resolveCloudUrl(fileID) {
+  const value = firstText(fileID)
+  if (!value || !value.startsWith('cloud://')) return value
+  try {
+    const res = await cloud.getTempFileURL({ fileList: [value] })
+    const item = res && res.fileList && res.fileList[0]
+    return firstText(item && item.tempFileURL, value)
+  } catch (error) {
+    console.warn('[owner_portal_v2] avatar temp url failed', error && error.message)
+    return value
+  }
+}
+async function getOwnerUser(openid) {
+  const users = await safeGet(db.collection('users').where(_.or([{ _openid: openid }, { openid }])).limit(1))
+  return users[0] || {}
+}
+async function mapOwnerProfile(user) {
+  const rawAvatar = firstText(user.avatarUrl, user.avatar, user.headUrl, user.photoUrl)
+  const avatarUrl = await resolveCloudUrl(rawAvatar)
+  return {
+    userId: firstText(user._id, user.userId, user.webUid),
+    nickname: firstText(user.nickname, user.nickName, user.name, '业主'),
+    avatarUrl,
+    avatarFileID: rawAvatar && rawAvatar.startsWith('cloud://') ? rawAvatar : '',
+    phoneNumber: firstText(user.phoneNumber, user.phone),
+  }
+}
 function normalizeStatus(value) {
   if (['completed', 'done'].includes(value)) return 'completed'
   if (['processing', 'matched', 'review', 'design', 'verifying'].includes(value)) return 'processing'
@@ -45,12 +72,22 @@ function makeNextAction(request) {
 }
 
 exports.main = async (event) => {
-  if ((event && event.action || 'overview') !== 'overview') return { success: false, code: 'INVALID_ACTION', message: 'Unsupported action' }
+  const action = event && event.action || 'overview'
+  if (!['overview', 'profile'].includes(action)) return { success: false, code: 'INVALID_ACTION', message: 'Unsupported action' }
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) return { success: false, code: 'UNAUTHENTICATED', message: '登录状态已失效' }
   try {
-    const users = await safeGet(db.collection('users').where(_.or([{ _openid: OPENID }, { openid: OPENID }])).limit(1))
-    const user = users[0] || {}
+    const user = await getOwnerUser(OPENID)
+    const profile = await mapOwnerProfile(user)
+
+    if (action === 'profile') {
+      return {
+        success: true,
+        code: 'OK',
+        data: { user: profile },
+      }
+    }
+
     const identityValues = [OPENID, user._id, user.userId, user.webUid].filter(Boolean)
     const branches = []
     identityValues.forEach(id => branches.push({ _openid: id }, { openid: id }, { ownerId: id }, { userId: id }, { webUid: id }))
@@ -64,7 +101,7 @@ exports.main = async (event) => {
       success: true,
       code: 'OK',
       data: {
-        user: { avatarUrl: firstText(user.avatarUrl, user.avatar), nickname: firstText(user.nickname, user.name, '业主') },
+        user: profile,
         nextAction: makeNextAction(requests[0]),
         requestStatus: counts,
         featuredCases: cases.map(item => ({

@@ -54,29 +54,28 @@ const CONTENT_ITEMS = Object.freeze([
 
 const TABS = Object.freeze([
   {
-    id: 'workbench',
-    label: '\u5de5\u4f5c\u53f0',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-workbench-v2.png',
-  },
-  {
     id: 'learning',
     label: '\u5b66\u4e60',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-learning-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-learning-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-learning-active.png',
   },
   {
     id: 'tools',
     label: '\u5de5\u5177',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-tools-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-designer-tools-active.png',
   },
   {
     id: 'projects',
     label: '\u9879\u76ee',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-projects-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-projects-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-projects-active.png',
   },
   {
     id: 'profile',
     label: '\u6211\u7684',
-    icon: '/pages/v2/designer-workbench/assets/icon-tab-profile-v2.png',
+    icon: '/pages/v2/shared/assets/tabbar/tab-profile-default.png',
+    activeIcon: '/pages/v2/shared/assets/tabbar/tab-profile-active.png',
   },
 ])
 
@@ -195,18 +194,26 @@ Page({
 
   openCourseIntro() { this.openCourseRoute('') },
 
+  openLearningContentSection(section) {
+    const courseId = this.data.courseId || ''
+    if (!courseId) { wx.showToast({ title: '\u6682\u65e0\u53ef\u5b66\u4e60\u8bfe\u7a0b', icon: 'none' }); return false }
+    navigateTo('/pages/v2/designer-learning-content/index?courseId=' + encodeURIComponent(courseId) + '&section=' + section)
+    return true
+  },
+
   openContentItem(event) {
     const id = event.currentTarget.dataset.id
-    this.openCourseRoute(id === 'intro' ? '' : '1')
+    const section = ['intro', 'catalog', 'history'].includes(id) ? id : 'intro'
+    if (section === 'catalog') {
+      this.openCourseRoute('1')
+      return
+    }
+    this.openLearningContentSection(section)
   },
 
   switchTab(event) {
     const id = event.currentTarget.dataset.id
     if (id === 'learning') return
-    if (id === 'workbench') {
-      redirectTo('/pages/v2/designer-workbench/index')
-      return
-    }
     if (id === 'projects') {
       redirectTo('/pages/v2/designer-projects/index')
       return

@@ -525,6 +525,6 @@ Page({
     wx.showToast({ title:'已提交', icon:'success' })
     // 标记订单管理页切换到"共创订单"tab
     try { wx.setStorageSync('cart_switch_to_scheme', true) } catch(e) {}
-    setTimeout(()=>{ wx.switchTab({ url:'/pages/cart/cart' }); this._submitting = false; this.setData({ submitting:false }) }, 400)
+    setTimeout(()=>{ wx.navigateTo({ url:'/pages/profile/orders/orders' }); this._submitting = false; this.setData({ submitting:false }) }, 400)
   }
 })

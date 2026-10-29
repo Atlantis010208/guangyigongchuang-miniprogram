@@ -18,6 +18,7 @@ Page({
     mallOrders: [],
     requestsCloud: [],
     mallOrdersCloud: [],
+    collectionSubmissions: [],
     filterType: 'mall',
     isLoggedIn: false,
     countdownTimer: null,
@@ -50,7 +51,7 @@ Page({
     // 更新自定义 tabBar 的选中状态和角色
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateRole()
-      this.getTabBar().setData({ selected: 4 }) // 订单管理在 ownerList 中变成了索引 4
+      this.getTabBar().setData({ selected: 3 }) // 订单管理在 ownerList 中的索引
     }
     // 检查登录状态
     const app = getApp()
@@ -63,10 +64,16 @@ Page({
       wx.removeStorageSync('cart_switch_to_scheme')
       this.setData({ filterType: 'scheme' })
     }
+    const switchToCollection = wx.getStorageSync('cart_switch_to_collection')
+    if (switchToCollection) {
+      wx.removeStorageSync('cart_switch_to_collection')
+      this.setData({ filterType: 'collection' })
+    }
     
     if (isLoggedIn) {
       // 🔥 主动从数据库获取完整数据，确保字段完整
       this.fetchRequestsFromDB()
+      this.fetchCollectionSubmissions()
       this.fetchOrdersFromDB()  // 使用云函数获取商城订单
       this.startDepositMonitor()
       this.startWatchers()
@@ -843,6 +850,36 @@ Page({
     const type = e.currentTarget.dataset.type
     if (!type) return
     this.setData({ filterType: type })
+  },
+
+  async fetchCollectionSubmissions() {
+    try {
+      const call = await wx.cloud.callFunction({ name: 'collection_form_public', data: { action: 'listSubmissions', limit: 50 } })
+      const result = call && call.result
+      const submissions = result && result.success && result.data && result.data.submissions || []
+      this.setData({ collectionSubmissions: submissions.map((item) => ({
+        ...item,
+        title: item.spaceType || '需求收集表',
+        timeText: this.formatCollectionTime(item.createdAt),
+        pdfStatusText: item.pdfStatus === 'ready' ? 'PDF 已生成' : (item.pdfStatus === 'failed' ? 'PDF 生成失败' : 'PDF 生成中'),
+      })) })
+    } catch (error) {
+      console.warn('[fetchCollectionSubmissions]', error)
+      this.setData({ collectionSubmissions: [] })
+    }
+  },
+
+  formatCollectionTime(value) {
+    const date = new Date(Number(value) || value || Date.now())
+    if (Number.isNaN(date.getTime())) return ''
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  },
+
+  onCollectionTap(e) {
+    const item = e.currentTarget.dataset.item || {}
+    const query = `id=${encodeURIComponent(item.id || '')}&requestId=${encodeURIComponent(item.requestId || '')}&spaceType=${encodeURIComponent(item.spaceType || '')}&pdfStatus=${encodeURIComponent(item.pdfStatus || 'pending')}&submittedAt=${encodeURIComponent(item.createdAt || '')}`
+    wx.navigateTo({ url: `/pages/flows/collection-form-result/collection-form-result?${query}` })
   },
   
   /**

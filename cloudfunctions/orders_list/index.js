@@ -770,6 +770,7 @@ async function legacyOrdersForMiniprogram(event, identity) {
 }
 
 exports.main = async (event) => {
+  if (event && event.action === 'virtual_delivery') return require('./virtual-delivery').main(event)
   try {
     const auth = requireAuthenticated(await resolveIdentity())
     if (!auth.ok) return fail(auth.code, auth.errorMessage)

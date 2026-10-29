@@ -1,0 +1,9 @@
+{
+  "name": "design_payment_get",
+  "version": "1.0.0",
+  "description": "小程序设计请求收款查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

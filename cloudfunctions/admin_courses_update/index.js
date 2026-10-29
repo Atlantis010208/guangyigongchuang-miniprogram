@@ -9,6 +9,7 @@
  */
 const cloud = require('wx-server-sdk')
 const { requireAdmin, getErrorMessage } = require('./admin_auth')
+const { validateCourseContent } = require('./course-validator')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -90,7 +91,20 @@ exports.main = async (event) => {
       delete updateData.isDelete
     }
     
-    console.log('[admin_courses_update] 更新数据:', JSON.stringify(updateData))
+    let currentCourse
+    try {
+      const currentResult = await db.collection('courses').doc(id).get()
+      currentCourse = currentResult.data
+    } catch (_) {
+      currentCourse = null
+    }
+    if (!currentCourse) return { success: false, code: 'NOT_FOUND', errorMessage: '课程不存在' }
+
+    const targetCourse = Object.assign({}, currentCourse, updateData)
+    const validation = validateCourseContent(targetCourse, { publishing: targetCourse.status === 'published' })
+    if (!validation.ok) return { success: false, code: 'INVALID_PARAMS', errorMessage: validation.message }
+
+    console.log('[admin_courses_update] 更新课程:', id, '字段:', Object.keys(updateData))
     
     // 执行更新
     const result = await db.collection('courses')

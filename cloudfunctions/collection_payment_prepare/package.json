@@ -1,0 +1,9 @@
+{
+  "name": "collection_payment_prepare",
+  "version": "1.0.0",
+  "description": "通用收款支付准备",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

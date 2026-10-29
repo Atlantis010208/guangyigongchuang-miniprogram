@@ -369,6 +369,136 @@ async function checkAndActivateToolkitWhitelist(phoneNumber, purePhoneNumber, co
   }
 }
 
+async function findUserByIdentity(db, _, openid) {
+  const result = await db.collection('users')
+    .where(_.or([
+      { _openid: openid },
+      { openid },
+      { alternateOpenids: openid }
+    ]))
+    .limit(1)
+    .get()
+  return result.data && result.data[0] || null
+}
+
+async function getDocument(collectionName, id) {
+  if (!id) return null
+  try {
+    const result = await cloud.database().collection(collectionName).doc(id).get()
+    return result.data || null
+  } catch (error) {
+    return null
+  }
+}
+
+async function findOrCreateDesigner(db, _, openid, user, whitelist, phoneMatchList) {
+  let designer = await getDocument('designers', whitelist.designerId || user.designerId)
+  if (designer && designer.isDelete !== 1) return designer
+
+  const conditions = [
+    { _openid: openid, isDelete: _.neq(1) },
+    { openid, isDelete: _.neq(1) },
+    { userId: user._id, isDelete: _.neq(1) }
+  ]
+  if (phoneMatchList.length > 0) {
+    conditions.push({ phone: _.in(phoneMatchList), isDelete: _.neq(1) })
+    conditions.push({ phoneNumber: _.in(phoneMatchList), isDelete: _.neq(1) })
+  }
+  const existing = await db.collection('designers').where(_.or(conditions)).limit(1).get()
+  designer = existing.data && existing.data[0]
+  if (designer) return designer
+
+  const timestamp = Date.now()
+  const data = {
+    _openid: openid,
+    openid,
+    userId: user._id,
+    whitelistId: whitelist._id,
+    name: whitelist.name || user.nickname || user.name || '设计师',
+    title: '专业灯光设计',
+    avatar: user.avatarUrl || user.avatar || '',
+    bio: '',
+    intro: '',
+    experience: 0,
+    styles: '',
+    specialties: [],
+    spaceType: [],
+    phone: user.phoneNumber || user.purePhoneNumber || whitelist.phone || '',
+    wechat: '',
+    rating: 5,
+    projects: 0,
+    portfolioCount: 0,
+    isDelete: 0,
+    createdAt: timestamp,
+    updatedAt: timestamp
+  }
+  const added = await db.collection('designers').add({ data })
+  return Object.assign({ _id: added._id }, data)
+}
+
+async function activateDesignerWhitelist(phoneNumber, purePhoneNumber, countryCode, openid, user) {
+  const db = cloud.database()
+  const _ = db.command
+  const phoneMatchList = generatePhoneMatchList(phoneNumber, purePhoneNumber, countryCode)
+  if (!openid || !user || !user._id || phoneMatchList.length === 0) {
+    return { certified: false, activated: false }
+  }
+
+  const result = await db.collection('designer_whitelist')
+    .where(_.or([
+      { status: 'active', phone: _.in(phoneMatchList) },
+      { status: 'active', purePhoneNumber: _.in(phoneMatchList) },
+      { status: 'active', fullPhoneNumber: _.in(phoneMatchList) },
+      { status: 'active', activatedOpenid: openid },
+      { status: 'active', userId: user._id }
+    ]))
+    .limit(1)
+    .get()
+  const whitelist = result.data && result.data[0]
+  if (!whitelist) return { certified: false, activated: false }
+
+  const designer = await findOrCreateDesigner(db, _, openid, user, whitelist, phoneMatchList)
+  const timestamp = Date.now()
+  const userUpdate = {
+    designerId: designer._id,
+    designerWhitelistId: whitelist._id,
+    designerCertified: true,
+    identitySelected: true,
+    availableRoles: ['owner', 'designer'],
+    updatedAt: timestamp
+  }
+  if (user.roles !== 0) userUpdate.roles = 2
+
+  await Promise.all([
+    db.collection('users').doc(user._id).update({ data: userUpdate }),
+    db.collection('designer_whitelist').doc(whitelist._id).update({
+      data: {
+        userId: user._id,
+        designerId: designer._id,
+        activatedOpenid: openid,
+        activatedAt: whitelist.activatedAt || timestamp,
+        updatedAt: timestamp
+      }
+    }),
+    db.collection('designers').doc(designer._id).update({
+      data: {
+        _openid: openid,
+        openid,
+        userId: user._id,
+        whitelistId: whitelist._id,
+        updatedAt: timestamp
+      }
+    })
+  ])
+
+  return {
+    certified: true,
+    activated: true,
+    whitelistId: whitelist._id,
+    designerId: designer._id
+  }
+}
+
 exports.main = async (event) => {
   try {
     const { code, saveToDb = true } = event || {}
@@ -407,16 +537,19 @@ exports.main = async (event) => {
     let user = null
     let whitelistResult = null
     let toolkitWhitelistResult = null
+    let designerWhitelistResult = null
     
     if (saveToDb) {
       const ctx = cloud.getWXContext()
       const openid = ctx.OPENID || ctx.openid || ''
-      // 也可以从前端传入 userId 作为备用
-      const userIdFromEvent = event && event.userId ? event.userId : ''
 
-      console.log('getPhoneNumber 开始保存，openid:', openid, 'userId:', userIdFromEvent)
+      if (!openid) {
+        return { success: false, code: 'UNAUTHORIZED', errorMessage: '无法获取可信用户身份' }
+      }
 
-      if (openid || userIdFromEvent) {
+      console.log('getPhoneNumber 开始保存，openid:', openid)
+
+      if (openid) {
         const db = cloud.database()
         const col = db.collection('users')
         const now = Date.now()
@@ -434,16 +567,18 @@ exports.main = async (event) => {
           const phoneParts = phoneUtils.getPhoneParts(phoneInfo.phoneNumber, phoneInfo.purePhoneNumber, phoneInfo.countryCode)
           const purePhone = phoneParts.purePhone || ''
 
-          // ========== 新增：手机号去重检查 ==========
-          // 检查该手机号是否已被其他用户使用（排除已删除的用户）
+          existingUser = await findUserByIdentity(db, _, openid)
+
+          // 检查该手机号是否已被其他有效用户使用。
           const phoneCheckRes = await col.where({
             purePhoneNumber: purePhone,
-            _openid: _.neq(openid),  // 排除当前用户
-            isDelete: _.neq(1)       // 排除已删除的用户
-          }).limit(1).get()
+            isDelete: _.neq(1)
+          }).limit(10).get()
 
-          if (phoneCheckRes && phoneCheckRes.data && phoneCheckRes.data.length > 0) {
-            const otherUser = phoneCheckRes.data[0]
+          const otherUser = phoneCheckRes && phoneCheckRes.data
+            ? phoneCheckRes.data.find(item => !existingUser || item._id !== existingUser._id)
+            : null
+          if (otherUser) {
             console.log('[手机号去重] 手机号已被其他用户使用:', {
               phone: purePhone.substring(0, 3) + '****' + purePhone.substring(7),
               otherUserId: otherUser._id,
@@ -454,37 +589,13 @@ exports.main = async (event) => {
               success: false,
               code: 'PHONE_ALREADY_USED',
               errorMessage: '该手机号已被其他账号绑定，如有疑问请联系客服',
-              phoneInfo,
-              existingUserId: otherUser._id
+              phoneInfo
             }
           }
           console.log('[手机号去重] 检查通过，手机号可用')
           // ==========================================
 
-          // 方法1：通过 _openid 查询
-          if (openid) {
-            const queryRes = await col.where({ _openid: openid }).limit(1).get()
-            console.log('通过 _openid 查询结果:', queryRes && queryRes.data ? queryRes.data.length : 0, '条')
-            if (queryRes && queryRes.data && queryRes.data.length) {
-              existingUser = queryRes.data[0]
-            }
-          }
-
-          // 方法2：如果 _openid 查询失败，尝试用 userId
-          if (!existingUser && userIdFromEvent) {
-            try {
-              const docRes = await col.doc(userIdFromEvent).get()
-              console.log('通过 userId 查询结果:', docRes && docRes.data ? '找到' : '未找到')
-              if (docRes && docRes.data) {
-                existingUser = { ...docRes.data, _id: userIdFromEvent }
-              }
-            } catch (docErr) {
-              console.warn('通过 userId 查询失败:', docErr.message)
-            }
-          }
-
-          // 方法3：如果都找不到，尝试创建一条新记录
-          // 注意：手机号去重检查已在上方完成
+          // 当前微信身份没有账号时才创建；业主端已有账号会直接复用。
           if (!existingUser && openid) {
             console.log('用户记录不存在，尝试创建新记录')
             const addRes = await col.add({
@@ -561,6 +672,18 @@ exports.main = async (event) => {
             if (toolkitWhitelistResult.activated) {
               console.log('[getPhoneNumber] 工具包白名单激活成功:', toolkitWhitelistResult)
             }
+
+            designerWhitelistResult = await activateDesignerWhitelist(
+              fullPhone,
+              purePhone,
+              countryCode,
+              openid,
+              user
+            )
+            if (designerWhitelistResult.certified) {
+              const latestUser = await col.doc(existingUser._id).get()
+              user = latestUser && latestUser.data ? latestUser.data : user
+            }
             // ========================================
             
           } else {
@@ -568,6 +691,11 @@ exports.main = async (event) => {
           }
         } catch (dbErr) {
           console.error('保存手机号到数据库失败:', dbErr)
+          return {
+            success: false,
+            code: 'PHONE_SAVE_FAILED',
+            errorMessage: '手机号保存失败，请重试'
+          }
         }
       }
     }
@@ -582,7 +710,9 @@ exports.main = async (event) => {
       whitelistInfo: whitelistResult,
       // 新增：工具包白名单激活结果
       toolkitWhitelistActivated: toolkitWhitelistResult ? toolkitWhitelistResult.activated : false,
-      toolkitWhitelistInfo: toolkitWhitelistResult
+      toolkitWhitelistInfo: toolkitWhitelistResult,
+      designerCertified: designerWhitelistResult ? designerWhitelistResult.certified : false,
+      designerCertification: designerWhitelistResult
     }
   } catch (err) {
     console.error('getPhoneNumber 云函数执行失败:', err)

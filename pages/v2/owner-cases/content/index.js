@@ -1,4 +1,4 @@
-﻿const ownerApi = typeof require === 'function' ? require('../../../../services/v2/owner') : { cases: async () => ({ ok: false }) }
+const ownerApi = typeof require === 'function' ? require('../../../../services/v2/owner') : { cases: async () => ({ ok: false }) }
 const BASELINE_WIDTH = 375
 const BASELINE_VIEWPORT_HEIGHT = 667
 const BASELINE_TOP_INSET = 64
@@ -33,10 +33,65 @@ const COPY = Object.freeze({
 
 const CATEGORY_ITEMS = Object.freeze([
   { value: 'all', label: '\u5168\u90e8' },
-  { value: 'residential', label: '\u4f4f\u5b85' },
-  { value: 'commercial', label: '\u5546\u4e1a' },
-  { value: 'hotel', label: '\u9152\u5e97' },
+  { value: '\u4f4f\u5b85\u7a7a\u95f4', label: '\u4f4f\u5b85' },
+  { value: '\u5546\u4e1a\u7a7a\u95f4', label: '\u5546\u4e1a' },
+  { value: '\u9152\u5e97\u7a7a\u95f4', label: '\u9152\u5e97' },
 ])
+
+const SPACE_TYPE_ORDER = Object.freeze([
+  '\u4f4f\u5b85\u7a7a\u95f4',
+  '\u5546\u4e1a\u7a7a\u95f4',
+  '\u529e\u516c\u7a7a\u95f4',
+  '\u9152\u5e97\u7a7a\u95f4',
+  '\u9910\u996e\u7a7a\u95f4',
+  '\u6587\u65c5\u7a7a\u95f4',
+  '\u516c\u5171\u7a7a\u95f4',
+  '\u6237\u5916\u666f\u89c2',
+  '\u8fd0\u52a8\u573a\u9986',
+  '\u5176\u4ed6',
+])
+
+const SPACE_TYPE_ALIASES = Object.freeze({
+  residential: '\u4f4f\u5b85\u7a7a\u95f4',
+  home: '\u4f4f\u5b85\u7a7a\u95f4',
+  house: '\u4f4f\u5b85\u7a7a\u95f4',
+  villa: '\u4f4f\u5b85\u7a7a\u95f4',
+  '\u4f4f\u5b85': '\u4f4f\u5b85\u7a7a\u95f4',
+  '\u79c1\u5b85': '\u4f4f\u5b85\u7a7a\u95f4',
+  '\u5bb6\u5c45': '\u4f4f\u5b85\u7a7a\u95f4',
+  commercial: '\u5546\u4e1a\u7a7a\u95f4',
+  business: '\u5546\u4e1a\u7a7a\u95f4',
+  retail: '\u5546\u4e1a\u7a7a\u95f4',
+  shop: '\u5546\u4e1a\u7a7a\u95f4',
+  store: '\u5546\u4e1a\u7a7a\u95f4',
+  '\u5546\u4e1a': '\u5546\u4e1a\u7a7a\u95f4',
+  '\u5546\u94fa': '\u5546\u4e1a\u7a7a\u95f4',
+  '\u5e97\u94fa': '\u5546\u4e1a\u7a7a\u95f4',
+  office: '\u529e\u516c\u7a7a\u95f4',
+  '\u529e\u516c': '\u529e\u516c\u7a7a\u95f4',
+  hotel: '\u9152\u5e97\u7a7a\u95f4',
+  hospitality: '\u9152\u5e97\u7a7a\u95f4',
+  resort: '\u9152\u5e97\u7a7a\u95f4',
+  '\u9152\u5e97': '\u9152\u5e97\u7a7a\u95f4',
+  restaurant: '\u9910\u996e\u7a7a\u95f4',
+  dining: '\u9910\u996e\u7a7a\u95f4',
+  cafe: '\u9910\u996e\u7a7a\u95f4',
+  '\u9910\u996e': '\u9910\u996e\u7a7a\u95f4',
+  culture: '\u6587\u65c5\u7a7a\u95f4',
+  tourism: '\u6587\u65c5\u7a7a\u95f4',
+  '\u6587\u65c5': '\u6587\u65c5\u7a7a\u95f4',
+  public: '\u516c\u5171\u7a7a\u95f4',
+  '\u516c\u5171': '\u516c\u5171\u7a7a\u95f4',
+  outdoor: '\u6237\u5916\u666f\u89c2',
+  landscape: '\u6237\u5916\u666f\u89c2',
+  '\u6237\u5916': '\u6237\u5916\u666f\u89c2',
+  '\u666f\u89c2': '\u6237\u5916\u666f\u89c2',
+  sport: '\u8fd0\u52a8\u573a\u9986',
+  stadium: '\u8fd0\u52a8\u573a\u9986',
+  '\u8fd0\u52a8': '\u8fd0\u52a8\u573a\u9986',
+  '\u5176\u4ed6': '\u5176\u4ed6',
+  other: '\u5176\u4ed6',
+})
 
 const CASE_ITEMS = Object.freeze([
   {
@@ -44,28 +99,28 @@ const CASE_ITEMS = Object.freeze([
     category: 'residential',
     title: '\u5357\u4eac \u00b7 \u79c1\u5b85\u7167\u660e',
     description: '\u73b0\u4ee3\u6781\u7b80',
-    image: '/pages/v2/owner-cases/assets/case-nanjing.jpg',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/case-nanjing.jpg',
   },
   {
     id: 'shanghai-minimal',
     category: 'residential',
     title: '\u4e0a\u6d77 \u00b7 \u6781\u7b80\u4f4f\u5b85',
     description: '\u65e0\u4e3b\u706f\u8bbe\u8ba1',
-    image: '/pages/v2/owner-cases/assets/case-shanghai.jpg',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/case-shanghai.jpg',
   },
   {
     id: 'hangzhou-lake',
     category: 'residential',
     title: '\u676d\u5dde \u00b7 \u6e56\u7554\u522b\u5885',
     description: '\u81ea\u7136\u5149\u5f71',
-    image: '/pages/v2/owner-cases/assets/case-hangzhou.jpg',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/case-hangzhou.jpg',
   },
   {
     id: 'shenzhen-gallery',
     category: 'commercial',
     title: '\u6df1\u5733 \u00b7 \u827a\u672f\u5c55\u5385',
     description: '\u5546\u4e1a\u7167\u660e',
-    image: '/pages/v2/owner-cases/assets/case-shenzhen.jpg',
+    image: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/case-shenzhen.jpg',
   },
 ])
 
@@ -77,13 +132,93 @@ function createCaseItems() {
   return CASE_ITEMS.map((item) => ({
     ...item,
     bookmarked: false,
-    bookmarkIcon: '/pages/v2/owner-cases/assets/icon-bookmark.png',
+    bookmarkIcon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark.png',
     bookmarkAria: COPY.bookmarkAria,
   }))
 }
 
 function createCategories(activeCategory) {
   return CATEGORY_ITEMS.map((item) => ({
+    ...item,
+    className: item.value === activeCategory
+      ? 'category category--active'
+      : 'category',
+  }))
+}
+
+function getSpaceTypeLabel(spaceType) {
+  const value = String(spaceType || '').trim()
+  if (value.endsWith('\u7a7a\u95f4')) return value.slice(0, -2)
+  return value || '\u5176\u4ed6'
+}
+
+function normalizeSpaceType(value) {
+  const raw = String(value || '').trim()
+  if (!raw || raw === 'all' || raw === '\u5168\u90e8') return ''
+  if (SPACE_TYPE_ORDER.includes(raw)) return raw
+
+  const lower = raw.toLowerCase()
+  if (SPACE_TYPE_ALIASES[lower]) return SPACE_TYPE_ALIASES[lower]
+  if (SPACE_TYPE_ALIASES[raw]) return SPACE_TYPE_ALIASES[raw]
+
+  for (const key of Object.keys(SPACE_TYPE_ALIASES)) {
+    if (lower.includes(String(key).toLowerCase())) {
+      return SPACE_TYPE_ALIASES[key]
+    }
+  }
+
+  return raw
+}
+
+function normalizeCaseSpaceType(item = {}) {
+  const direct = normalizeSpaceType(item.spaceType || item.category)
+  if (direct) return direct
+
+  const rawValues = [
+    item.caseType,
+    item.scene,
+    item.space,
+    item.type,
+  ]
+  if (Array.isArray(item.services)) rawValues.push(...item.services)
+  if (Array.isArray(item.tags)) rawValues.push(...item.tags)
+  rawValues.push(item.title, item.desc, item.description, item.city, item.style)
+
+  const text = rawValues
+    .filter(value => value !== undefined && value !== null)
+    .join(' ')
+    .toLowerCase()
+
+  for (const key of Object.keys(SPACE_TYPE_ALIASES)) {
+    if (text.includes(String(key).toLowerCase())) {
+      return SPACE_TYPE_ALIASES[key]
+    }
+  }
+
+  return '\u5176\u4ed6'
+}
+
+function createCategoriesFromStats(activeCategory, stats = []) {
+  const byValue = new Map()
+  for (const item of stats) {
+    const value = normalizeSpaceType(item && item.value)
+    if (!value || byValue.has(value)) continue
+    byValue.set(value, {
+      value,
+      label: item.label || getSpaceTypeLabel(value),
+    })
+  }
+
+  const ordered = SPACE_TYPE_ORDER
+    .filter(value => byValue.has(value))
+    .map(value => byValue.get(value))
+
+  for (const item of byValue.values()) {
+    if (!SPACE_TYPE_ORDER.includes(item.value)) ordered.push(item)
+  }
+
+  const visible = ordered.length ? ordered : CATEGORY_ITEMS.slice(1)
+  return [{ value: 'all', label: '\u5168\u90e8' }, ...visible].map((item) => ({
     ...item,
     className: item.value === activeCategory
       ? 'category category--active'
@@ -155,6 +290,13 @@ Component({
     styleIsolation: 'isolated',
   },
 
+  properties: {
+    userAvatar: {
+      type: String,
+      value: '',
+    },
+  },
+
   data: {
     copy: COPY,
     categories: createCategories('all'),
@@ -186,6 +328,7 @@ Component({
 
     attached() {
       this.updateLayout()
+      this.loadOwnerProfile()
       this.loadCases()
     },
   },
@@ -197,22 +340,45 @@ Component({
   },
 
   methods: {
+    async loadOwnerProfile() {
+      if (this.data.userAvatar) return
+      if (!ownerApi.profile) return
+
+      const response = await ownerApi.profile()
+      const avatarUrl = response.ok && response.data && response.data.user && response.data.user.avatarUrl
+      if (avatarUrl) this.setData({ userAvatar: avatarUrl })
+    },
+
+    handleAvatarError() {
+      this.setData({ userAvatar: '' })
+    },
 
     async loadCases() {
-      const response = await ownerApi.cases(30)
+      const activeCategory = this.data.activeCategory
+      const response = await ownerApi.cases({
+        limit: 30,
+        spaceType: activeCategory === 'all' ? '' : activeCategory,
+      })
       const raw = response.ok && response.data && (response.data.items || response.data.list) || []
+      const spaceTypes = response.ok && response.data && response.data.spaceTypes || []
       this._caseItems = raw.map(item => ({
         id: item._id || item.id,
-        category: item.category || item.spaceType || 'all',
+        category: item.category || 'all',
+        spaceType: normalizeCaseSpaceType(item),
+        spaceTypeLabel: item.spaceTypeLabel || getSpaceTypeLabel(normalizeCaseSpaceType(item)),
         title: item.title || '\u706f\u5149\u8bbe\u8ba1\u6848\u4f8b',
         description: item.desc || item.description || '',
         image: item.imageUrl || (item.imageUrls && item.imageUrls[0]) || '',
         bookmarked: false,
-        bookmarkIcon: '/pages/v2/owner-cases/assets/icon-bookmark.png',
+        bookmarkIcon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark.png',
         bookmarkAria: COPY.bookmarkAria,
       }))
-      this.setData({ loading: false, loadError: response.ok ? '' : response.message })
-      this.applyFilters(this.data.activeCategory, this.data.searchValue)
+      this.setData({
+        loading: false,
+        loadError: response.ok ? '' : response.message,
+        categories: createCategoriesFromStats(activeCategory, spaceTypes),
+      })
+      this.applyFilters(activeCategory, this.data.searchValue)
     },
 
     updateLayout() {
@@ -248,17 +414,25 @@ Component({
 
     applyFilters(activeCategory, searchValue) {
       const keyword = String(searchValue || '').trim().toLowerCase()
+      const normalizedCategory = activeCategory === 'all' ? 'all' : normalizeSpaceType(activeCategory)
       const items = (this._caseItems || []).filter((item) => {
-        const categoryMatch = activeCategory === 'all'
-          || item.category === activeCategory
-        const text = (item.title + ' ' + item.description).toLowerCase()
+        const categoryMatch = normalizedCategory === 'all'
+          || item.spaceType === normalizedCategory
+        const text = (item.title + ' ' + item.description + ' ' + item.spaceTypeLabel).toLowerCase()
         return categoryMatch && (!keyword || text.includes(keyword))
       })
 
       this.setData({
         activeCategory,
         searchValue,
-        categories: createCategories(activeCategory),
+        categories: this.data.categories.length
+          ? this.data.categories.map(item => ({
+            ...item,
+            className: item.value === activeCategory
+              ? 'category category--active'
+              : 'category',
+          }))
+          : createCategories(activeCategory),
         cases: items,
         hasCases: items.length > 0,
       })
@@ -268,8 +442,19 @@ Component({
       this.applyFilters(this.data.activeCategory, event.detail.value)
     },
 
-    selectCategory(event) {
-      this.applyFilters(event.currentTarget.dataset.value, this.data.searchValue)
+    async selectCategory(event) {
+      const value = event.currentTarget.dataset.value || 'all'
+      this.setData({
+        activeCategory: value,
+        loading: true,
+        categories: this.data.categories.map(item => ({
+          ...item,
+          className: item.value === value
+            ? 'category category--active'
+            : 'category',
+        })),
+      })
+      await this.loadCases()
     },
 
     toggleBookmark(event) {
@@ -281,8 +466,8 @@ Component({
           ...item,
           bookmarked,
           bookmarkIcon: bookmarked
-            ? '/pages/v2/owner-cases/assets/icon-bookmark-active.png'
-            : '/pages/v2/owner-cases/assets/icon-bookmark.png',
+            ? 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark-active.png'
+            : 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark.png',
           bookmarkAria: bookmarked ? COPY.unbookmarkAria : COPY.bookmarkAria,
         }
       })
@@ -302,10 +487,7 @@ Component({
     },
 
     goProfile() {
-      wx.navigateTo({
-        url: '/pages/profile/home/home',
-        fail: showRouteError,
-      })
+      this.triggerEvent('switchprofile', {}, { bubbles: true, composed: true })
     },
   },
 })

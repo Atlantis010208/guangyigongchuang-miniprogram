@@ -1,4 +1,4 @@
-﻿const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
+const enforceV2Gate = typeof require === 'function' ? require('../../../services/v2/navigation-gate').enforceV2Gate : async () => true
 const ownerApi = typeof require === 'function' ? require('../../../services/v2/owner') : { caseDetail: async () => ({ ok: false }) }
 
 // 空间亮点固定取封面之后的 4 张图，凑不满就少排几张
@@ -19,11 +19,18 @@ const COPY = Object.freeze({
   closingText: '\u4ece\u7a7a\u95f4\u3001\u4e60\u60ef\u4e0e\u6c1b\u56f4\u51fa\u53d1\uff0c\u4e3a\u4f60\u5b9a\u5236\u4e13\u5c5e\u706f\u5149\u65b9\u6848\u3002',
   favorite: '\u6536\u85cf',
   unfavorite: '\u53d6\u6d88\u6536\u85cf',
+  immersive: '\u6c89\u6d78\u6b23\u8d4f',
   consult: '\u54a8\u8be2\u706f\u5149\u65b9\u6848',
   routeError: '\u9875\u9762\u6682\u65f6\u65e0\u6cd5\u6253\u5f00',
 })
 
 const SEPARATOR = '  \u00b7  '
+
+function getSpaceTypeLabel(spaceType) {
+  const value = String(spaceType || '').trim()
+  if (value.endsWith('\u7a7a\u95f4')) return value.slice(0, -2)
+  return value
+}
 
 function calculateNavigationLayout(windowInfo, menuButton) {
   const statusBarHeight = Number(windowInfo.statusBarHeight) || 20
@@ -94,7 +101,9 @@ Page({
     galleryIndex: 0,
     galleryTotal: 0,
     isBookmarked: false,
-    bookmarkIcon: '/pages/v2/owner-cases/assets/icon-bookmark.png',
+    presentationAvailable: false,
+    enteringPresentation: false,
+    bookmarkIcon: 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark.png',
     statusBarHeight: 20,
     navigationBarHeight: 44,
   },
@@ -154,7 +163,7 @@ Page({
       loadFailed: false,
       detail: {
         title: (item.title || '').trim() || COPY.fallbackTitle,
-        category: joinParts(services),
+        category: joinParts([item.spaceTypeLabel || getSpaceTypeLabel(item.spaceType), ...services]),
         meta: joinParts([item.city, item.area, item.style]),
         desc: (item.desc || '').trim(),
         officialAccountUrl: (item.officialAccountUrl || '').trim(),
@@ -165,6 +174,7 @@ Page({
       currentSlide: 0,
       galleryIndex: imageUrls.length ? 1 : 0,
       galleryTotal: imageUrls.length,
+      presentationAvailable: item.presentationAvailable === true,
     })
   },
 
@@ -192,8 +202,8 @@ Page({
     this.setData({
       isBookmarked,
       bookmarkIcon: isBookmarked
-        ? '/pages/v2/owner-cases/assets/icon-bookmark-active.png'
-        : '/pages/v2/owner-cases/assets/icon-bookmark.png',
+        ? 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark-active.png'
+        : 'cloud://cloud1-5gb9c5u2c58ad6d7.636c-cloud1-5gb9c5u2c58ad6d7-1378684587/ui-v2-assets/pages/v2/owner-cases/assets/icon-bookmark.png',
     })
   },
 
@@ -202,6 +212,28 @@ Page({
       url: '/pages/support/contact/contact',
       fail: showRouteError,
     })
+  },
+
+  goPresentation() {
+    if (!this.data.presentationAvailable || this.data.enteringPresentation) return
+
+    const caseId = String(this.data.caseId || '').trim()
+    if (!caseId) return
+
+    this.setData({ enteringPresentation: true })
+    this.presentationTimer = setTimeout(() => {
+      wx.navigateTo({
+        url: `/pages/v2/owner-case-presentation/index?id=${encodeURIComponent(caseId)}&from=detail`,
+        fail: () => {
+          this.setData({ enteringPresentation: false })
+          showRouteError()
+        },
+      })
+    }, 220)
+  },
+
+  onUnload() {
+    if (this.presentationTimer) clearTimeout(this.presentationTimer)
   },
 
   goBack() {
